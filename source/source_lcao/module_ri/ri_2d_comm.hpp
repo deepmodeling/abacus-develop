@@ -78,7 +78,7 @@ auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
                 mRs_a2D[is_b][iat0];
 
         std::vector<omp_lock_t> locks(ucell.nat);
-        for (auto& l : locks)
+        for (omp_lock_t& l : locks)
             omp_init_lock(&l);
     #endif
 
@@ -130,7 +130,7 @@ auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
     }
 
     #ifdef _OPENMP
-        for (auto& l : locks)
+        for (omp_lock_t& l : locks)
             omp_destroy_lock(&l);
 
         // prune empty inner maps created by pre-init
@@ -343,8 +343,8 @@ void RI_2D_Comm::add_HexxR(
                         cell_nearest->get_cell_nearest_discrete(iat0, iat1, cell)
                         : cell));
                 hamilt::BaseMatrix<TR>* HlocR = hR.find_matrix(iat0, iat1, R.x, R.y, R.z);
-                auto row_indexes = pv.get_indexes_row(iat0);
-                auto col_indexes = pv.get_indexes_col(iat1);
+                std::vector<int> row_indexes = pv.get_indexes_row(iat0);
+                std::vector<int> col_indexes = pv.get_indexes_col(iat1);
                 const RI::Tensor<Tdata>& HexxR = (Tdata)alpha * Hs_tmpB.second;
                 for (int lw0_b = 0;lw0_b < row_indexes.size();lw0_b += npol)    // block
                 {

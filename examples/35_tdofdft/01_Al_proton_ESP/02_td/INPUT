@@ -36,7 +36,9 @@ md_restart	0
 md_type		nve
 md_nstep	4500
 md_dt		0.0005
-md_dumpfreq	1
+out_stru	1
+out_freq_ion	1
+out_app_flag	1
 
 # Total charge: 256 Al * 3 valence electrons = 768
 # (proton contributes +1 charge, no valence electrons)

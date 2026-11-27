@@ -699,7 +699,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const bool cal_exx = exx_info.info_global.cal_exx;
         const double etot_xc = pelec->f_en.etot;
 #ifdef __EXX
-        auto* hexxd_ptr = exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr;
+        std::vector<std::map<int, std::map<RI_2D_Comm::TAC, RI::Tensor<double>>>>* hexxd_ptr = exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr;
         auto* hexxc_ptr = exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr;
 #endif
         ModuleIO::write_Vxc<TK, TR>(nspin,

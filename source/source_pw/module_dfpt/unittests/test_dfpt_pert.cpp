@@ -12,19 +12,19 @@
 // FFT grid, exactly like the production setup_pwrho/setup_pwwfc sequence.
 
 #include "dfpt_test_tool.h"
-#include "source_basis/module_pw/pw_basis.h"
-#include "source_basis/module_pw/pw_basis_k.h"
-#include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
+#include "source_cell/qlist.h"
+#include "source_cell/stru_fac.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
-#include "source_cell/stru_fac.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
 // ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the
@@ -124,8 +124,9 @@ TEST_F(DFPTPertSerialTest, DVlocDtauMatchesFiniteDifference)
                 // per bohr of displacement (GS stru_fac phase convention)
                 const double ap = -ModuleBase::TWO_PI * (w * (tau_ + eps * d));
                 const double am = -ModuleBase::TWO_PI * (w * (tau_ - eps * d));
-                const std::complex<double> fd = dfpt_test::vloc_coulomb(ucell_.atoms[0].ncpp.zv, ucell_.omega, (w * w) * ucell_.tpiba2)
-                                                * (std::polar(1.0, ap) - std::polar(1.0, am)) / (2.0 * eps * dfpt_test::lat0);
+                const std::complex<double> fd =
+                    dfpt_test::vloc_coulomb(ucell_.atoms[0].ncpp.zv, ucell_.omega, (w * w) * ucell_.tpiba2) *
+                    (std::polar(1.0, ap) - std::polar(1.0, am)) / (2.0 * eps * dfpt_test::lat0);
                 EXPECT_NEAR(dv[ig].real(), fd.real(), 1.0e-9);
                 EXPECT_NEAR(dv[ig].imag(), fd.imag(), 1.0e-9);
             }
@@ -193,8 +194,9 @@ TEST_F(DFPTPertSerialTest, ApplyDvConvolutionMatchesAnalyticMatrixElement)
     {
         const ModuleBase::Vector3<double> gpp = kq.get_gcar(igl);
         const std::complex<double> e0 = dfpt_test::analytic_dvloc(ucell_, tau_, 0, gpp + q_cart_);
-        const std::complex<double> e1 = 0.7 * dfpt_test::analytic_dvloc(ucell_, tau_, 0, gpp - g1 + q_cart_)
-                                        + std::complex<double>(0.3, 0.2) * dfpt_test::analytic_dvloc(ucell_, tau_, 0, gpp - g2 + q_cart_);
+        const std::complex<double> e1 =
+            0.7 * dfpt_test::analytic_dvloc(ucell_, tau_, 0, gpp - g1 + q_cart_) +
+            std::complex<double>(0.3, 0.2) * dfpt_test::analytic_dvloc(ucell_, tau_, 0, gpp - g2 + q_cart_);
         EXPECT_NEAR(d0[igl].real(), e0.real(), 1.0e-8);
         EXPECT_NEAR(d0[igl].imag(), e0.imag(), 1.0e-8);
         EXPECT_NEAR(d1[igl].real(), e1.real(), 1.0e-8);
@@ -215,10 +217,11 @@ TEST_F(DFPTPertSerialTest, BuildVkbL0MatchesIndependentSimpson)
     pert_.build_vkb(0, 0, gk, vkb);
     ASSERT_EQ(vkb.size(), 4u); // l=0 gives one row, l=1 gives three rows
 
-    const pseudo& p = ucell_.atoms[0].ncpp;
+    const pseudo &p = ucell_.atoms[0].ncpp;
     const double dx = p.rab[0];
     const double pref = ModuleBase::FOUR_PI / std::sqrt(ucell_.omega);
-    auto simpson = [&](const std::function<double(int)>& f, int n) {
+    auto simpson = [&](const std::function<double(int)> &f, int n)
+    {
         double s = f(0) + f(n - 1);
         for (int i = 1; i < n - 1; ++i)
         {
@@ -231,15 +234,16 @@ TEST_F(DFPTPertSerialTest, BuildVkbL0MatchesIndependentSimpson)
     {
         const double g = std::sqrt(gk[ig] * gk[ig]) * ucell_.tpiba; // bohr^-1
         // independent j0 and Simpson transform (no ModuleBase Sphbes/Integral)
-        auto f0 = [&](int i) {
+        auto f0 = [&](int i)
+        {
             const double gr = g * p.r[i];
             const double j0 = (gr < 1.0e-12) ? 1.0 : std::sin(gr) / gr;
             return p.betar(0, i) * j0 * p.r[i];
         };
         const double vq = pref * simpson(f0, p.msh);
         const double arg = -ModuleBase::TWO_PI * (gk[ig] * tau_);
-        const std::complex<double> expect
-            = 0.5 * std::sqrt(1.0 / ModuleBase::PI) * vq * std::complex<double>(std::cos(arg), std::sin(arg));
+        const std::complex<double> expect =
+            0.5 * std::sqrt(1.0 / ModuleBase::PI) * vq * std::complex<double>(std::cos(arg), std::sin(arg));
         EXPECT_NEAR(vkb[0][ig].real(), expect.real(), 1.0e-9 * std::max(1.0, std::abs(expect)));
         EXPECT_NEAR(vkb[0][ig].imag(), expect.imag(), 1.0e-9 * std::max(1.0, std::abs(expect)));
     }
@@ -287,7 +291,8 @@ TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
     // deterministic pseudo-random wavefunctions, normalized per band
     psi::Psi<std::complex<double>> psi(1, 2, npwk, npwk, true);
     unsigned seed = 20260814u;
-    auto rnd = [&]() {
+    auto rnd = [&]()
+    {
         seed = seed * 1664525u + 1013904223u;
         return ((seed >> 8) & 0xffffff) / 16777216.0 * 2.0 - 1.0;
     };
@@ -314,7 +319,7 @@ TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
 
     // reference: finite difference of the displaced separable operator
     // <k+q+G''| Vnl(tau) |psi_k> = sum_mu vkb_out(mu,G'') (D becp)_mu
-    const pseudo& p = ucell_.atoms[0].ncpp;
+    const pseudo &p = ucell_.atoms[0].ncpp;
     const int nh = p.nh;
     std::vector<int> row_ib, row_m;
     for (int ib = 0; ib < p.nbeta; ++ib)
@@ -344,8 +349,8 @@ TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
         std::vector<std::complex<double>> fd(npwkq, std::complex<double>(0.0, 0.0));
         for (int side = 0; side < 2; ++side)
         {
-            const auto& vin = side == 0 ? vkb_in_p : vkb_in_m;
-            const auto& vout = side == 0 ? vkb_out_p : vkb_out_m;
+            const std::vector<std::vector<std::complex<double>>> &vin = side == 0 ? vkb_in_p : vkb_in_m;
+            const std::vector<std::vector<std::complex<double>>> &vout = side == 0 ? vkb_out_p : vkb_out_m;
             std::vector<std::complex<double>> becp(nh, std::complex<double>(0.0, 0.0));
             std::vector<std::complex<double>> dc(nh, std::complex<double>(0.0, 0.0));
             for (int nu = 0; nu < nh; ++nu)

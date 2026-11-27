@@ -31,7 +31,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
     // Pass 1: discover atom pairs and build the same structure in each per-atom-I container
     for (int iat1 = 0; iat1 < nat; iat1++)
     {
-        auto tau1 = this->ucell->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = this->ucell->get_tau(iat1);
         int T1 = 0, I1 = 0;
         this->ucell->iat2iait(iat1, &I1, &T1);
 
@@ -100,7 +100,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
 
                 for (int iap = 0; iap < pvdpR[d]->size_atom_pairs(); iap++)
                 {
-                    const auto& ap = pvdpR[d]->get_atom_pair(iap);
+                    const AtomPair<double>& ap = pvdpR[d]->get_atom_pair(iap);
                     const int iat1 = ap.get_atom_i(); // A
                     const int iat2 = ap.get_atom_j(); // B
                     if (iat2 != I)
@@ -197,7 +197,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
         const int* iat2iwt = this->ucell->get_iat2iwt();
         for (int iat1 = 0; iat1 < nat; iat1++)
         {
-            auto tau1 = this->ucell->get_tau(iat1);
+            ModuleBase::Vector3<double> tau1 = this->ucell->get_tau(iat1);
             int T1 = 0, I1 = 0;
             this->ucell->iat2iait(iat1, &I1, &T1);
 
@@ -339,7 +339,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
 
             for (int iap = 0; iap < mI.size_atom_pairs(); ++iap)
             {
-                auto& ap = mI.get_atom_pair(iap);
+                AtomPair<double>& ap = mI.get_atom_pair(iap);
                 if (ap.get_atom_i() != I)
                 {
                     continue; // rows not on atom I stay zero (delta_{KI})
@@ -451,7 +451,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
 
                 for (int iap = 0; iap < mI.size_atom_pairs(); ++iap)
                 {
-                    auto& ap = mI.get_atom_pair(iap);
+                    AtomPair<double>& ap = mI.get_atom_pair(iap);
                     if (ap.get_atom_i() != I)
                     {
                         continue;

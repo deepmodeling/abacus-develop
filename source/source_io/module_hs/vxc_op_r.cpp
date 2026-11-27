@@ -64,7 +64,7 @@ void write_Vxc_R(const int nspin,
     std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0, hamilt::HContainer<TR>(ucell, pv));
 #ifdef __EXX
     std::array<int, 3> Rs_period = {kv.nmp[0], kv.nmp[1], kv.nmp[2]};
-    const auto cell_nearest = hamilt::init_cell_nearest(ucell, Rs_period);
+    const RI::Cell_Nearest<int, int, 3, double, 3> cell_nearest = hamilt::init_cell_nearest(ucell, Rs_period);
 #endif
     for (int is = 0; is < nspin0; ++is)
     {

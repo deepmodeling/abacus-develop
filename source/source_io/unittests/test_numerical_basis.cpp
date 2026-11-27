@@ -42,7 +42,7 @@ TEST_F(NumericalBasisTest, indexgen)
     const std::vector<int> natom = {1, 2, 3};
     const std::vector<int> lmax = {2, 1, 2};
 
-    const auto index = indexgen(natom, lmax);
+    const std::vector<std::tuple<int, int, int, int>> index = indexgen(natom, lmax);
     size_t idx = 0;
 
     for (size_t it = 0; it < natom.size(); ++it)
@@ -81,7 +81,7 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
 
     const std::vector<int> natom = {int(tau_cart[0].size())};
     const std::vector<int> lmax_v = {lmax};
-    const auto index = indexgen(natom, lmax_v);
+    const std::vector<std::tuple<int, int, int, int>> index = indexgen(natom, lmax_v);
     const int nao = index.size();
 
     // zeros of sperical Bessel functions

@@ -451,7 +451,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell &ucell, const int istep, const
     if (this->inp_->out_elf[0] > 0)
     {
         elecstate::ElecStatePW<T, Device>* elec_pw = static_cast<elecstate::ElecStatePW<T, Device> *>(this->pelec);
-        auto &psi = *this->stp.template get_psi_t<T, Device>();
+        psi::Psi<T, Device>& psi = *this->stp.template get_psi_t<T, Device>();
         elec_pw->cal_tau(psi);
     }
 

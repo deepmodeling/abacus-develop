@@ -563,7 +563,7 @@ TEST_F(HContainerTest, atompair_funcs)
     // Note: these AtomPairs only contain R=(0,0,0), so r_index is always 0
     auto checkdata = [&](hamilt::AtomPair<std::complex<double>> &ap_in, const int r_index = 0)
     {
-        auto data_ij4 = ap_in.get_matrix_values(r_index);
+        std::tuple<std::vector<int>, std::complex<double>*> data_ij4 = ap_in.get_matrix_values(r_index);
         int *tmp_index = std::get<0>(data_ij4).data();
         std::complex<double> *tmp_data = std::get<1>(data_ij4);
         double sum_error = 0.0;

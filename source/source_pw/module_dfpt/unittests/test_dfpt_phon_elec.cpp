@@ -7,17 +7,17 @@
 // accumulation. Plus the nlcc kernel fill-semantics regression.
 
 #include "dfpt_test_tool.h"
+#include "source_base/complexmatrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
-#include "source_base/complexmatrix.h"
 #include "source_cell/stru_fac.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_phon.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 
 // only NlccDirectTermsFillSemantics instantiates DFPT_Rho
 #include "source_pw/module_dfpt/dfpt_rho.h"
@@ -59,7 +59,7 @@ class DFPTPhonSerialTest : public ::testing::Test
 
     // (re)initialize the bases and the pert/phon wiring for a given (k, q)
     // pair; SetUp uses the default fixture values
-    void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    void SetupPhon(const ModuleBase::Vector3<double> &k_d, const ModuleBase::Vector3<double> &q_d)
     {
         dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, 2, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
@@ -80,7 +80,7 @@ class DFPTPhonSerialTest : public ::testing::Test
     // only the component set below is nonzero regardless of heap history
     // from earlier tests. getgpluskcar returns the cartesian k+G, so the
     // G = 0 entry is the one with k+G = k_cart.
-    psi::Psi<std::complex<double>> MakeSinglePlaneWavePsi(const ModuleBase::Vector3<double>& k_d)
+    psi::Psi<std::complex<double>> MakeSinglePlaneWavePsi(const ModuleBase::Vector3<double> &k_d)
     {
         const int npwk = pw_wfc_.npwk[0];
         psi::Psi<std::complex<double>> psi(1, 2, npwk, npwk, true);
@@ -89,8 +89,8 @@ class DFPTPhonSerialTest : public ::testing::Test
         for (int ig = 0; ig < npwk; ++ig)
         {
             const ModuleBase::Vector3<double> gk = pw_wfc_.getgpluskcar(0, ig);
-            if (std::abs(gk.x - k_cart.x) < 1e-10 && std::abs(gk.y - k_cart.y) < 1e-10
-                && std::abs(gk.z - k_cart.z) < 1e-10)
+            if (std::abs(gk.x - k_cart.x) < 1e-10 && std::abs(gk.y - k_cart.y) < 1e-10 &&
+                std::abs(gk.z - k_cart.z) < 1e-10)
             {
                 psi(0, 0, ig) = std::complex<double>(1.0, 0.0);
                 break;
@@ -104,11 +104,12 @@ class DFPTPhonSerialTest : public ::testing::Test
     // basis, RHS^a(w) = -i tpiba w_a Vloc(|w|^2) e^{-i 2pi w.tau} with
     // w = G'' - G' + q (GS structure-factor phase convention); the
     // Delta + q = 0 component is dropped by dVloc
-    std::complex<double> AnalyticCrossTerm(const ModuleDFPT::DFPT_KQ_Basis& kq,
-                                           const std::vector<std::complex<double>>& psi_coef,
-                                           const std::vector<ModuleBase::Vector3<double>>& psi_gcart,
-                                           const std::vector<std::complex<double>>& dpsi_inj,
-                                           int adir) const
+    std::complex<double> AnalyticCrossTerm(
+        const ModuleDFPT::DFPT_KQ_Basis &kq,
+        const std::vector<std::complex<double>> &psi_coef,
+        const std::vector<ModuleBase::Vector3<double>> &psi_gcart,
+        const std::vector<std::complex<double>> &dpsi_inj,
+        int adir) const
     {
         // tau of the fixture cell's atom 0 (lat0-cartesian units)
         const ModuleBase::Vector3<double> tau(1.1, 2.3, 0.7);
@@ -119,8 +120,8 @@ class DFPTPhonSerialTest : public ::testing::Test
             for (size_t ic = 0; ic < psi_coef.size(); ++ic)
             {
                 // dfpt_test::analytic_dvloc returns 0 at w = 0 (dVloc drop)
-                cross += psi_coef[ic] * std::conj(dpsi_inj[igl])
-                         * dfpt_test::analytic_dvloc(ucell_, tau, adir, gpp - psi_gcart[ic] + q_cart_);
+                cross += psi_coef[ic] * std::conj(dpsi_inj[igl]) *
+                         dfpt_test::analytic_dvloc(ucell_, tau, adir, gpp - psi_gcart[ic] + q_cart_);
             }
         }
         return cross;
@@ -162,8 +163,8 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
     const std::vector<ModuleBase::Vector3<double>> g0(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int adir = 0; adir < 3; ++adir)
     {
-        std::complex<double> expect
-            = wg(0, 0) * AnalyticCrossTerm(kq, {std::complex<double>(1.0, 0.0)}, g0, dpsi_inj, adir);
+        std::complex<double> expect =
+            wg(0, 0) * AnalyticCrossTerm(kq, {std::complex<double>(1.0, 0.0)}, g0, dpsi_inj, adir);
         if (adir == 1)
         {
             expect = 2.0 * expect.real();
@@ -207,8 +208,8 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2GateOffGenericQ)
     const std::vector<ModuleBase::Vector3<double>> g0(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int adir = 0; adir < 3; ++adir)
     {
-        std::complex<double> expect
-            = wg(0, 0) * AnalyticCrossTerm(kq, {std::complex<double>(1.0, 0.0)}, g0, dpsi_inj, adir);
+        std::complex<double> expect =
+            wg(0, 0) * AnalyticCrossTerm(kq, {std::complex<double>(1.0, 0.0)}, g0, dpsi_inj, adir);
         if (adir == 0)
         {
             expect = 2.0 * expect.real();
@@ -240,10 +241,9 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
     // w=0 skip of the kernel); the (0,-1,1) difference makes the mixed
     // component K_{2,1} nonzero as well
     const std::vector<ModuleBase::Vector3<double>> gfrac = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                                            ModuleBase::Vector3<double>(0.0, 1.0, 0.0),
-                                                            ModuleBase::Vector3<double>(0.0, 0.0, 1.0)};
-    const std::vector<std::complex<double>> ccoef
-        = {std::complex<double>(1.0, 0.0), std::complex<double>(0.6, -0.3), std::complex<double>(-0.4, 0.25)};
+        ModuleBase::Vector3<double>(0.0, 1.0, 0.0), ModuleBase::Vector3<double>(0.0, 0.0, 1.0)};
+    const std::vector<std::complex<double>> ccoef = {
+        std::complex<double>(1.0, 0.0), std::complex<double>(0.6, -0.3), std::complex<double>(-0.4, 0.25)};
     const size_t ncomp = gfrac.size();
     std::vector<ModuleBase::Vector3<double>> gcart(ncomp);
     std::vector<int> ig_of(ncomp, -1);
@@ -256,8 +256,8 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
         const ModuleBase::Vector3<double> gprim = pw_wfc_.getgpluskcar(0, ig) - k_cart;
         for (size_t ic = 0; ic < ncomp; ++ic)
         {
-            if (std::abs(gprim.x - gcart[ic].x) < 1e-10 && std::abs(gprim.y - gcart[ic].y) < 1e-10
-                && std::abs(gprim.z - gcart[ic].z) < 1e-10)
+            if (std::abs(gprim.x - gcart[ic].x) < 1e-10 && std::abs(gprim.y - gcart[ic].y) < 1e-10 &&
+                std::abs(gprim.z - gcart[ic].z) < 1e-10)
             {
                 ig_of[ic] = ig;
             }
@@ -311,9 +311,10 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
                     }
                     const ModuleBase::Vector3<double> tau(1.1, 2.3, 0.7);
                     const double arg = -ModuleBase::TWO_PI * (g * tau);
-                    const std::complex<double> kterm = -(ucell_.tpiba * g[adir]) * (ucell_.tpiba * g[1])
-                                                       * dfpt_test::vloc_coulomb(ucell_.atoms[0].ncpp.zv, ucell_.omega, g2 * ucell_.tpiba2)
-                                                       * std::complex<double>(std::cos(arg), std::sin(arg));
+                    const std::complex<double> kterm =
+                        -(ucell_.tpiba * g[adir]) * (ucell_.tpiba * g[1]) *
+                        dfpt_test::vloc_coulomb(ucell_.atoms[0].ncpp.zv, ucell_.omega, g2 * ucell_.tpiba2) *
+                        std::complex<double>(std::cos(arg), std::sin(arg));
                     d2elem += std::conj(ccoef[i]) * ccoef[j] * kterm;
                 }
             }
@@ -374,7 +375,7 @@ TEST_F(DFPTPhonSerialTest, NlccDirectTermsFillSemantics)
 
     phon_.accumulate_electron(0, 1, 0, psi, wg, data_, table[3]);
 
-    const auto& m = phon_.dynmat_accum();
+    const ModuleBase::ComplexMatrix &m = phon_.dynmat_accum();
     // row (1, dir 0) = 3*1+0 = 3; column (atom 0, dir j) = j (coreless)
     // X_3j = sum_r table[3](r) * conj(drhoc(atom0, dir_j)(r)) = 0
     //   (atom 0 has no nlcc: drhoc = empty -> the kernel term's x_ab arm

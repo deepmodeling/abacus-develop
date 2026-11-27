@@ -13,22 +13,24 @@ class DFPT_Metal
     DFPT_Metal();
     ~DFPT_Metal();
 
-    void init(double sigma, const std::string& smearing_type);
+    void init(double sigma, const std::string &smearing_type);
 
-    void dfdeps(const ModuleBase::matrix& eig, double efermi, ModuleBase::matrix& dfdeps);
+    void dfdeps(const ModuleBase::matrix &eig, double efermi, ModuleBase::matrix &dfdeps);
 
-    void compute_dmu(int q_idx,
-                     const psi::Psi<std::complex<double>>& psi,
-                     const ModuleBase::matrix& wg,
-                     const ModuleBase::matrix& dfdeps,
-                     DFPT_PW_Data& data);
+    void compute_dmu(
+        int q_idx,
+        const psi::Psi<std::complex<double>> &psi,
+        const ModuleBase::matrix &wg,
+        const ModuleBase::matrix &dfdeps,
+        DFPT_PW_Data &data);
 
-    void compute_drho_metal(int q_idx,
-                            const psi::Psi<std::complex<double>>& psi,
-                            const ModuleBase::matrix& wg,
-                            const ModuleBase::matrix& dfdeps,
-                            double dmu,
-                            DFPT_PW_Data& data);
+    void compute_drho_metal(
+        int q_idx,
+        const psi::Psi<std::complex<double>> &psi,
+        const ModuleBase::matrix &wg,
+        const ModuleBase::matrix &dfdeps,
+        double dmu,
+        DFPT_PW_Data &data);
 
   private:
     double sigma_ = 0.0;

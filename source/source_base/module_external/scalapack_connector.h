@@ -49,6 +49,13 @@ extern "C"
         const std::complex<double> *alpha, const std::complex<double> *a, const int *ia, const int *ja, const int *desca,
         const std::complex<double> *beta, std::complex<double> *c, const int *ic, const int *jc, const int *descc);
 
+    void pdlacpy_(const char* uplo, const int* m, const int* n,
+        const double* a, const int* ia, const int* ja, const int* desca,
+        double* b, const int* ib, const int* jb, const int* descb);
+    void pzlacpy_(const char* uplo, const int* m, const int* n,
+        const std::complex<double>* a, const int* ia, const int* ja, const int* desca,
+        std::complex<double>* b, const int* ib, const int* jb, const int* descb);
+
     double pdlange_(const char* norm,
         const int* m, const int* n,
         const double* a, const int* ia, const int* ja, const int* desca,
@@ -90,10 +97,10 @@ extern "C"
         const std::complex<double> *B, const int *IB, const int *JB, const int *DESCB,
         const std::complex<double> *beta,
         std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
-    void pdsymm_(char *side , char *uplo , int *m , int *n ,
-        double *alpha , double *a , int *ia , int *ja , int *desca ,
-        double *b , int *ib , int *jb , int *descb ,
-        double *beta ,  double *c , int *ic , int *jc , int *descc );
+    void pdsymm_(const char* side, const char* uplo, const int* m, const int* n,
+        const double* alpha, const double* a, const int* ia, const int* ja, const int* desca,
+        const double* b, const int* ib, const int* jb, const int* descb,
+        const double* beta, double* c, const int* ic, const int* jc, const int* descc);
     void pdtrmm_(char *side , char *uplo , char *transa , char *diag , int *m , int *n ,
         double *alpha , double *a , int *ia , int *ja , int *desca ,
         double *b , int *ib , int *jb , int *descb );
@@ -103,10 +110,10 @@ extern "C"
     void pztrmm_(char *side , char *uplo , char *transa , char *diag , int *m , int *n ,
         std::complex<double> *alpha , std::complex<double> *a , int *ia , int *ja , int *desca ,
         std::complex<double> *b , int *ib , int *jb , int *descb );
-    void pzhemm_(char* side , char* uplo , int* m , int* n ,
-        std::complex<double>* alpha , std::complex<double>* a , int* ia , int* ja , int* desca ,
-        std::complex<double>* b , int* ib , int* jb , int* descb ,
-        std::complex<double>* beta ,  std::complex<double>* c , int* ic , int* jc , int* descc );
+    void pzhemm_(const char* side, const char* uplo, const int* m, const int* n,
+        const std::complex<double>* alpha, const std::complex<double>* a, const int* ia, const int* ja, const int* desca,
+        const std::complex<double>* b, const int* ib, const int* jb, const int* descb,
+        const std::complex<double>* beta, std::complex<double>* c, const int* ic, const int* jc, const int* descc);
     void pzgetrf_(
         const int *M, const int *N, 
         std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
@@ -375,6 +382,16 @@ public:
             DESC);
     }
 
+    static inline
+    void symm(char side, char uplo, int m, int n, double alpha,
+              const double* a, const int* desca, const double* b, const int* descb,
+              double beta, double* c, const int* descc)
+    {
+        const int one = 1;
+        pdsymm_(&side, &uplo, &m, &n, &alpha, a, &one, &one, desca, b, &one, &one, descb,
+                &beta, c, &one, &one, descc);
+    }
+
     static inline 
     void symm(char side,
         char uplo,
@@ -387,8 +404,7 @@ public:
         double* c,
         int* desc)
     {
-        int isrc = 1;
-        pdsymm_(&side, &uplo, &m, &n, &alpha, a, &isrc, &isrc, desc, b, &isrc, &isrc, desc, &beta, c, &isrc, &isrc, desc);
+        symm(side, uplo, m, n, alpha, a, desc, b, desc, beta, c, desc);
     }
 
     static inline
@@ -479,6 +495,22 @@ public:
     }
 
     static inline
+    void lacpy(char uplo, int m, int n, const double* a, const int* desca,
+               double* b, const int* descb)
+    {
+        const int one = 1;
+        pdlacpy_(&uplo, &m, &n, a, &one, &one, desca, b, &one, &one, descb);
+    }
+
+    static inline
+    void lacpy(char uplo, int m, int n, const std::complex<double>* a, const int* desca,
+               std::complex<double>* b, const int* descb)
+    {
+        const int one = 1;
+        pzlacpy_(&uplo, &m, &n, a, &one, &one, desca, b, &one, &one, descb);
+    }
+
+    static inline
     double lange(
         const char norm,
         const int m, const int n,
@@ -548,6 +580,24 @@ public:
     }
 
     static inline
+    void hemm(char side, char uplo, int m, int n, double alpha,
+              const double* a, const int* desca, const double* b, const int* descb,
+              double beta, double* c, const int* descc)
+    {
+        symm(side, uplo, m, n, alpha, a, desca, b, descb, beta, c, descc);
+    }
+
+    static inline
+    void hemm(char side, char uplo, int m, int n, std::complex<double> alpha,
+              const std::complex<double>* a, const int* desca, const std::complex<double>* b, const int* descb,
+              std::complex<double> beta, std::complex<double>* c, const int* descc)
+    {
+        const int one = 1;
+        pzhemm_(&side, &uplo, &m, &n, &alpha, a, &one, &one, desca, b, &one, &one, descb,
+                &beta, c, &one, &one, descc);
+    }
+
+    static inline
     void hemm(char side,
         char uplo,
         int na,
@@ -558,25 +608,7 @@ public:
         std::complex<double>* c,
         int* desc)
     {
-        int isrc = 1;
-        pzhemm_(&side,
-        &uplo,
-        &na,
-        &na,
-        &alpha,
-        a,
-        &isrc,
-        &isrc,
-        desc,
-        b,
-        &isrc,
-        &isrc,
-        desc,
-        &beta,
-        c,
-        &isrc,
-        &isrc,
-        desc);
+        hemm(side, uplo, na, na, alpha, a, desc, b, desc, beta, c, desc);
     }
 };
 

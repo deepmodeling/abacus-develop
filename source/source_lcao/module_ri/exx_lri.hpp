@@ -401,6 +401,12 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
             this->exx_lri.set_dCRs(std::move(dCRs), this->info.C_grad_R_threshold);
         }
     }
+    // Electronic, force and stress contractions use LibRI's distributed tensors.
+    // The original integral lookup caches are no longer needed for this ionic step.
+    for (std::pair<const Conv_Coulomb_Pot_K::Coulomb_Method, Exx_Obj<Tdata>>& object : this->exx_objs)
+    {
+        object.second.cv.clear_cache();
+    }
     ModuleBase::timer::end("Exx_LRI", "cal_exx_ions");
 }
 

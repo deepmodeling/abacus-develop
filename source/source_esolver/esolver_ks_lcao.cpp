@@ -240,7 +240,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell &ucell, const int istep, const
     this->exx_nao.before_scf(ucell, this->kv, orb_, this->pv, this->p_chgmix, istep, *this->inp_, this->exx_info_);
 
     // 10) initialize DM(R) with the sparsity pattern of H(R)
-    auto *hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR> *>(this->p_hamilt);
+    hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR> *>(this->p_hamilt);
 
     if (!hamilt_lcao)
     {
@@ -366,7 +366,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell &basecell)
 
     ESolver_KS::after_all_runners(ucell);
 
-    auto *hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR> *>(this->p_hamilt);
+    hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR> *>(this->p_hamilt);
     if (!hamilt_lcao)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_all_runners", "p_hamilt does not exist");
@@ -527,7 +527,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(
     {
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(
             &(this->pv), this->inp_->ks_solver, PARAM.globalv.kpar_lcao, PARAM.globalv.nlocal, this->inp_->nbands,
-            this->inp_->nelec, this->inp_->device == "gpu", GlobalV::NPROC, GlobalV::MY_RANK);
+            this->inp_->nelec, this->inp_->device == "gpu", GlobalV::NPROC, GlobalV::MY_RANK, this->inp_->lcao_sk_cut);
         // the eigensolvers only ever ask the Hamiltonian for H(k) and S(k)
         hamilt::HamiltHSMatrix<TK> hs(static_cast<hamilt::Hamilt<TK> *>(this->p_hamilt));
         hsolver_lcao_obj.solve(
@@ -588,7 +588,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
     std::ostream& running_log = GlobalV::ofs_running;
 
-    auto *hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR> *>(this->p_hamilt);
+    hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR> *>(this->p_hamilt);
 
     if (!hamilt_lcao)
     {
@@ -777,7 +777,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell &ucell, const int istep, const 
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
     ModuleBase::timer::start("ESolver_KS_LCAO", "after_scf");
 
-    auto *hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR> *>(this->p_hamilt);
+    hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR> *>(this->p_hamilt);
 
     if (!hamilt_lcao)
     {

@@ -26,15 +26,15 @@
 namespace ModuleDFPT
 {
 
-DFPT_Pert::DFPT_Pert()
-{
-}
+DFPT_Pert::DFPT_Pert() {}
 
-DFPT_Pert::~DFPT_Pert()
-{
-}
+DFPT_Pert::~DFPT_Pert() {}
 
-void DFPT_Pert::init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, ModulePW::PW_Basis_K* pw_wfc, Structure_Factor& sf)
+void DFPT_Pert::init(
+    UnitCell &ucell,
+    ModulePW::PW_Basis *pw_rho,
+    ModulePW::PW_Basis_K *pw_wfc,
+    Structure_Factor &sf)
 {
     ModuleBase::TITLE("DFPT_Pert", "init");
     ModuleBase::timer::start("DFPT_Pert", "init");
@@ -45,7 +45,7 @@ void DFPT_Pert::init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, ModulePW::PW_B
     ModuleBase::timer::end("DFPT_Pert", "init");
 }
 
-void DFPT_Pert::atom_index(int atom_idx, int& it, int& ia) const
+void DFPT_Pert::atom_index(int atom_idx, int &it, int &ia) const
 {
     ModuleBase::TITLE("DFPT_Pert", "atom_index");
     ModuleBase::timer::start("DFPT_Pert", "atom_index");
@@ -67,7 +67,7 @@ void DFPT_Pert::atom_index(int atom_idx, int& it, int& ia) const
     ModuleBase::timer::end("DFPT_Pert", "atom_index");
 }
 
-void DFPT_Pert::rho_gvec(int ig, ModuleBase::Vector3<double>& gcar) const
+void DFPT_Pert::rho_gvec(int ig, ModuleBase::Vector3<double> &gcar) const
 {
     ModuleBase::TITLE("DFPT_Pert", "rho_gvec");
     ModuleBase::timer::start("DFPT_Pert", "rho_gvec");
@@ -99,7 +99,7 @@ double DFPT_Pert::vloc_at_g(int it, double g2) const
     ModuleBase::timer::start("DFPT_Pert", "vloc_at_g");
     // g2 is the squared magnitude in bohr^-2 units.
     const double g_zero_tol = 1.0e-8; ///< empirical parameter: |G| floor (bohr^-1) for the G=0 radial integral
-    const Atom* atom = &ucell_->atoms[it];
+    const Atom *atom = &ucell_->atoms[it];
     const double zv = atom->ncpp.zv;
     if (atom->coulomb_potential)
     {
@@ -128,8 +128,8 @@ double DFPT_Pert::vloc_at_g(int it, double g2) const
     }
     for (int ir = 0; ir < msh; ++ir)
     {
-        aux[ir] = (atom->ncpp.r[ir] * atom->ncpp.vloc_at[ir] + fac * std::erf(atom->ncpp.r[ir]))
-                  * std::sin(g * atom->ncpp.r[ir]) / g;
+        aux[ir] = (atom->ncpp.r[ir] * atom->ncpp.vloc_at[ir] + fac * std::erf(atom->ncpp.r[ir])) *
+                  std::sin(g * atom->ncpp.r[ir]) / g;
     }
     double v = 0.0;
     ModuleBase::Integral::Simpson_Integral(msh, aux.data(), atom->ncpp.rab.data(), v);
@@ -139,17 +139,18 @@ double DFPT_Pert::vloc_at_g(int it, double g2) const
     return v * ModuleBase::FOUR_PI / ucell_->omega;
 }
 
-void DFPT_Pert::dVloc_dtau(int atom_idx,
-                           int dir,
-                           const ModuleBase::Vector3<double>& q,
-                           std::vector<std::complex<double>>& dv)
+void DFPT_Pert::dVloc_dtau(
+    int atom_idx,
+    int dir,
+    const ModuleBase::Vector3<double> &q,
+    std::vector<std::complex<double>> &dv)
 {
     ModuleBase::TITLE("DFPT_Pert", "dVloc_dtau");
     ModuleBase::timer::start("DFPT_Pert", "dVloc_dtau");
     if (pw_rho_ == nullptr || pw_rho_->gamma_only)
     {
-        ModuleBase::WARNING_QUIT("DFPT_Pert::dVloc_dtau",
-                                 "DFPT requires a complex (gamma_only=false) real-space basis.");
+        ModuleBase::WARNING_QUIT(
+            "DFPT_Pert::dVloc_dtau", "DFPT requires a complex (gamma_only=false) real-space basis.");
     }
     int it = 0;
     int ia = 0;
@@ -159,7 +160,7 @@ void DFPT_Pert::dVloc_dtau(int atom_idx,
         ModuleBase::timer::end("DFPT_Pert", "dVloc_dtau");
         return;
     }
-    const ModuleBase::Vector3<double>& tau = ucell_->atoms[it].tau[ia];
+    const ModuleBase::Vector3<double> &tau = ucell_->atoms[it].tau[ia];
     const int npw = pw_rho_->npw;
     dv.assign(npw, std::complex<double>(0.0, 0.0));
     ModuleBase::Vector3<double> gcar;
@@ -191,7 +192,11 @@ void DFPT_Pert::dVloc_dtau(int atom_idx,
     ModuleBase::timer::end("DFPT_Pert", "dVloc_dtau");
 }
 
-void DFPT_Pert::build_dv(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data)
+void DFPT_Pert::build_dv(
+    int q_idx,
+    int atom_idx,
+    int dir,
+    DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Pert", "build_dv");
     ModuleBase::timer::start("DFPT_Pert", "build_dv");
@@ -224,12 +229,13 @@ void DFPT_Pert::build_dv(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data)
     ModuleBase::timer::end("DFPT_Pert", "build_dv");
 }
 
-void DFPT_Pert::real_space_dv(int q_idx,
-                              int k_idx,
-                              const psi::Psi<std::complex<double>>& psi,
-                              DFPT_PW_Data& data,
-                              const DFPT_KQ_Basis& kq,
-                              std::vector<std::vector<std::complex<double>>>& dv_psi) const
+void DFPT_Pert::real_space_dv(
+    int q_idx,
+    int k_idx,
+    const psi::Psi<std::complex<double>> &psi,
+    DFPT_PW_Data &data,
+    const DFPT_KQ_Basis &kq,
+    std::vector<std::vector<std::complex<double>>> &dv_psi) const
 {
     ModuleBase::TITLE("DFPT_Pert", "real_space_dv");
     ModuleBase::timer::start("DFPT_Pert", "real_space_dv");
@@ -243,12 +249,13 @@ void DFPT_Pert::real_space_dv(int q_idx,
     ModuleBase::timer::end("DFPT_Pert", "real_space_dv");
 }
 
-void DFPT_Pert::apply_vr(int q_idx,
-                         int k_idx,
-                         const std::vector<std::complex<double>>& v_rc,
-                         const psi::Psi<std::complex<double>>& psi,
-                         const ModuleBase::Vector3<double>& q_cart,
-                         std::vector<std::vector<std::complex<double>>>& dv_psi) const
+void DFPT_Pert::apply_vr(
+    int q_idx,
+    int k_idx,
+    const std::vector<std::complex<double>> &v_rc,
+    const psi::Psi<std::complex<double>> &psi,
+    const ModuleBase::Vector3<double> &q_cart,
+    std::vector<std::vector<std::complex<double>>> &dv_psi) const
 {
     ModuleBase::TITLE("DFPT_Pert", "apply_vr");
     ModuleBase::timer::start("DFPT_Pert", "apply_vr");
@@ -265,11 +272,12 @@ void DFPT_Pert::apply_vr(int q_idx,
     ModuleBase::timer::end("DFPT_Pert", "apply_vr");
 }
 
-void DFPT_Pert::apply_vr_core(int k_idx,
-                              const std::vector<std::complex<double>>& v_rc,
-                              const psi::Psi<std::complex<double>>& psi,
-                              const DFPT_KQ_Basis& kq,
-                              std::vector<std::vector<std::complex<double>>>& dv_psi) const
+void DFPT_Pert::apply_vr_core(
+    int k_idx,
+    const std::vector<std::complex<double>> &v_rc,
+    const psi::Psi<std::complex<double>> &psi,
+    const DFPT_KQ_Basis &kq,
+    std::vector<std::vector<std::complex<double>>> &dv_psi) const
 {
     ModuleBase::TITLE("DFPT_Pert", "apply_vr_core");
     ModuleBase::timer::start("DFPT_Pert", "apply_vr_core");
@@ -301,7 +309,11 @@ void DFPT_Pert::apply_vr_core(int k_idx,
     ModuleBase::timer::end("DFPT_Pert", "apply_vr_core");
 }
 
-void DFPT_Pert::apply_dv(int q_idx, int k_idx, const psi::Psi<std::complex<double>>& psi, DFPT_PW_Data& data)
+void DFPT_Pert::apply_dv(
+    int q_idx,
+    int k_idx,
+    const psi::Psi<std::complex<double>> &psi,
+    DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Pert", "apply_dv");
     ModuleBase::timer::start("DFPT_Pert", "apply_dv");
@@ -343,7 +355,11 @@ void DFPT_Pert::apply_dv(int q_idx, int k_idx, const psi::Psi<std::complex<doubl
     ModuleBase::timer::end("DFPT_Pert", "apply_dv");
 }
 
-void DFPT_Pert::build_dv_u(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data)
+void DFPT_Pert::build_dv_u(
+    int q_idx,
+    int atom_idx,
+    int dir,
+    DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Pert", "build_dv_u");
     ModuleBase::timer::start("DFPT_Pert", "build_dv_u");
@@ -366,7 +382,11 @@ void DFPT_Pert::build_dv_u(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data)
     // (|phi(k+q)> U(diag*delta - docc) <phi(k)|psi>) lands in C3 after docc.
 }
 
-void DFPT_Pert::d2vloc_r(int atom_idx, int da, int db, std::vector<std::complex<double>>& dv2_r) const
+void DFPT_Pert::d2vloc_r(
+    int atom_idx,
+    int da,
+    int db,
+    std::vector<std::complex<double>> &dv2_r) const
 {
     ModuleBase::TITLE("DFPT_Pert", "d2vloc_r");
     ModuleBase::timer::start("DFPT_Pert", "d2vloc_r");
@@ -384,7 +404,7 @@ void DFPT_Pert::d2vloc_r(int atom_idx, int da, int db, std::vector<std::complex<
         ModuleBase::timer::end("DFPT_Pert", "d2vloc_r");
         return;
     }
-    const ModuleBase::Vector3<double>& tau = ucell_->atoms[it].tau[ia];
+    const ModuleBase::Vector3<double> &tau = ucell_->atoms[it].tau[ia];
     const int npw = pw_rho_->npw;
     std::vector<std::complex<double>> dv2_recip(npw, std::complex<double>(0.0, 0.0));
     ModuleBase::Vector3<double> gcar;

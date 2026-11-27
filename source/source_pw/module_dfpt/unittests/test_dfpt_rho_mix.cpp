@@ -7,17 +7,16 @@
 #include "gtest/gtest.h"
 
 #include "dfpt_test_tool.h"
+#include "source_base/constants.h"
+#include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
-#include "source_base/constants.h"
-#include "source_base/matrix.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
-
 
 namespace
 {
@@ -32,10 +31,7 @@ double test_rand()
     return ((g_seed >> 8) & 0xffffff) / 16777216.0 * 2.0 - 1.0;
 }
 
-std::complex<double> crand()
-{
-    return std::complex<double>(test_rand(), test_rand());
-}
+std::complex<double> crand() { return std::complex<double>(test_rand(), test_rand()); }
 
 } // namespace
 
@@ -72,14 +68,14 @@ class DFPTRhoSerialTest : public ::testing::Test
     }
 
     // (re)initialize the bases and the plain rho mixer for a given (k, q)
-    void SetupRho(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    void SetupRho(const ModuleBase::Vector3<double> &k_d, const ModuleBase::Vector3<double> &q_d)
     {
         dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, nbands_, q_cart_);
         rho_.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, ucell_.G, std::string("rho_plain"), 0.4, 0.0});
     }
 
-    void FillRandomStates(psi::Psi<std::complex<double>>& psi,
-                          std::vector<std::vector<std::vector<std::complex<double>>>>& dpsi)
+    void FillRandomStates(
+        psi::Psi<std::complex<double>> &psi, std::vector<std::vector<std::vector<std::complex<double>>>> &dpsi)
     {
         psi::Psi<std::complex<double>> p(1, nbands_, pw_wfc_.npwk_max, pw_wfc_.npwk[0], true);
         ModuleDFPT::DFPT_KQ_Basis kq;
@@ -101,7 +97,6 @@ class DFPTRhoSerialTest : public ::testing::Test
         psi = p;
     }
 };
-
 
 TEST_F(DFPTRhoSerialTest, MixDrhoFirstStepIsScaledOutput)
 {
@@ -258,7 +253,8 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
         target[ig] = 0.01 * std::complex<double>(std::cos(0.3 * ig), std::sin(0.9 * ig));
     }
 
-    auto model_out = [&](const std::vector<std::complex<double>>& in) {
+    auto model_out = [&](const std::vector<std::complex<double>> &in)
+    {
         std::vector<std::complex<double>> o(npw);
         for (int ig = 0; ig < npw; ++ig)
         {
@@ -330,7 +326,8 @@ TEST_F(DFPTRhoSerialTest, BroydenConvergesDiagonalSystemFast)
     std::vector<double> d(npw, 0.0);
     d[0] = 0.5;
     d[1] = 0.3;
-    auto model_out = [&](const std::vector<std::complex<double>>& in) {
+    auto model_out = [&](const std::vector<std::complex<double>> &in)
+    {
         std::vector<std::complex<double>> o(npw);
         for (int ig = 0; ig < npw; ++ig)
         {
@@ -342,7 +339,8 @@ TEST_F(DFPTRhoSerialTest, BroydenConvergesDiagonalSystemFast)
     // run mixing iterations from the zero input; each step the model
     // rebuilds the output from the mixed input
     int n_iter = 0;
-    std::vector<std::complex<double>> rho_out = model_out(std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
+    std::vector<std::complex<double>> rho_out =
+        model_out(std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
     for (int iter = 0; iter < 40; ++iter)
     {
         data_.set_drho_g(0, 0, rho_out);

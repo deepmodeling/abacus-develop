@@ -71,22 +71,24 @@ void Integral::Simpson_Integral
 )
 {
     /*     simpson's rule integration. On input:
-    !      mesh = mhe number of grid points (should be odd)
+    !      mesh = the number of grid points (should be positive and odd)
     !      func(i)= function to be integrated
-    !      rab(i) = r(i) * dr(i)/di * di
+    !      rab(i) = dr(i)/di * Delta_i
+    !      Indices are zero-based; the index spacing Delta_i is 1.
     !      For the logarithmic grid not including r=0 :
-    !      r(i) = r_0*exp((i-1)*dx) ==> rab(i)=r(i)*dx
+    !      r(i) = r_0*exp(i*dx) ==> rab(i)=r(i)*dx*Delta_i
     !      For the logarithmic grid including r=0 :
-    !      r(i) = a(exp((i-1)*dx)-1) ==> rab(i)=(r(i)+a)*dx
-    !      Output in asum = \sum_i c_i f(i)*rab(i) = \int_0^\infty f(r) dr
-    !      where c_i are alternativaly 2/3, 4/3 except c_1 = c_mesh = 1/3
+    !      r(i) = a*(exp(i*dx)-1) ==> rab(i)=(r(i)+a)*dx*Delta_i
+    !      Output in asum = \sum_i c_i f(i)*rab(i) \approx \int_{r[0]}^{r[mesh-1]} f(r) dr
+    !      for mesh >= 3, c_i are 4/3 (odd i), 2/3 (even i), except c_0 = c_{mesh-1} = 1/3
     */
     //  simpson's rule integrator for function stored on the
     //  radial logarithmic mesh
     //    routine assumes that mesh is an odd number so run check
-    assert(mesh&1);
+    assert(mesh >= 1 && (mesh & 1));
 
     asum = 0.00;
+    if (mesh == 1) return;
     const size_t end = mesh-2;
     for( size_t i=1; i!=end; i+=2 )
     {
@@ -112,22 +114,19 @@ void Integral::Simpson_Integral
 )
 {
     /*     simpson's rule integration. On input:
-    !      mesh = mhe number of grid points (should be odd)
+    !      mesh = the number of grid points (should be positive and odd)
     !      func(i)= function to be integrated
-    !      rab(i) = r(i) * dr(i)/di * di
-    !      For the logarithmic grid not including r=0 :
-    !      r(i) = r_0*exp((i-1)*dx) ==> rab(i)=r(i)*dx
-    !      For the logarithmic grid including r=0 :
-    !      r(i) = a(exp((i-1)*dx)-1) ==> rab(i)=(r(i)+a)*dx
-    !      Output in asum = \sum_i c_i f(i)*rab(i) = \int_0^\infty f(r) dr
-    !      where c_i are alternativaly 2/3, 4/3 except c_1 = c_mesh = 1/3
+    !      dr = constant radial spacing, r[i] = r[0] + i*dr
+    !      Output in asum = dr*\sum_i c_i f(i) \approx \int_{r[0]}^{r[mesh-1]} f(r) dr
+    !      for mesh >= 3, c_i are 4/3 (odd i), 2/3 (even i), except c_0 = c_{mesh-1} = 1/3
     */
     //  simpson's rule integrator for function stored on the
-    //  radial logarithmic mesh
+    //  uniform radial mesh
     //    routine assumes that mesh is an odd number so run check
-    assert(mesh&1);
+    assert(mesh >= 1 && (mesh & 1));
 
     asum = 0.00;
+    if (mesh == 1) return;
     const size_t end = mesh-2;
     for(size_t i=1; i!=end; i+=2 )
     {
@@ -152,8 +151,9 @@ void Integral::Simpson_Integral_0toall
     double * const asum
 )
 {
-    // asum(r) = \int_{r'=0}^{r} dr' f(r') 
+    // asum[i] \approx \int_{r[0]}^{r[i]} f(r) dr.
 
+    assert(mesh >= 1);
     const double r2=1.00/2.00, r3=1.00/3.00;
     asum[0] = 0.00;
     double f3 = func [0] * rab [0];
@@ -161,10 +161,10 @@ void Integral::Simpson_Integral_0toall
     {
         const double f1 = f3;
         const double f2 = func[i] * rab[i] ;
-        f3 = func[i+1] * rab[i+1] ;
         asum[i] = asum[i-1] + r2*( f1 + f2);
         if(i+1<mesh)
         {
+            f3 = func[i+1] * rab[i+1];
             asum[i+1] = asum[i-1] + r3*( f1 + 4.00*f2 + f3 );
         }
     }
@@ -330,6 +330,17 @@ void Integral::Gauss_Legendre_grid_and_weight(const int n, double *x, double *we
             if (std::abs(z - z1) < 1e-13) break;
         }
 
+        // The last Newton step changes z after pp was evaluated.
+        p1 = 1.0;
+        p2 = 0.0;
+        for (int j = 1; j <= n; ++j)
+        {
+            p3 = p2;
+            p2 = p1;
+            p1 = ((2.0 * j - 1.0) * z * p2 - (j - 1.0) * p3) / j;
+        }
+        pp = n * (p2 - z * p1) / (1.0 - z * z);
+
         x[i-1] = -z;
         x[n-i] = z;
         weights[i-1] = 2.0 / ((1.0 - z * z) * pp * pp);
@@ -375,6 +386,17 @@ void Integral::Gauss_Legendre_grid_and_weight(const double xmin, const double xm
 
             if (std::abs(z - z1) < 1e-13) break;
         }
+
+        // Evaluate the weight at the returned node, not the preceding iterate.
+        p1 = 1.0;
+        p2 = 0.0;
+        for (int j = 1; j <= n; ++j)
+        {
+            p3 = p2;
+            p2 = p1;
+            p1 = ((2.0 * j - 1.0) * z * p2 - (j - 1.0) * p3) / j;
+        }
+        pp = n * (p2 - z * p1) / (1.0 - z * z);
 
         x[i-1] = xmean - xl * z;
         x[n-i] = xmean + xl * z;

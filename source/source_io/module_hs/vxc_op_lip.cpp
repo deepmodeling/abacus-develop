@@ -236,7 +236,7 @@ void write_Vxc_LIP(int nspin,
             {
                 for (int is = 0; is < nspin0; ++is)
                 {
-                    for (auto e : e_orb[is * nk + ik])
+                    for (FPTYPE e : e_orb[is * nk + ik])
                     { // Hartree and eV
                         ofs << e / 2. << "\t" << e * static_cast<FPTYPE>(ModuleBase::Ry_to_eV) << "\n";
                     }

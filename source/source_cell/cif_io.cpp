@@ -195,7 +195,7 @@ std::map<std::string, std::vector<std::string>> _build_block_data(const std::vec
     std::vector<std::string> values;
     // first drop all elements that does not startswith "_" before the first element that startswith "_"
     std::vector<std::string> block_ = block;
-    auto it = std::find_if(block.begin(), block.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
+    std::vector<std::string>::const_iterator it = std::find_if(block.begin(), block.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
     if (it != block.begin())
     {
         block_.erase(block_.begin(), it);
@@ -249,7 +249,7 @@ void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the m
     int i = 0;
     if (myrank == rank) // if the rank is the source rank, then pack the map to keys and values
     {
-        for (auto& elem: map)
+        for (std::pair<const std::string, std::vector<std::string>>& elem: map)
         {
             keys[i] = elem.first;
             values[i] = elem.second;

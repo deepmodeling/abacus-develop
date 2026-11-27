@@ -18,11 +18,12 @@
 // . the multiplication with sk should be within specific operator
 // because the atom selection task is operator-specific.
 template <typename FPTYPE, typename Device>
-void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
-                                                         int npm,
-                                                         std::complex<FPTYPE>* becp_in,
-                                                         const std::complex<FPTYPE>* ppsi_in,
-                                                         int npwx)
+void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(
+    int ik,
+    int npm,
+    std::complex<FPTYPE> *becp_in,
+    const std::complex<FPTYPE> *ppsi_in,
+    int npwx)
 {
     const ModuleBase::Vector3<double> zero;
     cal_becp(ik, npm, becp_in, ppsi_in, npwx, zero, nullptr);
@@ -47,20 +48,21 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::invalidate_proj()
 }
 
 template <typename FPTYPE, typename Device>
-void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
-                                                         int npm,
-                                                         std::complex<FPTYPE>* becp_in,
-                                                         const std::complex<FPTYPE>* ppsi_in,
-                                                         int npwx,
-                                                         const ModuleBase::Vector3<double>& vector_potential,
-                                                         std::complex<FPTYPE>* host_becp)
+void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(
+    int ik,
+    int npm,
+    std::complex<FPTYPE> *becp_in,
+    const std::complex<FPTYPE> *ppsi_in,
+    int npwx,
+    const ModuleBase::Vector3<double> &vector_potential,
+    std::complex<FPTYPE> *host_becp)
 {
     ModuleBase::TITLE("Onsite_Proj_tools", "cal_becp");
     ModuleBase::timer::start("Onsite_Proj_tools", "cal_becp");
 
     const int npol = this->ucell_->get_npol();
     const int npw = this->wfc_basis_->npwk[ik];
-    const std::complex<FPTYPE>* ppsi = ppsi_in;
+    const std::complex<FPTYPE> *ppsi = ppsi_in;
     if (npw > 0 && ppsi == nullptr)
     {
         ppsi = &(this->psi_[0](ik, 0, 0));
@@ -69,7 +71,7 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
     {
         resmem_complex_op()(becp, this->nbands * npol * this->nkb);
     }
-    std::complex<FPTYPE>* becp_tmp = becp_in == nullptr ? this->becp : becp_in;
+    std::complex<FPTYPE> *becp_tmp = becp_in == nullptr ? this->becp : becp_in;
     const int size_becp_act = npm * npol * this->nkb;
     // Coordinates and radial-table changes invalidate current_ik explicitly; k and A are checked on each call.
     const bool changed_a = (vector_potential - current_a_).norm2() != 0.0;
@@ -84,7 +86,7 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
         // prepare math tools
         Nonlocal_maths<FPTYPE, Device> maths(*(this->nhtol), this->lprojmax, this->ucell_);
 
-        std::complex<FPTYPE>* vkb_ptr = this->ppcell_vkb;
+        std::complex<FPTYPE> *vkb_ptr = this->ppcell_vkb;
 
         // calculate G+K
         this->g_plus_k = maths.cal_gk(ik, this->wfc_basis_);
@@ -108,7 +110,7 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
         // calculate sk
         resmem_complex_op()(hd_sk, this->ucell_->nat * npw);
         this->sf_->get_sk(ctx, ik, this->wfc_basis_, hd_sk);
-        std::complex<FPTYPE>* d_sk = this->hd_sk;
+        std::complex<FPTYPE> *d_sk = this->hd_sk;
         // prepare ylm，size: (lmax+1)^2 * this->max_npw
         const int lmax_ = this->lprojmax;
         maths.cal_ylm(lmax_, npw, g_plus_k.data(), hd_ylm);
@@ -152,16 +154,12 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
         for (int it = 0; it < this->ucell_->ntype; it++) // loop all elements
         {
             // interpolate (it, 0..nproj[it], 0..npw) to get hd_vq
-            cal_vq_op()(this->ctx,
-                        vq_tb, // its data is correct, dimension (ntype, nprojmax, GlobalV::NQX)
-                        it,    // but maybe it is (ntype, nprojmax*npol, GlobalV::NQX)
-                        gk,
-                        npw,
-                        this->tabtpr->getBound2(),
-                        this->tabtpr->getBound3(),
-                        PARAM.globalv.dq,
-                        nproj[it],
-                        hd_vq); // hd_vq has dimension (nprojmax, npwx), this size will be the largest needed.
+            cal_vq_op()(
+                this->ctx,
+                vq_tb, // its data is correct, dimension (ntype, nprojmax, GlobalV::NQX)
+                it,    // but maybe it is (ntype, nprojmax*npol, GlobalV::NQX)
+                gk, npw, this->tabtpr->getBound2(), this->tabtpr->getBound3(), PARAM.globalv.dq, nproj[it],
+                hd_vq); // hd_vq has dimension (nprojmax, npwx), this size will be the largest needed.
 
             // DEBUG: ONCE YOU CHECK vq VALUES, YOU UNCOMMENT THE FOLLOWING LINE
             // for(int ip = 0; ip < nproj[it]; ip++)
@@ -228,19 +226,11 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
     }
     else
     {
-        gemm_op()(transa,
-                  transb,
-                  this->nkb,
-                  npm_npol, // nbands(occ)*npol
-                  npw,
-                  &ModuleBase::ONE,
-                  this->ppcell_vkb,
-                  npw,
-                  ppsi,
-                  npwx > 0 ? npwx : this->max_npw,
-                  &ModuleBase::ZERO,
-                  becp_tmp,
-                  this->nkb);
+        gemm_op()(
+            transa, transb, this->nkb,
+            npm_npol, // nbands(occ)*npol
+            npw, &ModuleBase::ONE, this->ppcell_vkb, npw, ppsi, npwx > 0 ? npwx : this->max_npw, &ModuleBase::ZERO,
+            becp_tmp, this->nkb);
     }
 
     if (this->device == base_device::GpuDevice)
@@ -278,34 +268,38 @@ void hamilt::Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
 }
 
 // explicit method instantiation
-template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_CPU>::cal_becp(int,
-                                                                                   int,
-                                                                                   std::complex<double>*,
-                                                                                   const std::complex<double>*,
-                                                                                   int,
-                                                                                   const ModuleBase::Vector3<double>&,
-                                                                                   std::complex<double>*);
+template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_CPU>::cal_becp(
+    int,
+    int,
+    std::complex<double> *,
+    const std::complex<double> *,
+    int,
+    const ModuleBase::Vector3<double> &,
+    std::complex<double> *);
 template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_CPU>::refresh_table();
 template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_CPU>::invalidate_proj();
-template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_CPU>::cal_becp(int,
-                                                                                   int,
-                                                                                   std::complex<double>*,
-                                                                                   const std::complex<double>*,
-                                                                                   int);
+template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_CPU>::cal_becp(
+    int,
+    int,
+    std::complex<double> *,
+    const std::complex<double> *,
+    int);
 
 #if ((defined __CUDA) || (defined __ROCM))
-template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_GPU>::cal_becp(int,
-                                                                                   int,
-                                                                                   std::complex<double>*,
-                                                                                   const std::complex<double>*,
-                                                                                   int,
-                                                                                   const ModuleBase::Vector3<double>&,
-                                                                                   std::complex<double>*);
+template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_GPU>::cal_becp(
+    int,
+    int,
+    std::complex<double> *,
+    const std::complex<double> *,
+    int,
+    const ModuleBase::Vector3<double> &,
+    std::complex<double> *);
 template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_GPU>::refresh_table();
 template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_GPU>::invalidate_proj();
-template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_GPU>::cal_becp(int,
-                                                                                   int,
-                                                                                   std::complex<double>*,
-                                                                                   const std::complex<double>*,
-                                                                                   int);
+template void hamilt::Onsite_Proj_tools<double, base_device::DEVICE_GPU>::cal_becp(
+    int,
+    int,
+    std::complex<double> *,
+    const std::complex<double> *,
+    int);
 #endif

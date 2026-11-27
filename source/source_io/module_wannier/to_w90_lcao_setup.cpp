@@ -458,11 +458,11 @@ void toW90_LCAO::construct_overlap_table_project()
         }
     }
 
-    for (auto& co1: center2_orb11_A)
+    for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>>& co1: center2_orb11_A)
     {
-        for (auto& co2: co1.second)
+        for (std::pair<const std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>& co2: co1.second)
         {
-            for (auto& co3: co2.second)
+            for (std::pair<const std::size_t, Center2_Orb::Orb11>& co3: co2.second)
             {
                 co3.second.init_radial_table();
             }

@@ -33,6 +33,17 @@ inline bool frame_appends(const int out_app_flag, const int istep)
     return out_app_flag == 1 && istep > 0;
 }
 
+/// Fixed STRU for overwrite/append modes; numbered STRU for mode 2.
+inline std::string stru_frame_filename(const std::string& directory, const int out_app_flag, const int istep)
+{
+    frame_appends(out_app_flag, istep);
+    if (out_app_flag == 2)
+    {
+        return directory + "STRU" + std::to_string(istep + 1);
+    }
+    return directory + "STRU";
+}
+
 } // namespace ModuleIO
 
 #endif // FRAME_APPEND_H

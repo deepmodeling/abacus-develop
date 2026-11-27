@@ -2,7 +2,6 @@
 #define ABACUS_SOURCE_LCAO_MODULE_LR_CAL_W_FROM_Z_H
 #include "gradient_inputs.h"
 #include "source_hamilt/hamilt.h"
-#include "source_lcao/module_lr/dm_trans/dm_diff.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/potentials/pot_grad_xc.h"
 #include "source_lcao/module_lr/operator_casida/op_gxc_ulr.h"
@@ -63,10 +62,11 @@ namespace LR
         }
     }
 
+    // relaxed_density[k] is the symmetric T + DZ + Dwin used by the force contraction.
     template<typename T>
     void cal_W_from_Z(const GradientInputs<T>& inputs,
         T* const W,
-        const T* const Z,
+        const std::vector<ct::Tensor>& relaxed_density,
         const T* const X,
         const double eig,
         const double* const eig_ks,
@@ -101,10 +101,10 @@ namespace LR
         // allocate memory for DMs
         module_dm::DensityMatrix<T, T> DM_trans(&pmat, 1, kv.kvec_d, nk);   //DX
         LR_Util::initialize_DMR(DM_trans, pmat, ucell, gd, orb_cutoff);
-        module_dm::DensityMatrix<T, T> DM_diff_relaxed(&pmat, 1, kv.kvec_d, nk);    //T+DZ
+        module_dm::DensityMatrix<T, T> DM_diff_relaxed(&pmat, 1, kv.kvec_d, nk);    //T+DZ+Dwin
         LR_Util::initialize_DMR(DM_diff_relaxed, pmat, ucell, gd, orb_cutoff);
         /// operators
-        // 1. 0.5$H_ij[T+Z]$, equals to $K_ij[T+Z]$ when $(T+Z)$ is symmetrized
+        // 1. Hgs_ij[T + DZ + Dwin]/2; the supplied density is symmetric.
         // Note that K_Hxc(singlet) = 2* pot_hxc_gs, that's why there's factor 2 here.
         OperatorLRHxc<T> op_ht(nspin, naos, nocc, nvirt, psi_ks,
             DM_diff_relaxed, pot_hxc_gs, ucell, orb_cutoff, gd, kv, p_occ_occ, pc, pmat,
@@ -121,13 +121,14 @@ namespace LR
         // correct way is to use `shared_ptr = make_shared()` and then assign it to weak_ptr
         // `weak_ptr=shared_ptr` is automatically called in the constructor of OperatorLRHxc, so we don't need to do it manually
         // if `pot_grad` is passed into a function rather than a class, we need to write `weak_ptr=shared_ptr` explicitly
-        // This quadratic term differentiates the LR kernel K, unlike H[T+DZ] above.
+        // This quadratic term differentiates the LR kernel K, unlike H[T+DZ+Dwin] above.
         const bool triplet = spin_type == "triplet";
-        const int ispin = triplet ? 1 : 0;
+        const int ispin = triplet && nspin == 2 ? 1 : 0;
         const std::shared_ptr<PotHxcLR>& pot_lr = inputs.pot[ispin];
+        const int kernel_nspin = pot_lr->xc_kernel_components().nspin();
         std::shared_ptr<PotGradXCLR> pot_grad =
             std::make_shared<PotGradXCLR>(pot_lr->xc_kernel_components(), pot_lr->get_rho_basis(),
-                ucell, pot_lr->nrxx, nspin, triplet);
+                ucell, pot_lr->nrxx, kernel_nspin, triplet);
         OperatorLRHxc<T> op_gxc(nspin, naos, nocc, nvirt, psi_ks,
             DM_trans, pot_grad, ucell, orb_cutoff, gd, kv, p_occ_occ, pc, pmat,
             // Factor 1.0 according to the $W^c$ formula (`pot_grad` carries $2*g^{xc}$: uu+ud or uu-ud).
@@ -136,13 +137,12 @@ namespace LR
             { 0 }, T(1.0), ATYPE::CC_oo, hamilt::calculation_type::lr_dmtrans_hxc);
 
         std::vector<ct::Tensor> dm_trans_2d;
-        std::vector<ct::Tensor> dm_diff_2d;
         auto cal_dm_trans = [&psi_ks, nk, &dm_trans_2d, &px, &pc, naos, &nocc, &nvirt, &pmat, &DM_trans](const int is, const T* const x_ptr)->void //DX
             {
-                const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
+                const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
 #ifdef __MPI
                 dm_trans_2d = cal_dm_trans_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                for (auto& t: dm_trans_2d)
+                for (container::Tensor& t: dm_trans_2d)
                     LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
 #else
                 dm_trans_2d = cal_dm_trans_blas(x_ptr, psi_ks_is, nocc[is], nvirt[is]);
@@ -154,36 +154,16 @@ namespace LR
                     DM_trans.set_dmk_ptr(ik, dm_trans_2d[ik].data<T>());
                 }
             };
-        auto cal_dm_diff_relaxed = [&psi_ks, nk, &px, &pc, naos, &nocc, &nvirt, &pmat, &dm_diff_2d, &DM_diff_relaxed](const int& is, const T* const x_ptr, const T* const z_ptr)->void  // T+DZ
-            {
-                const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
-#ifdef __MPI
-                std::vector<ct::Tensor> z_2d = cal_dm_trans_pblas(z_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                for (auto& t: z_2d)
-                    LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
-#else
-                std::vector<ct::Tensor> z_2d = cal_dm_trans_blas(z_ptr, psi_ks_is, nocc[is], nvirt[is]);
-                for (auto& t: z_2d)
-                    LR_Util::matsym(t.data<T>(), naos);
-#endif
-
-#ifdef __MPI
-                dm_diff_2d = cal_dm_diff_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-#else
-                dm_diff_2d = cal_dm_diff_blas(x_ptr, psi_ks_is, naos, nocc[is], nvirt[is]);
-#endif
-                for (int ik = 0;ik < nk;++ik)
-                {
-                    dm_diff_2d[ik] = dm_diff_2d[ik] + z_2d[ik];
-                    DM_diff_relaxed.set_dmk_ptr(ik, dm_diff_2d[ik].data<T>());
-                }
-            };
+        // The caller owns T + DZ + Dwin for this state, shared with the force contraction.
+        for (int ik = 0; ik < nk; ++ik)
+        {
+            DM_diff_relaxed.set_dmk_ptr(ik, relaxed_density[ik].data<T>());
+        }
 
         // act the operators onto current state
         const int ld_vo = nk * px[0].size();
         const int ld_oo = nk * p_occ_occ[0].size();
         cal_dm_trans(0, X);  // transition density matrix DX
-        cal_dm_diff_relaxed(0, X, Z);  // relaxed difference density matrix T+DZ
         // the 3 terms
         op_ht.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);    //comment out this line to test H[T+Z]=0
         // std::cout << "W (H[T+Z])) local terms: " << std::endl;
@@ -213,10 +193,11 @@ namespace LR
     /// $\tfrac12 H^S = K^S = 2\cdot$`pot_hxc_gs` because `pot_hxc_gs` is the halved `S2_gs`;
     /// here it is `S2_updown`, one $K_{\sigma\sigma'}$ component, and the $\sum_{\sigma'}$
     /// is done by the block loop below.
+    // relaxed_density[spin][k] includes Dwin; sum both input spins with the GS kernel.
     template<typename T>
     void cal_W_from_Z_openshell(const GradientInputs<T>& inputs,
         std::vector<std::vector<T>>& W,
-        const T* const Z,
+        const std::vector<std::vector<ct::Tensor>>& relaxed_density,
         const T* const X,
         const double eig,
         const double* const eig_ks,
@@ -292,38 +273,12 @@ namespace LR
             }
         }
 #endif
-        // the relaxed difference density matrix of one spin channel
-        std::vector<ct::Tensor> dm_buf;
-        auto set_dm_diff_relaxed = [&psi_ks, nk, X, Z, &off_x, &px, &pc, naos, &nocc, &nvirt, &pmat, &dm_buf, &DM_diff_relaxed](const int is)->void
-            {
-                const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
-                const T* const x_ptr = X + off_x[is];
-                const T* const z_ptr = Z + off_x[is];
-#ifdef __MPI
-                std::vector<ct::Tensor> z_2d = cal_dm_trans_pblas(z_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                for (auto& t: z_2d)
-                {
-                    LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
-                }
-                dm_buf = cal_dm_diff_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-#else
-                std::vector<ct::Tensor> z_2d = cal_dm_trans_blas(z_ptr, psi_ks_is, nocc[is], nvirt[is]);
-                for (auto& t: z_2d)
-                {
-                    LR_Util::matsym(t.data<T>(), naos);
-                }
-                dm_buf = cal_dm_diff_blas(x_ptr, psi_ks_is, naos, nocc[is], nvirt[is]);
-#endif
-                for (int ik = 0;ik < nk;++ik)
-                {
-                    dm_buf[ik] = dm_buf[ik] + z_2d[ik];
-                    DM_diff_relaxed.set_dmk_ptr(ik, dm_buf[ik].data<T>());
-                }
-            };
-
         for (int is_in : {0, 1})
         {
-            set_dm_diff_relaxed(is_in);
+            for (int ik = 0; ik < nk; ++ik)
+            {
+                DM_diff_relaxed.set_dmk_ptr(ik, relaxed_density[is_in][ik].data<T>());
+            }
             for (int is_out : {0, 1})
             {
                 op_ht[(is_out << 1) + is_in]->act(/*nband=*/1, ld_oo[is_out], /*npol=*/1,
@@ -341,7 +296,7 @@ namespace LR
         // $\sum_{\sigma'\sigma''}D^X_{\sigma'}D^X_{\sigma''}g^{xc}_{\dots,ij\tau}$, coefficient 1
         // in the spin-orbital formula. Quadratic in $D^X$, so it does not fit the block loop above.
         // Use the LR kernel's density derivative, consistently with the Z-vector RHS.
-        // The separate H[T+DZ] operators above retain the GS kernel.
+        // The separate H[T+DZ+Dwin] operators above retain the GS kernel.
         if (LR_Util::has_local_xc(xc_kernel))
         {
             const std::shared_ptr<PotHxcLR>& pot_lr = inputs.pot[0];

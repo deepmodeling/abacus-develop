@@ -5,17 +5,17 @@
 // cross-Cartesian regressions.
 
 #include "dfpt_test_tool.h"
+#include "source_base/complexmatrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
-#include "source_base/complexmatrix.h"
 #include "source_cell/stru_fac.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_phon.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -58,7 +58,7 @@ class DFPTPhonSerialTest : public ::testing::Test
 
     // (re)initialize the bases and the pert/phon wiring for a given (k, q)
     // pair; SetUp uses the default fixture values
-    void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    void SetupPhon(const ModuleBase::Vector3<double> &k_d, const ModuleBase::Vector3<double> &q_d)
     {
         dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, 2, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
@@ -66,17 +66,15 @@ class DFPTPhonSerialTest : public ::testing::Test
     }
 };
 
-
 namespace
 {
 /// per-atom PHYSICAL residual norm of a 2-atom (nat3=6) mass-reduced
 /// dynamical matrix: R(a,alpha,beta) = sum_b sqrt(m_b) D(3a+alpha, 3b+beta)
 /// at a FIXED direction beta, then combined -- opposite x/y residuals
 /// cannot cancel
-double row_sum_norm(const UnitCell& ucell, const ModuleBase::ComplexMatrix& dyn, int ia)
+double row_sum_norm(const UnitCell &ucell, const ModuleBase::ComplexMatrix &dyn, int ia)
 {
-    double sqm[2] = {std::sqrt(ucell.atoms[ucell.iat2it[0]].mass),
-                     std::sqrt(ucell.atoms[ucell.iat2it[1]].mass)};
+    double sqm[2] = {std::sqrt(ucell.atoms[ucell.iat2it[0]].mass), std::sqrt(ucell.atoms[ucell.iat2it[1]].mass)};
     double s2 = 0.0;
     for (int da = 0; da < 3; ++da)
     {

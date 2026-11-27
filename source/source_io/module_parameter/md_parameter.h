@@ -18,8 +18,7 @@ struct MD_para
     double md_dt = 1.0;                ///< Time increment (hbar/E_hartree)
     double md_tfirst = -1.0;           ///< Temperature (in Hartree, 1 Hartree ~ 3E5 K)
     double md_tlast = -1.0;            ///< Target temperature
-    int md_dumpfreq = 1;               ///< The period to dump MD information
-    int md_thermo_freq = 1;            ///< The period to output MD thermodynamic information
+    int out_thermo_freq = 1;           ///< The period to output MD thermodynamic information
     double md_neighbor_skin = 0.0;     ///< Extra neighbor-list radius in Angstrom for MDCell solvers
     int md_restartfreq = 5;            ///< The period to output MD restart information
     int md_seed = -1;                  ///< random seed for MD
@@ -70,12 +69,6 @@ struct MD_para
                                   ///< sampling (requires ABACUS compiled with PLUMED)
     std::string plumed_file = "plumed.dat"; ///< input file of PLUMED
 
-    bool dump_force = true;  ///< output atomic forces into the file MD_dump or
-                             ///< not. liuyu 2023-03-01
-    bool dump_vel = true;    ///< output atomic velocities into the file MD_dump or
-                             ///< not. liuyu 2023-03-01
-    bool dump_virial = true; ///< output lattice virial into the file MD_dump or
-                             ///< not. liuyu 2023-03-01
 };
 
 #endif // MD_PARA_H

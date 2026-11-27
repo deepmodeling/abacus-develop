@@ -12,7 +12,9 @@ Read_INPUT::Read_INPUT()
 Read_INPUT::~Read_INPUT()
 {
     if (TEST1)
+    {
         cout << "\n ~Read_INPUT()" << endl;
+    }
     delete[] QS_data;
     delete[] qsfile;
 }
@@ -20,7 +22,9 @@ Read_INPUT::~Read_INPUT()
 void Read_INPUT::init(void)
 {
     if (test == 1)
+    {
         TITLE("Read_INPUT", "init");
+    }
 
     stringstream ss;
     ss << "running_" << MY_RANK + 1 << ".txt";
@@ -264,9 +268,9 @@ void Read_INPUT::bcast(void)
 
     if (MY_RANK != 0)
     {
-        CARPOSX = new double*[NTYPE];
-        CARPOSY = new double*[NTYPE];
-        CARPOSZ = new double*[NTYPE];
+        CARPOSX = new double *[NTYPE];
+        CARPOSY = new double *[NTYPE];
+        CARPOSZ = new double *[NTYPE];
         for (int it = 0; it < NTYPE; it++)
         {
             CARPOSX[it] = new double[NA[it]];
@@ -383,9 +387,9 @@ void Read_INPUT::read_PW_QS_1(void)
                     assert(NTYPE > 0);
                     NA = new int[NTYPE];
                     LABEL = new string[NTYPE];
-                    CARPOSX = new double*[NTYPE];
-                    CARPOSY = new double*[NTYPE];
-                    CARPOSZ = new double*[NTYPE];
+                    CARPOSX = new double *[NTYPE];
+                    CARPOSY = new double *[NTYPE];
+                    CARPOSZ = new double *[NTYPE];
                     for (int it = 0; it < NTYPE; it++)
                     {
                         READ_VALUE(check, LABEL[it]);
@@ -428,7 +432,9 @@ void Read_INPUT::read_PW_QS_1(void)
                     OUT(ofs_running, "NE", NE);
 
                     if (SMOOTH)
+                    {
                         assert(SIGMA != 0.0);
+                    }
 
                     already_read = true;
                 } // only read once.
@@ -471,9 +477,9 @@ void Read_INPUT::read_WFC(void)
         assert(NTYPE > 0);
         NA = new int[NTYPE];
         LABEL = new string[NTYPE];
-        CARPOSX = new double*[NTYPE];
-        CARPOSY = new double*[NTYPE];
-        CARPOSZ = new double*[NTYPE];
+        CARPOSX = new double *[NTYPE];
+        CARPOSY = new double *[NTYPE];
+        CARPOSZ = new double *[NTYPE];
         for (int it = 0; it < NTYPE; it++)
         {
             READ_VALUE(ifswfc, LABEL[it]);

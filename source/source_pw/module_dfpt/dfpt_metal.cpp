@@ -7,15 +7,11 @@
 namespace ModuleDFPT
 {
 
-DFPT_Metal::DFPT_Metal()
-{
-}
+DFPT_Metal::DFPT_Metal() {}
 
-DFPT_Metal::~DFPT_Metal()
-{
-}
+DFPT_Metal::~DFPT_Metal() {}
 
-void DFPT_Metal::init(double sigma, const std::string& smearing_type)
+void DFPT_Metal::init(double sigma, const std::string &smearing_type)
 {
     ModuleBase::TITLE("DFPT_Metal", "init");
     ModuleBase::timer::start("DFPT_Metal", "init");
@@ -24,7 +20,7 @@ void DFPT_Metal::init(double sigma, const std::string& smearing_type)
     ModuleBase::timer::end("DFPT_Metal", "init");
 }
 
-void DFPT_Metal::dfdeps(const ModuleBase::matrix& eig, double efermi, ModuleBase::matrix& dfdeps)
+void DFPT_Metal::dfdeps(const ModuleBase::matrix &eig, double efermi, ModuleBase::matrix &dfdeps)
 {
     ModuleBase::TITLE("DFPT_Metal", "dfdeps");
     ModuleBase::timer::start("DFPT_Metal", "dfdeps");
@@ -40,11 +36,12 @@ void DFPT_Metal::dfdeps(const ModuleBase::matrix& eig, double efermi, ModuleBase
     ModuleBase::WARNING_QUIT("DFPT_Metal", "metallic DFPT (dfdeps) is not supported in the design phase");
 }
 
-void DFPT_Metal::compute_dmu(int q_idx,
-                             const psi::Psi<std::complex<double>>& psi,
-                             const ModuleBase::matrix& wg,
-                             const ModuleBase::matrix& dfdeps,
-                             DFPT_PW_Data& data)
+void DFPT_Metal::compute_dmu(
+    int q_idx,
+    const psi::Psi<std::complex<double>> &psi,
+    const ModuleBase::matrix &wg,
+    const ModuleBase::matrix &dfdeps,
+    DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Metal", "compute_dmu");
     ModuleBase::timer::start("DFPT_Metal", "compute_dmu");
@@ -56,12 +53,13 @@ void DFPT_Metal::compute_dmu(int q_idx,
     ModuleBase::WARNING_QUIT("DFPT_Metal", "metallic DFPT (compute_dmu) is not supported in the design phase");
 }
 
-void DFPT_Metal::compute_drho_metal(int q_idx,
-                                    const psi::Psi<std::complex<double>>& psi,
-                                    const ModuleBase::matrix& wg,
-                                    const ModuleBase::matrix& dfdeps,
-                                    double dmu,
-                                    DFPT_PW_Data& data)
+void DFPT_Metal::compute_drho_metal(
+    int q_idx,
+    const psi::Psi<std::complex<double>> &psi,
+    const ModuleBase::matrix &wg,
+    const ModuleBase::matrix &dfdeps,
+    double dmu,
+    DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Metal", "compute_drho_metal");
     ModuleBase::timer::start("DFPT_Metal", "compute_drho_metal");

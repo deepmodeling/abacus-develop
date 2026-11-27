@@ -83,33 +83,33 @@ void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
     // Works for generalized eigenvalue problem (US pseudopotentials) as well
     //-------------------------------------------------------------------
     // phi_m = new psi::Psi<T, Device>(phi, 1, 1);
-    auto phi_m
+    ct::Tensor phi_m
         = std::move(ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_}));
     // hphi.resize(this->n_basis_max_, ModuleBase::ZERO);
-    auto hphi
+    ct::Tensor hphi
         = std::move(ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_}));
     // sphi.resize(this->n_basis_max_, ModuleBase::ZERO);
-    auto sphi
+    ct::Tensor sphi
         = std::move(ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_}));
     // pphi.resize(this->n_basis_max_, ModuleBase::ZERO);
-    auto pphi
+    ct::Tensor pphi
         = std::move(ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_}));
 
     // cg = new psi::Psi<T, Device>(phi, 1, 1);
-    auto cg
+    ct::Tensor cg
         = std::move(ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_}));
     // scg.resize(this->n_basis_max_, ModuleBase::ZERO);
-    auto scg
+    ct::Tensor scg
         = std::move(ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_}));
 
     // grad.resize(this->n_basis_max_, ModuleBase::ZERO);
-    auto grad
+    ct::Tensor grad
         = std::move(ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_}));
     // g0.resize(this->n_basis_max_, ModuleBase::ZERO);
-    auto g0
+    ct::Tensor g0
         = std::move(ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_}));
     // lagrange.resize(this->n_band, ModuleBase::ZERO);
-    auto lagrange
+    ct::Tensor lagrange
         = std::move(ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_band_}));
 
     ct::Tensor prec = prec_in;
@@ -122,7 +122,7 @@ void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
     ModuleBase::Memory::record("DiagoCG", this->n_basis_ * 10);
 
     eigen.zero();
-    auto eigen_pack = eigen.accessor<Real, 1>();
+    container::TensorAccessor<Real, 1> eigen_pack = eigen.accessor<Real, 1>();
     for (int m = 0; m < this->n_band_; m++)
     {
         phi_m.sync(psi[m]);
@@ -545,7 +545,7 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
         psi_norm -= ( conj(lagrange[j]) * lagrange[j] ).real();
     }*/
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    auto psi_norm = ct::extract<Real>(lagrange_so[m])
+    Real psi_norm = ct::extract<Real>(lagrange_so[m])
                     - dot_real_op()(m, lagrange_so.data<T>(), lagrange_so.data<T>(), false);
 
     if (psi_norm <= 0.0)

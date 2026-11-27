@@ -406,8 +406,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_NEAR(param.inp.mdp.lj_sigma[0], 3.405, 1e-7);
     EXPECT_EQ(param.inp.mdp.md_damp, 1);
     EXPECT_EQ(param.inp.mdp.md_dt, 1);
-    EXPECT_EQ(param.inp.mdp.md_dumpfreq, 1);
-    EXPECT_EQ(param.inp.mdp.md_thermo_freq, 1);
+    EXPECT_EQ(param.inp.mdp.out_thermo_freq, 1);
     EXPECT_EQ(param.inp.mdp.md_nraise, 1);
     EXPECT_EQ(param.inp.cal_syns[0], 0);
     EXPECT_EQ(param.inp.cal_syns[1], 8);
@@ -446,9 +445,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.mdp.dp_fparam[1], 1.1);
     EXPECT_DOUBLE_EQ(param.inp.mdp.dp_aparam[0], 1.0);
     EXPECT_DOUBLE_EQ(param.inp.mdp.dp_aparam[1], 1.2);
-    EXPECT_FALSE(param.inp.mdp.dump_force);
-    EXPECT_FALSE(param.inp.mdp.dump_vel);
-    EXPECT_FALSE(param.inp.mdp.dump_virial);
     EXPECT_EQ(param.inp.sc_mag_switch, 0);
     EXPECT_TRUE(param.inp.decay_grad_switch);
     EXPECT_DOUBLE_EQ(param.inp.sc_thr, 1e-4);
@@ -836,4 +832,27 @@ TEST_F(InputParaTest, OpticalGaugeCanDisableSpectrum)
     item.str_values = {"invalid"};
     item.read_value(item, param);
     EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(InputParaTest, ScalarLrSpinSelection)
+{
+    ModuleIO::ReadInput reader(0);
+    const auto& list = reader.get_input_lists();
+    const std::map<std::string, ModuleIO::Input_Item> items(list.begin(), list.end());
+    Parameter parameter;
+    EXPECT_EQ(parameter.inp.lr_target_spin, "singlet");
+    auto item = items.at("lr_target_spin");
+    for (const std::string spin : {"singlet", "triplet"})
+    {
+        item.str_values = {spin};
+        item.read_value(item, parameter);
+        EXPECT_EQ(parameter.inp.lr_target_spin, spin);
+        EXPECT_NO_THROW(item.check_value(item, parameter));
+    }
+    for (const std::string spin : {"updown", "invalid"})
+    {
+        item.str_values = {spin};
+        item.read_value(item, parameter);
+        EXPECT_EXIT(item.check_value(item, parameter), testing::ExitedWithCode(1), "");
+    }
 }

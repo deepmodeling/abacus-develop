@@ -1,5 +1,5 @@
-#include "source_pw/module_pwdft/kernels/cal_density_real_op.h"
 #include "source_psi/psi.h"
+#include "source_pw/module_pwdft/kernels/cal_density_real_op.h"
 
 #include <thrust/complex.h>
 
@@ -24,15 +24,19 @@ template <typename FPTYPE>
 struct cal_density_real_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>
 {
     using T = std::complex<FPTYPE>;
-    void operator()(const T *psi1, const T *psi2, T *out, double omega, int nrxx)
+    void operator()(
+        const T *psi1,
+        const T *psi2,
+        T *out,
+        double omega,
+        int nrxx)
     {
         int threads_per_block = 256;
         int num_blocks = (nrxx + threads_per_block - 1) / threads_per_block;
 
         cal_density_real_kernel<FPTYPE><<<num_blocks, threads_per_block>>>(
             reinterpret_cast<const thrust::complex<FPTYPE> *>(psi1),
-            reinterpret_cast<const thrust::complex<FPTYPE> *>(psi2),
-            reinterpret_cast<thrust::complex<FPTYPE> *>(out),
+            reinterpret_cast<const thrust::complex<FPTYPE> *>(psi2), reinterpret_cast<thrust::complex<FPTYPE> *>(out),
             static_cast<FPTYPE>(omega), nrxx);
 
         cudaError_t err = cudaGetLastError();

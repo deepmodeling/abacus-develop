@@ -25,10 +25,11 @@ const double epsg = 1.0e-10;
 const double ha_to_ry = 2.0;
 } // namespace
 
-XC_First_Order_Analytic::XC_First_Order_Analytic(const std::vector<int>& func_id,
-                                                 const int func_type,
-                                                 const std::vector<double>& rho0_r,
-                                                 ModulePW::PW_Basis* pw_rho)
+XC_First_Order_Analytic::XC_First_Order_Analytic(
+    const std::vector<int> &func_id,
+    const int func_type,
+    const std::vector<double> &rho0_r,
+    ModulePW::PW_Basis *pw_rho)
     : func_type_(func_type), func_id_(func_id), pw_rho_(pw_rho)
 {
     ModuleBase::TITLE("XC_First_Order_Analytic", "XC_First_Order_Analytic");
@@ -44,12 +45,13 @@ XC_First_Order_Analytic::XC_First_Order_Analytic(const std::vector<int>& func_id
     this->init_kernel_fields_(rho0_r);
 }
 
-XC_First_Order_Analytic::XC_First_Order_Analytic(const std::vector<int>& func_id,
-                                                 const int func_type,
-                                                 const std::vector<double>& rho0_r,
-                                                 ModulePW::PW_Basis* pw_rho,
-                                                 const std::vector<std::vector<double>>& ext_params_per_func,
-                                                 const std::vector<double>& weights)
+XC_First_Order_Analytic::XC_First_Order_Analytic(
+    const std::vector<int> &func_id,
+    const int func_type,
+    const std::vector<double> &rho0_r,
+    ModulePW::PW_Basis *pw_rho,
+    const std::vector<std::vector<double>> &ext_params_per_func,
+    const std::vector<double> &weights)
     : XC_First_Order_Analytic(func_id, func_type, rho0_r, pw_rho)
 {
     // delegating ctor already built the default kernel fields; the
@@ -57,21 +59,21 @@ XC_First_Order_Analytic::XC_First_Order_Analytic(const std::vector<int>& func_id
     // applied, so validate first and reconstruct
     if (ext_params_per_func.size() != func_id.size() || weights.size() != func_id.size())
     {
-        ModuleBase::WARNING_QUIT("XC_First_Order_Analytic",
-                                 "ext_params_per_func / weights must match func_id elementwise");
+        ModuleBase::WARNING_QUIT(
+            "XC_First_Order_Analytic", "ext_params_per_func / weights must match func_id elementwise");
     }
     ext_params_ = ext_params_per_func;
     weights_ = weights;
     this->init_kernel_fields_(rho0_r);
 }
 
-void XC_First_Order_Analytic::set_context(const ModuleBase::Vector3<double>& q_cart) const
+void XC_First_Order_Analytic::set_context(const ModuleBase::Vector3<double> &q_cart) const
 {
     q_cart_ = q_cart;
     q_set_ = true;
 }
 
-void XC_First_Order_Analytic::init_gradient_(const std::vector<double>& rho0_r)
+void XC_First_Order_Analytic::init_gradient_(const std::vector<double> &rho0_r)
 {
     const int nrxx = pw_rho_->nrxx;
     const int npw = pw_rho_->npw;
@@ -97,7 +99,7 @@ void XC_First_Order_Analytic::init_gradient_(const std::vector<double>& rho0_r)
     }
 }
 
-void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double>& rho0_r)
+void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double> &rho0_r)
 {
     const int nrxx = pw_rho_->nrxx;
     k_rr_.assign(nrxx, 0.0);
@@ -131,13 +133,13 @@ void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double>& rho
         // the SAME functional the GS run used
         if (ifunc < ext_params_.size() && !ext_params_[ifunc].empty())
         {
-            const xc_func_info_type* info = xc_func_get_info(&func);
+            const xc_func_info_type *info = xc_func_get_info(&func);
             const int nref = xc_func_info_get_n_ext_params(info);
             if (static_cast<int>(ext_params_[ifunc].size()) != nref)
             {
-                ModuleBase::WARNING_QUIT("XC_First_Order_Analytic",
-                                         "invalid number of external parameters for libxc functional id "
-                                             + std::to_string(func_id_[ifunc]));
+                ModuleBase::WARNING_QUIT(
+                    "XC_First_Order_Analytic",
+                    "invalid number of external parameters for libxc functional id " + std::to_string(func_id_[ifunc]));
             }
             xc_func_set_ext_params(&func, ext_params_[ifunc].data());
         }
@@ -202,8 +204,8 @@ void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double>& rho
     }
 }
 
-void XC_First_Order_Analytic::apply(const std::vector<std::complex<double>>& drho_r,
-                                    std::vector<std::complex<double>>& dvxc_r) const
+void XC_First_Order_Analytic::apply(
+    const std::vector<std::complex<double>> &drho_r, std::vector<std::complex<double>> &dvxc_r) const
 {
     const int nrxx = pw_rho_->nrxx;
     const int npw = pw_rho_->npw;
@@ -231,7 +233,8 @@ void XC_First_Order_Analytic::apply(const std::vector<std::complex<double>>& drh
 
     // gdrho(ipol, r) = F^-1[ i tpiba (G + q)_ipol A(G) ]: physical
     // gradient of the carrier-carrying field, 1/lat0 units
-    std::vector<std::vector<std::complex<double>>> gdrho(3, std::vector<std::complex<double>>(nrxx, std::complex<double>(0.0, 0.0)));
+    std::vector<std::vector<std::complex<double>>> gdrho(
+        3, std::vector<std::complex<double>>(nrxx, std::complex<double>(0.0, 0.0)));
     std::vector<std::complex<double>> g_g(npw);
     for (int ipol = 0; ipol < 3; ++ipol)
     {
@@ -255,7 +258,8 @@ void XC_First_Order_Analytic::apply(const std::vector<std::complex<double>>& drh
     }
 
     // local part and the h field whose q-gradient completes the response
-    std::vector<std::vector<std::complex<double>>> h(3, std::vector<std::complex<double>>(nrxx, std::complex<double>(0.0, 0.0)));
+    std::vector<std::vector<std::complex<double>>> h(
+        3, std::vector<std::complex<double>>(nrxx, std::complex<double>(0.0, 0.0)));
     for (int ir = 0; ir < nrxx; ++ir)
     {
         dvxc_r[ir] = k_rr_[ir] * drho_r[ir] + k_sr_[ir] * s1[ir];

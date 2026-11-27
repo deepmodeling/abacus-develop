@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <memory>
 #define CREF(x) const std::vector<double>& x = x##_
-#define CREF3(x) const std::vector<ModuleBase::Vector3<double>>& x = x##_
 namespace LR
 {
     /// libxc component layout for the spin-POLARIZED case, shared by the closed- and open-shell
@@ -58,14 +57,37 @@ namespace LR
         constexpr int chan[2][3] = { {0, 1, -1}, {-1, 0, 1} };
     }
 
+    /// Derivative of the local energy's sigma-channel partial derivative along a density
+    /// perturbation. Input coefficients are the packed LibXC arrays for ONE grid point;
+    /// density_response has two components and sigma_response has (uu, ud, dd).
+    /// The half-open spin range selects one input spin or both. Only structurally active
+    /// sigma channels are read, avoiding artificial zero-times-NaN contributions.
+    /// Used by the unrestricted second-order potential contraction.
+    inline double sigma_potential_derivative(const double* rho_sigma, const double* sigma_sigma,
+        const int channel, const double* density_response, const double* sigma_response,
+        const int first_spin, const int end_spin)
+    {
+        double response = 0.;
+        for (int spin = first_spin; spin < end_spin; ++spin)
+        {
+            response += rho_sigma[libxc_idx::rs(spin, channel)] * density_response[spin];
+        }
+        for (int a = first_spin; a < end_spin + 1; ++a)
+        {
+            response += sigma_sigma[libxc_idx::p2[channel][a]] * sigma_response[a];
+        }
+        return response;
+    }
+
     /// @brief Calculate the exchange-correlation (XC) kernel ($f_{xc}=\delta^2E_xc/\delta\rho^2$) and store its components.
     class KernelXC
     {
         using Tvec = std::vector<double>;
-        using Tvec3 = std::vector<ModuleBase::Vector3<double>>;
     public:
         /// Which spin combinations of the $g^{xc}$ coefficient set (`GxcCoef`) to build.
         enum GxcSpin { NoGxc = 0, Singlet = 1, Triplet = 2, BothSpins = 3 };
+        /// GS response starts from raw sigma; non-finite HSE coefficients trigger a reported fallback.
+        enum class Purpose { LinearResponse, GroundStateResponse };
         KernelXC(const ModulePW::PW_Basis& rho_basis,
             const UnitCell& ucell,
             const Charge& chg_gs,
@@ -75,6 +97,12 @@ namespace LR
             const std::vector<std::string>& lr_init_xc_kernel,
             const bool openshell = false,
             const int gxc_spin = GxcSpin::NoGxc);
+        /// Explicit response role; GS response requests only second derivatives.
+        /// Density and grid are borrowed and never modified; their spin layouts must agree.
+        KernelXC(Purpose purpose, const ModulePW::PW_Basis& rho_basis,
+            const UnitCell& ucell, const Charge& chg_gs, const Parallel_Grid& pgrid,
+            const int& nspin, const std::string& kernel_name,
+            const std::vector<std::string>& lr_init_xc_kernel, bool openshell, int gxc_spin);
         ~KernelXC() {}
 
         /// Metadata belongs to this coefficient set, independent of later global XC changes.
@@ -91,17 +119,33 @@ namespace LR
             return kernel_name_;
         }
 
+        /// Construction metadata: true only after a collective HSE GS-response fallback.
+        /// This flags an approximate orbital Hessian; the SCF potential is unchanged.
+        bool gs_sigma_fallback_used() const { return gs_sigma_fallback_used_; }
+
         // const references
         CREF(vrho);CREF(vsigma); CREF(v2rho2); CREF(v2rhosigma); CREF(v2sigma2);
-        CREF3(v2rhosigma_2drho); CREF3(v2sigma2_4drho);
-        CREF3(v2rhosigma_drho_singlet); CREF3(v2rhosigma_drho_triplet); CREF3(v2sigma2_drho_singlet);CREF3(v2sigma2_drho_triplet);
-        CREF3(v2rhosigma_drho_uu); CREF3(v2rhosigma_drho_ud); CREF3(v2rhosigma_drho_du); CREF3(v2rhosigma_drho_dd);
-        CREF3(v2sigma2_drho_uu_u); CREF3(v2sigma2_drho_uu_d); CREF3(v2sigma2_drho_ud_u); CREF3(v2sigma2_drho_ud_d);
-        CREF3(v2sigma2_drho_du_u); CREF3(v2sigma2_drho_du_d); CREF3(v2sigma2_drho_dd_u); CREF3(v2sigma2_drho_dd_d);
         CREF(v3rho3);
         CREF(v3rho2sigma);
         CREF(v3rhosigma2);
         CREF(v3sigma3);
+        /// Scalar mixed-density/gradient and gradient/gradient GGA response coefficients.
+        /// The common ground-state gradient is supplied by the potential contraction.
+        /// These same arrays supply the transition-gradient terms of gxc; no duplicate cache.
+        struct ClosedShellGga
+        {
+            Tvec rho_sigma;
+            Tvec sigma_sigma;
+        };
+        const ClosedShellGga& closed_shell_gga(const bool triplet) const
+        {
+            if (openshell_)
+            {
+                throw std::logic_error("Closed-shell GGA coefficients requested for an open-shell kernel");
+            }
+            return (nspin_ == 1 || !triplet) ? closed_shell_gga_s_ : closed_shell_gga_t_;
+        }
+
         /// @brief The coefficients of
         ///     $v^{(2)}(r)=\iint dr'dr''\,g^{xc}(r,r',r'')\rho^1(r')\rho^1(r'')$
         /// for ONE spin combination, stored exactly as they appear in the final formula:
@@ -110,7 +154,9 @@ namespace LR
         ///          + (c_s\,s + c_t\,t)\,\nabla\rho^1\,]$
         /// with $s=\rho^1$, $t=\nabla\rho\cdot\nabla\rho^1$, $q=\nabla\rho^1\cdot\nabla\rho^1$.
         ///
-        /// Every numeric factor and every spin sum is folded in here, so `PotGradXCLR::cal_v_eff`
+        /// The transition-gradient scalars c_s and c_t reuse ClosedShellGga (factor 2 for
+        /// nspin=2, factor 8 for singlet-normalized nspin=1). The other factors are folded
+        /// in here, so `PotGradXCLR::cal_v_eff`
         /// is a literal transcription of the formula with no arithmetic of its own, and nspin=1,
         /// singlet and triplet all run through the same code. For LDA only `a_s2` is filled.
         /// $v^{(2)} = A - \nabla\cdot E$
@@ -120,14 +166,13 @@ namespace LR
         /// divergence, this factorization no longer holds and they must go back to `Vector3`.
         struct GxcCoef
         {
+            /// Availability is independent of the number of points assigned to this rank.
+            bool built = false;
             // Local part A.
             std::vector<double> a_s2;
             std::vector<double> a_st;
             std::vector<double> a_t2;
             std::vector<double> a_q;
-            // Scalars multiplying the transition-density gradient.
-            std::vector<double> c_s;
-            std::vector<double> c_t;
             // Divergence coefficients, all multiplying the ground-state density gradient.
             std::vector<double> e_s2;
             std::vector<double> e_st;
@@ -140,7 +185,7 @@ namespace LR
         const GxcCoef& gxc(const bool triplet) const
         {
             const GxcCoef& ret = (nspin_ == 1 || !triplet) ? gxc_s_ : gxc_t_;
-            if (ret.a_s2.empty())
+            if (!ret.built)
             {
                 throw std::runtime_error(
                     "KernelXC: the " + std::string(triplet ? "triplet" : "singlet")
@@ -148,6 +193,11 @@ namespace LR
             }
             return ret;
         }
+
+        /// Componentwise derivative of prepared sigma; empty means identity.
+        /// Borrowed for the kernel lifetime, point-major: one component at nspin=1,
+        /// or (uu, ud, dd) at nspin=2. Only implicit coefficient derivatives use it.
+        const Tvec& sigma_jacobian() const { return sigma_jacobian_; }
 
         const bool& openshell = openshell_;
         const std::vector<std::vector<ModuleBase::Vector3<double>>>& drho_gs = drho_gs_;
@@ -188,28 +238,9 @@ namespace LR
         // std::map<std::string, std::vector<ModuleBase::Vector3<double>>> grad_kernel_set_;// [kernel_type][nrxx][nspin],  intermediate terms for GGA
         // for nspin=1, gga
         std::vector<std::vector<ModuleBase::Vector3<double>>> drho_gs_; ///< $\nabla\rho$ of the ground state, size: nspin*nrxx
-        std::vector<ModuleBase::Vector3<double>> v2rhosigma_2drho_;  ///< $f^{\rho\sigma}*\nabla\rho *2$
-        std::vector<ModuleBase::Vector3<double>> v2sigma2_4drho_; ///< $f^{\sigma\sigma}*\nabla\rho *4$
+        ClosedShellGga closed_shell_gga_s_;
+        ClosedShellGga closed_shell_gga_t_;
 
-        // for nspin=2 (close-shell), gga kernels
-        Tvec3 v2rhosigma_drho_singlet_; ///< $2(f^{\rho_u\sigma_{uu}}+f^{\rho_u\sigma_{ud}}+f^{\rho_u\sigma_{dd}})*\nabla\rho)$
-        Tvec3 v2rhosigma_drho_triplet_; ///< $2(f^{\rho_u\sigma_{uu}}-f^{\rho_u\sigma_{ud}})*\nabla\rho)$
-        Tvec3 v2sigma2_drho_singlet_;   /// < $(4f^{\sigma_{uu}\sigma_{uu}}+6f^{\sigma_{uu}\sigma_{ud}}+4f^{\sigma_{uu}\sigma_{dd}}+2f^{\sigma_{ud}\sigma_{ud}}+2f^{\sigma_{ud}\sigma_{dd}})\nabla\rho$
-        Tvec3 v2sigma2_drho_triplet_;   /// < $(4f^{\sigma_{uu}\sigma_{uu}}+2f^{\sigma_{uu}\sigma_{ud}}-4f^{\sigma_{uu}\sigma_{dd}}-2f^{\sigma_{ud}\sigma_{dd}})\nabla\rho$
-
-        // for nspin=2 (open shell), gga kernels
-        Tvec3 v2rhosigma_drho_uu_;  ///< $2f^{\rho_u\sigma_{uu}}\nabla\rho_u+f^{\rho_u\sigma_{ud}}\nabla\rho_d$
-        Tvec3 v2rhosigma_drho_ud_;  ///< $f^{\rho_u\sigma_{ud}}\nabla\rho_u+2f^{\rho_u\sigma_{dd}}\nabla\rho_d$
-        Tvec3 v2rhosigma_drho_du_;  ///< $2f^{\rho_d\sigma_{uu}}\nabla\rho_u+f^{\rho_d\sigma_{ud}}\nabla\rho_d$
-        Tvec3 v2rhosigma_drho_dd_;  ///< $f^{\rho_d\sigma_{ud}}\nabla\rho_u+2f^{\rho_d\sigma_{dd}}\nabla\rho_d$
-        Tvec3 v2sigma2_drho_uu_u_;   /// $4f^{\sigma_{uu}\sigma_{uu}}\nabla\rho_u+2f^{\sigma_{uu}\sigma_{ud}\nabla\rho_d$
-        Tvec3 v2sigma2_drho_uu_d_;   /// $2f^{\sigma_{uu}\sigma_{ud}}\nabla\rho_u+f^{\sigma_{ud}\sigma_{ud}}\nabla\rho_d$
-        Tvec3 v2sigma2_drho_ud_u_;   /// $2f^{\sigma_{uu}\sigma_{ud}}\nabla\rho_u+f^{\sigma_{ud}\sigma_{ud}}\nabla\rho_d$
-        Tvec3 v2sigma2_drho_ud_d_;   /// $4f^{\sigma_{uu}\sigma_{dd}}\nabla\rho_u+2f^{\sigma_{ud}\sigma_{dd}\nabla\rho_d$
-        Tvec3 v2sigma2_drho_du_u_;   /// $4f^{\sigma_{uu}\sigma_{dd}}\nabla\rho_d+2f^{\sigma_{uu}\sigma_{ud}\nabla\rho_u$
-        Tvec3 v2sigma2_drho_du_d_;   /// $2f^{\sigma_{ud}\sigma_{dd}}\nabla\rho_d+f^{\sigma_{ud}\sigma_{ud}}\nabla\rho_u$
-        Tvec3 v2sigma2_drho_dd_u_;   /// $2f^{\sigma_{ud}\sigma_{dd}}\nabla\rho_d+f^{\sigma_{ud}\sigma_{ud}}\nabla\rho_u$
-        Tvec3 v2sigma2_drho_dd_d_;   /// $4f^{\sigma_{dd}\sigma_{dd}}\nabla\rho_d+2f^{\sigma_{ud}\sigma_{dd}\nabla\rho_u$
         // ================================== XC kernels ============================================
         // ================================== XC kernel Gradiants ====================================
         Tvec v3rho3_;
@@ -228,6 +259,9 @@ namespace LR
         const std::string kernel_name_;
         int functional_type_ = 0;
         const int gxc_spin_ = GxcSpin::NoGxc;   ///< which `GxcCoef` sets to build, see `GxcSpin`
+        const Purpose purpose_;
+        Tvec sigma_jacobian_;
+        bool gs_sigma_fallback_used_ = false;
         // ================================== XC kernel Gradiants ====================================
         const ModulePW::PW_Basis& rho_basis_;
         const bool openshell_ = false;
@@ -239,6 +273,13 @@ namespace LR
         const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const Charge& chg_gs,
         const Parallel_Grid& pgrid, const int nspin, const bool openshell, const int gxc_spin,
         const std::vector<std::string>& lr_init_xc_kernel);
+    /// Build immutable GS response from raw coefficients, retrying non-finite HSE with the LR floor.
+    /// Uses the supplied GS functional, density and grid, requesting no third derivatives.
+    std::shared_ptr<const KernelXC> build_gs_xc_kernel(const std::string& kernel_name,
+        const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const Charge& chg_gs,
+        const Parallel_Grid& pgrid, int nspin, bool openshell,
+        const std::vector<std::string>& lr_init_xc_kernel);
+
 }
 
 #endif // ABACUS_SOURCE_LCAO_MODULE_LR_POTENTIALS_XC_KERNEL_H

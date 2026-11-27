@@ -3,52 +3,58 @@
 
 #include "op_pw.h"
 
-#include "source_cell/unitcell.h"
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_cell/unitcell.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
-namespace hamilt {
+namespace hamilt
+{
 
 #ifndef ONSITETEMPLATE_H
 #define ONSITETEMPLATE_H
 
-template<class T> class OnsiteProj : public T {};
+template <class T>
+class OnsiteProj : public T
+{
+};
 // template<typename Real, typename Device = base_device::DEVICE_CPU>
 // class OnsiteProj : public OperatorPW<T, Device> {};
 
 #endif
 
-template<typename T, typename Device>
+template <typename T, typename Device>
 class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    OnsiteProj(const int* isk_in,
-             const UnitCell* ucell_in,
-             Plus_U_Base* p_dftu,
-             const int nspin_in,
-             const bool cal_delta_spin,
-             const bool cal_dftu);
+    OnsiteProj(
+        const int *isk_in,
+        const UnitCell *ucell_in,
+        Plus_U_Base *p_dftu,
+        const int nspin_in,
+        const bool cal_delta_spin,
+        const bool cal_dftu);
 
-    template<typename T_in, typename Device_in = Device>
-    explicit OnsiteProj(const OnsiteProj<OperatorPW<T_in, Device_in>>* onsite_proj);
+    template <typename T_in, typename Device_in = Device>
+    explicit OnsiteProj(const OnsiteProj<OperatorPW<T_in, Device_in>> *onsite_proj);
 
     virtual ~OnsiteProj();
 
-    virtual void init(const int ik_in)override;
+    virtual void init(const int ik_in) override;
 
-    virtual void act(const int nbands,
+    virtual void act(
+        const int nbands,
         const int nbasis,
         const int npol,
-        const T* tmpsi_in,
-        T* tmhpsi,
+        const T *tmpsi_in,
+        T *tmhpsi,
         const int ngk = 0,
-        const bool is_first_node = false)const override;
+        const bool is_first_node = false) const override;
 
-    const int *get_isk() const {return this->isk;}
-    const UnitCell *get_ucell() const {return this->ucell;}
+    const int *get_isk() const { return this->isk; }
+    const UnitCell *get_ucell() const { return this->ucell; }
 
   private:
     void cal_ps_delta_spin(const int npol, const int m) const;
@@ -58,24 +64,32 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     /// one-time setup of DFT+U PW index arrays (orb_l_iat, ip_iat, ip_m, pot_onsite_begin_iat)
     void setup_pw_dftu_indices() const;
 
-    void update_becp(const T* psi_in, const int npol, const int m, const int npwx) const;
+    void update_becp(
+        const T *psi_in,
+        const int npol,
+        const int m,
+        const int npwx) const;
 
-    void add_onsite_proj(T *hpsi_in, const int npol, const int m, const int npwx) const;
+    void add_onsite_proj(
+        T *hpsi_in,
+        const int npol,
+        const int m,
+        const int npwx) const;
 
-    const int* isk = nullptr;
+    const int *isk = nullptr;
 
-    const UnitCell* ucell = nullptr;
+    const UnitCell *ucell = nullptr;
 
-    Plus_U_Base* dftu = nullptr;
+    Plus_U_Base *dftu = nullptr;
 
     int nspin = 1;
 
-    mutable int* ip_iat = nullptr;
-    mutable T* lambda_coeff = nullptr;
-    mutable int* orb_l_iat = nullptr;
-    mutable int* ip_m = nullptr;
-    mutable int* pot_onsite_begin_iat = nullptr;
-    mutable T* pot_onsite_device = nullptr;
+    mutable int *ip_iat = nullptr;
+    mutable T *lambda_coeff = nullptr;
+    mutable int *orb_l_iat = nullptr;
+    mutable int *ip_m = nullptr;
+    mutable int *pot_onsite_begin_iat = nullptr;
+    mutable T *pot_onsite_device = nullptr;
 
     mutable int nkb_m = 0;
 
@@ -87,8 +101,8 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     mutable T *ps = nullptr;
     int tnp = 0;
-    Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
+    Device *ctx = {};
+    base_device::DEVICE_CPU *cpu_ctx = {};
 
     using gemv_op = ModuleBase::gemv_op<T, Device>;
     using gemm_op = ModuleBase::gemm_op<T, Device>;

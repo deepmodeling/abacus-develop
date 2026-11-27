@@ -1,12 +1,12 @@
 #include "vnl_pw.h"
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/math_sphbes.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_polyint.h"
+#include "source_base/math_sphbes.h"
 #include "source_base/timer.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <cmath>
 #include <complex>
@@ -39,7 +39,12 @@
  * @param M      total magnetic quantum number M
  * @return complex coefficient
  */
-std::complex<double> pseudopot_cell_vnl::Cal_C(int alpha, int lu, int mu, int L, int M) // pengfei Li  2018-3-23
+std::complex<double> pseudopot_cell_vnl::Cal_C(
+    int alpha,
+    int lu,
+    int mu,
+    int L,
+    int M) // pengfei Li  2018-3-23
 {
     std::complex<double> cf;
     if (alpha == 0)
@@ -76,7 +81,13 @@ std::complex<double> pseudopot_cell_vnl::Cal_C(int alpha, int lu, int mu, int L,
  * @param M  total magnetic quantum number
  * @return Gaunt coefficient value
  */
-double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // pengfei Li 2018-3-23
+double pseudopot_cell_vnl::CG(
+    int l1,
+    int m1,
+    int l2,
+    int m2,
+    int L,
+    int M) // pengfei Li 2018-3-23
 {
     int dim = L * L + M;
     int dim1 = l1 * l1 + m1;
@@ -94,9 +105,10 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
  *
  * @param ucell unit cell (read-only)
  */
-void pseudopot_cell_vnl::init_vnl_alpha(const UnitCell& ucell) // pengfei Li 2018-3-23
+void pseudopot_cell_vnl::init_vnl_alpha(const UnitCell &ucell) // pengfei Li 2018-3-23
 {
-    if (PARAM.inp.test_pp) {
+    if (PARAM.inp.test_pp)
+    {
         ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl_alpha");
     }
     ModuleBase::timer::start("ppcell_vnl", "init_vnl_alpha");
@@ -150,8 +162,8 @@ void pseudopot_cell_vnl::init_vnl_alpha(const UnitCell& ucell) // pengfei Li 201
 
                     for (int ir = 0; ir < kkbeta; ir++)
                     {
-                        aux[ir] = ucell.atoms[it].ncpp.betar(ib, ir) * jl[ir]
-                                  * ucell.atoms[it].ncpp.r[ir] * ucell.atoms[it].ncpp.r[ir];
+                        aux[ir] = ucell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * ucell.atoms[it].ncpp.r[ir] *
+                                  ucell.atoms[it].ncpp.r[ir];
                     }
                     double vqint = 0.0;
                     ModuleBase::Integral::Simpson_Integral(kkbeta, aux.data(), ucell.atoms[it].ncpp.rab.data(), vqint);

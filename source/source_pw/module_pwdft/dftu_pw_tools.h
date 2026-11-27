@@ -1,9 +1,9 @@
 #ifndef DFTU_PW_TOOLS_H
 #define DFTU_PW_TOOLS_H
 
+#include "source_base/matrix.h"
 #include <complex>
 #include <vector>
-#include "source_base/matrix.h"
 
 class UnitCell;
 class OccupationMatrix;
@@ -13,7 +13,8 @@ class OccupationMatrix;
 /// These functions are stateless and can be unit-tested directly.
 /// The member functions in dftu_pw.cpp call them after computing
 /// per-atom offsets and fetching the relevant member state.
-namespace pw {
+namespace pw
+{
 
 /// transform pot_onsite from Pauli basis to spin basis (in-place, nspin==4 only).
 ///
@@ -25,7 +26,7 @@ namespace pw {
 ///   pot_onsite[3*size]   <- 0.5 * (pot_onsite_pauli[0] - pot_onsite_pauli[3])
 ///   pot_onsite[size]     <- 0.5 * (pot_onsite_pauli[1] + i * pot_onsite_pauli[2])
 ///   pot_onsite[2*size]   <- 0.5 * (pot_onsite_pauli[1] - i * pot_onsite_pauli[2])
-void pauli_to_spin_basis(std::complex<double>* pot_onsite, int m_size);
+void pauli_to_spin_basis(std::complex<double> *pot_onsite, int m_size);
 
 /// compute pot_onsite and energy contribution for one atom (nspin==4, spinor).
 ///
@@ -36,8 +37,8 @@ void pauli_to_spin_basis(std::complex<double>* pot_onsite, int m_size);
 /// pot_onsite:  pointer to uterm_mat[uterm_mat_index[iat]]
 /// occ: pointer to occ_mat[iat][target_l][0].c (4 Pauli blocks packed)
 double compute_pot_onsite_spinor(
-    std::complex<double>* pot_onsite,
-    const double* occ,
+    std::complex<double> *pot_onsite,
+    const double *occ,
     double u_value,
     double diag_coeff,
     double weight_eu,
@@ -49,8 +50,8 @@ double compute_pot_onsite_spinor(
 /// pot_onsite:  pointer to the spin channel's pot_onsite block (size m_size * m_size)
 /// occ: pointer to occ_mat[iat][target_l][is].c for this channel
 double compute_pot_onsite_scalar(
-    std::complex<double>* pot_onsite,
-    const double* occ,
+    std::complex<double> *pot_onsite,
+    const double *occ,
     double u_value,
     double diag_coeff,
     double weight_eu,
@@ -69,15 +70,15 @@ double compute_pot_onsite_scalar(
 /// m_begin:  offset of the correlated l's first m within the atom's projectors
 /// tlp1:     2*target_l + 1
 void accumulate_occ_spinor(
-    double* occ_mat_out,
-    const std::complex<double>* becp,
+    double *occ_mat_out,
+    const std::complex<double> *becp,
     int nbands,
     int npol,
     int nkb,
     int begin_ih,
     int m_begin,
     int tlp1,
-    const ModuleBase::matrix& wg,
+    const ModuleBase::matrix &wg,
     int ik);
 
 /// accumulate occ_mat from becp for one atom, one k-point (nspin==1 or 2).
@@ -89,14 +90,14 @@ void accumulate_occ_spinor(
 ///
 /// becp, nbands, nkb, begin_ih, m_begin, tlp1: same as accumulate_occ_spinor
 void accumulate_occ_scalar(
-    double* occ_mat_out,
-    const std::complex<double>* becp,
+    double *occ_mat_out,
+    const std::complex<double> *becp,
     int nbands,
     int nkb,
     int begin_ih,
     int m_begin,
     int tlp1,
-    const ModuleBase::matrix& wg,
+    const ModuleBase::matrix &wg,
     int ik);
 
 /// reduce occ_mat across all k-pools (per-atom, nspin-aware).
@@ -106,11 +107,12 @@ void accumulate_occ_scalar(
 /// nspin=1: single channel, size elements
 /// nspin=2: two channels (spin-up/down) reduced separately
 /// nspin=4: 4 Pauli blocks packed contiguously, reduced in one shot
-void reduce_occ_mat(const UnitCell& cell,
-                    const int nspin,
-                    const int kpar,
-                    const std::vector<int>& l_channel,
-                    OccupationMatrix& occmat);
+void reduce_occ_mat(
+    const UnitCell &cell,
+    const int nspin,
+    const int kpar,
+    const std::vector<int> &l_channel,
+    OccupationMatrix &occmat);
 
 /// compute effective potential pot_onsite and DFT+U energy from occ_mat.
 ///
@@ -124,14 +126,15 @@ void reduce_occ_mat(const UnitCell& cell,
 ///     nspin=2: two channels in split layout [all_up | all_dn]
 ///   - energy_u (out): E_U = sum U * weight_eu * occ(m2,m1) * occ(m1,m2),
 ///     overwritten with the total energy of this call
-void compute_pot_uterm_and_energy(const UnitCell& cell,
-                                  const int nspin,
-                                  const std::vector<double>& u_current,
-                                  const std::vector<int>& l_channel,
-                                  const std::vector<int>& uterm_mat_index,
-                                  const OccupationMatrix& occmat,
-                                  std::vector<std::complex<double>>& uterm_mat,
-                                  double& energy_u);
+void compute_pot_uterm_and_energy(
+    const UnitCell &cell,
+    const int nspin,
+    const std::vector<double> &u_current,
+    const std::vector<int> &l_channel,
+    const std::vector<int> &uterm_mat_index,
+    const OccupationMatrix &occmat,
+    std::vector<std::complex<double>> &uterm_mat,
+    double &energy_u);
 
 } // namespace pw
 

@@ -11,7 +11,7 @@
 namespace
 {
 
-double radial_norm(const std::vector<double>& r, const std::vector<double>& radial)
+double radial_norm(const std::vector<double> &r, const std::vector<double> &radial)
 {
     std::vector<double> dr(radial.size());
     std::vector<double> integrand(radial.size());
@@ -78,10 +78,26 @@ TEST(ProjgenTest, MatchesReferenceProfile)
 
     // reference values from the python prototype
     const std::vector<double> ref = {
-        0.000000000000e+00, 2.344902364599e-05, 9.378381332712e-05, 2.109675345121e-04, 3.749388271050e-04,
-        5.856118515995e-04, 8.428763536364e-04, 1.146597746904e-03, 1.496617214310e-03, 1.892751827321e-03,
-        2.334794683381e-03, 2.822515061259e-03, 3.355658594204e-03, 3.933947460740e-03, 4.557080592928e-03,
-        5.224733901903e-03, 5.936560520491e-03, 6.692191062668e-03, 7.491233899644e-03, 8.333275452302e-03,
+        0.000000000000e+00,
+        2.344902364599e-05,
+        9.378381332712e-05,
+        2.109675345121e-04,
+        3.749388271050e-04,
+        5.856118515995e-04,
+        8.428763536364e-04,
+        1.146597746904e-03,
+        1.496617214310e-03,
+        1.892751827321e-03,
+        2.334794683381e-03,
+        2.822515061259e-03,
+        3.355658594204e-03,
+        3.933947460740e-03,
+        4.557080592928e-03,
+        5.224733901903e-03,
+        5.936560520491e-03,
+        6.692191062668e-03,
+        7.491233899644e-03,
+        8.333275452302e-03,
     };
 
     ASSERT_GE(alpha.size(), ref.size());
@@ -90,4 +106,3 @@ TEST(ProjgenTest, MatchesReferenceProfile)
         EXPECT_NEAR(alpha[i], ref[i], 1.0e-12);
     }
 }
-

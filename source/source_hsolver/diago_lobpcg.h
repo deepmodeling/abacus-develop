@@ -205,7 +205,7 @@ class DiagoLOBPCG
         const int zero_prefix,
         ProjectionCache& cache);
 
-    // Exception-only physical-metric and rank recovery.
+    // Physical-metric and rank recovery after a failed projected solve.
     bool recover_projected(const HSOperator<T, Device>& op,
         const VectorImages& basis,
         int& working_columns,

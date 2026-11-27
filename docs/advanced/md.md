@@ -28,11 +28,15 @@ When [md_type](./input_files/input-main.md#md_type) is set to npt, [md_pmode](./
 
 Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.md#molecular-dynamics) to control relevant parmeters used in MD simulations.
 
-The MD output information will be written into the file `MD_dump`， in which the atomic forces, atomic velocities, and lattice virial are controlled by keyword [dump_force](./input_files/input-main.md#dump_force), [dump_vel](./input_files/input-main.md#dump_vel), and [dump_virial](./input_files/input-main.md#dump_virial), respectively.
+MD structure output is controlled by [`out_stru`](./input_files/input-main.md#out_stru), [`out_freq_ion`](./input_files/input-main.md#out_freq_ion), and [`out_app_flag`](./input_files/input-main.md#out_app_flag). Set `out_stru 1`, `out_freq_ion 1`, and `out_app_flag 1` to keep every MD step in the appended `STRU` trajectory. With `out_freq_ion 0`, only `STRU_FINAL` is written. Mode 0 overwrites the periodic `STRU`; mode 2 writes numbered files and `STRU_FINAL` under `STRUC/`. Set `out_stru 2` for CIF geometry: periodic output overwrites `STRU.cif` in modes 0 and 1 or writes numbered `STRU{step}.cif` files in mode 2, and the final geometry is `STRU_FINAL.cif`. CIF omits atomic forces and velocities; the separate `STRU_restart` checkpoint retains velocities for restarting MD.
 
-Use `md_thermo_freq` to set the output interval for MD step, energy, temperature, and pressure information in `running_md.log` and on screen. The default is 1; set it to 0 to disable this thermodynamic output. The interval counts MD steps from 0, so a value of 10 selects steps 0, 10, 20, and so on, including after a restart.
+Use `out_thermo_freq` to set the output interval for MD step, energy, temperature, and pressure information in `running_md.log` and on screen. The default is 1; set it to 0 to disable this thermodynamic output. The interval counts MD steps from 0, so a value of 10 selects steps 0, 10, 20, and so on, including after a restart.
 
-The `md_out_force` INPUT keyword has been removed. An INPUT file that still contains it will fail to parse. For MDCell simulations, per-atom forces are no longer printed in `running_md.log`; use `dump_force 1` to include them in `MD_dump`, and use `md_dumpfreq` to set the trajectory output interval.
+For MDCell simulations, per-atom forces are in ordinary STRU frames rather than `running_md.log`. The `md_out_force`, `md_dumpfreq`, `dump_force`, `dump_vel`, and `dump_virial` INPUT keywords have been removed; an INPUT file using them will fail to parse.
+
+MDCell structure output (`STRU`, `STRU_FINAL`, and `STRU_restart`) lists atoms by element and then by their original index within that element. This order remains stable when atoms migrate between MPI processes. In an appended `STRU` trajectory, the same row within each element therefore refers to the same atom in every frame.
+
+Ordinary MD structure frames include per-atom `f` forces in eV/Angstrom and `v` velocities in atomic units; `STRU_restart` retains `v` for restarting and omits `f`. When `cal_stress=1`, the thermodynamic block in `running_md.log` includes the complete 3-by-3 virial and total stress tensors in kbar at the `out_thermo_freq` cadence. This frequency affects MD only; SCF and relaxation output are unchanged.
 
 [Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/18_md/01_LCAO_NVE_Si8) of MD simulations are also provided.
 There are eight INPUT files corresponding to eight different MD evolution methods in the directory.
