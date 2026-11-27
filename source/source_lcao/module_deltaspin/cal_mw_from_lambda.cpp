@@ -69,7 +69,7 @@
  *
  * @par LCAO path:
  *   1. Update lambda in DeltaSpin operator (dspin->update_lambda())
- *   2. Solve HSolverLCAO with charge update disabled (last param = true means no charge update)
+ *   2. Solve HSolverLCAO for the density matrix without rebuilding the real-space charge
  *   3. Calculate weights from new eigenvalues
  *   4. Call cal_mi_lcao() to compute moments from density matrix
  *
@@ -130,11 +130,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 this->p_operator)
                 ->update_lambda();
         }
-        // Diagonalization without updating charge density (last param = true means skip charge update).
-        // omega is unused here because skip_charge=true; rhopw->omega is passed only to satisfy the
-        // signature and would be stale in NPT anyway (see Charge::renormalize_rho).
+        // The inner lambda loop needs the density matrix, not the real-space charge.
+        // Only the PEXSI path uses omega; ordinary eigensolvers leave rho to the outer SCF.
         hamilt::HamiltHSMatrix<std::complex<double>> hs(hamilt_t);
-        hsolver_t.solve(hs, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->state_.nspin_, this->pelec->charge->rhopw->omega, true);
+        hsolver_t.solve(
+            hs, psi_t[0], this->pelec, *this->dm_, this->state_.nspin_, this->pelec->charge->rhopw->omega);
         // Note: although update_lambda() modifies lambda in-place above,
         // solve() unconditionally recomputes DM and DMR (via dm_from_psi +
         // cal_dmr) from the psi obtained by diagonalizing with the new
@@ -324,16 +324,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
 #ifdef __LCAO
     if (PARAM.inp.basis_type == "lcao")
     {
-        // TODO: Known issue — the base-class psiToRho() is a no-op for
-        // LCAO, so the charge density rho is NOT recomputed here after the
-        // final lambda update. After the lambda loop converges, rho remains
-        // from the last solve() call with skip_charge=false, which was
-        // computed with a different lambda. To fix this, update_psi_charge
-        // should recalculate DM from the current psi/weights, then DMR,
-        // then rho via dm2rho (similar to the PW path which performs a
-        // subspace diagonalization + optional full solve). The DMR inside
-        // cal_mi_lcao() itself is fresh (see comment above), but the
-        // charge density fed back into the next SCF iteration is stale.
+        // The base-class psiToRho() is a no-op for LCAO. The outer
+        // ESolver_KS_LCAO::hamilt2rho_single rebuilds rho from the updated
+        // DMR after the lambda loop.
         psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
         this->pelec->psiToRho(*psi_t);
     }

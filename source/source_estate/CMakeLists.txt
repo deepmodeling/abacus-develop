@@ -68,7 +68,6 @@ list(
   occ_comput.cpp
   occ_mixer.cpp
   param_update.cpp
-  setup_estate_pw.cpp
   update_pot.cpp)
 
 if(ENABLE_LCAO)

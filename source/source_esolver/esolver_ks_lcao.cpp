@@ -492,7 +492,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(
     // 1) reset band energy and smearing correction
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
-    bool skip_charge = this->inp_->calculation == "nscf" ? true : false;
+    const bool skip_charge = this->inp_->calculation == "nscf";
 
     // 2) run the inner lambda loop to constrain atomic moments with the DeltaSpin method
     bool skip_solve = false;
@@ -528,7 +528,12 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(
         // the eigensolvers only ever ask the Hamiltonian for H(k) and S(k)
         hamilt::HamiltHSMatrix<TK> hs(static_cast<hamilt::Hamilt<TK> *>(this->p_hamilt));
         hsolver_lcao_obj.solve(
-            hs, this->psi[0], this->pelec, *this->dmat.dm, this->chr, this->inp_->nspin, ucell.omega, skip_charge);
+            hs, this->psi[0], this->pelec, *this->dmat.dm, this->inp_->nspin, ucell.omega);
+        if (this->inp_->ks_solver != "pexsi" && !skip_charge)
+        {
+            LCAO_domain::dm2rho(
+                this->dmat.dm->get_dmr_vec(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
+        }
     }
     else
     {

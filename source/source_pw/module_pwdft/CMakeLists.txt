@@ -36,6 +36,7 @@ list(
   dftu_pw_tools.cpp
   yukawa_screening.cpp
   setup_pot.cpp
+  setup_estate_pw.cpp
   setup_pwrho.cpp
   setup_pwwfc.cpp
   uspp_support.cpp

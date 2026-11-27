@@ -5,7 +5,6 @@
 #include "source_hsolver/hs_matrix.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
-#include "source_estate/module_charge/charge.h" // mohan add 20251024
 #include "source_estate/module_dm/density_matrix.h" // mohan add 20251103
 
 namespace hsolver
@@ -29,14 +28,14 @@ class HSolverLCAO
           nelec(nelec_in), use_gpu(use_gpu_in), world_nproc(world_nproc_in), world_rank(world_rank_in), overlap_cutoff(overlap_cutoff_in){};
 
     /// @param hs supplies H(k) and S(k) of the Hamiltonian for each k point
+    /// Ordinary solvers update DMK/DMR; the caller constructs the real-space density.
+    /// PEXSI constructs the density here while its DM/EDM buffers are alive.
     void solve(HSMatrix<TK>& hs,
                psi::Psi<TK>& psi,
                elecstate::ElecState* pes,
-			   module_dm::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
-			   Charge &chr, // charge density
-			   const int nspin,
-               const double omega, // current cell volume (ucell.omega), NOT rhopw->omega
-			   const bool skip_charge);
+               module_dm::DensityMatrix<TK, double>& dm,
+               const int nspin,
+               const double omega); // PEXSI uses the current cell volume (ucell.omega).
 
   private:
     void hamiltSolvePsiK(ModuleBase::MatrixBlock<TK>& hk,

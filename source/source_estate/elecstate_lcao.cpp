@@ -6,7 +6,6 @@
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_hamilt/module_gint/gint_interface.h"
-#include "source_lcao/rho_tau_lcao.h"
 
 #include <vector>
 
@@ -70,16 +69,6 @@ void ElecStateLCAO<std::complex<double>>::dm2rho(std::vector<std::complex<double
     ModuleBase::WARNING_QUIT("ElecStateLCAO", "pexsi is not completed for multi-k case");
 }
 
-
-template <typename TK>
-void ElecStateLCAO<TK>::dmToRho(std::vector<hamilt::HContainer<double>*>& dmr,
-                                int nspin,
-                                Charge* chr,
-                                const double omega,
-                                bool skip_charge)
-{
-    LCAO_domain::dm2rho(dmr, nspin, chr, PARAM.inp.nelec, omega, skip_charge);
-}
 
 template class ElecStateLCAO<double>;               // Gamma_only case
 template class ElecStateLCAO<std::complex<double>>; // multi-k case
