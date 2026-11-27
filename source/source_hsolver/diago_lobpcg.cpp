@@ -85,7 +85,7 @@ bool DiagoLOBPCG<T, Device>::diag(const HSOperator<T, Device>& op,
         Parallel_Common::reduce_data(&global_dim, 1, comm_.comm);
     }
 #endif
-    // A full [X,P,W] block needs at least 3*b physical rows; trim only optional buffer bands.
+    // A full [X,P,W] block needs at least 3*n_max_ physical rows; trim only optional buffer bands.
     if (3 * n_max_ > global_dim)
     {
         if (n_band_ > static_cast<int>(global_dim) / 3)
