@@ -139,7 +139,7 @@ void md_line(
         const int md_step = mdrun->step_ + mdrun->step_rst_;
         /// Mark the final ionic step on the cell passed to the solver. The
         /// output module then writes the final snapshot even when this step is
-        /// off the out_freq_ion cadence or its SCF did not converge.
+        /// off the out_stru cadence or its SCF did not converge.
         const bool is_final_step = is_last_step(md_step, param_in.mdp.md_nstep);
         if (mdcell.has_backing_unitcell())
         {

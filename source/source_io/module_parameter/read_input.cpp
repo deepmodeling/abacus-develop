@@ -494,13 +494,14 @@ std::string ReadInput::prepare_input(Parameter& param)
         errors += item->domain.validate_explicit(item->label, item->str_values);
     }
 
-    // out_dos and out_mat_xc take one or two tokens. Their vector domains skip the
+    // out_dos, out_mat_xc, and out_stru take one or two tokens. Their vector domains skip the
     // whole-token validation of the scalar readers, so check that every supplied
     // token is a complete value before any read hook runs.
     for (const ModuleIO::Input_Item* item : this->readvalue_items)
     {
         const bool starts_with_boolean = item->label == "out_mat_xc";
-        if (!starts_with_boolean && item->label != "out_dos")
+        const bool is_out_stru = item->label == "out_stru";
+        if (!starts_with_boolean && item->label != "out_dos" && !is_out_stru)
         {
             continue;
         }
@@ -508,7 +509,9 @@ std::string ReadInput::prepare_input(Parameter& param)
         if (valid)
         {
             valid = starts_with_boolean ? is_boolean_token(item->str_values[0])
-                                        : is_integer_token(item->str_values[0]);
+                                        : (is_out_stru
+                                               ? is_boolean_token(item->str_values[0]) || is_integer_token(item->str_values[0])
+                                               : is_integer_token(item->str_values[0]));
         }
         if (valid && item->str_values.size() == 2)
         {
@@ -518,7 +521,9 @@ std::string ReadInput::prepare_input(Parameter& param)
         {
             errors += input_diagnostic(item->label, longstring(item->str_values), "supplied",
                                        starts_with_boolean ? "Expected a Boolean and an optional Integer."
-                                                           : "Expected one Integer and an optional precision Integer.");
+                                                           : (is_out_stru
+                                                                  ? "Expected 0, 1, 2 (or a Boolean) and an optional nonnegative Integer."
+                                                                  : "Expected one Integer and an optional precision Integer."));
         }
     }
 
