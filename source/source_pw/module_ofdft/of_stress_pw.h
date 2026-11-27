@@ -1,6 +1,8 @@
 #ifndef OF_STRESS_PW_H
 #define OF_STRESS_PW_H
 
+#include <fstream>
+
 #include "source_estate/elecstate.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/stress_func.h"
@@ -17,6 +19,8 @@ class OF_Stress_PW : public Stress_Func<double>
         : pelec(pelec_in), rhopw(rhopw_in){};
 
     // calculate the stress in OFDFT
+    // log: running-log stream used for the stress report; injected so this
+    // function does not read the GlobalV::ofs_running process-global.
     void cal_stress(const int nspin,
                     const bool domag,
                     const bool domag_z,
@@ -29,7 +33,8 @@ class OF_Stress_PW : public Stress_Func<double>
                     ModuleSymmetry::Symmetry* p_symm,
                     const pseudopot_cell_vl& locpp,
                     Structure_Factor* p_sf,
-                    K_Vectors* p_kv);
+                    K_Vectors* p_kv,
+                    std::ofstream& log);
 
   protected:
     const elecstate::ElecState* pelec = nullptr;

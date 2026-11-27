@@ -553,6 +553,6 @@ void ESolver_OF::cal_stress(BaseCell &basecell, ModuleBase::matrix &stress)
     ss.cal_stress(
         this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
         PARAM.globalv.gamma_only_pw, stress, kinetic_stress_, ucell, this->get_vdw_result(), &ucell.symm, this->locpp,
-        &sf, &kv);
+        &sf, &kv, GlobalV::ofs_running);
 }
 } // namespace ModuleESolver

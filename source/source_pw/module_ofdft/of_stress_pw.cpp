@@ -19,7 +19,8 @@ void OF_Stress_PW::cal_stress(const int nspin,
                               ModuleSymmetry::Symmetry* p_symm,
                               const pseudopot_cell_vl& locpp,
                               Structure_Factor* p_sf,
-                              K_Vectors* p_kv)
+                              K_Vectors* p_kv,
+                              std::ofstream& log)
 {
     ModuleBase::TITLE("OF_Stress_PW", "cal_stress");
     ModuleBase::timer::start("OF_Stress_PW", "cal_stress");
@@ -116,21 +117,21 @@ void OF_Stress_PW::cal_stress(const int nspin,
 
     const bool ry = false;
     const bool screen = PARAM.inp.test_stress && PARAM.inp.calculation != "md";
-    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, GlobalV::ofs_running);
+    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, log);
 
     if (screen)
     {
-        GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
-        GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
-        GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
-        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, screen, ry, GlobalV::ofs_running);
-        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, screen, ry, GlobalV::ofs_running);
-        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, screen, ry, GlobalV::ofs_running);
-        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, screen, ry, GlobalV::ofs_running);
-        ModuleIO::print_stress("XC    STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
-        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, screen, ry, GlobalV::ofs_running);
-        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, screen, ry, GlobalV::ofs_running);
-        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
+        log << "\n PARTS OF STRESS: " << std::endl;
+        log << std::setiosflags(std::ios::showpos);
+        log << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
+        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, screen, ry, log);
+        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, screen, ry, log);
+        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, screen, ry, log);
+        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, screen, ry, log);
+        ModuleIO::print_stress("XC    STRESS", sigmaxc, screen, ry, log);
+        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, screen, ry, log);
+        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, screen, ry, log);
+        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, log);
     }
     ModuleBase::timer::end("OF_Stress_PW", "cal_stress");
     return;
