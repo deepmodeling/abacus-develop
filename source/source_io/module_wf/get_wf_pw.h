@@ -38,6 +38,9 @@ class Get_wf_pw
      *
      * A spinor has one combined norm and separate up/down complex components.
      * Re/Im output includes the Bloch phase; all fields scale as omega^(-1/2).
+     * @param istep Zero-based ionic step (electronic step in RT-TDDFT); used for the
+     *     cube header and the mode-2 filename suffix.
+     * @param out_app_flag Output layout mode: 0 truncates, 1 appends a frame, 2 adds g{step}.
      */
     void begin(const UnitCell& ucell,
                const Parallel_Grid& pgrid,
@@ -45,6 +48,8 @@ class Get_wf_pw
                const std::vector<int>& out_wfc_norm,
                const std::vector<int>& out_wfc_re_im,
                const std::string& global_out_dir,
+               const int istep,
+               const int out_app_flag,
                std::ofstream& ofs_running) const;
 
   private:
@@ -72,6 +77,8 @@ class Get_wf_pw
                     const Parallel_Grid& pgrid,
                     const K_Vectors& kv,
                     const std::string& out_dir,
+                    const int istep,
+                    const int out_app_flag,
                     const Parallel::ParaBandOutput& band_output,
                     std::ofstream& ofs_running,
                     Workspace* work) const;
@@ -80,6 +87,8 @@ class Get_wf_pw
                        const Parallel_Grid& pgrid,
                        const K_Vectors& kv,
                        const std::string& out_dir,
+                       const int istep,
+                       const int out_app_flag,
                        const Parallel::ParaBandOutput& band_output,
                        std::ofstream& ofs_running,
                        Workspace* work) const;
@@ -99,6 +108,8 @@ class Get_wf_pw
                     const UnitCell& ucell,
                     const Parallel_Grid& pgrid,
                     const std::string& out_dir,
+                    const int istep,
+                    const int out_app_flag,
                     const std::vector<double>& values,
                     std::ofstream& ofs_running) const;
 };

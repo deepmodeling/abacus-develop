@@ -39,6 +39,9 @@ class Get_pchg_pw
      * @brief Write selected bands, either per k-point or after k summation and symmetry.
      * @param ucell Cell whose symmetry workspace may be updated during symmetrization.
      * @param noncolin Whether to retain transverse spinor magnetization components.
+     * @param istep Zero-based ionic step (electronic step in RT-TDDFT); used for the
+     *     cube header and the mode-2 filename suffix.
+     * @param out_app_flag Output layout mode: 0 truncates, 1 appends a frame, 2 adds g{step}.
      */
     void begin(UnitCell* ucell,
                const Parallel_Grid& pgrid,
@@ -47,6 +50,8 @@ class Get_pchg_pw
                const std::string& global_out_dir,
                const bool if_separate_k,
                const bool noncolin,
+               const int istep,
+               const int out_app_flag,
                std::ofstream& ofs_running) const;
 
   private:
@@ -76,6 +81,8 @@ class Get_pchg_pw
                         const K_Vectors& kv,
                         const std::string& out_dir,
                         const bool noncolin,
+                        const int istep,
+                        const int out_app_flag,
                         const Parallel::ParaBandOutput& band_output,
                         std::ofstream& ofs_running,
                         Workspace* work) const;
@@ -85,6 +92,8 @@ class Get_pchg_pw
                       const K_Vectors& kv,
                       const std::string& out_dir,
                       const bool noncolin,
+                      const int istep,
+                      const int out_app_flag,
                       const Parallel::ParaBandOutput& band_output,
                       std::ofstream& ofs_running,
                       Workspace* work) const;
@@ -107,6 +116,8 @@ class Get_pchg_pw
                     const Parallel_Grid& pgrid,
                     const std::string& out_dir,
                     const bool separate_k,
+                    const int istep,
+                    const int out_app_flag,
                     const std::vector<double>& values,
                     std::ofstream& ofs_running) const;
 };

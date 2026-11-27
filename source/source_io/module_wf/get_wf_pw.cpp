@@ -85,6 +85,8 @@ void Get_wf_pw<T, Device>::begin(const UnitCell& ucell,
                                  const std::vector<int>& out_wfc_norm,
                                  const std::vector<int>& out_wfc_re_im,
                                  const std::string& global_out_dir,
+                                 const int istep,
+                                 const int out_app_flag,
                                  std::ofstream& ofs_running) const
 {
     // Resolve global band ownership collectively before validating the selection.
@@ -108,7 +110,7 @@ void Get_wf_pw<T, Device>::begin(const UnitCell& ucell,
         {
             std::fill(work.values[is].begin(), work.values[is].end(), 0.0);
         }
-        write_norm(band, ucell, pgrid, kv, global_out_dir, band_output, ofs_running, &work);
+        write_norm(band, ucell, pgrid, kv, global_out_dir, istep, out_app_flag, band_output, ofs_running, &work);
     }
     for (int band = 0; band < global_nbands_; ++band)
     {
@@ -121,7 +123,7 @@ void Get_wf_pw<T, Device>::begin(const UnitCell& ucell,
             std::fill(work.values[is].begin(), work.values[is].end(), 0.0);
             std::fill(work.imag[is].begin(), work.imag[is].end(), 0.0);
         }
-        write_complex(band, ucell, pgrid, kv, global_out_dir, band_output, ofs_running, &work);
+        write_complex(band, ucell, pgrid, kv, global_out_dir, istep, out_app_flag, band_output, ofs_running, &work);
     }
 }
 
@@ -209,6 +211,8 @@ void Get_wf_pw<T, Device>::write_norm(const int band,
                                       const Parallel_Grid& pgrid,
                                       const K_Vectors& kv,
                                       const std::string& out_dir,
+                                      const int istep,
+                                      const int out_app_flag,
                                       const Parallel::ParaBandOutput& band_output,
                                       std::ofstream& ofs_running,
                                       Workspace* work) const
@@ -224,7 +228,7 @@ void Get_wf_pw<T, Device>::write_norm(const int band,
         // Wavefunction amplitudes carry the inverse square root of the cell volume.
         const double scale = std::sqrt(1.0 / ucell.omega);
         calc_norm(spin_index, scale, work);
-        write_cube(band, spin_index, k_number, "", ucell, pgrid, out_dir, work->values[spin_index], ofs_running);
+        write_cube(band, spin_index, k_number, "", ucell, pgrid, out_dir, istep, out_app_flag, work->values[spin_index], ofs_running);
     }
 }
 
@@ -234,6 +238,8 @@ void Get_wf_pw<T, Device>::write_complex(const int band,
                                          const Parallel_Grid& pgrid,
                                          const K_Vectors& kv,
                                          const std::string& out_dir,
+                                         const int istep,
+                                         const int out_app_flag,
                                          const Parallel::ParaBandOutput& band_output,
                                          std::ofstream& ofs_running,
                                          Workspace* work) const
@@ -256,8 +262,8 @@ void Get_wf_pw<T, Device>::write_complex(const int band,
         {
             const int wfc_component = work->is_spinor && component == 1 ? 1 : 0;
             calc_component(work->wfcr[wfc_component], work->phase, scale, &work->values[component], &work->imag[component]);
-            write_cube(band, component, k_number, "re", ucell, pgrid, out_dir, work->values[component], ofs_running);
-            write_cube(band, component, k_number, "im", ucell, pgrid, out_dir, work->imag[component], ofs_running);
+            write_cube(band, component, k_number, "re", ucell, pgrid, out_dir, istep, out_app_flag, work->values[component], ofs_running);
+            write_cube(band, component, k_number, "im", ucell, pgrid, out_dir, istep, out_app_flag, work->imag[component], ofs_running);
         }
     }
 }
@@ -317,11 +323,22 @@ void Get_wf_pw<T, Device>::write_cube(const int band,
                                       const UnitCell& ucell,
                                       const Parallel_Grid& pgrid,
                                       const std::string& out_dir,
+                                      const int istep,
+                                      const int out_app_flag,
                                       const std::vector<double>& values,
                                       std::ofstream& ofs_running) const
 {
+    // Modes 0 and 1 reuse the fixed filename (mode 0 truncates, mode 1 appends
+    // one frame per written step); only mode 2 embeds the step index.
+    const bool append = (out_app_flag == 1) && (istep > 0);
+
     std::stringstream filename;
-    filename << out_dir << "wfi" << band + 1 << "s" << component + 1 << "k" << k_number << part << ".cube";
+    filename << out_dir << "wfi" << band + 1 << "s" << component + 1 << "k" << k_number << part;
+    if (out_app_flag == 2)
+    {
+        filename << "g" << istep + 1;
+    }
+    filename << ".cube";
 
     std::string data_desc;
     if (part == "re")
@@ -338,7 +355,7 @@ void Get_wf_pw<T, Device>::write_cube(const int band,
     }
     // collinear spin channel (nspin=2); spinor components (nspin=4) are not spin channels
     data_desc += ModuleIO::make_spin_tag(component, nspin_);
-    ModuleIO::write_vdata_palgrid(pgrid, values.data(), component, nspin_, 0, filename.str(), 0.0, &ucell, 11, 0, false, true, false, ofs_running, data_desc);
+    ModuleIO::write_vdata_palgrid(pgrid, values.data(), component, nspin_, istep, filename.str(), 0.0, &ucell, 11, 0, false, true, append, ofs_running, data_desc);
 }
 
 // Explicit instantiation emits both precisions for each supported device from this .cpp file.
