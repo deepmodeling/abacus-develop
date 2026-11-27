@@ -190,7 +190,7 @@ if(USE_KML)
     list(APPEND _abacus_linalg_libs KML::FFTW3_FLOAT)
   endif()
 elseif(MKL_FOUND)
-  list(APPEND _abacus_linalg_libs ${MKL_LIBRARIES})
+  list(APPEND _abacus_linalg_libs ${ABACUS_MKL_LIBRARIES})
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     list(APPEND _abacus_linalg_libs ifcore)
   endif()
@@ -280,7 +280,7 @@ foreach(
 endforeach()
 
 if(MKL_FOUND)
-  abacus_add_target_compile_requirements("${MKL_LIBRARIES}")
+  abacus_add_target_compile_requirements("${ABACUS_MKL_LIBRARIES}")
 endif()
 
 # ------------------------------------------------------------------------------

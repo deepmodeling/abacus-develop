@@ -10,8 +10,8 @@
 # Search roots: MKLROOT, MKL_ROOT, or the MKLROOT environment variable.
 #
 # Optional cache variables:
-#   MKL_LINK       AUTO (default), static, or dynamic
-#   MKL_MPI        AUTO (default), openmpi, intelmpi, or mpich
+#   ABACUS_MKL_LINK       AUTO (default), static, or dynamic
+#   ABACUS_MKL_MPI        AUTO (default), openmpi, intelmpi, or mpich
 #
 
 include(FindPackageHandleStandardArgs)
@@ -19,7 +19,7 @@ include(FindPackageHandleStandardArgs)
 # Reuse targets configured by this module.  ABACUS deliberately keeps its
 # adapter targets separate from the provider-owned MKL:: namespace.
 if(TARGET abacus::mkl)
-  set(MKL_LIBRARIES abacus::mkl)
+  set(ABACUS_MKL_LIBRARIES abacus::mkl)
   if(ENABLE_MPI)
     if(NOT TARGET abacus::mkl_scalapack)
       message(
@@ -27,7 +27,7 @@ if(TARGET abacus::mkl)
           "The existing ABACUS MKL configuration lacks abacus::mkl_scalapack "
           "for an MPI build.")
     endif()
-    set(MKL_LIBRARIES abacus::mkl_scalapack)
+    set(ABACUS_MKL_LIBRARIES abacus::mkl_scalapack)
   endif()
   set(MKL_FOUND TRUE)
   return()
@@ -52,13 +52,13 @@ set(_mkl_root_hints "${MKLROOT}" "${MKL_ROOT}" "$ENV{MKLROOT}")
 list(REMOVE_ITEM _mkl_root_hints "")
 list(REMOVE_DUPLICATES _mkl_root_hints)
 
-set(MKL_LINK
+set(ABACUS_MKL_LINK
     AUTO
     CACHE STRING "oneMKL link mode: AUTO, static, or dynamic")
-set_property(CACHE MKL_LINK PROPERTY STRINGS AUTO static dynamic)
-string(TOLOWER "${MKL_LINK}" _mkl_link)
+set_property(CACHE ABACUS_MKL_LINK PROPERTY STRINGS AUTO static dynamic)
+string(TOLOWER "${ABACUS_MKL_LINK}" _mkl_link)
 if(NOT _mkl_link MATCHES "^(auto|static|dynamic)$")
-  message(FATAL_ERROR "MKL_LINK must be AUTO, static, or dynamic.")
+  message(FATAL_ERROR "ABACUS_MKL_LINK must be AUTO, static, or dynamic.")
 endif()
 
 # Keep MKL threading internal: derive it from ABACUS OpenMP support and the
@@ -73,18 +73,18 @@ if(ENABLE_OPENMP)
 endif()
 
 if(ENABLE_MPI)
-  set(MKL_MPI
+  set(ABACUS_MKL_MPI
       AUTO
       CACHE STRING "oneMKL MPI interface: AUTO, openmpi, intelmpi, or mpich")
-  set_property(CACHE MKL_MPI PROPERTY STRINGS AUTO openmpi intelmpi mpich)
+  set_property(CACHE ABACUS_MKL_MPI PROPERTY STRINGS AUTO openmpi intelmpi mpich)
 
-  string(TOLOWER "${MKL_MPI}" _mkl_mpi)
+  string(TOLOWER "${ABACUS_MKL_MPI}" _mkl_mpi)
   if(_mkl_mpi STREQUAL "auto")
     if(CMAKE_CROSSCOMPILING)
       message(
         FATAL_ERROR
           "CMake cannot auto-determine MKL-BLACS interface correctly with cross compiling. "
-          "Please manually pass -DMKL_MPI=<intelmpi|mpich|openmpi> flag to CMake."
+          "Please manually pass -DABACUS_MKL_MPI=<intelmpi|mpich|openmpi> flag to CMake."
       )
     endif()
     if("${MPI_CXX_LIBRARY_VERSION_STRING}" MATCHES "Open MPI")
@@ -96,7 +96,7 @@ if(ENABLE_MPI)
     # MPICH uses Intel-MPI-compatible BLACS on Unix.
     set(_mkl_mpi intelmpi)
   elseif(NOT _mkl_mpi MATCHES "^(openmpi|intelmpi)$")
-    message(FATAL_ERROR "MKL_MPI must be AUTO, openmpi, intelmpi, or mpich.")
+    message(FATAL_ERROR "ABACUS_MKL_MPI must be AUTO, openmpi, intelmpi, or mpich.")
   endif()
 
   set(_mkl_blacs_name mkl_blacs_${_mkl_mpi}_lp64)
@@ -231,14 +231,14 @@ if(MKL_FOUND)
   if(_mkl_any_static AND NOT _mkl_all_static)
     message(
       FATAL_ERROR "The selected oneMKL libraries mix static and shared files. "
-                  "Choose a consistent MKL_LINK mode or library set.")
+                  "Choose a consistent ABACUS_MKL_LINK mode or library set.")
   endif()
   if(_mkl_link STREQUAL "static" AND NOT _mkl_all_static)
     message(
-      FATAL_ERROR "MKL_LINK=static did not select static oneMKL libraries.")
+      FATAL_ERROR "ABACUS_MKL_LINK=static did not select static oneMKL libraries.")
   elseif(_mkl_link STREQUAL "dynamic" AND _mkl_all_static)
     message(
-      FATAL_ERROR "MKL_LINK=dynamic did not select shared oneMKL libraries.")
+      FATAL_ERROR "ABACUS_MKL_LINK=dynamic did not select shared oneMKL libraries.")
   endif()
 
   # oneMKL requires pthread even with mkl_sequential
@@ -288,9 +288,9 @@ if(MKL_FOUND)
         abacus_mkl_scalapack INTERFACE ${MKL_SCALAPACK} ${MKL_BLACS}
                                        abacus::mkl MPI::MPI_CXX)
     endif()
-    set(MKL_LIBRARIES abacus::mkl_scalapack)
+    set(ABACUS_MKL_LIBRARIES abacus::mkl_scalapack)
   else()
-    set(MKL_LIBRARIES abacus::mkl)
+    set(ABACUS_MKL_LIBRARIES abacus::mkl)
   endif()
 endif()
 
