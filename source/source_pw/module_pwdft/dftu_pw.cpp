@@ -110,7 +110,9 @@ void cal_occ_pw(const void* psi_in,
     if (occ_mixer != nullptr && p_chgmix != nullptr)
     {
         occ_mixer->collect(occmat);
+        const bool applied = p_chgmix->has_uom_coefficients();
         p_chgmix->mix_uom(occ_mixer->uom(), occ_mixer->uom_save());
+        occ_mixer->record_mixing(applied);
         occ_mixer->write_back(occmat);
     }
 
@@ -159,6 +161,11 @@ std::vector<ScfDiagnostics::ScfOccupationBlock> observe_occ_pw(
             {
                 const double* input = dftu.occmat().mat(atom,l,spin).c;
                 block.input.assign(input,input+size);
+            }
+            if (dftu.has_occ_mixer())
+            {
+                block.raw_before_occupation_mixing = dftu.occ_mixer().raw_block(atom, spin, size);
+                block.after_occupation_mixing = dftu.occ_mixer().mixed_block(atom, spin, size);
             }
             blocks.push_back(block);
         }

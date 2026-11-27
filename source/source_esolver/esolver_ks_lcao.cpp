@@ -649,9 +649,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
     // JSON output and density restart files are handled
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
 
+    ScfDiagnostics::ScfDiagnosticStep diagnostic_step;
+    std::vector<ScfDiagnostics::ScfOccupationBlock> diagnostic_blocks;
     if (observe_scf)
     {
-        ScfDiagnostics::ScfDiagnosticStep diagnostic_step;
         diagnostic_step.output_dir = global_out_dir;
         diagnostic_step.rank = GlobalV::MY_RANK;
         diagnostic_step.ionic_step = istep + 1;
@@ -678,6 +679,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
         diagnostic_step.mixing_dftu = this->inp_->mixing_dftu;
         diagnostic_step.mixing_dmr = this->inp_->mixing_dmr;
         diagnostic_step.mixing_restart = this->inp_->mixing_restart;
+        diagnostic_step.uramping_eV = this->dftu_->get_uramping() * ModuleBase::Ry_to_eV;
+        diagnostic_step.u_converged = this->dftu_->u_converged();
         for (hamilt::Operator<TK>* op = hamilt_lcao->getOperator(); op != nullptr; op = op->next_op)
         {
             // The onsite Hubbard operator has its own lcao_dftu main-chain
@@ -686,7 +689,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
             OnsiteOperator* onsite = dynamic_cast<OnsiteOperator*>(op);
             if (onsite != nullptr)
             {
-                onsite->write_scf_diagnostics(diagnostic_step, running_log);
+                diagnostic_blocks = onsite->observe_scf_occupations();
             }
         }
     }
@@ -717,7 +720,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
     // except at convergence or the maximum iteration count.
     if (iter != iter_limit && !conv_esolver)
     {
-        if (this->inp_->mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && this->inp_->mixing_dmr)
+        const int rho_history = this->p_chgmix->get_rho_mdata().ndim_history;
+        const int dmr_history = this->p_chgmix->get_dmr_mdata().ndim_history;
+        if (this->inp_->mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0
+            && this->inp_->mixing_dmr && rho_history == dmr_history + 1)
         {
             // Extract the contiguous per-spin DMR buffers expected by the
             // stateless mixing kernel.
@@ -733,7 +739,29 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
             module_charge::mix_dmr(
                 dmr_out, dmr_in, dmr_containers[0]->get_nnr(), this->p_chgmix->get_mixing(),
                 this->p_chgmix->get_dmr_mdata(), this->p_chgmix->get_mixing_config());
+            diagnostic_step.dmr_mixing_executed = true;
         }
+    }
+
+    if (observe_scf)
+    {
+        if (diagnostic_step.dmr_mixing_executed)
+        {
+            for (hamilt::Operator<TK>* op = hamilt_lcao->getOperator(); op != nullptr; op = op->next_op)
+            {
+                typedef hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>> OnsiteOperator;
+                OnsiteOperator* onsite = dynamic_cast<OnsiteOperator*>(op);
+                if (onsite != nullptr)
+                {
+                    const std::vector<ScfDiagnostics::ScfOccupationBlock> mixed = onsite->observe_scf_occupations();
+                    for (std::size_t i = 0; i < diagnostic_blocks.size(); ++i)
+                    {
+                        diagnostic_blocks[i].after_dmr_mixing = mixed.at(i).raw_output;
+                    }
+                }
+            }
+        }
+        ScfDiagnostics::write_scf_diagnostics(diagnostic_step, diagnostic_blocks, running_log);
     }
 
     // control the output related to the finished iteration

@@ -10,12 +10,6 @@ abacus_disable_feature_definitions(_OPENMP)
 if(ENABLE_MPI)
 
   addtest(
-    TARGET MODULE_DFTU_scf_diagnostics
-    LIBS
-    SOURCES test_dftu_scf_diagnostics.cpp
-            ../../../source_estate/scf_diagnostics.cpp)
-
-  addtest(
     TARGET MODULE_DFTU_pots
     LIBS base device
     SOURCES test_dftu_nao_pots.cpp)

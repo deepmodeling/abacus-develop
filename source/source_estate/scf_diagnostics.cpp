@@ -54,7 +54,7 @@ void ScfDiagnostics::write_scf_diagnostics(const ScfDiagnosticStep& step,
         running_log << "Write SCF diagnostic records to file: " << path << '\n';
     }
     out << std::scientific << std::setprecision(17);
-    out << "{\"schema\":3,\"basis_type\":\"" << step.basis_type << "\",\"ionic_step\":" << step.ionic_step
+    out << "{\"schema\":4,\"basis_type\":\"" << step.basis_type << "\",\"ionic_step\":" << step.ionic_step
         << ",\"iteration\":" << step.iteration
         << ",\"threshold\":" << step.threshold << ",\"drho\":" << step.drho
         << ",\"charge_residual_L1_per_electron\":" << step.charge_residual
@@ -79,7 +79,12 @@ void ScfDiagnostics::write_scf_diagnostics(const ScfDiagnosticStep& step,
         << ",\"mixing_type\":\"" << step.mixing_type << "\",\"mixing_beta\":" << step.beta
         << ",\"mixing_beta_mag\":" << step.beta_mag << ",\"mixing_dftu\":" << step.mixing_dftu
         << ",\"mixing_dmr\":" << step.mixing_dmr << ",\"mixing_restart\":" << step.mixing_restart
-        << ",\"blocks\":[";
+        << ",\"uramping_eV\":" << step.uramping_eV
+        << ",\"u_at_target\":" << step.u_converged
+        << ",\"dmr_mixing_executed\":" << step.dmr_mixing_executed
+        << ",\"occupation_mixing_source_iteration\":";
+    if (step.iteration > 1) { out << step.iteration - 1; } else { out << "null"; }
+    out << ",\"blocks\":[";
     for (std::size_t i = 0; i < blocks.size(); ++i)
     {
         const ScfOccupationBlock& b = blocks[i];
@@ -93,9 +98,13 @@ void ScfDiagnostics::write_scf_diagnostics(const ScfDiagnosticStep& step,
         write_matrix(out, b.input);
         out << ",\"n_raw_out\":";
         write_matrix(out, b.raw_output);
-        // This observer only supports onsite collinear runs without occupation
-        // mixing. Do not invent a post-mixing occupation when none exists.
-        out << ",\"n_after_occupation_mixing\":null}";
+        out << ",\"n_before_occupation_mixing\":";
+        write_matrix(out, b.raw_before_occupation_mixing);
+        out << ",\"n_after_occupation_mixing\":";
+        write_matrix(out, b.after_occupation_mixing);
+        out << ",\"n_after_dmr_mixing\":";
+        write_matrix(out, b.after_dmr_mixing);
+        out << '}';
     }
     out << "]}\n";
     out.flush();

@@ -185,6 +185,9 @@ void Charge_Mixing::init_mixing()
         }
     }
 
+    // Auxiliary histories use the coefficients of this newly constructed mixer.
+    this->dmr_mdata.reset();
+    this->uom_mdata.reset();
     ModuleBase::timer::end("Charge_Mixing", "init_mixing");
 
     return;
@@ -308,6 +311,12 @@ void Charge_Mixing::mix_uom(std::vector<double>& uom_in, std::vector<double>& uo
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_uom");
     ModuleBase::timer::start("Charge_Mixing", "mix_uom");
+    if (this->rho_mdata.ndim_history != this->uom_mdata.ndim_history + 1)
+    {
+        // No fresh charge coefficients (restart or a skipped charge step).
+        ModuleBase::timer::end("Charge_Mixing", "mix_uom");
+        return;
+    }
     double* uom_value_out = uom_in.data();
     double* uom_value_in = uom_save_in.data();
     // For all nspin cases, uom_array layout is already fully sized

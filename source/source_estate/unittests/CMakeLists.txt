@@ -24,6 +24,11 @@ addtest(
   SOURCES test_pcc_2d.cpp ../pcc_2d.cpp ../charge_moments.cpp
           ../../source_cell/cell_geometry.cpp)
 
+addtest(
+  TARGET MODULE_ESTATE_scf_diagnostics
+  LIBS
+  SOURCES test_scf_diagnostics.cpp ../scf_diagnostics.cpp)
+
 if(ENABLE_MPI)
 
   set(pcc_test_sources

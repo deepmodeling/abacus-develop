@@ -69,6 +69,10 @@ class Charge_Mixing
      * @param uom_save_in input occupation matrix
      */
     void mix_uom(std::vector<double>& uom_in, std::vector<double>& uom_save_in);
+    bool has_uom_coefficients() const
+    {
+        return rho_mdata.ndim_history == uom_mdata.ndim_history + 1;
+    }
 
     /**
      * @brief reset mixing, actually we only call init_mixing() to reset mixing instead of this function

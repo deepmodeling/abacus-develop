@@ -355,12 +355,10 @@ void ESolver_KS::iter_finish(
     // SCF will continue if U is not converged for uramping calculation
     bool converged_u = true;
     // to avoid unnecessary dependence on dft+u, refactor is needed
-#ifdef __LCAO
     if (this->inp_->dft_plus_u)
     {
         converged_u = this->dftu_->u_converged();
     }
-#endif
 
     module_charge::ScfMixingCtx ctx;
     ctx.iter_limit = iter_limit;

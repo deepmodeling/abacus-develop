@@ -167,17 +167,20 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contribute_hubbard_atoms
         if (!this->dftu->is_occmat_ready())
         {
             assert(dmr != nullptr);
-            DFTU_LCAO::compute_occ_from_dmr(*this->ucell,
-                                            *this->dftu,
+            DFTU_LCAO::project_occ_from_dmr(*this->ucell,
                                             iat0,
-                                            target_L,
-                                            this->current_spin,
                                             this->nspin,
                                             adjs,
                                             pv,
                                             this->nlm_tot,
                                             *dmr,
                                             occ);
+            if (this->dftu->has_occ_mixer())
+            {
+                const double beta = this->dftu->occ_mixer().beta();
+                this->dftu->occ_mixer().mix_onsite_block(iat0, this->current_spin, occ, beta);
+            }
+            this->dftu->occmat().set_flat(iat0, target_L, this->current_spin, occ);
         }
         else
         {
@@ -194,6 +197,12 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contribute_hubbard_atoms
             snapshot.l = target_L;
             snapshot.u_eV = u_value * ModuleBase::Ry_to_eV;
             snapshot.input = occ;
+            if (this->dftu->has_occ_mixer() && !this->dftu->is_occmat_ready())
+            {
+                const int size = occ.size();
+                snapshot.raw_before_occupation_mixing = this->dftu->occ_mixer().raw_block(iat0, this->current_spin, size);
+                snapshot.after_occupation_mixing = this->dftu->occ_mixer().mixed_block(iat0, this->current_spin, size);
+            }
             this->diagnostic_inputs_.push_back(snapshot);
         }
         std::vector<double> pot_onsite_tmp(occ.size());
@@ -217,7 +226,10 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::finish_spin_step()
     }
     if (this->current_spin == this->nspin - 1 || this->nspin == 4)
     {
-        this->dftu->set_occmat_stale();
+        if (this->dftu->get_init_occ_mat() != 2)
+        {
+            this->dftu->set_occmat_stale();
+        }
     }
     if (this->nspin == 2)
     {
@@ -320,16 +332,14 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 }
 
 template <typename TK, typename TR>
-void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::write_scf_diagnostics(
-    const ScfDiagnostics::ScfDiagnosticStep& step,
-    std::ostream& running_log) const
+std::vector<ScfDiagnostics::ScfOccupationBlock>
+hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::observe_scf_occupations() const
 {
     // Honest scope restriction: no spinor packing or symmetry restoration is
     // silently interpreted as a real collinear 5x5 matrix.
-    if (this->nspin != 2 || ModuleSymmetry::Symmetry::symm_flag == 1
-        || step.mixing_dftu != 0 || step.mixing_dmr)
+    if (this->nspin != 2 || ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        throw std::runtime_error("SCF diagnostics require nspin=2, symmetry=0, mixing_dftu=0, mixing_dmr=0");
+        throw std::runtime_error("SCF diagnostics require nspin=2, symmetry=0");
     }
     const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
     std::vector<ScfDiagnostics::ScfOccupationBlock> blocks;
@@ -357,6 +367,8 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::write_scf_diagnostics(
                 if (input.atom == block.atom && input.spin == spin)
                 {
                     block.input = input.input;
+                    block.raw_before_occupation_mixing = input.raw_before_occupation_mixing;
+                    block.after_occupation_mixing = input.after_occupation_mixing;
                 }
             }
             const hamilt::HContainer<double>* dmr = this->dm_->get_dmr_ptr(spin + 1);
@@ -365,7 +377,7 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::write_scf_diagnostics(
             blocks.push_back(block);
         }
     }
-    ScfDiagnostics::write_scf_diagnostics(step, blocks, running_log);
+    return blocks;
 }
 
 template class hamilt::DFTU_onsite<hamilt::OperatorLCAO<double, double>>;

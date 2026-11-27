@@ -1,5 +1,5 @@
-#ifndef DFTU_SCF_DIAGNOSTICS_H
-#define DFTU_SCF_DIAGNOSTICS_H
+#ifndef SCF_DIAGNOSTICS_H
+#define SCF_DIAGNOSTICS_H
 
 #include <ostream>
 #include <string>
@@ -16,6 +16,12 @@ struct ScfOccupationBlock
     double u_eV = 0.0;
     std::vector<double> input;
     std::vector<double> raw_output;
+    // These two snapshots belong to construction of THIS step's input
+    // Hamiltonian, normally from the preceding electronic output.
+    std::vector<double> raw_before_occupation_mixing;
+    std::vector<double> after_occupation_mixing;
+    // Projection of this step's DMR after its actual density-matrix mixing.
+    std::vector<double> after_dmr_mixing;
 };
 
 struct ScfDiagnosticStep
@@ -29,6 +35,9 @@ struct ScfDiagnosticStep
     int mixing_dftu = 0;
     bool mixing_dmr = false;
     double mixing_restart = 0.0;
+    double uramping_eV = 0.0;
+    bool u_converged = true;
+    bool dmr_mixing_executed = false;
     double beta = 0.0;
     double beta_mag = 0.0;
     double threshold = 0.0;

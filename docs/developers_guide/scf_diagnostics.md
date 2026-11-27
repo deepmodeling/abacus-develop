@@ -1,4 +1,4 @@
-# Onsite LCAO SCF observer (local diagnostic build)
+# Onsite DFT+U mixing and per-iteration diagnostics
 
 Set `ABACUS_SCF_DIAGNOSTICS=1` in the runtime environment to enable the
 observer. It writes one double-precision JSON record per completed electronic
@@ -7,12 +7,11 @@ updates, thresholds, or mixing coefficients are changed. All MPI ranks
 participate in the extra projection reductions; only rank zero writes the
 file. Each record is flushed immediately.
 
-Supported scope: `dft_plus_u=1`, `nspin=2`, `symmetry=0`, `mixing_dftu=0`,
-`mixing_dmr=0`. Unsupported layouts raise an error rather than being
-reinterpreted as real collinear matrices. The analysis accepts any number of
-atoms and iterations, and can preserve complex Hermitian matrices if supplied;
-the source observer itself does not implement spinor or occupation-mixing
-output. This is a local diagnostic extension, not an upstream feature.
+Supported diagnostic scope: onsite `dft_plus_u=1`, `nspin=2`, double precision,
+and LCAO `symmetry=0`. Both `mixing_dftu` and LCAO `mixing_dmr` can be observed,
+individually or with `uramping`. Enabling both mixing options is rejected.
+Spinor/symmetry diagnostic layouts and PW DMR mixing are outside this feature.
+The calculations themselves retain the existing spin-layout support.
 
 ## Matrix definitions and timing
 
@@ -28,8 +27,20 @@ the potential, or mixing buffers. It is observed after the base solver computes
 DRHO, magnetism, gap, and energy, and before optional DMR mixing. Charge-density
 mixing changes rho, not this solved DMR.
 
-`n_after_occupation_mixing` is `null`: no occupation mixer runs in this supported
-onsite path. It is not a synonym for raw output or charge-mixed density.
+Schema 4 records `n_before_occupation_mixing` and
+`n_after_occupation_mixing` for the projection/mixing that constructed the
+**current Hamiltonian input**. This projection normally belongs to the preceding
+electronic output, identified by `occupation_mixing_source_iteration`; its ionic
+step is the record's ionic step. The source iteration is null at an ionic-step
+boundary or file initialization. These fields are null when no occupation mixing
+was executed, including the first unseeded LCAO projection. They must not be
+paired with the current `n_raw_out` as if they were the same projection.
+
+`n_after_dmr_mixing` is the current step's DMR projected after DMR mixing, and
+is null if DMR mixing did not execute. Its presence agrees with
+`dmr_mixing_executed`. `n_raw_out` is always captured before DMR mixing.
+The writer emits one record per completed electronic step, including the final
+step, and keeps absent first-step input null.
 
 The representation is the real onsite projector basis, not the nonorthogonal
 NAO coefficient matrix or a Mulliken/Lowdin population matrix. Projectors use
@@ -123,12 +134,10 @@ complete elapsed job wall time. `scf_converged` is the actual solver flag.
 Local projected d moments in analysis are Tr(n_up_raw)-Tr(n_down_raw) in
 muB per Hubbard atom; they are partial shell moments, not total atomic moments.
 
-## Shared PW observer (schema 3)
+## PW projection observer
 
 The record model and writer now live in `source_estate/scf_diagnostics.*`,
-under `ScfDiagnostics`, and are built unconditionally. LCAO still observes its
-actual onsite input buffer; its established binary remains pinned for the
-LCAO rerun campaign.
+under `ScfDiagnostics`, and are built unconditionally. LCAO observes its actual onsite Hamiltonian input buffer.
 
 For CPU PW, `DFTU_BASE::observe_occ_pw` projects the freshly solved wavefunctions
 into a separate `OccupationMatrix`, using exactly the native onsite projector,
@@ -138,7 +147,7 @@ matrix. It restores the wavefunction k cursor and projector cache to that k.
 The native `dftu.occmat()` retained after iter_init is the actual Hamiltonian
 input; without a loaded seed the first input is absent. The raw output is not
 the one-step-lagged native occ_mat.txt. Supported scope is collinear nspin=2,
-double precision and mixing_dftu=0; no independent occupation mixer is claimed.
+double precision; occupation mixing snapshots are supplied by the native mixer.
 
 PW projectors are the original smoothed onsite atomic projectors represented
 in plane waves, with overlaps contracted over bands and weighted by the native
@@ -164,3 +173,51 @@ L1 channels are also retained as explicitly named additional measurements.
 `scf_thr_type` identifies the native convergence metric. No equality between
 these L2/L1 channels and the native PW DRHO is implied. L2 fields are null
 where not observed; missing values are not replaced with zero.
+
+## Mixing and U-ramping lifecycle
+
+`mixing_dftu=true` now acts on LCAO onsite occupations before the Hubbard
+potential and its band-energy replacement correction are constructed. It uses
+`n_next = beta*n_projected + (1-beta)*n_previous_input`, with `mixing_beta`.
+The first unseeded projection passes through; file-loaded occupations seed the
+previous input. `init_occ_mat=2` remains fixed and is never mixed. PW retains
+its existing reuse of charge-history coefficients; this is not an independent
+occupation-residual Pulay solver. Its first unseeded projection is not damped
+against an invented zero matrix.
+
+`mixing_dmr=true` requires LCAO, `scf_thr_type=2`, and `mixing_restart>0`.
+It starts at the first threshold-triggered restart, preserving the existing
+activation policy. It mixes the solved DMR after charge mixing and before the
+next Hamiltonian construction. In the collinear case, charge and magnetic DMR
+channels use `mixing_beta` and `mixing_beta_mag`. DMR mixing omits Kerker
+screening. Its history must advance exactly once for each fresh charge-history
+coefficient set; skipped charge steps also skip auxiliary mixing.
+
+Any positive `uramping` increment (eV) enables ramping from zero to the target
+`hubbard_u`, clamping the last increment. Zero and negative values disable it.
+It requires `mixing_restart>scf_thr` and is incompatible with Yukawa U. The
+threshold schedules the next iteration's restart; that iteration updates U
+before building the Hamiltonian and cannot report convergence. Reconstructing
+the charge mixer clears charge, DMR and PW occupation histories together.
+The previous physical matrix remains available as an initial guess. LCAO
+occupation mixing is linear and retains only that one previous input, with no
+multistep coefficients to reuse across U stages. Once U reaches its target,
+SCF must still satisfy its native convergence checks. This guard also applies
+to PW-only builds. `uramping_eV`, per-block `U_eff_eV`, `u_at_target`, and restart
+fields make the applied U sequence inspectable. Energy changes across different
+U stages are not fixed-Hamiltonian convergence measures.
+
+The opt-in diagnostics preserve the original source energy, density and
+potential. They do not change convergence criteria or select a magnetic state.
+U-ramping and mixing can reach different metastable solutions; acceptance is
+based on verified update semantics, not an assumption of identical final states.
+
+## Regression cases
+
+`tests/17_DS_DFTU/CASES_DFTU_MIXING.txt` lists fixed-input Autotest cases for
+PW baseline/occupation/ramping/combined and the corresponding LCAO cases plus
+DMR and DMR+ramping. Run with `OMP_NUM_THREADS=1` and
+`ABACUS_SCF_DIAGNOSTICS=1`. The read-only helper
+`tests/integrate/validation_tools/check_dftu_scf_diagnostics.py` validates
+matrix timing, finite Hermitian matrices, the Hubbard energy identity, and
+actual execution of the requested features. It does not launch calculations.

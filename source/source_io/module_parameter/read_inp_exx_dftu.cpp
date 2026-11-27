@@ -866,7 +866,7 @@ void ReadInput::item_dftu()
         item.unit = "";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read()) { return; }
-            if (para.inp.yukawa_potential && para.globalv.uramping > 0.01)
+            if (para.inp.yukawa_potential && para.globalv.uramping > 0.0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "yukawa_potential and uramping cannot be used together. "
@@ -894,8 +894,8 @@ void ReadInput::item_dftu()
         item.annotation = "increasing U values during SCF";
         item.category = "DFT+U correction";
         item.type = "Real";
-        item.description = "Once uramping > 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho<mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.";
-        item.default_value = "-1.0.";
+        item.description = "For any positive uramping increment (eV), DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho<mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.";
+        item.default_value = "-1.0";
         item.unit = "eV";
         item.set_availability("dft_plus_u==1 and mixing_restart>0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -919,6 +919,17 @@ void ReadInput::item_dftu()
                     para.sys.uramping = 0.0;
                     ModuleBase::WARNING("ReadInput", "No atoms are correlated, U-ramping is closed!!!");
                 }
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.sys.uramping > 0.0
+                && (para.input.dft_plus_u != 1 || para.input.mixing_restart <= para.input.scf_thr))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "uramping requires dft_plus_u=1 and mixing_restart>scf_thr");
+            }
+            if (para.sys.uramping > 0.0 && para.input.yukawa_potential)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "uramping cannot be combined with yukawa_potential");
             }
         };
         sync_double(input.uramping_eV);

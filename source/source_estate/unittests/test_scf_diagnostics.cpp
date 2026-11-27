@@ -26,6 +26,11 @@ TEST(ScfDiagnostics, PreservePrecisionMissingInputAndAppend)
     ScfDiagnostics::write_scf_diagnostics(step, blocks, log);
     step.iteration = 2;
     blocks[0].input = block.raw_output;
+    blocks[0].raw_before_occupation_mixing = {0.8};
+    blocks[0].after_occupation_mixing = {0.6};
+    blocks[0].after_dmr_mixing = {0.4};
+    step.uramping_eV = 0.1;
+    step.dmr_mixing_executed = true;
     ScfDiagnostics::write_scf_diagnostics(step, blocks, log);
     const std::string path = step.output_dir + "scf_diagnostics.jsonl";
     std::ifstream in(path.c_str());
@@ -39,6 +44,10 @@ TEST(ScfDiagnostics, PreservePrecisionMissingInputAndAppend)
     EXPECT_NE(text.find("\"mixing_restart_executed\":1"), std::string::npos);
     EXPECT_EQ(std::count(text.begin(), text.end(), '\n'), 2);
     EXPECT_EQ(blocks[0].raw_output, block.raw_output);
+    EXPECT_NE(text.find("\"schema\":4"), std::string::npos);
+    EXPECT_NE(text.find("\"occupation_mixing_source_iteration\":1"), std::string::npos);
+    EXPECT_NE(text.find("\"n_after_dmr_mixing\":[4.000000000000000"), std::string::npos);
+    EXPECT_NE(text.find("\"n_after_occupation_mixing\":[5.999999999999999"), std::string::npos);
     EXPECT_NE(log.str().find(path), std::string::npos);
     in.close();
     std::remove(path.c_str());

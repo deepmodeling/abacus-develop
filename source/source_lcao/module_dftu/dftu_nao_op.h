@@ -72,8 +72,7 @@ class DFTU_onsite<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     void set_kv(const K_Vectors* kv_in) { this->kv_ = kv_in; }
 
     // Observes the raw solved DMR without modifying Plus_U, DMR, or mixing.
-    void write_scf_diagnostics(const ScfDiagnostics::ScfDiagnosticStep& step,
-                               std::ostream& running_log) const;
+    std::vector<ScfDiagnostics::ScfOccupationBlock> observe_scf_occupations() const;
 
   private:
     bool should_restore_symmetric_dmr() const;

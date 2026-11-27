@@ -325,9 +325,9 @@ void ESolver_KS_PW<T, Device>::iter_finish(
     double magnetic_l2 = 0.0;
     if (observe_scf)
     {
-        if (this->inp_->nspin != 2 || this->inp_->mixing_dftu != 0 || this->inp_->precision != "double")
+        if (this->inp_->nspin != 2 || this->inp_->precision != "double")
         {
-            ModuleBase::WARNING_QUIT("SCF diagnostics", "PW observer requires nspin=2, precision=double, mixing_dftu=0");
+            ModuleBase::WARNING_QUIT("SCF diagnostics", "PW observer requires nspin=2, precision=double");
         }
         module_charge::cal_spin_channel_residuals(
             this->chr, this->inp_->nelec, *this->chr.rhopw, ucell.omega, charge_residual, magnetic_residual);
@@ -369,8 +369,10 @@ void ESolver_KS_PW<T, Device>::iter_finish(
         diagnostic_step.mixing_dftu = this->inp_->mixing_dftu;
         diagnostic_step.mixing_dmr = this->inp_->mixing_dmr;
         diagnostic_step.mixing_restart = this->inp_->mixing_restart;
+        diagnostic_step.uramping_eV = this->dftu_->get_uramping() * ModuleBase::Ry_to_eV;
+        diagnostic_step.u_converged = this->dftu_->u_converged();
         const bool input_ready = iter > 1 || istep > 0 || this->dftu_->is_occmat_ready();
-        const auto blocks = DFTU_BASE::observe_occ_pw<Device>(
+        const std::vector<ScfDiagnostics::ScfOccupationBlock> blocks = DFTU_BASE::observe_occ_pw<Device>(
             this->stp.template get_psi_t<T, Device>(), this->pelec->wg, ucell, this->kv.isk.data(),
             this->inp_->kpar, *this->dftu_, input_ready);
         ScfDiagnostics::write_scf_diagnostics(diagnostic_step, blocks, running_log);
