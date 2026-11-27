@@ -16,7 +16,7 @@
 # then:
 #     ./build_abacus_windows.sh
 
-if ! command -v pacman >/dev/null 2>&1; then
+if ! command -v pacman > /dev/null 2>&1; then
   echo "ERROR: pacman not found. Run this inside an MSYS2 shell (https://www.msys2.org)."
   exit 1
 fi
@@ -52,7 +52,7 @@ pacman -S --needed --noconfirm bc
 TOOL=$(cd "$(dirname "$0")" && pwd)
 INSTALL_DIR="$TOOL/install"
 mkdir -p "$INSTALL_DIR"
-cat >"$INSTALL_DIR/setup" <<'EOF'
+cat > "$INSTALL_DIR/setup" << 'EOF'
 # Native Windows (MSYS2/MinGW-w64) prerequisites live under /mingw64.
 export MINGW_PREFIX="${MINGW_PREFIX:-/mingw64}"
 export OPENBLAS_ROOT="$MINGW_PREFIX"   # OpenBLAS provides BLAS *and* LAPACK
@@ -60,7 +60,7 @@ export FFTW_ROOT="$MINGW_PREFIX"
 export PATH="$MINGW_PREFIX/bin:$PATH"
 EOF
 
-cat <<EOF
+cat << EOF
 ========================== done ==========================
 MinGW-w64 prerequisites installed; environment recorded in:
     $INSTALL_DIR/setup

@@ -107,9 +107,6 @@ class Setcell
         input.search_radius = 8.5 * ModuleBase::ANGSTROM_AU;
         input.esolver_type = "lj";
 
-        input.mdp.dump_virial = true;
-        input.mdp.dump_force = true;
-        input.mdp.dump_vel = true;
         input.cal_stress = true;
 
         input.mdp.md_restart = false;

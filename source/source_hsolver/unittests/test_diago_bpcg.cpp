@@ -98,7 +98,7 @@ class DiagoBPCGPrepare
     {
         // calculate eigenvalues by LAPACK;
         double *e_lapack = new double[npw];
-        auto ev = DIAGOTEST::hmatrix;
+        std::vector<std::complex<double>> ev = DIAGOTEST::hmatrix;
         if (mypnum == 0)
         {
             lapackEigen(

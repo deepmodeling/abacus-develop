@@ -15,7 +15,7 @@ void Inverse_Matrix_S::init(int dim_in)
     return;
 }
 
-const ComplexMatrix& Inverse_Matrix_S::cal_inverse(ComplexMatrix& S)
+const ComplexMatrix &Inverse_Matrix_S::cal_inverse(ComplexMatrix &S)
 {
     if (0 == loop_count)
     {
@@ -28,7 +28,7 @@ const ComplexMatrix& Inverse_Matrix_S::cal_inverse(ComplexMatrix& S)
         {
             if (1 == loop_count)
             {
-                copy_matrix_U2L(const_cast<ComplexMatrix&>(*this->inverse_old));
+                copy_matrix_U2L(const_cast<ComplexMatrix &>(*this->inverse_old));
             }
             //			copy_matrix_U2L(const_cast<ComplexMatrix &>(*this->inverse_old));
             //			copy_matrix_U2L(S);
@@ -38,7 +38,7 @@ const ComplexMatrix& Inverse_Matrix_S::cal_inverse(ComplexMatrix& S)
             //			zero_matrix_L(const_cast<ComplexMatrix &>(*this->inverse_old));
             //			zero_matrix_L(S);
         }
-        catch (const Inverse_Matrix_Iterate::Unstable& e)
+        catch (const Inverse_Matrix_Iterate::Unstable &e)
         {
             //			zero_matrix_L(const_cast<ComplexMatrix &>(*this->inverse_old));
             //			zero_matrix_L(S);

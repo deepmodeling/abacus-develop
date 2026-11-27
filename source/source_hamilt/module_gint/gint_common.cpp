@@ -190,7 +190,7 @@ void merge_hr_part_to_hR(
         hRGint_tmpCd->set_zero();
         for (int iap = 0; iap < hRGint_tmpCd->size_atom_pairs(); iap++)
         {
-            auto *ap = &hRGint_tmpCd->get_atom_pair(iap);
+            hamilt::AtomPair<std::complex<double>>* ap = &hRGint_tmpCd->get_atom_pair(iap);
             const int iat1 = ap->get_atom_i();
             const int iat2 = ap->get_atom_j();
             if (iat1 <= iat2)
@@ -201,10 +201,10 @@ void merge_hr_part_to_hR(
                 const hamilt::AtomPair<double> *ap_nspin2 = hr_gint_tmp[second[is]].find_pair(iat1, iat2);
                 for (int ir = 0; ir < upper_ap->get_R_size(); ir++)
                 {
-                    const auto R_index = upper_ap->get_R_index(ir);
-                    auto upper_mat = upper_ap->find_matrix(R_index);
-                    auto mat_nspin1 = ap_nspin1->find_matrix(R_index);
-                    auto mat_nspin2 = ap_nspin2->find_matrix(R_index);
+                    const ModuleBase::Vector3<int> R_index = upper_ap->get_R_index(ir);
+                    hamilt::BaseMatrix<std::complex<double>>* upper_mat = upper_ap->find_matrix(R_index);
+                    const hamilt::BaseMatrix<double>* mat_nspin1 = ap_nspin1->find_matrix(R_index);
+                    const hamilt::BaseMatrix<double>* mat_nspin2 = ap_nspin2->find_matrix(R_index);
                     // The row size and the col size of upper_matrix is double that of matrix_nspin_0
                     for (int irow = 0; irow < mat_nspin1->get_row_size(); ++irow)
                     {
@@ -221,7 +221,7 @@ void merge_hr_part_to_hR(
                     // conjugate coefficients are already in the opposite spin block.
                     if (iat1 < iat2)
                     {
-                        auto lower_mat = lower_ap->find_matrix(-R_index);
+                        hamilt::BaseMatrix<std::complex<double>>* lower_mat = lower_ap->find_matrix(-R_index);
                         for (int irow = 0; irow < upper_mat->get_row_size(); ++irow)
                         {
                             for (int icol = 0; icol < upper_mat->get_col_size(); ++icol)
@@ -242,15 +242,15 @@ void merge_hr_part_to_hR(
         // merge hR_tmp to hR
         for (int iap = 0; iap < hR->size_atom_pairs(); iap++)
         {
-            auto *ap = &hR->get_atom_pair(iap);
+            hamilt::AtomPair<std::complex<double>>* ap = &hR->get_atom_pair(iap);
             const int iat1 = ap->get_atom_i();
             const int iat2 = ap->get_atom_j();
-            auto *ap_nspin = hR_tmp->find_pair(iat1, iat2);
+            hamilt::AtomPair<std::complex<double>>* ap_nspin = hR_tmp->find_pair(iat1, iat2);
             for (int ir = 0; ir < ap->get_R_size(); ir++)
             {
-                const auto R_index = ap->get_R_index(ir);
-                auto upper_mat = ap->find_matrix(R_index);
-                auto mat_nspin = ap_nspin->find_matrix(R_index);
+                const ModuleBase::Vector3<int> R_index = ap->get_R_index(ir);
+                hamilt::BaseMatrix<std::complex<double>>* upper_mat = ap->find_matrix(R_index);
+                hamilt::BaseMatrix<std::complex<double>>* mat_nspin = ap_nspin->find_matrix(R_index);
                 // The row size and the col size of upper_matrix is double that of matrix_nspin_0
                 for (int irow = 0; irow < mat_nspin->get_row_size(); ++irow)
                 {

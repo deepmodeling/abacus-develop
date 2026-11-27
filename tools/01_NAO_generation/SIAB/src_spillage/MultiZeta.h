@@ -12,7 +12,7 @@ class MultiZeta
     MultiZeta();
     ~MultiZeta();
 
-    SpillageStep* Level;
+    SpillageStep *Level;
     Metropolis metro;
     Orthogonal Orth; // Orthogonal wave functions.
 
@@ -20,7 +20,7 @@ class MultiZeta
 
     int nlevel;
 
-    int* lmax_type; // lmax for each type(consider all levels)
+    int *lmax_type; // lmax for each type(consider all levels)
 
     IntArray l_nchi;
 

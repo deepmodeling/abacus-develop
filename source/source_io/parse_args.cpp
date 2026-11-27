@@ -212,10 +212,10 @@ void parse_args(int argc, char** argv)
                         std::cerr << "Error: Unknown parameter '" << next_arg << "'" << std::endl;
 
                         // Try to find similar parameters (fuzzy matching)
-                        auto suggestions = ParameterHelp::find_similar_parameters(next_arg, 5, 3);
+                        std::vector<std::string> suggestions = ParameterHelp::find_similar_parameters(next_arg, 5, 3);
                         if (!suggestions.empty()) {
                             std::cerr << "\nDid you mean one of these?" << std::endl;
-                            for (const auto& suggestion : suggestions) {
+                            for (const std::string& suggestion : suggestions) {
                                 std::cerr << "  - " << suggestion << std::endl;
                             }
                         }
@@ -243,7 +243,7 @@ void parse_args(int argc, char** argv)
             // Initialize help system
             ParameterHelp::initialize();
 
-            auto results = ParameterHelp::search_parameters(query);
+            std::vector<std::string> results = ParameterHelp::search_parameters(query);
             if (results.empty()) {
                 std::cerr << "No parameters found matching '" << query << "'" << std::endl;
                 std::exit(1);
@@ -251,8 +251,8 @@ void parse_args(int argc, char** argv)
 
             // Display results
             std::cout << "\nFound " << results.size() << " parameter(s) matching '" << query << "':\n\n";
-            for (const auto& param : results) {
-                auto metadata = ParameterHelp::get_metadata(param);
+            for (const std::string& param : results) {
+                ParameterMetadata metadata = ParameterHelp::get_metadata(param);
                 std::cout << "  " << std::left << std::setw(30) << param;
                 if (!metadata.name.empty() && !metadata.description.empty()) {
                     // Format description for brief display

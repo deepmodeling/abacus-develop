@@ -5,12 +5,12 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/macros.h"
 #include "source_base/matrix.h"
+#include "source_base/module_container/ATen/kernels/lapack.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_hamilt/module_xc/coulomb_config.h"
 #include "source_psi/psi.h"
-#include "source_base/module_container/ATen/kernels/lapack.h"
 
 #include <memory>
 #include <utility>
@@ -29,29 +29,31 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    OperatorEXXPW(const int* isk_in,
-                  const ModulePW::PW_Basis_K* wfcpw_in,
-                  const ModulePW::PW_Basis* rhopw_in,
-                  K_Vectors* kv_in,
-                  const UnitCell* ucell,
-                  const General_Exx_Info& exx_info,
-                  const int nspin_in,
-                  const int kpar_in,
-                  const int my_rank_in,
-                  const int my_pool_in);
+    OperatorEXXPW(
+        const int *isk_in,
+        const ModulePW::PW_Basis_K *wfcpw_in,
+        const ModulePW::PW_Basis *rhopw_in,
+        K_Vectors *kv_in,
+        const UnitCell *ucell,
+        const General_Exx_Info &exx_info,
+        const int nspin_in,
+        const int kpar_in,
+        const int my_rank_in,
+        const int my_pool_in);
 
     template <typename T_in, typename Device_in = Device>
     explicit OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op_exx);
 
     virtual ~OperatorEXXPW();
 
-    virtual void act(const int nbands,
-                     const int nbasis,
-                     const int npol,
-                     const T *tmpsi_in,
-                     T *tmhpsi,
-                     const int ngk_ik = 0,
-                     const bool is_first_node = false) const override;
+    virtual void act(
+        const int nbands,
+        const int nbasis,
+        const int npol,
+        const T *tmpsi_in,
+        T *tmhpsi,
+        const int ngk_ik = 0,
+        const bool is_first_node = false) const override;
 
     double cal_exx_energy(psi::Psi<T, Device> *psi_) const;
 
@@ -62,10 +64,11 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     // The source orbitals remain fixed while target states are diagonalized.
     // Takes ownership of the frozen ensemble: the operator keeps observer pointers
     // to these objects, so their lifetime must match the operator's own.
-    void set_source(std::unique_ptr<ModulePW::PW_Basis_K> source_basis,
-                    std::unique_ptr<K_Vectors> source_points,
-                    const psi::Psi<T, Device>& source_psi,
-                    ModuleBase::matrix source_weights);
+    void set_source(
+        std::unique_ptr<ModulePW::PW_Basis_K> source_basis,
+        std::unique_ptr<K_Vectors> source_points,
+        const psi::Psi<T, Device> &source_psi,
+        ModuleBase::matrix source_weights);
 
     void construct_ace() const;
 
@@ -77,17 +80,17 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     static std::vector<Real> fock_div, erfc_div;
 
   private:
-    const int* isk = nullptr;
-    const ModulePW::PW_Basis_K* wfcpw = nullptr;
-    const ModulePW::PW_Basis_K* source_basis_ = nullptr;
-    const K_Vectors* source_points_ = nullptr;
+    const int *isk = nullptr;
+    const ModulePW::PW_Basis_K *wfcpw = nullptr;
+    const ModulePW::PW_Basis_K *source_basis_ = nullptr;
+    const K_Vectors *source_points_ = nullptr;
     // Owned frozen SCF source for hybrid NSCF; null in ordinary SCF, where the
     // observer pointers above alias wfcpw/kv instead.
     std::unique_ptr<ModulePW::PW_Basis_K> owned_source_basis_;
     std::unique_ptr<K_Vectors> owned_source_points_;
     ModuleBase::matrix owned_source_weights_;
-    const ModulePW::PW_Basis* rhopw = nullptr;
-    ModulePW::PW_Basis* rhopw_dev = nullptr; // for device
+    const ModulePW::PW_Basis *rhopw = nullptr;
+    ModulePW::PW_Basis *rhopw_dev = nullptr; // for device
     const UnitCell *ucell = nullptr;
     Real tpiba = 0;
 
@@ -98,66 +101,73 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     bool ecutexx_user_set_ = false; // gates the small-grid fallback warnings
     int exx_batch_size_ = 0;        // band chunk width, 0 = all bands
     bool exxace_ = false;
-    int my_rank_ = 0;               // world rank, gates the one-time reports
-    int my_pool_ = 0;               // k-point pool of this rank
+    int my_rank_ = 0; // world rank, gates the one-time reports
+    int my_pool_ = 0; // k-point pool of this rank
 
     std::vector<int> get_q_points(const int ik) const;
     const T *get_pw(const int m, const int iq) const;
 
     void multiply_potential(T *density_recip, int ik, int iq) const;
 
-    void act_op(const int nbands,
-                const int nbasis,
-                const int npol,
-                const T *tmpsi_in,
-                T *tmhpsi,
-                const int ngk_ik = 0,
-                const bool is_first_node = false) const;
+    void act_op(
+        const int nbands,
+        const int nbasis,
+        const int npol,
+        const T *tmpsi_in,
+        T *tmhpsi,
+        const int ngk_ik = 0,
+        const bool is_first_node = false) const;
 
     // Both active and idle ACE pools join the same source-q broadcasts.
     // has_kpoint identifies a local target k point in the current spin channel.
-    void act_op_kpar(const int nbands,
-                     const int nbasis,
-                     const T* tmpsi_in,
-                     T* tmhpsi,
-                     const int ispin,
-                     const bool has_kpoint) const;
+    void act_op_kpar(
+        const int nbands,
+        const int nbasis,
+        const T *tmpsi_in,
+        T *tmhpsi,
+        const int ispin,
+        const bool has_kpoint) const;
 
-    void act_op_ace(const int nbands,
-                    const int nbasis,
-                    const int npol,
-                    const T *tmpsi_in,
-                    T *tmhpsi,
-                    const int ngk_ik = 0,
-                    const bool is_first_node = false) const;
+    void act_op_ace(
+        const int nbands,
+        const int nbasis,
+        const int npol,
+        const T *tmpsi_in,
+        T *tmhpsi,
+        const int ngk_ik = 0,
+        const bool is_first_node = false) const;
 
     double cal_exx_energy_op(psi::Psi<T, Device> *psi_) const;
 
     double cal_exx_energy_ace(psi::Psi<T, Device> *psi_) const;
 
-    void cal_density_recip(const T* psi_nk_real, const T* psi_mq_real, double omega) const;
+    void cal_density_recip(const T *psi_nk_real, const T *psi_mq_real, double omega) const;
 
-    void rho_recip2real(const T* rho_recip, T* rho_real, bool add = false, Real factor = 1.0) const;
+    void rho_recip2real(
+        const T *rho_recip,
+        T *rho_real,
+        bool add = false,
+        Real factor = 1.0) const;
 
     mutable int cnt = 0;
 
     mutable bool potential_got = false;
-    
+
     // pws
-//    mutable std::vector<std::unique_ptr<T[]>> pws;
+    //    mutable std::vector<std::unique_ptr<T[]>> pws;
 
     // k vectors
     K_Vectors *kv = nullptr;
 
     // psi
     mutable psi::Psi<T, Device> psi;
-    const ModuleBase::matrix* wg;
+    const ModuleBase::matrix *wg;
 
     // real space memory
     T *psi_nk_real = nullptr;
     T *psi_mq_real = nullptr;
     // cache of psi_nk in real space for all bands on the active grid
-    mutable T* psi_nk_real_cache = nullptr;
+    mutable T *psi_nk_real_cache = nullptr;
     mutable int psi_nk_cache_size = 0; // number of bands currently allocated in the cache
 
     // ---- EXX FFT grid + band-batch layer ----
@@ -179,22 +189,31 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     // G-vector -> active FFT box index maps, hiding the grid choice: the
     // small-grid maps when exx_sg_ok, the basis's own ig2ixyz arrays on CUDA,
     // and the host-built full-box maps (full_map_*) on CPU otherwise
-    const int* active_map_rho() const;
-    const int* active_map_wfc(const int ik) const;
+    const int *active_map_rho() const;
+    const int *active_map_wfc(const int ik) const;
     // fill psi_nk_real_cache: all bands of psi_in at k-point ik, real space on
     // the active grid
-    void cache_psi_nk_real(const int nbands, const int nbasis, const T* psi_in, const int ik) const;
+    void cache_psi_nk_real(
+        const int nbands,
+        const int nbasis,
+        const T *psi_in,
+        const int ik) const;
     // psi_mq_real: single band psi_m at k-point iq, real space on the active
     // grid (psi_m points to a band block with row stride psi_stride)
-    void wfc_to_real_exx(const T* psi_m, const int iq, const int psi_stride) const;
+    void wfc_to_real_exx(const T *psi_m, const int iq, const int psi_stride) const;
     // tmhpsi += factor * V_x|psi> for all bands; needs psi_nk_real_cache and
     // psi_mq_real filled, and `pot` holding the Coulomb kernel for (ik, iq)
-    void apply_fock_all_bands(const int nbands, const int nbasis, const int iq, const Real factor, T* tmhpsi) const;
+    void apply_fock_all_bands(
+        const int nbands,
+        const int nbasis,
+        const int iq,
+        const Real factor,
+        T *tmhpsi) const;
     // pair densities psi_nk* psi_mq of bands [start, start+count) in the
     // rhopw_dev G-space; pair_density(n) then returns band n (global index)
     // without recomputation
     void prepare_pair_densities(const int start, const int count) const;
-    const T* pair_density(const int n) const;
+    const T *pair_density(const int n) const;
 
     // Small EXX FFT grid sized by ecut_exx (like QE's dfftt): when usable, the
     // batched path runs all FFTs on this smaller grid instead of the wfcpw grid.
@@ -208,35 +227,36 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     mutable bool exx_sg_init = false;
     mutable bool exx_sg_ok = false;
     mutable int sg_nx = 0, sg_ny = 0, sg_nz = 0, sg_nxyz = 0;
-    mutable int* sg_map_rho = nullptr; // rhopw_dev G-vector ig -> small box index [rhopw_dev->npw]
-    mutable int* sg_map_wfc = nullptr; // wfcpw (G+k) ig -> small box index [npwk_max * nks]
-    mutable int* full_map_rho = nullptr; // rhopw_dev G-vector ig -> full box index (CPU only)
-    mutable int* full_map_wfc = nullptr; // wfcpw (G+k) ig -> full box index (CPU only)
+    mutable int *sg_map_rho = nullptr;   // rhopw_dev G-vector ig -> small box index [rhopw_dev->npw]
+    mutable int *sg_map_wfc = nullptr;   // wfcpw (G+k) ig -> small box index [npwk_max * nks]
+    mutable int *full_map_rho = nullptr; // rhopw_dev G-vector ig -> full box index (CPU only)
+    mutable int *full_map_wfc = nullptr; // wfcpw (G+k) ig -> full box index (CPU only)
 
     // Batched n-band loop of act_op / act_op_kpar: all bands of one
     // (iq, m_iband) pair are processed with batched FFTs and a handful of
     // kernel launches instead of ~8 launches per band. Requires the psi_nk
     // real-space cache and a local (non-distributed) FFT box. `factor` is the
     // full accumulation weight (including hybrid_alpha and the k/q weights).
-    void apply_exx_nbatched(const int nbands,
-                            const int nbasis,
-                            const T* psi_mq_real,
-                            const Real factor,
-                            T* tmhpsi) const;
+    void apply_exx_nbatched(
+        const int nbands,
+        const int nbasis,
+        const T *psi_mq_real,
+        const Real factor,
+        T *tmhpsi) const;
 
     // reciprocal-space density of bands [0, nbands) of the nk_real block
     // (rhopw_dev G-space), ends up in dens_pw_batch
-    void calc_density_pw_nbatched(const int nbands, const T* nk_real, const T* psi_mq_real) const;
+    void calc_density_pw_nbatched(const int nbands, const T *nk_real, const T *psi_mq_real) const;
 
-    mutable void* exx_fft_plan = nullptr;   // batched FFT plan (void* to keep FFTW/cuFFT out of the header)
-    mutable void* exx_fft_plan1 = nullptr;  // batch-1 FFT plan (psi_mq on the active grid)
-    mutable int exx_fft_plan_nx = 0;        // grid dims the plans were created for
+    mutable void *exx_fft_plan = nullptr;  // batched FFT plan (void* to keep FFTW/cuFFT out of the header)
+    mutable void *exx_fft_plan1 = nullptr; // batch-1 FFT plan (psi_mq on the active grid)
+    mutable int exx_fft_plan_nx = 0;       // grid dims the plans were created for
     mutable int exx_fft_plan_ny = 0;
     mutable int exx_fft_plan_nz = 0;
-    mutable T* dens_box_batch = nullptr;    // band-chunk * nxyz box buffer
-    mutable T* dens_pw_batch = nullptr;     // band-chunk * npw (rhopw_dev) plane-wave buffer
-    mutable int exx_batch_alloc = 0;        // band chunk width the buffers/plan are allocated for
-    mutable int dens_chunk_base = 0;        // global band index of dens_pw_batch[0]
+    mutable T *dens_box_batch = nullptr; // band-chunk * nxyz box buffer
+    mutable T *dens_pw_batch = nullptr;  // band-chunk * npw (rhopw_dev) plane-wave buffer
+    mutable int exx_batch_alloc = 0;     // band chunk width the buffers/plan are allocated for
+    mutable int dens_chunk_base = 0;     // global band index of dens_pw_batch[0]
 
     // create/recreate the batched FFT plans and work buffers for the active grid
     void ensure_exx_batch(const int nbands) const;
@@ -249,21 +269,21 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     Real *pot = nullptr;
 
     // Lin Lin's ACE memory, 10.1021/acs.jctc.6b00092
-    mutable T* h_psi_ace = nullptr; // H \Psi, W in the paper
-    mutable T* psi_h_psi_ace = nullptr; // \Psi^{\dagger} H \Psi, M in the paper
-    mutable T* L_ace = nullptr; // cholesky(-M).L, L in the paper
-    mutable std::vector<T*> Xi_ace_k; // L^{-1} (H \Psi)^{\dagger}, \Xi in the paper
-//    mutable T* Xi_ace = nullptr; // L^{-1} (H \Psi)^{\dagger}, \Xi in the paper
+    mutable T *h_psi_ace = nullptr;     // H \Psi, W in the paper
+    mutable T *psi_h_psi_ace = nullptr; // \Psi^{\dagger} H \Psi, M in the paper
+    mutable T *L_ace = nullptr;         // cholesky(-M).L, L in the paper
+    mutable std::vector<T *> Xi_ace_k;  // L^{-1} (H \Psi)^{\dagger}, \Xi in the paper
+    //    mutable T* Xi_ace = nullptr; // L^{-1} (H \Psi)^{\dagger}, \Xi in the paper
 
     mutable std::map<int, std::vector<int>> q_points;
 
     // occupational number
     const ModuleBase::matrix *p_wg;
 
-//    mutable bool update_psi = false;
+    //    mutable bool update_psi = false;
 
     Device *ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
+    base_device::DEVICE_CPU *cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
     using ct_Device = typename ct::PsiToContainer<Device>::type;
@@ -291,7 +311,6 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     using lapack_trtri = container::kernels::lapack_trtri<T, ct_Device>;
 
     bool gamma_extrapolation = true;
-
 };
 
 // Explicit specializations must be declared before any implicit instantiation.
@@ -299,54 +318,46 @@ class OperatorEXXPW : public OperatorPW<T, Device>
 // generic cal_density_recip / rho_recip2real members.
 template <>
 void OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>::cal_density_recip(
-    const std::complex<double>* psi_nk_real,
-    const std::complex<double>* psi_mq_real,
-    double omega) const;
+    const std::complex<double> *psi_nk_real, const std::complex<double> *psi_mq_real, double omega) const;
 
 template <>
 void OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>::cal_density_recip(
-    const std::complex<float>* psi_nk_real,
-    const std::complex<float>* psi_mq_real,
-    double omega) const;
+    const std::complex<float> *psi_nk_real, const std::complex<float> *psi_mq_real, double omega) const;
 
 template <>
 void OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>::rho_recip2real(
-    const std::complex<double>* rho_recip,
-    std::complex<double>* rho_real,
+    const std::complex<double> *rho_recip,
+    std::complex<double> *rho_real,
     bool add,
     double factor) const;
 
 template <>
 void OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>::rho_recip2real(
-    const std::complex<float>* rho_recip,
-    std::complex<float>* rho_real,
+    const std::complex<float> *rho_recip,
+    std::complex<float> *rho_real,
     bool add,
     float factor) const;
 
 #if ((defined __CUDA) || (defined __ROCM))
 template <>
 void OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>::cal_density_recip(
-    const std::complex<double>* psi_nk_real,
-    const std::complex<double>* psi_mq_real,
-    double omega) const;
+    const std::complex<double> *psi_nk_real, const std::complex<double> *psi_mq_real, double omega) const;
 
 template <>
 void OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>::cal_density_recip(
-    const std::complex<float>* psi_nk_real,
-    const std::complex<float>* psi_mq_real,
-    double omega) const;
+    const std::complex<float> *psi_nk_real, const std::complex<float> *psi_mq_real, double omega) const;
 
 template <>
 void OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>::rho_recip2real(
-    const std::complex<double>* rho_recip,
-    std::complex<double>* rho_real,
+    const std::complex<double> *rho_recip,
+    std::complex<double> *rho_real,
     bool add,
     double factor) const;
 
 template <>
 void OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>::rho_recip2real(
-    const std::complex<float>* rho_recip,
-    std::complex<float>* rho_real,
+    const std::complex<float> *rho_recip,
+    std::complex<float> *rho_real,
     bool add,
     float factor) const;
 #endif
@@ -359,38 +370,41 @@ extern template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GP
 #endif
 
 template <typename Real, typename Device>
-void get_exx_potential(const K_Vectors* kv,
-                       const ModulePW::PW_Basis_K* wfcpw,
-                       ModulePW::PW_Basis* rhopw_dev,
-                       Real* pot,
-                       double tpiba,
-                       bool gamma_extrapolation,
-                       double ucell_omega,
-                       int ik,
-                       int iq,
-                       bool is_stress,
-                       const CoulombParam& coulomb_param_in);
+void get_exx_potential(
+    const K_Vectors *kv,
+    const ModulePW::PW_Basis_K *wfcpw,
+    ModulePW::PW_Basis *rhopw_dev,
+    Real *pot,
+    double tpiba,
+    bool gamma_extrapolation,
+    double ucell_omega,
+    int ik,
+    int iq,
+    bool is_stress,
+    const CoulombParam &coulomb_param_in);
 
 template <typename Real, typename Device>
-void get_exx_stress_potential(const K_Vectors* kv,
-                              const ModulePW::PW_Basis_K* wfcpw,
-                              ModulePW::PW_Basis* rhopw_dev,
-                              Real* pot,
-                              double tpiba,
-                              bool gamma_extrapolation,
-                              double ucell_omega,
-                              int ik,
-                              int iq,
-                              const CoulombParam& coulomb_param_in);
+void get_exx_stress_potential(
+    const K_Vectors *kv,
+    const ModulePW::PW_Basis_K *wfcpw,
+    ModulePW::PW_Basis *rhopw_dev,
+    Real *pot,
+    double tpiba,
+    bool gamma_extrapolation,
+    double ucell_omega,
+    int ik,
+    int iq,
+    const CoulombParam &coulomb_param_in);
 
-double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
-                      double erfc_omega,
-                      const K_Vectors* kv,
-                      const ModulePW::PW_Basis_K* wfcpw,
-                      ModulePW::PW_Basis* rhopw_dev,
-                      double tpiba,
-                      bool gamma_extrapolation,
-                      double ucell_omega);
+double exx_divergence(
+    Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
+    double erfc_omega,
+    const K_Vectors *kv,
+    const ModulePW::PW_Basis_K *wfcpw,
+    ModulePW::PW_Basis *rhopw_dev,
+    double tpiba,
+    bool gamma_extrapolation,
+    double ucell_omega);
 
 } // namespace hamilt
 

@@ -517,7 +517,7 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
                 // 5. V(R)→V(k) 
                 std::vector<ct::Tensor> v_k_2d(
                     nk, LR_Util::newTensor<T>({pmat.para_2d().ncloc(), pmat.para_2d().nrloc()}));
-                for (auto& v : v_k_2d) v.zero();
+                for (container::Tensor& v : v_k_2d) v.zero();
                 int nrow = this->pmat.para_2d().nrloc();
                 for (int ik1 = 0;ik1 < nk;++ik1) {
                     folding_HR(*VR, v_k_2d[ik1].data<T>(), this->kv.kvec_d[ik1], nrow, 1);

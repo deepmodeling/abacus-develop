@@ -14,9 +14,11 @@
 #include <vector>
 #include <cassert>
 #include <cctype>
+#include <limits.h>
 #include <limits>
 #include <stdexcept>
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h"
 #include "source_base/global_file.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
@@ -285,7 +287,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     // It must be after the set_globalv, because some parameters need to be checked according to param.sys
     if (this->rank == 0)
     {
-        for (auto& input_item: this->input_lists)
+        for (std::pair<std::string, ModuleIO::Input_Item>& input_item: this->input_lists)
         {
             Input_Item* checkvalue_item = &(input_item.second);
             if (checkvalue_item->check_value != nullptr)
@@ -352,6 +354,13 @@ void ReadInput::create_directory(const Parameter& param)
                                           param.globalv.log_file,
                                           param.input.of_ml_gene_data,
                                           param.input.deepks_out_freq_elec > 0); // xiaohui add 2013-09-01
+
+    if (this->rank == 0 && param.input.calculation == "md" && param.mdp.md_restart
+        && !param.globalv.global_in_stru.empty())
+    {
+        const std::string full_path = ModuleBase::absolute_path_for_log(param.globalv.global_in_stru);
+        GlobalV::ofs_running << "Read file: " << full_path << std::endl;
+    }
 
     // The unified subdirectories used when out_app_flag == 2 (STRUC/, PSI/,
     // CHG/, POT/, ELF/, DOS/, DIP/, MAT/) are NOT created here. Each output
@@ -519,7 +528,7 @@ std::string ReadInput::prepare_input(Parameter& param)
     }
 
     // 1) read the value of the parameters
-    for (auto& readvalue_item: this->readvalue_items)
+    for (ModuleIO::Input_Item*& readvalue_item: this->readvalue_items)
     {
         readvalue_item->read_value(*readvalue_item, param);
     }
@@ -550,7 +559,7 @@ std::string ReadInput::prepare_input(Parameter& param)
 
     // 2) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
-    for (auto& input_item: this->input_lists)
+    for (std::pair<std::string, ModuleIO::Input_Item>& input_item: this->input_lists)
     {
         Input_Item* resetvalue_item = &(input_item.second);
         if (resetvalue_item->reset_value != nullptr) 
@@ -564,13 +573,6 @@ std::string ReadInput::prepare_input(Parameter& param)
     this->normalize_out_eband_alias(param);
     this->normalize_td_output_frequency(param);
 
-    // The MD driver writes ABACUS STRU frames only, and the restart logic reads
-    // them back, so CIF output (out_stru = 2) is not available for MD. Reject it
-    // instead of silently writing STRU content under a CIF setting.
-    if (param.input.calculation == "md" && param.input.out_stru == 2)
-    {
-        errors += "Invalid INPUT parameter 'out_stru': value 2 (CIF) is not supported for calculation = md; use 0 or 1.\n";
-    }
     // The CSR angular-momentum writer indexes the scalar real-harmonic basis.
     // In nspin = 4 the spinor basis doubles nlocal and uses a different
     // magnetic-quantum-number ordering, so only the spin-up block could be
@@ -815,7 +817,7 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     ofs << std::setiosflags(std::ios::left);
 
     ofs << "#Parameters (1.System)" << std::endl;
-    for (auto& item: this->input_lists)
+    for (std::pair<std::string, ModuleIO::Input_Item>& item: this->input_lists)
     {
         Input_Item* p_item = &(item.second);
         // Do not serialize an inactive internal marker as a public INPUT value.

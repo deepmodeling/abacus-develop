@@ -26,7 +26,7 @@ SCALAPACK="${AOCLhome}/lib"
 FFTW3="${AOCLhome}"
 LIBRI="${LIBRI_ROOT}"
 LIBCOMM="${LIBCOMM_ROOT}"
-USE_CUDA=OFF # set ON to enable gpu-abacus
+USE_CUDA=OFF   # set ON to enable gpu-abacus
 ENABLE_NEP=OFF # set ON to enable NEP
 # LIBTORCH="${INSTALL_DIR}/libtorch-2.1.2/share/cmake/Torch"
 # LIBNPY="${INSTALL_DIR}/libnpy-1.0.1/include"
@@ -86,14 +86,14 @@ cmake "${cmake_args[@]}"
 cmake --build "${BUILD_DIR}" --target install -j "${NUM_JOBS}"
 
 # generate abacus_env.sh
-cat <<EOF >"${TOOL}/abacus_env.sh"
+cat << EOF > "${TOOL}/abacus_env.sh"
 #!/bin/bash
 source "${INSTALL_DIR}/setup"
 export PATH="${PREFIX}/bin":\${PATH}
 EOF
 
 # generate information
-cat <<EOF
+cat << EOF
 ========================== usage =========================
 Done!
 To use the installed ABACUS version

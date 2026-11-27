@@ -31,11 +31,11 @@ extern int NE;
 // global information
 extern int STRNUM;
 extern int NTYPE;
-extern string* LABEL;
-extern int* NA;
-extern double** CARPOSX;
-extern double** CARPOSY;
-extern double** CARPOSZ;
+extern string *LABEL;
+extern int *NA;
+extern double **CARPOSX;
+extern double **CARPOSY;
+extern double **CARPOSZ;
 extern Matrix3 LATVEC;
 
 // plane wave information
@@ -43,9 +43,9 @@ extern bool USEPW;
 extern double LAT0;
 
 // k points
-extern double* CARKX;
-extern double* CARKY;
-extern double* CARKZ;
+extern double *CARKX;
+extern double *CARKY;
+extern double *CARKZ;
 
 // orbital + energy cutoff
 extern double ECUT;

@@ -134,9 +134,9 @@ namespace LR_Util
             for (int iR = 0;iR < ap->get_R_size();++iR)
             {
                 // R index may be different between the two HContainers, find by R value instead of R-index
-                auto dR = ap->get_R_index(iR);
-                auto ptr = ap->get_HR_values(iR).get_pointer();
-                auto ptr_real = ap_real->get_HR_values(dR.x, dR.y, dR.z).get_pointer();
+                ModuleBase::Vector3<int> dR = ap->get_R_index(iR);
+                std::complex<double>* ptr = ap->get_HR_values(iR).get_pointer();
+                double* ptr_real = ap_real->get_HR_values(dR.x, dR.y, dR.z).get_pointer();
                 for (int i = 0; i < ap->get_size(); ++i)
                 {
                     get_imag ? ptr[i].imag(ptr_real[i]) : ptr[i].real(ptr_real[i]);

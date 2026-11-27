@@ -243,7 +243,7 @@ void OrbitalEvaluator::init(const LCAO_Orbitals& orb, const UnitCell& ucell)
             {
                 const int l = atom.iw2l[iw];
                 const int n = atom.iw2n[iw];
-                const auto& phi_ln = no.PhiLN(l, n);
+                const Numerical_Orbital_Lm& phi_ln = no.PhiLN(l, n);
 
                 AtomTypeData::RadialBlock block;
                 block.begin_iw = iw;
@@ -281,11 +281,11 @@ void OrbitalEvaluator::eval_phi(const int it, const ModuleBase::Vector3<double>&
     const double c2 = (dx - 2.0 * dx2 + dx3) * td.dr_uniform;
     const double c4 = (dx3 - dx2) * td.dr_uniform;
 
-    const auto* blocks = td.radial_blocks.data();
+    OrbitalEvaluator::AtomTypeData::RadialBlock const* blocks = td.radial_blocks.data();
     const int num_blocks = td.radial_blocks.size();
     for (int ib = 0; ib < num_blocks; ++ib)
     {
-        const auto& block = blocks[ib];
+        const OrbitalEvaluator::AtomTypeData::RadialBlock& block = blocks[ib];
         const double* psi_uniform = block.psi_uniform;
         const double* dpsi_uniform = block.dpsi_uniform;
         const double psi
@@ -321,7 +321,7 @@ void OrbitalEvaluator::eval_phi_all_bloch(const ModuleBase::Vector3<double>& r,
     // Determine how many lattice translations to check in each direction.
     // nR = ceil(rcut / min(|a|,|b|,|c|)) + 1 ensures all overlapping orbitals are captured.
     double max_rcut = 0.0;
-    for (const auto& td: atypes_)
+    for (const OrbitalEvaluator::AtomTypeData& td: atypes_)
         max_rcut = std::max(max_rcut, td.rcut);
     const int nR = static_cast<int>(std::ceil(max_rcut / std::min({a.norm(), b.norm(), c.norm()}))) + 1;
 

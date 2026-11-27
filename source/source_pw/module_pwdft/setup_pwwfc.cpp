@@ -1,20 +1,18 @@
-#include "source_pw/module_pwdft/setup_pwwfc.h" // pw_wfc
+#include "source_pw/module_pwdft/setup_pwwfc.h"    // pw_wfc
+#include "source_base/parallel_comm.h"             // POOL_WORLD
+#include "source_base/parallel_reduce.h"           // Parallel_Reduce
 #include "source_basis/module_pw/pw_basis_k_big.h" // PW_Basis_K_Big
-#include "source_base/parallel_comm.h" // POOL_WORLD
-#include "source_base/parallel_reduce.h" // Parallel_Reduce
-#include "source_io/module_output/print_info.h" // print information
+#include "source_io/module_output/print_info.h"    // print information
 #include "source_io/module_parameter/parameter.h"
 
-void pw::teardown_pwwfc(ModulePW::PW_Basis_K* &pw_wfc)
-{
-    delete pw_wfc;
-}
+void pw::teardown_pwwfc(ModulePW::PW_Basis_K *&pw_wfc) { delete pw_wfc; }
 
-void pw::setup_pwwfc(const Input_para& inp,
-        const UnitCell& ucell, 
-        const ModulePW::PW_Basis& pw_rho,
-        K_Vectors& kv,
-        ModulePW::PW_Basis_K* &pw_wfc)
+void pw::setup_pwwfc(
+    const Input_para &inp,
+    const UnitCell &ucell,
+    const ModulePW::PW_Basis &pw_rho,
+    K_Vectors &kv,
+    ModulePW::PW_Basis_K *&pw_wfc)
 {
     ModuleBase::TITLE("pw", "pw_setup");
 
@@ -22,7 +20,7 @@ void pw::setup_pwwfc(const Input_para& inp,
 
     //! setup pw_wfc
     // currently LCAO doesn't support GPU acceleration of FFT
-    if(inp.basis_type == "lcao")
+    if (inp.basis_type == "lcao")
     {
         fft_device = "cpu";
     }
@@ -36,12 +34,9 @@ void pw::setup_pwwfc(const Input_para& inp,
 
     pw_wfc = new ModulePW::PW_Basis_K_Big(fft_device, fft_precision);
 
-
     // for LCAO calculations, we need to set bx, by, and bz
-    ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
+    ModulePW::PW_Basis_K_Big *tmp = static_cast<ModulePW::PW_Basis_K_Big *>(pw_wfc);
     tmp->setbxyz(inp.bx, inp.by, inp.bz);
-
-
 
     //! new plane wave basis, fft grids, etc.
 #ifdef __MPI
@@ -57,17 +52,13 @@ void pw::setup_pwwfc(const Input_para& inp,
     // write_wfc_pw), cal_energies, and other paths that read these
     // members as physical-cell quantities. If re-enabled in the future,
     // see the comment in setup_pwrho.cpp for the required refactor.
-    pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0,
-            ucell.latvec,
-            pw_rho.nx,
-            pw_rho.ny,
-            pw_rho.nz);
+    pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, pw_rho.nx, pw_rho.ny, pw_rho.nz);
 
     pw_wfc->initparameters(false, inp.ecutwfc, kv.get_nks(), kv.kvec_d.data());
 #ifdef __MPI
     if (inp.pw_seed > 0)
     {
-        Parallel_Reduce::reduce_max( pw_wfc->ggecut);
+        Parallel_Reduce::reduce_max(pw_wfc->ggecut);
     }
     // qianrui add 2021-8-13 to make different kpar parameters can get the same result
 #endif
@@ -87,4 +78,3 @@ void pw::setup_pwwfc(const Input_para& inp,
 
     return;
 }
-

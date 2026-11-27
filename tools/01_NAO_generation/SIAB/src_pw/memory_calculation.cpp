@@ -2,13 +2,9 @@
 
 #include "../src_tools/complexmatrix_inline.h"
 
-Memory::Memory()
-{
-}
+Memory::Memory() {}
 
-Memory::~Memory()
-{
-}
+Memory::~Memory() {}
 
 void Memory::calculation(void)
 {
@@ -17,7 +13,9 @@ void Memory::calculation(void)
     const double dk = 0.01;
     int kmesh = static_cast<int>(sqrt(ECUT) / dk) + 1 + 4;
     if (kmesh % 2 == 0)
+    {
         ++kmesh;
+    }
 
     const int n1 = NTYPE;
     const int n2 = LMAXUSED + 1;

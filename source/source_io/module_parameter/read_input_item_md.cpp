@@ -159,8 +159,8 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.category = "Molecular dynamics";
         item.type = "Boolean";
         item.description = R"(Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
-* True: ABACUS will read in {md_step}, then read in the corresponding structure file automatically (STRU{istep} from the STRUC/ output directory when out_app_flag=2; older releases wrote STRU_MD_{istep} into a STRU/ subdirectory, which is still recognized). For tddft, ABACUS will also read in the LCAO wavefunction file of the last step (OUT.{suffix}/PSI/wf{k-point index}{spin?}g{step}_nao.txt). You need to set out_wfc_lcao=1 and out_app_flag=2 to obtain this per-step snapshot (modes 0 and 1 write fixed-name files without a step suffix, which cannot be mapped to a specific restart step and are therefore not accepted for istep>0).
-A structure frame is required for {istep}. Because out_freq_ion sets the structure-frame cadence independently of md_restartfreq, keep out_freq_ion unset (0) or equal to md_restartfreq when you intend to restart, and make sure out_stru is positive.
+* True: ABACUS reads the step in Restart_md.txt and the matching structure from STRU_restart in read_file_dir. If STRU_restart is absent, legacy numbered or cumulative MD STRU frames with velocities are accepted when the recorded step matches. For tddft, ABACUS will also read in the LCAO wavefunction file of the last step (OUT.{suffix}/PSI/wf{k-point index}{spin?}g{step}_nao.txt). You need to set out_wfc_lcao=1 and out_app_flag=2 to obtain this per-step wavefunction snapshot (modes 0 and 1 write fixed-name files without a step suffix, which cannot be mapped to a specific restart step and are therefore not accepted for istep>0).
+A structure frame with velocities is required for {istep}. New runs write it to STRU_restart whenever Restart_md.txt is updated, regardless of out_stru and out_freq_ion. Older outputs using cumulative or numbered STRU frames are still accepted when the matching frame exists.
 * False: ABACUS will start molecular dynamics calculations normally from the first step.)";
         item.default_value = "False";
         item.unit = "";
@@ -174,35 +174,23 @@ A structure frame is required for {istep}. Because out_freq_ion sets the structu
         item.type = "Integer";
         item.description = "The period (in ionic steps) of writing the MD restart file "
                            "(Restart_md.txt). This cadence is independent of out_freq_ion: "
-                           "restart files are written every md_restartfreq steps regardless of "
-                           "the STRU output cadence. Set to 0 to disable restart-file output. "
-                           "When out_freq_ion is not set (0), it also falls back to md_restartfreq "
-                           "as the STRU output frequency for backward compatibility.";
+                           "Restart_md.txt and STRU_restart are overwritten every md_restartfreq steps "
+                           "regardless of out_stru and out_freq_ion. STRU_restart contains the atomic "
+                           "velocities needed to resume MD. Set to 0 to disable checkpoint output.";
         item.default_value = "5";
         item.unit = "";
         read_sync_int(input.mdp.md_restartfreq);
         this->add_item(item);
     }
     {
-        Input_Item item("md_dumpfreq");
-        item.annotation = "The period to dump MD information";
-        item.category = "Molecular dynamics";
-        item.type = "Integer";
-        item.description = "The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.";
-        item.default_value = "1";
-        item.unit = "";
-        read_sync_int(input.mdp.md_dumpfreq);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_thermo_freq");
+        Input_Item item("out_thermo_freq");
         item.annotation = "The period to output MD thermodynamic information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The output frequency of MD step, energy, temperature, and pressure information in OUT.${suffix}/running_md.log and on screen. Set to 0 to disable this output.";
+        item.description = "The output frequency of MD step, energy, temperature, and pressure information in OUT.${suffix}/running_md.log and on screen. When cal_stress is enabled, the virial and total stress tensors are written to the running log at this frequency. This parameter only affects MD. Set to 0 to disable these summaries; force and stress calculations continue every step.";
         item.default_value = "1";
         item.unit = "";
-        read_sync_int(input.mdp.md_thermo_freq);
+        read_sync_int(input.mdp.out_thermo_freq);
         this->add_item(item);
     }
     {
@@ -217,39 +205,6 @@ A structure frame is required for {istep}. Because out_freq_ion sets the structu
         item.default_value = "0.0";
         item.unit = "Angstrom";
         read_sync_double(input.mdp.md_neighbor_skin);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dump_force");
-        item.annotation = "output atomic forces into the file MD_dump or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output atomic forces into the file OUT.${suffix}/MD_dump.";
-        item.default_value = "True";
-        item.unit = "";
-        read_sync_bool(input.mdp.dump_force);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dump_vel");
-        item.annotation = "output atomic velocities into the file MD_dump or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output atomic velocities into the file OUT.${suffix}/MD_dump.";
-        item.default_value = "True";
-        item.unit = "";
-        read_sync_bool(input.mdp.dump_vel);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dump_virial");
-        item.annotation = "output lattice virial into the file MD_dump or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output lattice virials into the file OUT.${suffix}/MD_dump.";
-        item.default_value = "True";
-        item.unit = "";
-        read_sync_bool(input.mdp.dump_virial);
         this->add_item(item);
     }
     {
@@ -477,7 +432,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
             {
                 ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_rcut should be 1 or ntype(ntype+1)/2 ");
             }
-            for (auto rcut: para.input.mdp.lj_rcut)
+            for (double rcut: para.input.mdp.lj_rcut)
             {
                 if (rcut <= 0)
                 {

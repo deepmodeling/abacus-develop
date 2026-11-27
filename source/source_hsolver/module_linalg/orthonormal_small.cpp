@@ -2,7 +2,9 @@
 #include "source_base/module_container/base/third_party/lapack.h"
 #include "source_base/timer.h"
 #include "source_hsolver/module_linalg/orthonormal.h"
+#include "source_hsolver/module_linalg/overlap_spectrum.h"
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -80,11 +82,8 @@ bool lowdin(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
                                iwork.data(),
                                liwork,
                                info);
-    bool valid = info == 0;
-    for (double value: values)
-    {
-        valid = valid && std::isfinite(value) && value > 0.0;
-    }
+    std::vector<double> weights;
+    const bool valid = info == 0 && overlap_inverse_sqrt(values, 0.0, weights);
     if (valid)
     {
         std::vector<Wide> scaled(u);
@@ -92,7 +91,7 @@ bool lowdin(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
         {
             for (int i = 0; i < n; ++i)
             {
-                scaled[i + j * n] /= std::sqrt(values[j]);
+                scaled[i + j * n] *= weights[j];
             }
         }
         c->resize(n * n);

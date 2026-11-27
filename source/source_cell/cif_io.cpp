@@ -106,7 +106,7 @@ std::vector<std::string> _split_outside_enclose(const std::string& in,
     std::string cache;
     std::vector<std::string> words = FmtCore::split(in, delim);
     bool in_enclose = false;
-    for (auto& word: words)
+    for (std::string& word: words)
     {
         if (FmtCore::startswith(word, enclose[0]))
         {
@@ -200,7 +200,7 @@ std::map<std::string, std::vector<std::string>> _build_block_data(const std::vec
     {
         block_.erase(block_.begin(), it);
     }
-    for (auto& elem: block_)
+    for (std::string& elem: block_)
     {
         if (FmtCore::startswith(elem, "_"))
         {
@@ -498,7 +498,7 @@ void ModuleIO::CifParser::read(const std::string& fcif,
     std::vector<std::string> blocks = FmtCore::split(FmtCore::strip(cache), "loop_");
     blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [](const std::string& s) { return s.empty(); }), blocks.end());
     
-    for (auto& block: blocks)
+    for (std::string& block: blocks)
     {
         std::vector<std::string> words = _split_loop_block(block);
         std::map<std::string, std::vector<std::string>> data = _build_block_data(words);

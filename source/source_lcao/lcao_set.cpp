@@ -286,7 +286,7 @@ void LCAO_domain::init_chg_hr(
 {
     ModuleBase::TITLE("LCAO_domain", "init_chg_hr");
 
-    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
+    hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
     if (!hamilt_lcao)
     {
         ModuleBase::WARNING_QUIT("LCAO_domain::init_chg_hr", "p_hamilt is not HamiltLCAO");
@@ -328,7 +328,8 @@ void LCAO_domain::init_chg_hr(
                                               input.nelec,
                                               use_gpu,
                                               GlobalV::NPROC,
-                                              GlobalV::MY_RANK);
+                                              GlobalV::MY_RANK,
+                                              input.lcao_sk_cut);
     hamilt::HamiltHSMatrix<TK> hs(p_hamilt);
     hsolver_lcao_obj.solve(hs, psi, pelec, dm, chr, nspin, ucell.omega, false, input.device_dm);
 }

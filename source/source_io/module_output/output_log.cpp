@@ -232,6 +232,12 @@ void print_force(std::ofstream& ofs_running,
                  const ModuleBase::matrix& force,
                  bool ry)
 {
+    const auto& input = PARAM.inp;
+    // MD writes forces with its STRU frames, independently of solver type.
+    if (input.calculation == "md")
+    {
+        return;
+    }
     // this is a magic number, mohan note 2025-06-22
     const double output_acc = 1.0e-8;
     double fac = 1.0;
@@ -278,7 +284,7 @@ void print_force(std::ofstream& ofs_running,
     table = fmt.str();
     ofs_running << table; 
 
-    if (PARAM.inp.test_force) 
+    if (input.test_force)
     { 
         std::cout << table;
     }
@@ -287,6 +293,11 @@ void print_force(std::ofstream& ofs_running,
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, 
   const bool screen, const bool ry, std::ofstream &ofs)
 {
+    // MD prints virial and total stress on the thermodynamic cadence.
+    if (PARAM.inp.calculation == "md")
+    {
+        return;
+    }
     const double output_acc = 1.0e-8;
     double unit_transform = 1;
     std::string title = name;
@@ -332,7 +343,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
     fmt << stress_x << stress_y << stress_z;
     table = fmt.str();
     ofs << table;
-    if (name == "TOTAL-STRESS" && PARAM.inp.calculation != "md")
+    if (name == "TOTAL-STRESS")
     {
         ofs << " #TOTAL-PRESSURE# (EXCLUDE KINETIC PART OF IONS): " << std::fixed 
                              << std::setprecision(6) << pressure << unit

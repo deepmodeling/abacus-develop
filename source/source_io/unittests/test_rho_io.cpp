@@ -214,7 +214,7 @@ TEST_F(CubeIOTest, ReadCube)
     EXPECT_EQ(comment[0], "Ionic_Step 1  Cubefile created from ABACUS. Inner loop is z, followed by y and x");
     EXPECT_EQ(comment[1], "1 # number of spin directions 0.461002 # Fermi energy, in Ry");
     EXPECT_EQ(natom, 2);
-    for (auto& o : origin) { EXPECT_EQ(o, 0.0); }
+    for (double& o : origin) { EXPECT_EQ(o, 0.0); }
     EXPECT_EQ(nx_read, 36);
     EXPECT_EQ(ny_read, 36);
     EXPECT_EQ(nz_read, 36);
@@ -224,8 +224,8 @@ TEST_F(CubeIOTest, ReadCube)
     EXPECT_EQ(atom_type.size(), natom);
     EXPECT_EQ(atom_charge.size(), natom);
     EXPECT_EQ(atom_pos.size(), natom);
-    for (auto& t : atom_type) { EXPECT_EQ(t, 14); }
-    for (auto& c : atom_charge) { EXPECT_DOUBLE_EQ(c, 4.0); }
+    for (int& t : atom_type) { EXPECT_EQ(t, 14); }
+    for (double& c : atom_charge) { EXPECT_DOUBLE_EQ(c, 4.0); }
     EXPECT_DOUBLE_EQ(atom_pos[1][1], 7.65);
     const int nxyz = nx_read * ny_read * nz_read;
     EXPECT_EQ(data_read.size(), nxyz);

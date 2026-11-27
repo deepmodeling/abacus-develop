@@ -15,60 +15,55 @@ using namespace std;
 class realArray
 {
   public:
-    double* ptr;
+    double *ptr;
 
     realArray(const int d1 = 1, const int d2 = 1, const int d3 = 1);
-    realArray(const int d1, const int d2, const int d3, const int d4);
+    realArray(
+        const int d1,
+        const int d2,
+        const int d3,
+        const int d4);
     ~realArray();
 
     void create(const int d1, const int d2, const int d3);
-    void create(const int d1, const int d2, const int d3, const int d4);
+    void create(
+        const int d1,
+        const int d2,
+        const int d3,
+        const int d4);
 
-    const realArray& operator=(const realArray& right);
-    const realArray& operator=(const double& right);
+    const realArray &operator=(const realArray &right);
+    const realArray &operator=(const double &right);
 
-    double& operator()(const int d1, const int d2, const int d3);
-    double& operator()(const int d1, const int d2, const int d3, const int d4);
+    double &operator()(const int d1, const int d2, const int d3);
+    double &operator()(
+        const int d1,
+        const int d2,
+        const int d3,
+        const int d4);
 
-    const double& operator()(const int d1, const int d2, const int d3) const;
-    const double& operator()(const int d1, const int d2, const int d3, const int d4) const;
+    const double &operator()(const int d1, const int d2, const int d3) const;
+    const double &operator()(
+        const int d1,
+        const int d2,
+        const int d3,
+        const int d4) const;
 
     void zero_out(void);
 
-    int getSize() const
-    {
-        return size;
-    }
+    int getSize() const { return size; }
 
-    int getDim() const
-    {
-        return dim;
-    }
+    int getDim() const { return dim; }
 
-    int getBound1() const
-    {
-        return bound1;
-    }
+    int getBound1() const { return bound1; }
 
-    int getBound2() const
-    {
-        return bound2;
-    }
+    int getBound2() const { return bound2; }
 
-    int getBound3() const
-    {
-        return bound3;
-    }
+    int getBound3() const { return bound3; }
 
-    int getBound4() const
-    {
-        return bound4;
-    }
+    int getBound4() const { return bound4; }
 
-    int getArrayCount(void)
-    {
-        return arrayCount;
-    }
+    int getArrayCount(void) { return arrayCount; }
 
   private:
     int size;
@@ -83,11 +78,13 @@ class realArray
 // set elements of a as zeros which a is 1_d array.
 //**************************************************
 template <class T>
-void zeros(T* u, const int n)
+void zeros(T *u, const int n)
 {
     assert(n > 0);
     for (int i = 0; i < n; i++)
+    {
         u[i] = 0;
+    }
 }
 
 #endif // realArray class

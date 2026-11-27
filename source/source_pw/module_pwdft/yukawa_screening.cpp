@@ -14,9 +14,7 @@
 #include <limits>
 #include <sstream>
 
-void YukawaScreening::init(const UnitCell& cell,
-                           const std::vector<int>& l_channel,
-                           double yukawa_lambda_cfg)
+void YukawaScreening::init(const UnitCell &cell, const std::vector<int> &l_channel, double yukawa_lambda_cfg)
 {
     this->yukawa_lambda_cfg_ = yukawa_lambda_cfg;
     this->lambda_ = 0.0;
@@ -50,7 +48,7 @@ void YukawaScreening::init(const UnitCell& cell,
     }
 }
 
-void YukawaScreening::cal_lambda(double** rho, int nrxx, int nspin)
+void YukawaScreening::cal_lambda(double **rho, int nrxx, int nspin)
 {
     ModuleBase::TITLE("YukawaScreening", "cal_lambda");
 
@@ -117,11 +115,8 @@ void YukawaScreening::cal_lambda(double** rho, int nrxx, int nspin)
     if (!std::isfinite(val1) || !std::isfinite(val2) || val1 <= 0.0)
     {
         std::ostringstream oss;
-        oss << "rho sanity check failed: sum_rho=" << val1
-            << " sum_rho_lambda=" << val2
-            << " min_rho=" << min_rho_global
-            << " (need finite sum_rho > 0); nspin=" << nspin
-            << " nrxx=" << nrxx;
+        oss << "rho sanity check failed: sum_rho=" << val1 << " sum_rho_lambda=" << val2
+            << " min_rho=" << min_rho_global << " (need finite sum_rho > 0); nspin=" << nspin << " nrxx=" << nrxx;
         ModuleBase::WARNING_QUIT("YukawaScreening::cal_lambda", oss.str());
     }
 
@@ -131,7 +126,11 @@ void YukawaScreening::cal_lambda(double** rho, int nrxx, int nspin)
     this->lambda_ /= 1.6;
 }
 
-void YukawaScreening::cal_slater_Fk(const UnitCell& ucell, int L, int T, const LCAO_Orbitals* orb)
+void YukawaScreening::cal_slater_Fk(
+    const UnitCell &ucell,
+    int L,
+    int T,
+    const LCAO_Orbitals *orb)
 {
     ModuleBase::TITLE("YukawaScreening", "cal_slater_Fk");
 
@@ -168,8 +167,8 @@ void YukawaScreening::cal_slater_Fk(const UnitCell& ucell, int L, int T, const L
                         bslval = spherical_Bessel(l, r1, lambda_val);
                         hnkval = spherical_Hankel(l, r0, lambda_val);
                     }
-                    this->Fk_[T][L][chi][k] -= (4 * k + 1) * lambda_val * pow(R_L0, 2) * bslval * hnkval
-                                               * pow(R_L1, 2) * pow(r0, 2) * pow(r1, 2) * rab0 * rab1;
+                    this->Fk_[T][L][chi][k] -= (4 * k + 1) * lambda_val * pow(R_L0, 2) * bslval * hnkval *
+                                               pow(R_L1, 2) * pow(r0, 2) * pow(r1, 2) * rab0 * rab1;
                 }
             }
         }
@@ -179,16 +178,17 @@ void YukawaScreening::cal_slater_Fk(const UnitCell& ucell, int L, int T, const L
     (void)L;
     (void)T;
     (void)orb;
-    ModuleBase::WARNING_QUIT("YukawaScreening::cal_slater_Fk",
-                             "Slater integrals require numerical orbitals; compile with __LCAO");
+    ModuleBase::WARNING_QUIT(
+        "YukawaScreening::cal_slater_Fk", "Slater integrals require numerical orbitals; compile with __LCAO");
 #endif
 }
 
-void YukawaScreening::cal_slater_UJ(const UnitCell& ucell,
-                                    double** rho,
-                                    int nrxx,
-                                    int nspin,
-                                    const LCAO_Orbitals* orb)
+void YukawaScreening::cal_slater_UJ(
+    const UnitCell &ucell,
+    double **rho,
+    int nrxx,
+    int nspin,
+    const LCAO_Orbitals *orb)
 {
     ModuleBase::TITLE("YukawaScreening", "cal_slater_UJ");
 
@@ -235,9 +235,9 @@ void YukawaScreening::cal_slater_UJ(const UnitCell& ucell,
                 else if (L == 3)
                 {
                     this->U_Yukawa_[T][L] = this->Fk_[T][L][0][0];
-                    this->J_Yukawa_[T][L] = (286.0 * this->Fk_[T][L][0][1]
-                                                + 195.0 * this->Fk_[T][L][0][2]
-                                                + 250.0 * this->Fk_[T][L][0][3]) / 6435.0;
+                    this->J_Yukawa_[T][L] = (286.0 * this->Fk_[T][L][0][1] + 195.0 * this->Fk_[T][L][0][2] +
+                                                250.0 * this->Fk_[T][L][0][3]) /
+                                            6435.0;
                 }
 
                 // Hartree to Rydeberg
@@ -282,8 +282,8 @@ double YukawaScreening::spherical_Bessel(const int k, const double r, const doub
         }
         else
         {
-            val = -5 * (21 + 2 * pow(x, 2)) * cosh(x) / pow(x, 4)
-                  + (105 + 45 * pow(x, 2) + pow(x, 4)) * sinh(x) / pow(x, 5);
+            val = -5 * (21 + 2 * pow(x, 2)) * cosh(x) / pow(x, 4) +
+                  (105 + 45 * pow(x, 2) + pow(x, 4)) * sinh(x) / pow(x, 5);
         }
     }
     else if (k == 6)
@@ -294,8 +294,8 @@ double YukawaScreening::spherical_Bessel(const int k, const double r, const doub
         }
         else
         {
-            val = 21 * (495 + 60 * pow(x, 2) + pow(x, 4)) * cosh(x) / pow(x, 6)
-                  + (-10395 - 4725 * pow(x, 2) - 210 * pow(x, 4) - pow(x, 6)) * sinh(x) / pow(x, 7);
+            val = 21 * (495 + 60 * pow(x, 2) + pow(x, 4)) * cosh(x) / pow(x, 6) +
+                  (-10395 - 4725 * pow(x, 2) - 210 * pow(x, 4) - pow(x, 6)) * sinh(x) / pow(x, 7);
         }
     }
     return val;
@@ -331,8 +331,8 @@ double YukawaScreening::spherical_Hankel(const int k, const double r, const doub
     {
         if (x < 5.0e-1)
         {
-            val = -105 / pow(x, 5) + 15 / (2 * pow(x, 3)) - 3 / (8 * x) + x / 48 - pow(x, 3) / 384.0
-                  + pow(x, 4) / 945.0;
+            val =
+                -105 / pow(x, 5) + 15 / (2 * pow(x, 3)) - 3 / (8 * x) + x / 48 - pow(x, 3) / 384.0 + pow(x, 4) / 945.0;
         }
         else
         {
@@ -343,15 +343,15 @@ double YukawaScreening::spherical_Hankel(const int k, const double r, const doub
     {
         if (x < 9.0e-1)
         {
-            val = 10395 / pow(x, 7) - 945 / (2 * pow(x, 5)) + 105 / (8 * pow(x, 3)) - 5 / (16 * x) + x / 128.0
-                  - pow(x, 3) / 3840.0 + pow(x, 5) / 46080.0 - pow(x, 6) / 135135.0;
+            val = 10395 / pow(x, 7) - 945 / (2 * pow(x, 5)) + 105 / (8 * pow(x, 3)) - 5 / (16 * x) + x / 128.0 -
+                  pow(x, 3) / 3840.0 + pow(x, 5) / 46080.0 - pow(x, 6) / 135135.0;
         }
         else
         {
-            val = exp(-x)
-                  * (10395 + 10395 * x + 4725 * pow(x, 2) + 1260 * pow(x, 3) + 210 * pow(x, 4) + 21 * pow(x, 5)
-                     + pow(x, 6))
-                  / pow(x, 7);
+            val = exp(-x) *
+                  (10395 + 10395 * x + 4725 * pow(x, 2) + 1260 * pow(x, 3) + 210 * pow(x, 4) + 21 * pow(x, 5) +
+                      pow(x, 6)) /
+                  pow(x, 7);
         }
     }
     return val;

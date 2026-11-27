@@ -32,7 +32,7 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
     ModuleBase::timer::start(this->classname, "real2recip");
 
     assert(this->gamma_only == false);
-    auto* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
+    std::complex<FPTYPE>* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
     detail::copy_complex_buffer_parallel(in, auxr, this->nrxx);
     this->fft_bundle.fftxyfor(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
 
@@ -42,7 +42,7 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
 
     const int startig = ik * this->npwk_max;
     const int npwk = this->npwk[ik];
-    auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
+    std::complex<FPTYPE>* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
     if (add)
     {
         FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
@@ -115,7 +115,7 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
 
     const int startig = ik * this->npwk_max;
     const int npwk = this->npwk[ik];
-    auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
+    std::complex<FPTYPE>* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
     if (add)
     {
         FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
@@ -168,7 +168,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
 
     const int startig = ik * this->npwk_max;
     const int npwk = this->npwk[ik];
-    auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
+    std::complex<FPTYPE>* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
@@ -181,7 +181,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     this->gathers_scatterp(this->fft_bundle.get_auxg_data<FPTYPE>(), this->fft_bundle.get_auxr_data<FPTYPE>());
 
     this->fft_bundle.fftxybac(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
-    auto* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
+    std::complex<FPTYPE>* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
     if (add)
     {
 #ifdef _OPENMP
@@ -225,7 +225,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
 
     const int startig = ik * this->npwk_max;
     const int npwk = this->npwk[ik];
-    auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
+    std::complex<FPTYPE>* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
@@ -246,7 +246,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
 
     // r2c in place
     const int npy = this->ny * this->nplane;
-    auto* rspace = this->fft_bundle.get_rspace_data<FPTYPE>();
+    FPTYPE* rspace = this->fft_bundle.get_rspace_data<FPTYPE>();
     if (add)
     {
 #ifdef _OPENMP

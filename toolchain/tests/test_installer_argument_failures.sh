@@ -26,7 +26,7 @@ copy_toolchain() {
 run_installer_in_copy() {
   local tmpdir="$1"
   shift
-  (cd "${tmpdir}/toolchain" && ./install_abacus_toolchain_new.sh "$@") >"${tmpdir}/output.log" 2>&1
+  (cd "${tmpdir}/toolchain" && ./install_abacus_toolchain_new.sh "$@") > "${tmpdir}/output.log" 2>&1
 }
 
 assert_invalid_input_fails() {

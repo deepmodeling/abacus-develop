@@ -71,6 +71,7 @@ device_dm   gpu
 Run one or more MPI ranks on one node with one visible GPU per rank. GPU DM
 supports Kohn-Sham SCF, relaxation and MD charge updates. Other configurations
 are rejected when GPU DM is explicitly selected.
+Keep `lcao_sk_cut 0` (the default); overlap regularization requires `device_dm cpu`.
 
 To combine GPU DM with GPU EXX and Libxc, use one MPI rank and one GPU with
 `device_exx gpu` and `device_xc gpu`. The build must also enable the corresponding

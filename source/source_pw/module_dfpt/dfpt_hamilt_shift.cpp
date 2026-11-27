@@ -16,22 +16,23 @@
 namespace ModuleDFPT
 {
 
-DFPT_HamiltShift::DFPT_HamiltShift(const UnitCell& ucell,
-                                   ModulePW::PW_Basis* pw_rho,
-                                   ModulePW::PW_Basis_K* pw_wfc,
-                                   const std::vector<double>& veff_r,
-                                   const DFPT_Pert* pert)
+DFPT_HamiltShift::DFPT_HamiltShift(
+    const UnitCell &ucell,
+    ModulePW::PW_Basis *pw_rho,
+    ModulePW::PW_Basis_K *pw_wfc,
+    const std::vector<double> &veff_r,
+    const DFPT_Pert *pert)
     : ucell_(&ucell), pw_rho_(pw_rho), pw_wfc_(pw_wfc), pert_(pert), veff_r_(veff_r), tpiba2_(ucell.tpiba2),
       nrxx_(pw_rho != nullptr ? pw_rho->nrxx : 0)
 {
     for (int it = 0; it < ucell_->ntype; ++it)
     {
-        const pseudo& ncpp = ucell_->atoms[it].ncpp;
+        const pseudo &ncpp = ucell_->atoms[it].ncpp;
         if (ncpp.tvanp || ncpp.has_so)
         {
-            ModuleBase::WARNING_QUIT("DFPT_HamiltShift",
-                                     "the shifted Sternheimer operator is implemented for "
-                                     "normal-conserving separable pseudopotentials only.");
+            ModuleBase::WARNING_QUIT(
+                "DFPT_HamiltShift", "the shifted Sternheimer operator is implemented for "
+                                    "normal-conserving separable pseudopotentials only.");
         }
         // projector -> (radial beta index, m channel) tables, matching
         // build_vkb / dVnl_dtau
@@ -56,11 +57,9 @@ DFPT_HamiltShift::DFPT_HamiltShift(const UnitCell& ucell,
     }
 }
 
-DFPT_HamiltShift::~DFPT_HamiltShift()
-{
-}
+DFPT_HamiltShift::~DFPT_HamiltShift() {}
 
-void DFPT_HamiltShift::set_context(const ModuleBase::Vector3<double>& q_cart, int k_idx)
+void DFPT_HamiltShift::set_context(const ModuleBase::Vector3<double> &q_cart, int k_idx)
 {
     ModuleBase::TITLE("DFPT_HamiltShift", "set_context");
     ModuleBase::timer::start("DFPT_HamiltShift", "set_context");
@@ -114,7 +113,7 @@ int DFPT_HamiltShift::dimension() const
     return kq_.get_npwk();
 }
 
-void DFPT_HamiltShift::apply(const std::complex<double>* x, std::complex<double>* y) const
+void DFPT_HamiltShift::apply(const std::complex<double> *x, std::complex<double> *y) const
 {
     ModuleBase::TITLE("DFPT_HamiltShift", "apply");
     ModuleBase::timer::start("DFPT_HamiltShift", "apply");
@@ -161,7 +160,7 @@ void DFPT_HamiltShift::apply(const std::complex<double>* x, std::complex<double>
         {
             continue;
         }
-        const std::vector<std::vector<std::complex<double>>>& vkb = vkb_cache_[iat];
+        const std::vector<std::vector<std::complex<double>>> &vkb = vkb_cache_[iat];
         becp_.assign(nh, std::complex<double>(0.0, 0.0));
         for (int mu = 0; mu < nh; ++mu)
         {
@@ -193,7 +192,7 @@ void DFPT_HamiltShift::apply(const std::complex<double>* x, std::complex<double>
     ModuleBase::timer::end("DFPT_HamiltShift", "apply");
 }
 
-double DFPT_HamiltShift::debug_t_vnl(const std::vector<std::complex<double>>& x) const
+double DFPT_HamiltShift::debug_t_vnl(const std::vector<std::complex<double>> &x) const
 {
     ModuleBase::TITLE("DFPT_HamiltShift", "debug_t_vnl");
     ModuleBase::timer::start("DFPT_HamiltShift", "debug_t_vnl");
@@ -212,7 +211,7 @@ double DFPT_HamiltShift::debug_t_vnl(const std::vector<std::complex<double>>& x)
         {
             continue;
         }
-        const std::vector<std::vector<std::complex<double>>>& vkb = vkb_cache_[iat];
+        const std::vector<std::vector<std::complex<double>>> &vkb = vkb_cache_[iat];
         becp_.assign(nh, std::complex<double>(0.0, 0.0));
         for (int mu = 0; mu < nh; ++mu)
         {
@@ -242,7 +241,7 @@ double DFPT_HamiltShift::debug_t_vnl(const std::vector<std::complex<double>>& x)
     return ekin + vnl;
 }
 
-double DFPT_HamiltShift::debug_v_wfc(const std::vector<std::complex<double>>& x) const
+double DFPT_HamiltShift::debug_v_wfc(const std::vector<std::complex<double>> &x) const
 {
     ModuleBase::TITLE("DFPT_HamiltShift", "debug_v_wfc");
     ModuleBase::timer::start("DFPT_HamiltShift", "debug_v_wfc");

@@ -9,6 +9,7 @@
 #include "source_base/module_out/read_exit_file.h"
 #include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
+#include "source_io/module_output/frame_append.h"
 #include "source_io/module_output/print_info.h"
 #include "source_io/module_output/write_notice.h"
 #include "source_io/module_parameter/parameter.h"
@@ -279,9 +280,8 @@ void Relax_Driver::stru_out(
         // numbered STRU{istep+1} files. Mode 0 only writes STRU_NOW, which is
         // already overwritten each step above.
         const bool append_stru = (inp.out_app_flag == 1) && (inp.out_stru == 1) && (istep > 0);
-        const std::string step_file =
-            (inp.out_app_flag == 1) ? out_dir_ + (inp.out_stru == 1 ? "STRU" : "STRU.cif")
-                                    : out_dir_ + "STRU" + std::to_string(istep + 1) + (inp.out_stru == 1 ? "" : ".cif");
+        const std::string stru_filename = ModuleIO::stru_frame_filename(out_dir_, inp.out_app_flag, istep);
+        const std::string step_file = stru_filename + (inp.out_stru == 1 ? "" : ".cif");
         relax_stru_io::write_stru(
             ucell, inp, step_file, header, force, need_orb, deepks_setorb_, my_rank_, inp.cal_force, append_stru);
         if (my_rank_ == 0)

@@ -76,6 +76,7 @@ TEST(DmDeviceInput, RejectsIncompatibleExplicitGpuRequests)
         valid["nspin"] = ModuleIO::InputValue(1);
         valid["kpar"] = ModuleIO::InputValue(1);
         valid["precision"] = ModuleIO::InputValue(std::string("double"));
+        valid["lcao_sk_cut"] = ModuleIO::InputValue(0.0);
         valid["esolver_type"] = ModuleIO::InputValue(std::string("ksdft"));
         valid["calculation"] = ModuleIO::InputValue(std::string("scf"));
         EXPECT_TRUE(domain.validate_requirements(entry.first, valid).empty());
@@ -87,6 +88,7 @@ TEST(DmDeviceInput, RejectsIncompatibleExplicitGpuRequests)
             {"nspin", ModuleIO::InputValue(2)},
             {"kpar", ModuleIO::InputValue(2)},
             {"precision", ModuleIO::InputValue(std::string("single"))},
+            {"lcao_sk_cut", ModuleIO::InputValue(1.0e-8)},
             {"esolver_type", ModuleIO::InputValue(std::string("tddft"))},
             {"calculation", ModuleIO::InputValue(std::string("nscf"))}};
         for (const std::pair<const std::string, ModuleIO::InputValue>& mismatch : incompatible)

@@ -66,7 +66,7 @@ class BoundaryTest : public testing::TestWithParam<bool>
             0.0,
             1.0);
         cell.lat0 = 3.0;
-        const auto communicator = domain.communicator();
+        const MPI_Comm communicator = domain.communicator();
         const int init_result = orbitals.para_2d().init(
             4,
             4,
@@ -116,7 +116,7 @@ class BoundaryTest : public testing::TestWithParam<bool>
 
     void expect_phase_correction(const Vector &saved_A)
     {
-        const auto &layout = matrix_layout().para_2d();
+        const Parallel_Blkcyclic& layout = matrix_layout().para_2d();
         const int rows = layout.nrloc();
         const int matrix_size = layout.size();
         const Vector next_A(-0.13, 0.17, 0.09);
@@ -130,10 +130,10 @@ class BoundaryTest : public testing::TestWithParam<bool>
                 {
                     const int i = layout.irglb(row);
                     const int offset = k * matrix_size + column * rows + row;
-                    const auto initial = matrix_value(i, j);
+                    const Complex initial = matrix_value(i, j);
                     h.data<Complex>()[offset] = initial;
                     expected[offset] = initial * std::conj(phase_for(i, k, saved_A)) * phase_for(j, k, saved_A);
-                    const auto wrong_time = initial * std::conj(phase_for(i, k, next_A)) * phase_for(j, k, next_A);
+                    const std::complex<double> wrong_time = initial * std::conj(phase_for(i, k, next_A)) * phase_for(j, k, next_A);
                     difference += std::abs(expected[offset] - wrong_time);
                 }
             }

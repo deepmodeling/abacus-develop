@@ -232,6 +232,7 @@ OBJS_CELL=atom_pseudo.o\
     read_atoms.o\
     read_atoms_helper.o\
     print_cell.o\
+    mdcell_cif_io.o\
     setup_nonlocal.o\
     klist.o\
     klist_io.o\
@@ -515,6 +516,10 @@ OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
     diago_dav_subspace.o\
     diago_bpcg.o\
+    diago_lobpcg.o\
+    lobpcg_subspace.o\
+    lobpcg_recovery.o\
+    dense_eigensolver.o\
     para_lin_tf.o\
     hsolver.o\
     hsolver_pw.o\
@@ -526,6 +531,8 @@ OBJS_HSOLVER=diago_cg.o\
     exp_lanczos.o\
     orthonormal.o\
     orthonormal_small.o\
+    matrix_block_ops.o\
+    overlap_spectrum.o\
     hsolver_lcaopw.o\
     diago_iter_assist.o\
     hegvd_op.o\
@@ -544,6 +551,8 @@ OBJS_HSOLVER=diago_cg.o\
     linear_op.o\
 
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
+      diag_lcao.o\
+      diag_sk_cut.o\
       diago_scalapack.o\
       diago_lapack.o\
       diago_elpa.o\

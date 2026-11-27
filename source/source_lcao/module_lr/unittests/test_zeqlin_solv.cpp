@@ -170,7 +170,7 @@ class ZeqLinearSolverTest : public testing::Test
 
 TEST_F(ZeqLinearSolverTest, ScalapackDouble)
 {
-    for (const auto& s : sizes)
+    for (const std::vector<int>& s : sizes)
     {
         const std::vector<double> a = hermitian_matrix<double>(s[0], s[0] + 1.0);
         check_against_lapack<double>(&LR::scalapack_linear_solver<double>, a, a, s[0], s[1], s[2]);
@@ -180,7 +180,7 @@ TEST_F(ZeqLinearSolverTest, ScalapackDouble)
 TEST_F(ZeqLinearSolverTest, ScalapackComplex)
 {
     typedef std::complex<double> C;
-    for (const auto& s : sizes)
+    for (const std::vector<int>& s : sizes)
     {
         const std::vector<C> a = hermitian_matrix<C>(s[0], s[0] + 1.0);
         check_against_lapack<C>(&LR::scalapack_linear_solver<C>, a, a, s[0], s[1], s[2]);
@@ -190,7 +190,7 @@ TEST_F(ZeqLinearSolverTest, ScalapackComplex)
 TEST_F(ZeqLinearSolverTest, ScalapackNonSymmetric)
 {
     // LU must not assume symmetry: perturb with an antisymmetric part
-    for (const auto& s : sizes)
+    for (const std::vector<int>& s : sizes)
     {
         const int n = s[0];
         std::vector<double> a = hermitian_matrix<double>(n, n + 1.0);
@@ -208,7 +208,7 @@ TEST_F(ZeqLinearSolverTest, ScalapackNonSymmetric)
 
 TEST_F(ZeqLinearSolverTest, ScalapackCholDouble)
 {
-    for (const auto& s : sizes)
+    for (const std::vector<int>& s : sizes)
     {
         const std::vector<double> a = hermitian_matrix<double>(s[0], s[0] + 1.0);
         check_against_lapack<double>(&LR::scalapack_cholesky_linear_solver<double>, a, a, s[0], s[1], s[2]);
@@ -218,7 +218,7 @@ TEST_F(ZeqLinearSolverTest, ScalapackCholDouble)
 TEST_F(ZeqLinearSolverTest, ScalapackCholComplex)
 {
     typedef std::complex<double> C;
-    for (const auto& s : sizes)
+    for (const std::vector<int>& s : sizes)
     {
         const std::vector<C> a = hermitian_matrix<C>(s[0], s[0] + 1.0);
         check_against_lapack<C>(&LR::scalapack_cholesky_linear_solver<C>, a, a, s[0], s[1], s[2]);
@@ -228,7 +228,7 @@ TEST_F(ZeqLinearSolverTest, ScalapackCholComplex)
 TEST_F(ZeqLinearSolverTest, ScalapackCholSolvesHermitianPart)
 {
     // A slightly non-symmetric input is solved as (A + A^T)/2
-    for (const auto& s : sizes)
+    for (const std::vector<int>& s : sizes)
     {
         const int n = s[0];
         const std::vector<double> a_sym = hermitian_matrix<double>(n, n + 1.0);
