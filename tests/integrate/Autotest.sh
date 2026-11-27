@@ -352,7 +352,12 @@ run_case() {
     TIMEFORMAT='[----------] Time elapsed: %R seconds'
     #parallel test
     time {
-      if [ "$np" -le 0 ] 2> /dev/null; then
+      # Opted-in density checks must see only this run's LR cubes. Preserve
+      # other output and restart files, including the ground-state charge.
+      if [ -f lr_density.ref ] && ! rm -f -- OUT.autotest/LR_e-h_density_*.cube; then
+        echo "Error: cannot clear previous LR density cubes" >log.txt
+        false
+      elif [ "$np" -le 0 ] 2> /dev/null; then
         # serial build: run the binary directly, no MPI launcher.
         # This lets a serial ABACUS (ENABLE_MPI=OFF, e.g. the native
         # Windows build) reuse this harness unchanged.
@@ -548,10 +553,11 @@ if [ -z $g ]; then
     exit 1
   fi
 else
-  if [ "$fatal" -gt 0 ] || [ "$failed" -gt 0 ]; then
-    echo -e "\e[0;31m[ERROR     ]\e[0m Reference generation failed for $fatal cases."
-    printf "%b" "$fatal_case_list"
+  if [ "$fatal" -eq 0 ] && [ "$failed" -eq 0 ]; then
+    echo "Generate test cases complete."
+  else
+    echo -e "\e[0;31m[ERROR     ]\e[0m Reference generation failed for $(($fatal + $failed)) case(s)."
+    printf "%b" "$fatal_case_list$failed_case_list"
     exit 1
   fi
-  echo "Generate test cases complete."
 fi

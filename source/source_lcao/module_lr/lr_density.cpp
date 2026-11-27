@@ -52,8 +52,6 @@ LR_Density<T>::LR_Density(const UnitCell& ucell,
     openshell_(openshell), out_chg_precision_(output_precision), global_out_dir_(output_directory)
 {
     nk_ = kv.get_nks() / nspin;
-    spintype_ = openshell ? std::vector<std::string>({ "up", "down" })
-                         : std::vector<std::string>({ "singlet", "triplet" });
 }
 
 template<typename T>
@@ -63,7 +61,7 @@ void LR_Density<T>::cal_eh_density_single_state(const T* const X_istate, const i
     ModuleBase::GlobalFunc::ZEROS(density[0], this->pgrid_.get_nrxx());
     // 1. calculate the density matrix in AO basis
     // Closed-shell singlet and triplet amplitudes both use the spin-up KS orbitals.
-    // ispin still selects the response window and the output label.
+    // ispin selects the response window; the caller supplies the output label.
     const int orbital_spin = this->openshell_ ? ispin : 0;
     psi::Psi<T> c_spin = LR_Util::get_psi_spin(psi_ks_, orbital_spin, nk_);
 #ifdef __MPI
@@ -92,7 +90,7 @@ void LR_Density<T>::write_density_single_state(const double* const* const densit
 
 template<typename T>
 void LR_Density<T>::output_eh_density_all_states(const T* const X, const int ispin, const int nstate,
-                                  std::ofstream& ofs_running)
+                                  const std::string& channel_label, std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("LR_Density", "cal_eh_density_all_states");
     const int up_size = this->pX_[0].size();
@@ -105,7 +103,7 @@ void LR_Density<T>::output_eh_density_all_states(const T* const X, const int isp
         const int offset = LR::electron_hole_offset(istate, nk_, up_size, down_size, ispin, openshell_);
         const T* const amplitudes = X + offset;
         this->cal_eh_density_single_state(amplitudes, ispin, density);
-        const std::string filepath = this->global_out_dir_ + "LR_e-h_density_" + spintype_[ispin] + "_" + std::to_string(istate + 1) + ".cube";
+        const std::string filepath = this->global_out_dir_ + "LR_e-h_density_" + channel_label + "_" + std::to_string(istate + 1) + ".cube";
         this->write_density_single_state(density, filepath, ofs_running);
     }
     LR_Util::_deallocate_2order_nested_ptr(density, 1);

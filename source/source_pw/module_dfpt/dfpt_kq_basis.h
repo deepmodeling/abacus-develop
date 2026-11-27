@@ -20,15 +20,13 @@ namespace ModuleDFPT
  * C0: for every (ik, q) pair the first-order response (the Sternheimer
  * solution dpsi) lives in the k+q plane-wave basis. Rather than building a
  * full PW_Basis_K (new FFT grids, MP redistribution) per q, this helper
- * enumerates the G vectors of two already-initialized ground-state bases at
- * the shifted center k+q: every G with |G + (k+q)|^2 <= gk_ecut is kept.
- *
- * Two reservoirs are needed because the wavefunction G grid is distributed
- * with the ball radius (sqrt(gk_ecut) + max|k_mesh|)^2, which does not cover
- * the q-shifted balls (the k-mesh knows nothing about q). The dense charge
- * grid, built with ecutrho >= 4*ecutwfc, has radius 2*sqrt(gk_ecut) and
- * covers sqrt(gk_ecut) + |k+q| for every q inside the first Brillouin
- * zone, so it completes the enumeration.
+ * enumerates the k+q ball directly on the shared ground-state FFT grid:
+ * every integer G with |G + (k+q)|^2 <= gk_ecut is kept, carried by the
+ * single FFT cell that the half-space wrap assigns to it. The scan is
+ * exact (cell-to-G is bijective), so the ball layout of neither
+ * ground-state grid can silently drop members; a member whose cell lacks
+ * a charge-grid G quits with an explicit diagnostic instead (the veff
+ * convolution would otherwise zero its coefficient).
  *
  * Preconditions:
  * - The ground-state k-basis must be complex (gamma_only=false): DFPT
@@ -36,6 +34,8 @@ namespace ModuleDFPT
  *   gamma-only half-space reduction.
  * - Both bases must share the same FFT grid dimensions (the k+q G vectors
  *   are exchanged between them through the shared FFT cell position).
+ * - ecutrho >= 4 ecutwfc: the charge ball (radius 2*sqrt(gk_ecut)) then
+ *   carries every k+q ball member for q inside the first Brillouin zone.
  */
 class DFPT_KQ_Basis
 {

@@ -6,26 +6,32 @@ addtest(
   LIBS parameter base device
   SOURCES test_csr_file_reader.cpp test_csr_reader.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_BASE_filename
   LIBS parameter base device
-  SOURCES test_filename.cpp
-)
+  SOURCES test_filename.cpp)
 
-AddTest(
+addtest(
+  TARGET MODULE_BASE_integral
+  LIBS parameter base device
+  SOURCES test_math_integral.cpp)
+
+addtest(
+  TARGET MODULE_BASE_net_force
+  LIBS parameter base device
+  SOURCES test_mathzone.cpp)
+
+addtest(
   TARGET MODULE_BASE_matrix_overflow
   LIBS parameter base device
-  SOURCES test_matrix.cpp
-)
+  SOURCES test_matrix.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_BASE_complexmatrix_overflow
   LIBS parameter base device
-  SOURCES test_complexmatrix.cpp
-)
+  SOURCES test_complexmatrix.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_BASE_memory_budget
   LIBS parameter base device
-  SOURCES test_memory_budget.cpp
-)
+  SOURCES test_memory_budget.cpp)

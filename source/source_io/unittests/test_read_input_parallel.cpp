@@ -833,3 +833,26 @@ TEST_F(InputParaTest, OpticalGaugeCanDisableSpectrum)
     item.read_value(item, param);
     EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
 }
+
+TEST_F(InputParaTest, ScalarLrSpinSelection)
+{
+    ModuleIO::ReadInput reader(0);
+    const auto& list = reader.get_input_lists();
+    const std::map<std::string, ModuleIO::Input_Item> items(list.begin(), list.end());
+    Parameter parameter;
+    EXPECT_EQ(parameter.inp.lr_target_spin, "singlet");
+    auto item = items.at("lr_target_spin");
+    for (const std::string spin : {"singlet", "triplet"})
+    {
+        item.str_values = {spin};
+        item.read_value(item, parameter);
+        EXPECT_EQ(parameter.inp.lr_target_spin, spin);
+        EXPECT_NO_THROW(item.check_value(item, parameter));
+    }
+    for (const std::string spin : {"updown", "invalid"})
+    {
+        item.str_values = {spin};
+        item.read_value(item, parameter);
+        EXPECT_EXIT(item.check_value(item, parameter), testing::ExitedWithCode(1), "");
+    }
+}

@@ -13,7 +13,7 @@ void print_lr_force(const std::vector<ModuleBase::matrix>& force, std::ostream& 
     const std::ios::fmtflags old_flags = ofs.flags();
     const std::streamsize old_precision = ofs.precision();
     const int nstate = force.size();
-    ofs << "Forces (-gradients) of each excited state: (eV/Angstrom)" << std::endl;
+    ofs << "Excitation-energy force contributions (-dOmega/dR) of each state: (eV/Angstrom)" << std::endl;
     ofs << std::fixed << std::setprecision(10) << std::setw(6) << "state" << std::setw(6) << "atom"
         << std::setw(20) << "x" << std::setw(20) << "y" << std::setw(20) << "z" << std::endl;
     const double fac = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;

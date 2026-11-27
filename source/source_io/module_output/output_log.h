@@ -5,6 +5,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_base/matrix.h"
+#include "source_base/vector3.h"
 #include "source_cell/unitcell.h"
 
 namespace elecstate
@@ -64,6 +65,11 @@ void print_force(std::ofstream& ofs,
                  const std::string& name,
                  const ModuleBase::matrix& force,
                  bool ry = true);
+
+/// @brief output the net force vector and the magnitude of the force drift
+/// @param ofs the output stream
+/// @param net_force the sum of all atomic forces, in Ry/Bohr
+void print_net_force(std::ofstream& ofs, const ModuleBase::Vector3<double>& net_force);
 
 /// @brief output stress components
 /// @param name stress term name
