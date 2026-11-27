@@ -235,7 +235,6 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     imm.set_update_iter(4);
     imm.get_etot_info() = {-1.0, -2.0};
     Ions_Move_BFGS &bfgs = imm.get_bfgs();
-    bfgs.get_first_step() = false;
     bfgs.get_save_flag() = true;
     bfgs.get_tr_min_hit() = true;
     std::fill(bfgs.get_pos().begin(), bfgs.get_pos().end(), 1.0);
@@ -252,7 +251,6 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     EXPECT_FALSE(imm.get_converged());
     EXPECT_EQ(imm.get_update_iter(), 0);
     EXPECT_THAT(imm.get_etot_info(), testing::Each(0.0));
-    EXPECT_TRUE(bfgs.get_first_step());
     EXPECT_FALSE(bfgs.get_save_flag());
     EXPECT_FALSE(bfgs.get_tr_min_hit());
     EXPECT_THAT(bfgs.get_pos(), testing::Each(0.0));

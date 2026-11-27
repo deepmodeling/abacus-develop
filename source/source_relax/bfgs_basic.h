@@ -62,20 +62,16 @@ class BFGS_Basic
 
     void allocate_basic_for_testing() { allocate_basic(); }
     void new_step_for_testing(
-        const double &lat0,
         int &update_iter,
         std::ofstream &ofs,
         std::vector<double> &etot_info,
         const int test_relax_method)
     {
-        new_step(lat0, update_iter, ofs, etot_info, test_relax_method);
+        new_step(update_iter, ofs, etot_info, test_relax_method);
     }
     void reset_hessian_for_testing() { reset_hessian(); }
     void save_bfgs_for_testing() { save_bfgs(); }
-    void update_inverse_hessian_for_testing(const double &lat0, std::ofstream &ofs)
-    {
-        update_inverse_hessian(lat0, ofs);
-    }
+    void update_inverse_hessian_for_testing(std::ofstream &ofs) { update_inverse_hessian(false, ofs); }
     void check_wolfe_conditions_for_testing(std::ofstream &ofs, std::vector<double> &etot_info)
     {
         check_wolfe_conditions(ofs, etot_info);
@@ -89,7 +85,6 @@ class BFGS_Basic
   protected:
     void allocate_basic(void);
     void new_step(
-        const double &lat0,
         int &update_iter,
         std::ofstream &ofs,
         std::vector<double> &etot_info,
@@ -103,7 +98,7 @@ class BFGS_Basic
 
     std::vector<double> pos_p;  // p: previous
     std::vector<double> grad_p; // p: previous
-    std::vector<double> move_p;
+    std::vector<double> move_p; // Applied displacement from the accepted point to the trial point in Bohr.
 
   public:
     static double relax_bfgs_w1; // fixed: parameters for Wolfe conditions.
@@ -114,16 +109,13 @@ class BFGS_Basic
     bool tr_min_hit = false; //.TRUE. if the trust_radius has already been set
                              // to the minimum value at the previous step
 
-    // mohan add 2010-07-27
-    double check_move(const double &lat0, const double &pos, const double &pos_p);
-
   private:
     bool wolfe_flag = false;
     ModuleBase::matrix inv_hess;
 
     int bfgs_ndim;
 
-    void update_inverse_hessian(const double &lat0, std::ofstream &ofs);
+    void update_inverse_hessian(bool first_update, std::ofstream &ofs);
     void check_wolfe_conditions(std::ofstream &ofs, std::vector<double> &etot_info);
     void compute_trust_radius(std::ofstream &ofs, std::vector<double> &etot_info, const int test_relax_method);
 };

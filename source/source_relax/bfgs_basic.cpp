@@ -5,11 +5,12 @@
 #include "source_base/global_variable.h"
 
 #include <algorithm>
+#include <cmath>
 
 using namespace Ions_Move_Basic;
 
 double BFGS_Basic::relax_bfgs_w1 = -1.0; // default is 0.01
-double BFGS_Basic::relax_bfgs_w2 = -1.0; // defalut is 0.05
+double BFGS_Basic::relax_bfgs_w2 = -1.0; // default is 0.5
 
 BFGS_Basic::BFGS_Basic() { bfgs_ndim = 1; }
 
@@ -30,21 +31,16 @@ void BFGS_Basic::allocate_basic(void)
     return;
 }
 
-void BFGS_Basic::update_inverse_hessian(const double &lat0, std::ofstream &ofs)
+void BFGS_Basic::update_inverse_hessian(bool first_update, std::ofstream &ofs)
 {
     //  ModuleBase::TITLE("Ions_Move_BFGS","update_inverse_hessian");
     assert(dim > 0);
 
-    std::vector<double> s(dim, 0.0);
+    const std::vector<double> &s = move_p;
     std::vector<double> y(dim, 0.0);
 
     for (int i = 0; i < dim; i++)
     {
-        //      s[i] = this->pos[i] - this->pos_p[i];
-        //        mohan update 2010-07-27
-        s[i] = this->check_move(lat0, pos[i], pos_p[i]);
-        s[i] *= lat0;
-
         y[i] = this->grad[i] - this->grad_p[i];
     }
 
@@ -53,11 +49,22 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0, std::ofstream &ofs)
     {
         sdoty += s[i] * y[i];
     }
-    if (std::abs(sdoty) < 1.0e-16)
+    if (first_update)
     {
-        ofs << " WARINIG: unexpected behaviour in update_inverse_hessian" << std::endl;
-        ofs << " Resetting bfgs history " << std::endl;
-        this->reset_hessian();
+        // Set the initial inverse-Hessian scale from the first accepted secant pair.
+        const double yy = dot_func(y.data(), y.data(), dim);
+        if (yy > 0.0)
+        {
+            const double scale = std::abs(sdoty) / yy;
+            if (scale > 0.0 && std::isfinite(scale))
+            {
+                inv_hess *= scale;
+            }
+        }
+    }
+    if (sdoty < 1.0e-16)
+    {
+        ofs << " Skipping inverse BFGS update with insufficient positive curvature." << std::endl;
         return;
     }
 
@@ -104,16 +111,16 @@ void BFGS_Basic::check_wolfe_conditions(std::ofstream &ofs, std::vector<double> 
     // ediff = etot_info[0] - etot_info[1] (computed on demand)
     const double ediff = etot_info[0] - etot_info[1];
 
-    bool wolfe1 = ediff < this->relax_bfgs_w1 * dot_p;
+    const bool wolfe1 = ediff <= relax_bfgs_w1 * dot_p;
 
-    bool wolfe2 = std::abs(dot) > -this->relax_bfgs_w2 * dot_p;
+    const bool wolfe2 = dot_p < 0.0 && std::abs(dot) <= -relax_bfgs_w2 * dot_p;
 
     this->wolfe_flag = wolfe1 && wolfe2;
 
     ModuleBase::GlobalFunc::OUT(ofs, "etot - etot_p", ediff);
     ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
     ModuleBase::GlobalFunc::OUT(ofs, "dot", dot);
-    ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w2 * dot_p", relax_bfgs_w2 * dot_p);
+    ModuleBase::GlobalFunc::OUT(ofs, "-relax_bfgs_w2 * dot_p", -relax_bfgs_w2 * dot_p);
     ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1", relax_bfgs_w1);
     ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w2", relax_bfgs_w2);
     ModuleBase::GlobalFunc::OUT(ofs, "wolfe1", wolfe1);
@@ -152,7 +159,6 @@ void BFGS_Basic::save_bfgs(void)
     {
         this->pos_p[i] = this->pos[i];
         this->grad_p[i] = this->grad[i];
-        this->move_p[i] = this->move[i];
     }
     return;
 }
@@ -161,7 +167,6 @@ void BFGS_Basic::save_bfgs(void)
 // we have already done well in the previous direction
 // we should get a new direction in this case
 void BFGS_Basic::new_step(
-    const double &lat0,
     int &update_iter,
     std::ofstream &ofs,
     std::vector<double> &etot_info,
@@ -170,31 +175,13 @@ void BFGS_Basic::new_step(
     ModuleBase::TITLE("BFGS_Basic", "new_step");
 
     //--------------------------------------------------------------------
+    const int dim = grad.size();
     ++update_iter;
-    if (update_iter == 1)
-    {
-        // update_iter == 1 in this case
-        // we haven't succes before, but we also need to decide a direction
-        // this is the case when BFGS first start
-        // if the gradient is very small now,
-        // we don't need large relax_bfgs_init,
-        // we choose a smaller one.
-        if (Ions_Move_Basic::largest_grad < 0.01)
-        {
-            relax_bfgs_init = std::min(0.2, relax_bfgs_init);
-        }
-
-        Ions_Move_Basic::best_xxx = std::fabs(Ions_Move_Basic::best_xxx);
-
-        // std::cout << "best_xxx=" << " " << best_xxx <<std::endl;
-
-        relax_bfgs_init =
-            std::min(Ions_Move_Basic::best_xxx, relax_bfgs_init); // cg to bfgs initial trust_radius   13-8-10 pengfei
-    }
-    else if (update_iter > 1)
+    if (update_iter > 1)
     {
         this->check_wolfe_conditions(ofs, etot_info);
-        this->update_inverse_hessian(lat0, ofs);
+        const bool first_update = update_iter == 2;
+        this->update_inverse_hessian(first_update, ofs);
     }
 
     //--------------------------------------------------------------------
@@ -218,7 +205,8 @@ void BFGS_Basic::new_step(
             // std::cout << " move after hess " << move[i] << std::endl;
         }
 
-        ofs << " check the norm of new move " << dot_func(move.data(), move.data(), dim) << " (Bohr)" << std::endl;
+        const double norm = std::sqrt(dot_func(move.data(), move.data(), dim));
+        ofs << " check the norm of new move " << norm << " (Bohr)" << std::endl;
     }
     else if (bfgs_ndim > 1)
     {
@@ -248,121 +236,40 @@ void BFGS_Basic::new_step(
     // std::cout<<"update_iter="<<update_iter<<std::endl;
     if (update_iter == 1)
     {
-        trust_radius = relax_bfgs_init;
-
-        this->tr_min_hit = false;
+        trust_radius = std::min({relax_bfgs_init, relax_bfgs_rmax, std::abs(best_xxx)});
+        if (largest_grad < 0.01)
+        {
+            trust_radius = std::min(trust_radius, 0.2);
+        }
+        tr_min_hit = false;
     }
     else if (update_iter > 1)
     {
-        trust_radius = trust_radius_old;
         this->compute_trust_radius(ofs, etot_info, test_relax_method);
     }
     // std::cout<<"trust_radius ="<<" "<<trust_radius;
     return;
 }
 
-// trust radius is computed in this function
-// trust radius determine the step length
+// Grow the radius only after sufficient decrease on a step that reached the boundary.
 void BFGS_Basic::compute_trust_radius(std::ofstream &ofs, std::vector<double> &etot_info, const int test_relax_method)
 {
     ModuleBase::TITLE("BFGS_Basic", "compute_trust_radius");
-
-    // etot_info[0] = etot (current total energy)
-    // etot_info[1] = etot_p (previous total energy)
-    // ediff = etot_info[0] - etot_info[1] (computed on demand)
+    const int dim = move_p.size();
+    const double taken = std::sqrt(dot_func(move_p.data(), move_p.data(), dim));
+    const double slope = dot_func(grad_p.data(), move_p.data(), dim);
     const double ediff = etot_info[0] - etot_info[1];
-
-    // (1) judge 1
-    double dot = dot_func(grad_p.data(), move_p.data(), dim);
-    bool ltest = ediff < this->relax_bfgs_w1 * dot;
-
-    // (2) judge 2
-    // calculate the norm of move, which
-    // is used to compare to trust_radius_old.
-    double norm_move = dot_func(this->move.data(), this->move.data(), dim);
-    norm_move = std::sqrt(norm_move);
-    ModuleBase::GlobalFunc::OUT(ofs, "move(norm)", norm_move);
-
-    ltest = ltest && (norm_move > trust_radius_old);
-
-    // (3) decide a
-    double a;
-    if (ltest)
+    trust_radius = trust_radius_old;
+    if (taken >= (1.0 - 1.e-10) * trust_radius_old && slope < 0.0 && ediff <= relax_bfgs_w1 * slope)
     {
-        a = 1.5;
+        const double growth = wolfe_flag ? 2.0 : 1.5;
+        trust_radius = std::min(relax_bfgs_rmax, growth * trust_radius_old);
     }
-    else
-    {
-        a = 1.1;
-    }
-
-    /*
-    std::cout << " a=" << a << std::endl;
-    std::cout << " norm_move=" << norm_move << std::endl;
-    std::cout << " trust_radius=" << trust_radius << std::endl;
-    std::cout << " trust_radius_old=" << trust_radius_old << std::endl;
-    */
-
-    if (this->wolfe_flag)
-    {
-        trust_radius = std::min(relax_bfgs_rmax, 2.0 * a * trust_radius_old);
-    }
-    else
-    {
-        // mohan fix bug 2011-03-13 2*a*trust_radius_old -> a*trust_radius_old
-        trust_radius = std::min(relax_bfgs_rmax, a * trust_radius_old);
-        trust_radius = std::min(trust_radius, norm_move);
-    }
-
+    tr_min_hit = false;
     if (test_relax_method)
     {
         ModuleBase::GlobalFunc::OUT(ofs, "wolfe_flag", wolfe_flag);
-        ModuleBase::GlobalFunc::OUT(ofs, "trust_radius_old", trust_radius_old);
-        ModuleBase::GlobalFunc::OUT(ofs, "2*a*trust_radius_old", 2.0 * a * trust_radius_old);
-        ModuleBase::GlobalFunc::OUT(ofs, "norm_move", norm_move);
+        ModuleBase::GlobalFunc::OUT(ofs, "step taken (Bohr)", taken);
         ModuleBase::GlobalFunc::OUT(ofs, "Trust_radius (Bohr)", trust_radius);
     }
-
-    if (trust_radius < relax_bfgs_rmin)
-    {
-        // the history should be reset, we got trapped
-        if (tr_min_hit)
-        {
-            // the history has already been reset at the previous step
-            // something is going wrongsomething is going wrong
-            ModuleBase::WARNING_QUIT("bfgs", "bfgs history already reset at previous step, we got trapped!");
-        }
-        ofs << " Resetting BFGS history." << std::endl;
-        this->reset_hessian();
-        for (int i = 0; i < dim; i++)
-        {
-            move[i] = -grad[i];
-        }
-        trust_radius = relax_bfgs_rmin;
-        tr_min_hit = true;
-    }
-    else
-    {
-        tr_min_hit = false;
-    }
-
-    return;
-}
-
-double BFGS_Basic::check_move(const double &lat0, const double &pos, const double &pos_p)
-{
-    // this must be careful.
-    // unit is ucell.lat0.
-    assert(lat0 > 0.0);
-    const double direct_move = (pos - pos_p) / lat0;
-    double shortest_move = direct_move;
-    for (int cell = -1; cell <= 1; ++cell)
-    {
-        const double now_move = direct_move + cell;
-        if (std::abs(now_move) < std::abs(shortest_move))
-        {
-            shortest_move = now_move;
-        }
-    }
-    return shortest_move;
 }

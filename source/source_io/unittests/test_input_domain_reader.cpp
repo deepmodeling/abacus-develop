@@ -110,6 +110,16 @@ TEST_F(InputDomainReaderTest, ReportsIndependentErrorsTogether)
     EXPECT_NE(output.find("Invalid INPUT parameter 'gga_grad'"), std::string::npos);
 }
 
+TEST_F(InputDomainReaderTest, RequiresPositiveIonicBfgsRadius)
+{
+    const std::string relax = "calculation relax\nrelax_method bfgs\n";
+    for (const std::string key : {"relax_bfgs_init", "relax_bfgs_rmax"})
+    {
+        const std::string output = reject_input(relax + key + " 0\n");
+        EXPECT_NE(output.find("Requires " + key + ">0"), std::string::npos);
+    }
+}
+
 TEST_F(InputDomainReaderTest, RejectsAngularMomentumOutputWithSpinorBasis)
 {
     const std::string output = reject_input("nspin 4\nout_mat_l 1\n", "lcao");
