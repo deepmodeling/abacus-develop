@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-
 /// find_first_existing_file must return the first candidate that exists,
 /// in declaration order, and an empty string when none exist.
 TEST(FindFirstExistingFileTest, ReturnsFirstExistingCandidate)
@@ -21,9 +20,7 @@ TEST(FindFirstExistingFileTest, ReturnsFirstExistingCandidate)
     // No candidates exist -> empty string. All three names are unique to
     // this test, so they should not be present in td.
     {
-        const std::vector<std::string> candidates = {"ffe_absent_1.txt",
-                                                      "ffe_absent_2.txt",
-                                                      "ffe_absent_3.txt"};
+        const std::vector<std::string> candidates = {"ffe_absent_1.txt", "ffe_absent_2.txt", "ffe_absent_3.txt"};
         EXPECT_TRUE(DFTU_BASE::find_first_existing_file(td, candidates).empty());
     }
 
@@ -32,9 +29,7 @@ TEST(FindFirstExistingFileTest, ReturnsFirstExistingCandidate)
     {
         const std::string fn = temp_dir.file("ffe_second_only.txt");
         std::ofstream(fn).close();
-        const std::vector<std::string> candidates = {"ffe_absent_1.txt",
-                                                      "ffe_second_only.txt",
-                                                      "ffe_absent_3.txt"};
+        const std::vector<std::string> candidates = {"ffe_absent_1.txt", "ffe_second_only.txt", "ffe_absent_3.txt"};
         EXPECT_EQ(DFTU_BASE::find_first_existing_file(td, candidates), fn);
     }
 
@@ -42,9 +37,7 @@ TEST(FindFirstExistingFileTest, ReturnsFirstExistingCandidate)
     {
         const std::string fn = temp_dir.file("ffe_first_wins.txt");
         std::ofstream(fn).close();
-        const std::vector<std::string> candidates = {"ffe_first_wins.txt",
-                                                      "ffe_second_only.txt",
-                                                      "ffe_absent_3.txt"};
+        const std::vector<std::string> candidates = {"ffe_first_wins.txt", "ffe_second_only.txt", "ffe_absent_3.txt"};
         EXPECT_EQ(DFTU_BASE::find_first_existing_file(td, candidates), fn);
     }
 }
@@ -70,22 +63,13 @@ TEST_F(DFTUBaseTest, CompactWriterReaderCollinearRoundtrip)
     {
         std::ofstream output(filename.c_str());
         ASSERT_TRUE(output.is_open());
-        DFTU_BASE::write_occup_m(source,
-                                 ucell,
-                                 output,
-                                 DFTU_BASE::SOC_LAYOUT_PAULI);
+        DFTU_BASE::write_occup_m(source, ucell, output, DFTU_BASE::SOC_LAYOUT_PAULI);
     }
 
     OccupationMatrix restored;
     const std::vector<int> l_channel = {2};
     restored.init(ucell, l_channel, 2, 1);
-    DFTU_BASE::read_occup_m(ucell,
-                            restored,
-                            l_channel,
-                            filename,
-                            2,
-                            1,
-                            DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 2, 1, DFTU_BASE::SOC_LAYOUT_PAULI);
 
     for (int spin = 0; spin < 2; ++spin)
     {
@@ -93,9 +77,7 @@ TEST_F(DFTUBaseTest, CompactWriterReaderCollinearRoundtrip)
         {
             for (int column = 0; column < 5; ++column)
             {
-                EXPECT_NEAR(restored.get(0, 2, spin, row, column),
-                            source.occmat().get(0, 2, spin, row, column),
-                            1e-8);
+                EXPECT_NEAR(restored.get(0, 2, spin, row, column), source.occmat().get(0, 2, spin, row, column), 1e-8);
             }
         }
     }
@@ -152,8 +134,7 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
     {
         for (int index = 0; index < block_size; ++index)
         {
-            source.occmat().mat(0, 2, 0).c[block * block_size + index]
-                = 0.1 * (block + 1) + 0.001 * index;
+            source.occmat().mat(0, 2, 0).c[block * block_size + index] = 0.1 * (block + 1) + 0.001 * index;
         }
     }
 
@@ -168,26 +149,18 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
     OccupationMatrix restored;
     const std::vector<int> l_channel = {2};
     restored.init(ucell, l_channel, 4, 2);
-    DFTU_BASE::read_occup_m(ucell,
-                            restored,
-                            l_channel,
-                            filename,
-                            4,
-                            2,
-                            layout);
+    DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 4, 2, layout);
 
     for (int index = 0; index < 4 * block_size; ++index)
     {
-        EXPECT_NEAR(restored.mat(0, 2, 0).c[index],
-                    source.occmat().mat(0, 2, 0).c[index],
-                    1e-8);
+        EXPECT_NEAR(restored.mat(0, 2, 0).c[index], source.occmat().mat(0, 2, 0).c[index], 1e-8);
     }
 
     // Assert the SOC diagnostic header: mag x/y/z and per-spin nelec.
     // Pauli blocks are charge/spin_x/spin_y/spin_z, so the writer reports
     // mag_x = sum(spin_x diag), mag_y = sum(spin_y diag), mag_z = sum(spin_z diag)
     // and nelec = 0.5 * sum(charge +/- spin_z) on the diagonal.
-    const ModuleBase::matrix& occ = source.occmat().mat(0, 2, 0);
+    const ModuleBase::matrix &occ = source.occmat().mat(0, 2, 0);
     double expected_mag[3] = {0.0, 0.0, 0.0};
     double expected_nelec_soc[2] = {0.0, 0.0};
     for (int m = 0; m < 5; ++m)
@@ -265,21 +238,13 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocRealSpinBasisRoundtrip)
     OccupationMatrix restored;
     const std::vector<int> l_channel = {2};
     restored.init(ucell, l_channel, 4, 2);
-    DFTU_BASE::read_occup_m(ucell,
-                            restored,
-                            l_channel,
-                            filename,
-                            4,
-                            2,
-                            layout);
+    DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 4, 2, layout);
 
     for (int row = 0; row < 2 * orbital_size; ++row)
     {
         for (int column = 0; column < 2 * orbital_size; ++column)
         {
-            EXPECT_NEAR(restored.get(0, 2, 0, row, column),
-                        source.occmat().get(0, 2, 0, row, column),
-                        1e-8);
+            EXPECT_NEAR(restored.get(0, 2, 0, row, column), source.occmat().get(0, 2, 0, row, column), 1e-8);
         }
     }
 }

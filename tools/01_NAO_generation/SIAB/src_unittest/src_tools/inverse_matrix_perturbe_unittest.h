@@ -33,7 +33,7 @@ void Inverse_Matrix_Perturbe_Unittest()
         for (size_t iterate_num(0); iterate_num < 10; ++iterate_num)
         {
             cout << iterate_num << endl;
-            const ComplexMatrix& ii(inverse.set_iterate_num(iterate_num).cal_inverse());
+            const ComplexMatrix &ii(inverse.set_iterate_num(iterate_num).cal_inverse());
             cout_matrix(&ii, dim);
         }
     }

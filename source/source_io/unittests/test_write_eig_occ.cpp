@@ -91,7 +91,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     // setup coordinates of k-points
     kv->kvec_c.resize(kv->get_nkstot());
     int i = 0;
-    for (auto& kd: kv->kvec_c)
+    for (ModuleBase::Vector3<double>& kd: kv->kvec_c)
     {
         kd.set(0.01 * i, 0.01 * i, 0.01 * i);
         ++i;

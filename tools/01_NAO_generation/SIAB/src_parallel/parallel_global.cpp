@@ -13,7 +13,11 @@ using namespace std;
 #if defined __MPI
 MPI_Comm POOL_WORLD;
 
-void Parallel_Global::myProd(complex<double>* in, std::complex<double>* inout, int* len, MPI_Datatype* dptr)
+void Parallel_Global::myProd(
+    complex<double> *in,
+    std::complex<double> *inout,
+    int *len,
+    MPI_Datatype *dptr)
 {
     for (int i = 0; i < *len; i++)
     {
@@ -26,7 +30,7 @@ void Parallel_Global::myProd(complex<double>* in, std::complex<double>* inout, i
 }
 #endif
 
-void Parallel_Global::read_pal_param(int argc, char** argv)
+void Parallel_Global::read_pal_param(int argc, char **argv)
 {
 #if defined __MPI
     // for test

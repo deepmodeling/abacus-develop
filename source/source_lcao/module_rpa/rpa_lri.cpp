@@ -184,7 +184,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     if (exx_spacegroup_symmetry)
     {
         const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
-        const auto& Rs = RI_Util::get_Born_von_Karmen_cells(period);
+        const std::vector<std::array<int, 3>>& Rs = RI_Util::get_Born_von_Karmen_cells(period);
         symrot.find_irred_sector(ucell.symm,
                                  ucell.atoms,
                                  ucell.nat,

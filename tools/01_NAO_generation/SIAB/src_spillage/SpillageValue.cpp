@@ -15,7 +15,7 @@ SpillageValue::~SpillageValue()
     delete[] value_old;
 }
 
-void SpillageValue::allocate(const int& dim_in)
+void SpillageValue::allocate(const int &dim_in)
 {
     this->dim = dim_in;
     assert(dim < 100);
@@ -48,7 +48,7 @@ void SpillageValue::reset(void)
 double SpillageValue::cal_defined_value(bool get_new_flag)
 {
     // spillage value of each structure.
-    double* v;
+    double *v;
     if (get_new_flag)
     {
         v = this->value;
@@ -129,7 +129,7 @@ void SpillageValue::out(void)
     }
 }
 
-void SpillageValue::save_level(const int& ilevel)
+void SpillageValue::save_level(const int &ilevel)
 {
     // dim stands for number of structures.
     for (int i = 0; i < dim; i++)

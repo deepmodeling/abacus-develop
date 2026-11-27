@@ -96,7 +96,7 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
         }
     }
 
-    for (auto& R_coor: all_R_coor)
+    for (const Abfs::Vector3_Order<int>& R_coor: all_R_coor)
     {
         std::map<size_t, std::map<size_t, double>> psi_r_psi_sparse[3];
 
@@ -172,7 +172,7 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
         int rR_nonzero_num[3] = {0, 0, 0};
         for (int direction = 0; direction < 3; ++direction)
         {
-            for (auto& row_loop: psi_r_psi_sparse[direction])
+            for (std::pair<const std::size_t, std::map<std::size_t, double>>& row_loop: psi_r_psi_sparse[direction])
             {
                 rR_nonzero_num[direction] += row_loop.second.size();
             }

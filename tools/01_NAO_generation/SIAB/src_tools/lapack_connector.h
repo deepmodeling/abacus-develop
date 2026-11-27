@@ -26,9 +26,19 @@ using namespace std;
 extern "C"
 {
 
-    void zpotrf_(const char* uplo, const int* n, const std::complex<double>* A, const int* lda, const int* infp);
+    void zpotrf_(
+        const char *uplo,
+        const int *n,
+        const std::complex<double> *A,
+        const int *lda,
+        const int *infp);
 
-    void zpotri_(const char* uplo, const int* n, const std::complex<double>* A, const int* lda, const int* infp);
+    void zpotri_(
+        const char *uplo,
+        const int *n,
+        const std::complex<double> *A,
+        const int *lda,
+        const int *infp);
 
     //=======================================================================
     // ZGESV computes the solution to a complex system of linear equations
@@ -45,14 +55,15 @@ extern "C"
     //  A = LDA * N
     //  B = LDB * NRHS (exit X = B)
     //========================================================================
-    void zgesv_(const int* n,
-                const int* nrhs,
-                const std::complex<double>* A,
-                const int* lda,
-                const int* ipiv,
-                const std::complex<double>* B,
-                const int* ldb,
-                int* info);
+    void zgesv_(
+        const int *n,
+        const int *nrhs,
+        const std::complex<double> *A,
+        const int *lda,
+        const int *ipiv,
+        const std::complex<double> *B,
+        const int *ldb,
+        int *info);
 
     /*zhegv computes all the eigenvalues, and optionally, the eigenvectors
       of a complex generalized Hermitian-definite eigenproblem, of the form
@@ -69,30 +80,32 @@ extern "C"
       range of values or a range of indices for the desired eigenvalues.
     */
 
-    void zhegv_(const int* itype,
-                const char* jobz,
-                const char* uplo,
-                const int* n,
-                std::complex<double>* a,
-                const int* lda,
-                std::complex<double>* b,
-                const int* ldb,
-                double* w,
-                std::complex<double>* work,
-                int* lwork,
-                double* rwork,
-                int* info);
+    void zhegv_(
+        const int *itype,
+        const char *jobz,
+        const char *uplo,
+        const int *n,
+        std::complex<double> *a,
+        const int *lda,
+        std::complex<double> *b,
+        const int *ldb,
+        double *w,
+        std::complex<double> *work,
+        int *lwork,
+        double *rwork,
+        int *info);
 
-    void zheev_(const char* jobz,
-                const char* uplo,
-                const int* n,
-                complex<double>* a,
-                const int* lda,
-                double* w,
-                complex<double>* work,
-                const int* lwork,
-                double* rwork,
-                int* info);
+    void zheev_(
+        const char *jobz,
+        const char *uplo,
+        const int *n,
+        complex<double> *a,
+        const int *lda,
+        double *w,
+        complex<double> *work,
+        const int *lwork,
+        double *rwork,
+        int *info);
 
     //===================================================================================
     // zhegvx	:
@@ -183,47 +196,60 @@ extern "C"
     */
 
     // Peize Lin add 2015-11-20
-    void daxpy_(int* N, double* alpha, double* X, int* incX, double* Y, int* incY);
-    void dscal_(int* N, double* alpha, double* X, int* incX);
+    void daxpy_(
+        int *N,
+        double *alpha,
+        double *X,
+        int *incX,
+        double *Y,
+        int *incY);
+    void dscal_(
+        int *N,
+        double *alpha,
+        double *X,
+        int *incX);
 
     // Peize Lin add 2015-12-07
-    void zgemm_(const char* TransA,
-                const char* TransB,
-                const int* M,
-                const int* N,
-                const int* K,
-                const double* alpha,
-                const void* A,
-                const int* lda,
-                const void* B,
-                const int* ldb,
-                const double* beta,
-                void* C,
-                const int* ldc);
-    void zsymm_(const char* Side,
-                const char* Uplo,
-                const int* M,
-                const int* N,
-                const double* alpha,
-                const void* A,
-                const int* lda,
-                const void* B,
-                const int* ldb,
-                const double* beta,
-                void* C,
-                const int* ldc);
-    void zhemm_(const char* Side,
-                const char* Uplo,
-                const int* M,
-                const int* N,
-                const double* alpha,
-                const void* A,
-                const int* lda,
-                const void* B,
-                const int* ldb,
-                const double* beta,
-                void* C,
-                const int* ldc);
+    void zgemm_(
+        const char *TransA,
+        const char *TransB,
+        const int *M,
+        const int *N,
+        const int *K,
+        const double *alpha,
+        const void *A,
+        const int *lda,
+        const void *B,
+        const int *ldb,
+        const double *beta,
+        void *C,
+        const int *ldc);
+    void zsymm_(
+        const char *Side,
+        const char *Uplo,
+        const int *M,
+        const int *N,
+        const double *alpha,
+        const void *A,
+        const int *lda,
+        const void *B,
+        const int *ldb,
+        const double *beta,
+        void *C,
+        const int *ldc);
+    void zhemm_(
+        const char *Side,
+        const char *Uplo,
+        const int *M,
+        const int *N,
+        const double *alpha,
+        const void *A,
+        const int *lda,
+        const void *B,
+        const int *ldb,
+        const double *beta,
+        void *C,
+        const int *ldc);
 };
 
 // Class LapackConnector provide the connector to fortran lapack routine.
@@ -233,9 +259,9 @@ class LapackConnector
 {
   private:
     // Transpose the complex matrix to the fortran-form real-complex array.
-    static inline complex<double>* transpose(const ComplexMatrix& a, const int n, const int lda)
+    static inline complex<double> *transpose(const ComplexMatrix &a, const int n, const int lda)
     {
-        complex<double>* aux = new std::complex<double>[lda * n];
+        complex<double> *aux = new std::complex<double>[lda * n];
         for (int i = 0; i < n; ++i)
         {
             for (int j = 0; j < lda; ++j)
@@ -247,7 +273,11 @@ class LapackConnector
     }
 
     // Transpose the fortran-form real-complex array to the complex matrix.
-    static inline void transpose(const std::complex<double>* aux, ComplexMatrix& a, const int n, const int lda)
+    static inline void transpose(
+        const std::complex<double> *aux,
+        ComplexMatrix &a,
+        const int n,
+        const int lda)
     {
         for (int i = 0; i < n; ++i)
         {
@@ -258,7 +288,7 @@ class LapackConnector
         }
     }
 
-    static inline char change_side(const char& side)
+    static inline char change_side(const char &side)
     {
         switch (side)
         {
@@ -271,7 +301,7 @@ class LapackConnector
         }
     }
 
-    static inline char change_uplo(const char& uplo)
+    static inline char change_uplo(const char &uplo)
     {
         switch (uplo)
         {
@@ -285,23 +315,29 @@ class LapackConnector
     }
 
   public:
-    static inline void zgesv(const int n,
-                             const int nrhs,
-                             ComplexMatrix& A,
-                             const int lda,
-                             const int* ipiv,
-                             complex<double>* B,
-                             const int ldb,
-                             int* info)
+    static inline void zgesv(
+        const int n,
+        const int nrhs,
+        ComplexMatrix &A,
+        const int lda,
+        const int *ipiv,
+        complex<double> *B,
+        const int ldb,
+        int *info)
     {
-        complex<double>* aux = LapackConnector::transpose(A, n, lda);
+        complex<double> *aux = LapackConnector::transpose(A, n, lda);
 
         zgesv_(&n, &nrhs, aux, &lda, ipiv, B, &ldb, info);
 
         LapackConnector::transpose(aux, A, n, lda);
     }
 
-    static inline void zpotrf(char uplo, int n, ComplexMatrix& a, const int lda, int& info)
+    static inline void zpotrf(
+        char uplo,
+        int n,
+        ComplexMatrix &a,
+        const int lda,
+        int &info)
     {
         /*		complex<double> *aux = LapackConnector::transpose(a, n, lda);
                 zpotrf_( &uplo, &n, aux, &lda, &info);
@@ -312,7 +348,12 @@ class LapackConnector
         zpotrf_(&uplo_changed, &n, a.c, &lda, &info);
     }
 
-    static inline void zpotri(char uplo, int n, ComplexMatrix& a, const int lda, int& info)
+    static inline void zpotri(
+        char uplo,
+        int n,
+        ComplexMatrix &a,
+        const int lda,
+        int &info)
     {
         /*		complex<double> *aux = LapackConnector::transpose(a, n, lda);
                 zpotri_( &uplo, &n, aux, &lda, &info);
@@ -324,22 +365,23 @@ class LapackConnector
     }
 
     // wrap function of fortran lapack routine zhegv.
-    static inline void zhegv(const int itype,
-                             const char jobz,
-                             const char uplo,
-                             const int n,
-                             ComplexMatrix& a,
-                             const int lda,
-                             ComplexMatrix& b,
-                             const int ldb,
-                             double* w,
-                             std::complex<double>* work,
-                             int lwork,
-                             double* rwork,
-                             int& info)
+    static inline void zhegv(
+        const int itype,
+        const char jobz,
+        const char uplo,
+        const int n,
+        ComplexMatrix &a,
+        const int lda,
+        ComplexMatrix &b,
+        const int ldb,
+        double *w,
+        std::complex<double> *work,
+        int lwork,
+        double *rwork,
+        int &info)
     { // Transpose the complex matrix to the fortran-form real-complex array.
-        complex<double>* aux = LapackConnector::transpose(a, n, lda);
-        complex<double>* bux = LapackConnector::transpose(b, n, ldb);
+        complex<double> *aux = LapackConnector::transpose(a, n, lda);
+        complex<double> *bux = LapackConnector::transpose(b, n, ldb);
 
         // call the fortran routine
         zhegv_(&itype, &jobz, &uplo, &n, aux, &lda, bux, &ldb, w, work, &lwork, rwork, &info);
@@ -354,18 +396,19 @@ class LapackConnector
     }
 
     // wrap function of fortran lapack routine zheev.
-    static inline void zheev(const char jobz,
-                             const char uplo,
-                             const int n,
-                             ComplexMatrix& a,
-                             const int lda,
-                             double* w,
-                             complex<double>* work,
-                             const int lwork,
-                             double* rwork,
-                             int* info)
+    static inline void zheev(
+        const char jobz,
+        const char uplo,
+        const int n,
+        ComplexMatrix &a,
+        const int lda,
+        double *w,
+        complex<double> *work,
+        const int lwork,
+        double *rwork,
+        int *info)
     { // Transpose the complex matrix to the fortran-form real-complex array.
-        complex<double>* aux = LapackConnector::transpose(a, n, lda);
+        complex<double> *aux = LapackConnector::transpose(a, n, lda);
 
         // call the fortran routine
         zheev_(&jobz, &uplo, &n, aux, &lda, w, work, &lwork, rwork, info);
@@ -378,35 +421,36 @@ class LapackConnector
     }
 
     // wrap function of fortran lapack routine zheev.
-    static inline void zhegvx(const int itype,
-                              const char jobz,
-                              const char range,
-                              const char uplo,
-                              const int n,
-                              ComplexMatrix& a,
-                              const int lda,
-                              ComplexMatrix& b,
-                              const int ldb,
-                              const double vl,
-                              const double vu,
-                              const int il,
-                              const int iu,
-                              const double abstol,
-                              const int m,
-                              double* w,
-                              ComplexMatrix& z,
-                              const int ldz,
-                              std::complex<double>* work,
-                              const int lwork,
-                              double* rwork,
-                              int* iwork,
-                              int* ifail,
-                              int& info)
+    static inline void zhegvx(
+        const int itype,
+        const char jobz,
+        const char range,
+        const char uplo,
+        const int n,
+        ComplexMatrix &a,
+        const int lda,
+        ComplexMatrix &b,
+        const int ldb,
+        const double vl,
+        const double vu,
+        const int il,
+        const int iu,
+        const double abstol,
+        const int m,
+        double *w,
+        ComplexMatrix &z,
+        const int ldz,
+        std::complex<double> *work,
+        const int lwork,
+        double *rwork,
+        int *iwork,
+        int *ifail,
+        int &info)
     {
         // Transpose the complex matrix to the fortran-form real-complex array.
-        complex<double>* aux = LapackConnector::transpose(a, n, lda);
-        complex<double>* bux = LapackConnector::transpose(b, n, ldb);
-        complex<double>* zux = LapackConnector::transpose(z, n, ldz);
+        complex<double> *aux = LapackConnector::transpose(a, n, lda);
+        complex<double> *bux = LapackConnector::transpose(b, n, ldb);
+        complex<double> *zux = LapackConnector::transpose(z, n, ldz);
 
         // call the fortran routine
         //	    zhegvx_(&itype, &jobz, &range, &uplo, &n, aux, &lda, bux, &ldb, &vl,
@@ -422,70 +466,83 @@ class LapackConnector
     }
 
     // Peize Lin add 2015-11-20
-    static inline void daxpy(int N, double alpha, double* X, int incX, double* Y, int incY)
+    static inline void daxpy(
+        int N,
+        double alpha,
+        double *X,
+        int incX,
+        double *Y,
+        int incY)
     {
         daxpy_(&N, &alpha, X, &incX, Y, &incY);
     }
 
-    static inline void dscal(int N, double alpha, double* X, int incX)
+    static inline void dscal(
+        int N,
+        double alpha,
+        double *X,
+        int incX)
     {
         dscal_(&N, &alpha, X, &incX);
     }
 
     // Peize Lin add 2015-12-07
     // multiply two matrix. C=A*B
-    static inline void zgemm(const char TransA,
-                             const char TransB,
-                             const int M,
-                             const int N,
-                             const int K,
-                             const double alpha,
-                             const void* A,
-                             const int lda,
-                             const void* B,
-                             const int ldb,
-                             const double beta,
-                             void* C,
-                             const int ldc)
+    static inline void zgemm(
+        const char TransA,
+        const char TransB,
+        const int M,
+        const int N,
+        const int K,
+        const double alpha,
+        const void *A,
+        const int lda,
+        const void *B,
+        const int ldb,
+        const double beta,
+        void *C,
+        const int ldc)
     {
         zgemm_(&TransA, &TransB, &N, &M, &K, &alpha, B, &ldb, A, &lda, &beta, C, &ldc);
     }
 
     // multiply two matrix. C=A*B('L'eft) or C=B*A('R'ight). A^T=A, stored in 'U'pper or 'L'ower
-    static inline void zsymm(const char side,
-                             const char uplo,
-                             const int M,
-                             const int N,
-                             const double alpha,
-                             const void* A,
-                             const int lda,
-                             const void* B,
-                             const int ldb,
-                             const double beta,
-                             void* C,
-                             const int ldc)
+    static inline void zsymm(
+        const char side,
+        const char uplo,
+        const int M,
+        const int N,
+        const double alpha,
+        const void *A,
+        const int lda,
+        const void *B,
+        const int ldb,
+        const double beta,
+        void *C,
+        const int ldc)
     {
-        const char& side_changed(change_side(side));
-        const char& uplo_changed(change_uplo(uplo));
+        const char &side_changed(change_side(side));
+        const char &uplo_changed(change_uplo(uplo));
         zsymm_(&side_changed, &uplo_changed, &N, &M, &alpha, A, &lda, B, &ldb, &beta, C, &ldc);
     }
 
     // multiply two matrix. C=A*B('L'eft) or C=B*A('R'ight). A^H=A, stored in 'U'pper or 'L'ower
-    static inline void zhemm(const char side,
-                             const char uplo,
-                             const int M,
-                             const int N,
-                             const double alpha,
-                             const void* A,
-                             const int lda,
-                             const void* B,
-                             const int ldb,
-                             const double beta,
-                             void* C,
-                             const int ldc)
+    static inline void zhemm(
+        const char side,
+        const char uplo,
+        const int M,
+        const int N,
+        const double alpha,
+        const void *A,
+        const int lda,
+        const void *B,
+        const int ldb,
+        const double beta,
+        void *C,
+        const int ldc)
     {
-        const char& side_changed(change_side(side));
-        const char& uplo_changed(change_uplo(uplo));
+        const char &side_changed(change_side(side));
+        const char &uplo_changed(change_uplo(uplo));
         zhemm_(&side_changed, &uplo_changed, &N, &M, &alpha, A, &lda, B, &ldb, &beta, C, &ldc);
     }
 };

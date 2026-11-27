@@ -29,7 +29,7 @@ class InputTest : public testing::Test
         const std::string& label,
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>& bcastfuncs)
     {
-        auto it = std::find_if(
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = std::find_if(
             bcastfuncs.begin(),
             bcastfuncs.end(),
             [&label](const std::pair<std::string, ModuleIO::Input_Item>& item) { return item.first == label; });
@@ -131,7 +131,7 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     restart_file.close();
     const std::string stru_legacy = legacy_dir + "STRU_MD_5";
     std::ofstream stru_file_legacy(stru_legacy.c_str());
-    stru_file_legacy << "ATOMIC_SPECIES" << std::endl;
+    stru_file_legacy << "ATOMIC_SPECIES\n0 0 0 v 0 0 0\n";
     stru_file_legacy.close();
 
     input.suffix = "autotest";
@@ -141,8 +141,8 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     TestParameters::set_global_dir(readinput, input, sys);
     EXPECT_EQ(sys.global_in_stru, stru_legacy);
 
-    // Restart from a read_file_dir holding the current "STRU{istep + 1}"
-    // naming written by run_md (1-based, unified with relax).
+    // Restart from a read_file_dir holding the older "STRU{istep + 1}"
+    // naming (1-based, unified with relax).
     const std::string newnaming_dir = case_dir + "newnaming/";
     ModuleBase::make_directory(newnaming_dir);
     const std::string restart_txt_new = newnaming_dir + "Restart_md.txt";
@@ -152,7 +152,7 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     restart_file_new.close();
     const std::string stru_new = newnaming_dir + "STRU6";
     std::ofstream stru_file_new(stru_new.c_str());
-    stru_file_new << "ATOMIC_SPECIES" << std::endl;
+    stru_file_new << "ATOMIC_SPECIES\n0 0 0 v 0 0 0\n";
     stru_file_new.close();
 
     input.read_file_dir = newnaming_dir;
@@ -166,6 +166,8 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     // resuming from step 2 corresponds to the frame tagged "# MD step 3".
     const std::string cumulative_dir = case_dir + "cumulative/";
     ModuleBase::make_directory(cumulative_dir);
+    const std::string checkpoint = cumulative_dir + "STRU_restart";
+    std::remove(checkpoint.c_str());
     const std::string restart_txt_cum = cumulative_dir + "Restart_md.txt";
     std::ofstream restart_file_cum(restart_txt_cum.c_str());
     restart_file_cum << 2 << std::endl;
@@ -175,7 +177,7 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     std::ofstream stru_file_cum(stru_cumulative.c_str());
     stru_file_cum << "# MD step 1\n\nATOMIC_SPECIES\nSi 28.0855\n" << std::endl;
     stru_file_cum << "# MD step 2\n\nATOMIC_SPECIES\nSi 28.0855\n\nLATTICE_CONSTANT\n10.2\n" << std::endl;
-    stru_file_cum << "# MD step 3\n\nATOMIC_SPECIES\nSi 28.0855\n\nLATTICE_CONSTANT\n10.5\n" << std::endl;
+    stru_file_cum << "# MD step 3\n\nATOMIC_SPECIES\nSi 28.0855\n\nLATTICE_CONSTANT\n10.5\n0 0 0 v 0 0 0\n" << std::endl;
     stru_file_cum.close();
 
     input.read_file_dir = cumulative_dir;
@@ -187,6 +189,13 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     std::ifstream frame_ifs(stru_frame.c_str());
     EXPECT_TRUE(frame_ifs.good());
     frame_ifs.close();
+
+    // A dedicated checkpoint takes priority over ordinary trajectory frames.
+    std::ofstream checkpoint_file(checkpoint.c_str());
+    checkpoint_file << "# MD step 3\n\nATOMIC_SPECIES\nSi 28.0855\n0 0 0 v 0 0 0\n";
+    checkpoint_file.close();
+    TestParameters::set_global_dir(readinput, input, sys);
+    EXPECT_EQ(sys.global_in_stru, checkpoint);
 
     // Regression: a stale number-named file from an earlier run must not
     // shadow the cumulative STRU of the run being restarted. Here the fixed
@@ -201,7 +210,7 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     restart_file_stale.close();
     const std::string stru_stale = stale_dir + "STRU";
     std::ofstream stru_file_stale(stru_stale.c_str());
-    stru_file_stale << "# MD step 1\n\nATOMIC_SPECIES\nSi 28.0855\n" << std::endl;
+    stru_file_stale << "# MD step 1\n\nATOMIC_SPECIES\nSi 28.0855\n0 0 0 v 0 0 0\n" << std::endl;
     stru_file_stale.close();
     const std::string stru_leftover = stale_dir + "STRU1";
     std::ofstream stru_file_leftover(stru_leftover.c_str());
@@ -211,6 +220,7 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     input.read_file_dir = stale_dir;
     TestParameters::set_global_dir(readinput, input, sys);
     EXPECT_EQ(sys.global_in_stru, stale_dir + "STRU_restart_frame");
+    std::remove(checkpoint.c_str());
 
     // restore the shared input state so other tests are not affected
     input.calculation = "scf";

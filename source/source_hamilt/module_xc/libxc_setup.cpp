@@ -1,6 +1,7 @@
 #ifdef __LIBXC
 
 #include "libxc_abacus.h"
+#include "libxc_host.h"
 #include "source_base/formatter.h"
 #include "source_base/tool_quit.h"
 #include "xc_functional.h"
@@ -72,7 +73,7 @@ int xc_func_type_classifier(
     if (std::regex_match(xc_func, match, pattern))
     {
         std::string type = match[2].str();
-        auto it = mymap.find(type);
+        std::map<std::string, int>::const_iterator it = mymap.find(type);
         if (it != mymap.end())
         {
             return it->second;
@@ -148,7 +149,7 @@ std::pair<int, std::vector<int>> XC_Functional_Libxc::set_xc_type_libxc(const st
     // warn if any functional needs Laplacian of density
     {
         std::vector<xc_func_type> tmp_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
-        for (auto &f : tmp_funcs)
+        for (xc_func_type& f : tmp_funcs)
         {
             if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
             {
@@ -253,13 +254,13 @@ const std::vector<double> in_built_xc_func_ext_params(const int id, const double
 
 const std::vector<double> external_xc_func_ext_params(const int id)
 {
-    const auto &exch_ext = XC_Functional::get_runtime_parameters().xc_exch_ext;
+    const std::vector<double>& exch_ext = XC_Functional::get_runtime_parameters().xc_exch_ext;
     if (!exch_ext.empty() && static_cast<int>(exch_ext.front()) == id)
     {
         return {exch_ext.begin() + 1, exch_ext.end()};
     }
 
-    const auto &corr_ext = XC_Functional::get_runtime_parameters().xc_corr_ext;
+    const std::vector<double>& corr_ext = XC_Functional::get_runtime_parameters().xc_corr_ext;
     if (!corr_ext.empty() && static_cast<int>(corr_ext.front()) == id)
     {
         return {corr_ext.begin() + 1, corr_ext.end()};
@@ -274,11 +275,38 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(
     const double hybrid_alpha,
     const double hse_omega)
 {
+    return init_func(func_id, xc_polarized, hybrid_alpha, hse_omega, false);
+}
+
+std::vector<xc_func_type> XC_Functional_Libxc::init_func(
+    const std::vector<int> &func_id,
+    const int xc_polarized,
+    const double hybrid_alpha,
+    const double hse_omega,
+    const bool use_gpu)
+{
+#if !defined(ABACUS_LIBXC_CUDA) || !defined(__CUDA)
+    if (use_gpu)
+    {
+        ModuleBase::WARNING_QUIT(
+            "XC_Functional_Libxc::init_func", "device_xc gpu requires ABACUS built with -DENABLE_LIBXC_CUDA=ON.");
+    }
+#endif
     std::vector<xc_func_type> funcs;
     for (int id : func_id)
     {
-        funcs.push_back({});                           // create placeholder
-        xc_func_init(&funcs.back(), id, xc_polarized); // instantiate the XC term
+        funcs.push_back({}); // create placeholder
+        int status = 0;
+#ifdef XC_FLAGS_ON_HOST
+        const int flags = use_gpu ? XC_FLAGS_ON_DEVICE : XC_FLAGS_ON_HOST;
+        status = xc_func_init_flags(&funcs.back(), id, xc_polarized, flags);
+#else
+        status = init_func_host(&funcs.back(), id, xc_polarized);
+#endif
+        if (status != 0)
+        {
+            ModuleBase::WARNING_QUIT("XC_Functional_Libxc::init_func", "Libxc functional initialization failed.");
+        }
 
         // Search for external parameters. User-supplied parameters take precedence
         // over ABACUS built-in overrides.

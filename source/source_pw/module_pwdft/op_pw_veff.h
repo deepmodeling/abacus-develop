@@ -8,63 +8,66 @@
 
 #include <source_base/macros.h>
 
-namespace hamilt {
+namespace hamilt
+{
 
 #ifndef __VEFFTEMPLATE
 #define __VEFFTEMPLATE
 
-template<class T> class Veff : public T {};
+template <class T>
+class Veff : public T
+{
+};
 // template<typename Real, typename Device = base_device::DEVICE_CPU>
 // class Veff : public OperatorPW<T, Device> {};
 
 #endif
 
-template<typename T, typename Device>
+template <typename T, typename Device>
 class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
-  public:
-    Veff(const int* isk_in,
-         const Real* veff_in,
-         const int veff_row,
-         const int veff_col,
-         const ModulePW::PW_Basis_K* wfcpw_in);
 
-    template<typename T_in, typename Device_in = Device>
-    explicit Veff(const Veff<OperatorPW<T_in, Device_in>>* veff);
+  public:
+    Veff(
+        const int *isk_in,
+        const Real *veff_in,
+        const int veff_row,
+        const int veff_col,
+        const ModulePW::PW_Basis_K *wfcpw_in);
+
+    template <typename T_in, typename Device_in = Device>
+    explicit Veff(const Veff<OperatorPW<T_in, Device_in>> *veff);
 
     virtual ~Veff();
 
-    virtual void act(const int nbands,
+    virtual void act(
+        const int nbands,
         const int nbasis,
         const int npol,
-        const T* tmpsi_in,
-        T* tmhpsi,
+        const T *tmpsi_in,
+        T *tmhpsi,
         const int ngk_ik = 0,
-        const bool is_first_node = false)const override;
+        const bool is_first_node = false) const override;
 
     // denghui added for copy constructor at 20221105
-    const Real *get_veff() const {return this->veff;}
-    int get_veff_col() const {return this->veff_col;}
+    const Real *get_veff() const { return this->veff; }
+    int get_veff_col() const { return this->veff_col; }
     int get_veff_row() const { return this->veff_row; }
-    const int *get_isk() const {return isk;}
-    const ModulePW::PW_Basis_K* get_wfcpw() const
-    {
-        return this->wfcpw;
-    }
+    const int *get_isk() const { return isk; }
+    const ModulePW::PW_Basis_K *get_wfcpw() const { return this->wfcpw; }
 
     // Override the effective potential for the TDDFT midpoint Hamiltonian.
-    void set_veff(const Real* custom_veff) { this->veff = custom_veff; }
+    void set_veff(const Real *custom_veff) { this->veff = custom_veff; }
 
   private:
+    const int *isk = nullptr;
 
-    const int* isk = nullptr;
+    const ModulePW::PW_Basis_K *wfcpw = nullptr;
 
-    const ModulePW::PW_Basis_K* wfcpw = nullptr;
-
-    Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
+    Device *ctx = {};
+    base_device::DEVICE_CPU *cpu_ctx = {};
 
     int veff_col = 0;
     int veff_row = 0;

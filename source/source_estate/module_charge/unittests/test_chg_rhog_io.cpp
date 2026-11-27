@@ -130,7 +130,7 @@ class ReadRhogTest : public ::testing::Test
 
         size = 3 * npw_file;
         ofs.write(reinterpret_cast<const char*>(&size), sizeof(int));
-        for (const auto& m : miller)
+        for (const std::array<int, 3>& m : miller)
         {
             ofs.write(reinterpret_cast<const char*>(m.data()), 3 * sizeof(int));
         }
@@ -518,7 +518,7 @@ TEST_F(ReadRhogTest, RestartRejectsExcessSpinChannelsBeforeWriting)
     write_binary_by_hand(filename, 0, 2, miller, values);
     Parallel::barrier(pw_world);
     fill_rhog(1); // Exactly one pointer, as allocated by an nspin=1 calculation.
-    const auto original = rhog_data;
+    const std::vector<std::vector<std::complex<double>>> original = rhog_data;
     std::vector<double> density(rhopw.nrxx, 0.125);
     double* channels[] = {density.data()};
     std::ostringstream log;
@@ -538,7 +538,7 @@ TEST_F(ReadRhogTest, RestartRejectsMissingSpinChannelsBeforeWriting)
     write_binary_by_hand(filename, 0, 1, miller, values);
     Parallel::barrier(pw_world);
     fill_rhog(2);
-    const auto original = rhog_data;
+    const std::vector<std::vector<std::complex<double>>> original = rhog_data;
     std::vector<double> up(rhopw.nrxx, 0.125);
     std::vector<double> down(rhopw.nrxx, 0.375);
     double* channels[] = {up.data(), down.data()};

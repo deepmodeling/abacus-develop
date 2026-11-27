@@ -286,7 +286,7 @@ void LCAO_domain::init_chg_hr(
 {
     ModuleBase::TITLE("LCAO_domain", "init_chg_hr");
 
-    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
+    hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
     if (!hamilt_lcao)
     {
         ModuleBase::WARNING_QUIT("LCAO_domain::init_chg_hr", "p_hamilt is not HamiltLCAO");
@@ -300,7 +300,7 @@ void LCAO_domain::init_chg_hr(
         LCAO_domain::init_hr_from_file<TR>(hrfile_up, hamilt_lcao->getHR(), ucell, pv);
 
         // switch hR data pointer to spin-down half, then read hrs2
-        auto& hRS2 = hamilt_lcao->getHRS2();
+        std::vector<TR>& hRS2 = hamilt_lcao->getHRS2();
         hamilt_lcao->getHR()->allocate(hRS2.data() + hRS2.size() / 2, 0);
         const std::string hrfile_down = readin_dir + "/hrs2_nao.csr";
         LCAO_domain::init_hr_from_file<TR>(hrfile_down, hamilt_lcao->getHR(), ucell, pv);
@@ -318,15 +318,17 @@ void LCAO_domain::init_chg_hr(
     p_hamilt->refresh(false);
 
     // Step 3: Diagonalize to get wavefunctions and charge density
+    const auto& input = PARAM.inp;
     hsolver::HSolverLCAO<TK> hsolver_lcao_obj(pv,
                                               ks_solver,
                                               PARAM.globalv.kpar_lcao,
                                               PARAM.globalv.nlocal,
-                                              PARAM.inp.nbands,
-                                              PARAM.inp.nelec,
-                                              PARAM.inp.device == "gpu",
+                                              input.nbands,
+                                              input.nelec,
+                                              input.device == "gpu",
                                               GlobalV::NPROC,
-                                              GlobalV::MY_RANK);
+                                              GlobalV::MY_RANK,
+                                              input.lcao_sk_cut);
     hamilt::HamiltHSMatrix<TK> hs(p_hamilt);
     hsolver_lcao_obj.solve(hs, psi, pelec, dm, chr, nspin, ucell.omega, 0);
 }

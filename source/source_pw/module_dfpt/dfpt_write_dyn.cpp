@@ -17,10 +17,10 @@
 
 #include "dfpt_pw_data.h"
 
-#include "source_cell/unitcell.h"
 #include "source_base/constants.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#include "source_cell/unitcell.h"
 
 #include <cmath>
 #include <fstream>
@@ -34,17 +34,15 @@ namespace ModuleDFPT
 
 /// QE's mass unit conversion: dyn files store mass[amu] * AMU_RY,
 /// where AMU_RY = AMU_AU / 2 = 911.444... (constants.f90 line 57)
-static double amu_to_ry(double mass_amu)
-{
-    return mass_amu * 911.4442431045;
-}
+static double amu_to_ry(double mass_amu) { return mass_amu * 911.4442431045; }
 
-void DFPT_Write_Dyn(const UnitCell& ucell,
-                    const DFPT_PW_Data& data,
-                    int nq,
-                    const std::string& out_dir,
-                    int my_rank,
-                    std::ostream* running_log)
+void DFPT_Write_Dyn(
+    const UnitCell &ucell,
+    const DFPT_PW_Data &data,
+    int nq,
+    const std::string &out_dir,
+    int my_rank,
+    std::ostream *running_log)
 {
     ModuleBase::TITLE("ModuleDFPT", "DFPT_Write_Dyn");
     ModuleBase::timer::start("ModuleDFPT", "DFPT_Write_Dyn");
@@ -63,8 +61,7 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
 
     for (int q = 0; q < nq; ++q)
     {
-        const ModuleBase::ComplexMatrix dm = data.has_dynmat_raw(q) ? data.get_dynmat_raw(q)
-                                                                    : data.get_dynmat(q);
+        const ModuleBase::ComplexMatrix dm = data.has_dynmat_raw(q) ? data.get_dynmat_raw(q) : data.get_dynmat(q);
         if (dm.nr != nat3)
         {
             continue;
@@ -77,8 +74,7 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
         {
             // report the full failed path and skip this q
             std::ostringstream err;
-            err << "DFPT_Write_Dyn: cannot open " << name.str() << " for writing; skipping q="
-                << q;
+            err << "DFPT_Write_Dyn: cannot open " << name.str() << " for writing; skipping q=" << q;
             ModuleBase::WARNING("DFPT_Write_Dyn", err.str());
             continue;
         }
@@ -95,7 +91,7 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
         // "latvec have the unit of lat0"); write directly, no division
         for (int i = 0; i < 3; ++i)
         {
-            const ModuleBase::Matrix3& lv = ucell.latvec;
+            const ModuleBase::Matrix3 &lv = ucell.latvec;
             out << "  ";
             if (i == 0)
             {
@@ -123,8 +119,8 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
             const int it = ucell.iat2it[ia];
             const int ial = ucell.iat2ia[ia];
             const ModuleBase::Vector3<double> tau_alat = ucell.atoms[it].tau[ial];
-            out << "  " << ia + 1 << "  " << it + 1 << "  " << tau_alat.x << "  " << tau_alat.y
-                << "  " << tau_alat.z << "\n";
+            out << "  " << ia + 1 << "  " << it + 1 << "  " << tau_alat.x << "  " << tau_alat.y << "  " << tau_alat.z
+                << "\n";
         }
 
         // --- q vector in cartesian 2*pi/alat units (QE convention) ---
@@ -169,12 +165,12 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
         // compute_q0=true and loto=false the tensors are still computed
         // and should be exported
         const double gamma_tol = 1.0e-8; ///< empirical parameter: fractional-q Gamma tolerance (dfpt_phon.cpp value)
-        const bool q_is_gamma = std::abs(q_frac.x) <= gamma_tol && std::abs(q_frac.y) <= gamma_tol
-                                && std::abs(q_frac.z) <= gamma_tol;
+        const bool q_is_gamma =
+            std::abs(q_frac.x) <= gamma_tol && std::abs(q_frac.y) <= gamma_tol && std::abs(q_frac.z) <= gamma_tol;
         if (q_is_gamma && data.get_compute_q0())
         {
-            const ModuleBase::matrix& eps = data.get_dielectric();
-            const ModuleBase::matrix& born0 = data.get_born(0);
+            const ModuleBase::matrix &eps = data.get_dielectric();
+            const ModuleBase::matrix &born0 = data.get_born(0);
             const bool has_eps = eps.nr == 3 && eps.nc == 3;
             const bool has_born = born0.nr == 3 && born0.nc == 3;
             if (has_eps)
@@ -194,7 +190,7 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
                 out << "\n     Effective Charges E-U: Z_{alpha}{s,beta}\n\n";
                 for (int ia = 0; ia < nat; ++ia)
                 {
-                    const ModuleBase::matrix& zstar = data.get_born(ia);
+                    const ModuleBase::matrix &zstar = data.get_born(ia);
                     out << "     atom #  " << ia + 1 << "\n";
                     for (int b = 0; b < 3; ++b)
                     {

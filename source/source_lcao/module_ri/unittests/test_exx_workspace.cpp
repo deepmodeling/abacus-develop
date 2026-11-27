@@ -51,7 +51,7 @@ void check_workspace()
         }
     }
     std::map<std::string, TensorMap> original_packs;
-    for (const auto& pack : ks.lri.data_pool)
+    for (const std::pair<const std::string, RI::Data_Pack<int, Cell, T>>& pack : ks.lri.data_pool)
     {
         for (const auto& atom : pack.second.Ds_ab)
         {
@@ -61,9 +61,9 @@ void check_workspace()
             }
         }
     }
-    const auto gs_bindings = ks.lri.data_ab_name;
-    const auto gs_pool_size = ks.lri.data_pool.size();
-    const auto gs_energy = ks.energy;
+    const std::unordered_map<RI::Label::ab, std::string> gs_bindings = ks.lri.data_ab_name;
+    const std::size_t gs_pool_size = ks.lri.data_pool.size();
+    const T gs_energy = ks.energy;
     share_exx_geometry(ks, lr);
     EXPECT_NE(ks.lri.parallel.get(), lr.lri.parallel.get());
     EXPECT_NE(ks.lri.filter_atom.get(), lr.lri.filter_atom.get());
@@ -72,13 +72,13 @@ void check_workspace()
     EXPECT_EQ(lr.lri.data_pool.count("Ds_0"), 0);
     EXPECT_EQ(lr.lri.data_pool.count("Ds_1"), 0);
     EXPECT_EQ(lr.lri.data_pool.size(), 26);
-    for (const auto& pack : lr.lri.data_pool)
+    for (const std::pair<const std::string, RI::Data_Pack<int, Cell, T>>& pack : lr.lri.data_pool)
     {
         for (const auto& atom : pack.second.Ds_ab)
         {
             for (const auto& entry : atom.second)
             {
-                const auto& original = ks.lri.data_pool.at(pack.first).Ds_ab.at(atom.first).at(entry.first);
+                const RI::Tensor<T>& original = ks.lri.data_pool.at(pack.first).Ds_ab.at(atom.first).at(entry.first);
                 EXPECT_EQ(original.ptr(), entry.second.ptr());
             }
         }
@@ -93,13 +93,13 @@ void check_workspace()
     EXPECT_EQ(ks.lri.data_pool.size(), gs_pool_size);
     EXPECT_EQ(ks.lri.data_ab_name, gs_bindings);
     EXPECT_EQ(ks.energy, gs_energy);
-    for (const auto& pack : original_packs)
+    for (const std::pair<const std::string, TensorMap>& pack : original_packs)
     {
         for (const auto& atom : pack.second)
         {
             for (const auto& entry : atom.second)
             {
-                const auto& unchanged = ks.lri.data_pool.at(pack.first).Ds_ab.at(atom.first).at(entry.first);
+                const RI::Tensor<T>& unchanged = ks.lri.data_pool.at(pack.first).Ds_ab.at(atom.first).at(entry.first);
                 EXPECT_EQ(unchanged.ptr()[0], entry.second.ptr()[0]);
             }
         }
@@ -109,7 +109,7 @@ void check_workspace()
     {
         for (const auto& entry : atom.second)
         {
-            const auto& unchanged = ks.Hs.at(atom.first).at(entry.first);
+            const RI::Tensor<T>& unchanged = ks.Hs.at(atom.first).at(entry.first);
             EXPECT_EQ(unchanged.ptr()[0], entry.second.ptr()[0]);
         }
     }
@@ -127,8 +127,8 @@ void check_workspace()
     {
         for (const auto& entry : atom.second)
         {
-            const auto& updated = ks.lri.data_pool.at("Cs_").Ds_ab.at(atom.first).at(entry.first);
-            const auto& previous = lr.lri.data_pool.at("Cs_").Ds_ab.at(atom.first).at(entry.first);
+            const RI::Tensor<T>& updated = ks.lri.data_pool.at("Cs_").Ds_ab.at(atom.first).at(entry.first);
+            const RI::Tensor<T>& previous = lr.lri.data_pool.at("Cs_").Ds_ab.at(atom.first).at(entry.first);
             EXPECT_EQ(entry.second.ptr()[0], updated.ptr()[0]);
             EXPECT_NE(entry.second.ptr()[0], previous.ptr()[0]);
         }

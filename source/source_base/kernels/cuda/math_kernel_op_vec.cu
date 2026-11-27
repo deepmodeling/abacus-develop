@@ -216,9 +216,9 @@ void vector_mul_vector_op<T, base_device::DEVICE_GPU, Operand>::operator()(const
 
     using DeviceT = typename GetTypeThrust<T>::type;
     using DeviceOperand = typename GetTypeThrust<Operand>::type;
-    auto result_tmp = reinterpret_cast<DeviceT*>(result);
-    auto vector1_tmp = reinterpret_cast<const DeviceT*>(vector1);
-    auto vector2_tmp = reinterpret_cast<const DeviceOperand*>(vector2);
+    DeviceT* result_tmp = reinterpret_cast<DeviceT*>(result);
+    const DeviceT* vector1_tmp = reinterpret_cast<const DeviceT*>(vector1);
+    const DeviceOperand* vector2_tmp = reinterpret_cast<const DeviceOperand*>(vector2);
     const int thread = thread_per_block;
     const int block = (dim + thread - 1) / thread;
     vector_mul_vector_kernel<DeviceT, DeviceOperand>
@@ -239,9 +239,9 @@ void vector_div_vector_op<T, base_device::DEVICE_GPU, Operand>::operator()(const
 
     using DeviceT = typename GetTypeThrust<T>::type;
     using DeviceOperand = typename GetTypeThrust<Operand>::type;
-    auto result_tmp = reinterpret_cast<DeviceT*>(result);
-    auto vector1_tmp = reinterpret_cast<const DeviceT*>(vector1);
-    auto vector2_tmp = reinterpret_cast<const DeviceOperand*>(vector2);
+    DeviceT* result_tmp = reinterpret_cast<DeviceT*>(result);
+    const DeviceT* vector1_tmp = reinterpret_cast<const DeviceT*>(vector1);
+    const DeviceOperand* vector2_tmp = reinterpret_cast<const DeviceOperand*>(vector2);
     const int thread = thread_per_block;
     const int block = (dim + thread - 1) / thread;
     vector_div_vector_kernel<DeviceT, DeviceOperand>
@@ -264,9 +264,9 @@ void vector_add_vector_op<T, base_device::DEVICE_GPU, Scalar>::operator()(const 
 
     using DeviceT = typename GetTypeThrust<T>::type;
     using DeviceScalar = typename GetTypeThrust<Scalar>::type;
-    auto result_tmp = reinterpret_cast<DeviceT*>(result);
-    auto vector1_tmp = reinterpret_cast<const DeviceT*>(vector1);
-    auto vector2_tmp = reinterpret_cast<const DeviceT*>(vector2);
+    DeviceT* result_tmp = reinterpret_cast<DeviceT*>(result);
+    const DeviceT* vector1_tmp = reinterpret_cast<const DeviceT*>(vector1);
+    const DeviceT* vector2_tmp = reinterpret_cast<const DeviceT*>(vector2);
     const DeviceScalar device_constant1 = to_device_value(constant1);
     const DeviceScalar device_constant2 = to_device_value(constant2);
     const int thread = thread_per_block;

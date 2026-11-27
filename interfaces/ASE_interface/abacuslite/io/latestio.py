@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from ase.atoms import Atoms
+from ase.io import read as read_cif_atoms
 from ase.calculators.singlepoint import (
     SinglePointKPoint,
     SinglePointDFTCalculator
@@ -24,6 +25,122 @@ from abacuslite.io.legacyio import (
     is_invalid_arr,
     find_final_info_with_iter_header
 )
+
+
+def read_traj_from_md_stru(directory: Path,
+                           running_log_lines: Optional[List[str]] = None) -> List[Dict[str, np.ndarray]]:
+    """Read MD frames from appended, numbered, or final STRU output."""
+    periodic = directory / 'STRU'
+    if not periodic.is_file():
+        periodic = directory / 'STRU' / 'STRU'
+    numbered = sorted((path for path in (directory / 'STRUC').glob('STRU[0-9]*')
+                       if re.fullmatch(r'STRU[0-9]+', path.name)),
+                      key=lambda path: int(path.name[4:]))
+    sources = [periodic] if periodic.is_file() else numbered
+    final = directory / 'STRU_FINAL'
+    if not final.is_file():
+        final = directory / 'STRUC' / 'STRU_FINAL'
+    if final.is_file():
+        sources.append(final)
+    if running_log_lines is not None:
+        announced = []
+        for line in running_log_lines:
+            match = re.search(r'Write file:\s+(.+?)\s*$', line)
+            if match is None:
+                continue
+            path = Path(match.group(1))
+            if path.name in ('STRU', 'STRU_FINAL') or re.fullmatch(r'STRU[0-9]+', path.name):
+                if path.parent.name in ('STRUC', 'STRU'):
+                    path = directory / path.parent.name / path.name
+                else:
+                    path = directory / path.name
+                if path.is_file() and path not in announced:
+                    announced.append(path)
+        if announced:
+            sources = announced
+    frames = {}
+    for source in sources:
+        step = None
+        lines = []
+        for raw in source.read_text().splitlines() + ['# MD step END']:
+            if raw.startswith('# MD step '):
+                if step is not None:
+                    data = [line.split('#', 1)[0].strip() for line in lines]
+                    data = [line for line in data if line]
+                    lat0 = float(data[data.index('LATTICE_CONSTANT') + 1])
+                    lattice_index = data.index('LATTICE_VECTORS') + 1
+                    cell = np.array([list(map(float, row.split()))
+                                     for row in data[lattice_index:lattice_index + 3]])
+                    cell *= lat0 * 0.529177
+                    index = data.index('ATOMIC_POSITIONS') + 1
+                    coordinate = data[index]
+                    assert coordinate == 'Cartesian_angstrom', coordinate
+                    index += 1
+                    labels = []
+                    coords = []
+                    forces = []
+                    while index < len(data):
+                        label = data[index]
+                        count = int(data[index + 2])
+                        index += 3
+                        for atom in data[index:index + count]:
+                            fields = atom.split()
+                            labels.append(label)
+                            coords.append([float(value) for value in fields[:3]])
+                            if 'f' in fields:
+                                force_index = fields.index('f')
+                                forces.append([float(value) for value in fields[force_index + 1:force_index + 4]])
+                        index += count
+                    frames[step] = {'step': step, 'coordinate': coordinate,
+                                    'cell': cell, 'elem': labels, 'coords': np.array(coords),
+                                    'forces': np.array(forces) if len(forces) == len(labels) else None}
+                if raw != '# MD step END':
+                    step = int(raw.split()[3])
+                    lines = []
+                else:
+                    step = None
+            elif step is not None:
+                lines.append(raw)
+    return [frames[step] for step in sorted(frames)]
+
+
+def read_traj_from_md_cif(directory: Path,
+                          running_log_lines: Optional[List[str]] = None) -> List[Dict[str, np.ndarray]]:
+    """Read single-frame MD CIF files, keeping the cumulative step markers."""
+    numbered = sorted((path for path in (directory / 'STRUC').glob('STRU[0-9]*.cif')
+                       if re.fullmatch(r'STRU[0-9]+\.cif', path.name)),
+                      key=lambda path: int(path.stem[4:]))
+    periodic = directory / 'STRU.cif'
+    sources = [periodic] if periodic.is_file() else numbered
+    final = directory / 'STRU_FINAL.cif'
+    if not final.is_file():
+        final = directory / 'STRUC' / 'STRU_FINAL.cif'
+    if final.is_file():
+        sources.append(final)
+    if running_log_lines is not None:
+        announced = []
+        for line in running_log_lines:
+            match = re.search(r'Write file:\s+(.+?)\s*$', line)
+            if match is None:
+                continue
+            path = Path(match.group(1))
+            if path.name in ('STRU.cif', 'STRU_FINAL.cif') or re.fullmatch(r'STRU[0-9]+\.cif', path.name):
+                path = directory / 'STRUC' / path.name if path.parent.name == 'STRUC' else directory / path.name
+                if path.is_file() and path not in announced:
+                    announced.append(path)
+        if announced:
+            sources = announced
+    frames = {}
+    for source in sources:
+        marker = re.match(r'# MD step (\d+)', source.read_text().splitlines()[0])
+        if marker is None:
+            continue
+        atoms = read_cif_atoms(source)
+        step = int(marker.group(1))
+        frames[step] = {'step': step, 'coordinate': 'Cartesian_angstrom',
+                        'cell': np.array(atoms.cell), 'elem': atoms.get_chemical_symbols(),
+                        'coords': atoms.get_positions(), 'forces': None}
+    return [frames[step] for step in sorted(frames)]
 
 
 def find_eig_occ_files(directory: Path,
@@ -125,7 +242,7 @@ def read_esolver_type_from_running_log(src: str | Path | List[str]) \
     ----------
     fn : str
         The path to the ABACUS running log file.
-    
+
     Returns
     -------
     str
@@ -487,6 +604,44 @@ def read_stress_from_running_log(src: str | Path | List[str]) \
 
     return stresses
 
+
+def read_md_virial_by_step(lines: List[str], input_info: Path,
+                           esolver_type: str) -> Dict[int, np.ndarray]:
+    """Reconstruct the former electronic stress from MD virial output."""
+    pressure = np.zeros(3)
+    if input_info.is_file() and not esolver_type.startswith(('ofdft', 'sdft')):
+        for line in input_info.read_text().splitlines():
+            match = re.match(r'\s*press([123])\s+([-+\d.eE]+)', line)
+            if match:
+                pressure[int(match.group(1)) - 1] = float(match.group(2))
+    stresses = {}
+    step = None
+    for index, line in enumerate(lines):
+        marker = re.match(r'\s*MD STEP:\s*(\d+)', line)
+        if marker:
+            step = int(marker.group(1))
+        if step is not None and re.match(r'\s*VIRIAL \(kbar\):', line):
+            rows = [list(map(float, row.split())) for row in lines[index + 1:index + 4]]
+            if len(rows) != 3 or any(len(row) != 3 for row in rows):
+                raise ValueError(f'Malformed MD virial at step {step}')
+            tensor = np.array(rows)
+            tensor[np.diag_indices(3)] += pressure
+            stresses[step] = -0.1 * tensor * GPa
+    return stresses
+
+
+def md_log_step_offset(lines: List[str]) -> Optional[int]:
+    """Map local solver ion-move IDs to cumulative MD structure step IDs."""
+    global_step = None
+    for line in lines:
+        marker = re.match(r'\s*STEP OF MOLECULAR DYNAMICS:\s*(\d+)', line)
+        if marker:
+            global_step = int(marker.group(1))
+        local = re.search(r'-->\s+#ION MOVE#\s+(\d+)', line)
+        if local and global_step is not None:
+            return global_step - int(local.group(1))
+    return None
+
 def read_iter_header_from_running_log(src: str | Path | List[str]) \
     -> List[Tuple[int, int]]:
     '''
@@ -555,18 +710,42 @@ def read_abacus_out(fileobj,
     # invalid and cause the failure
     with open(fileobj) as f:
         abacus_lines = f.readlines()
+    if fileobj.name == 'running_md.log':
+        restart_markers = [index for index, line in enumerate(abacus_lines)
+                           if re.search(r'Read file: .*[/\\]STRU(?:_restart|_MD_\d+|\d+)?\s*$', line)]
+        if restart_markers:
+            abacus_lines = abacus_lines[restart_markers[-1]:]
     
     # read the esolver type
     eslvtyp = read_esolver_type_from_running_log(abacus_lines)
     # FIXME: implement read_ksdft_esolver_out instead of read_abacus_out to
     # make flexible esolver support
 
-    # read the structure, with the cell, elem, etc. (nframe)
-    # if it is MD run, the trajectories will be in the file MD_dump, instead
-    # of the running log
-    trajectory = read_traj_from_running_log(abacus_lines) \
-        if fileobj.name != 'running_md.log' else \
-        read_traj_from_md_dump(fileobj.parent / 'MD_dump')
+    # New MD output uses STRU frames. Keep the legacy reader for existing
+    # calculation directories written by older ABACUS versions.
+    announced_structure = any(re.search(r'Write file: .*[/\\]STRU(?:_FINAL|[0-9]+)?(?:\.cif)?\s*$', line)
+                              for line in abacus_lines)
+    has_stru_files = ((fileobj.parent / 'STRU').is_file()
+                      or (fileobj.parent / 'STRU' / 'STRU').is_file()
+                      or (fileobj.parent / 'STRU_FINAL').is_file()
+                      or (fileobj.parent / 'STRUC' / 'STRU_FINAL').is_file()
+                      or (fileobj.parent / 'STRU.cif').is_file()
+                      or (fileobj.parent / 'STRU_FINAL.cif').is_file()
+                      or (fileobj.parent / 'STRUC' / 'STRU_FINAL.cif').is_file()
+                      or any((fileobj.parent / 'STRUC').glob('STRU[0-9]*')))
+    new_md_output = (fileobj.name == 'running_md.log' and
+                     (announced_structure or (has_stru_files and not (fileobj.parent / 'MD_dump').is_file())))
+    if new_md_output:
+        cif_output = any(re.search(r'Write file: .*[/\\]STRU(?:_FINAL|[0-9]+)?\.cif\s*$', line)
+                         for line in abacus_lines)
+        if cif_output or (fileobj.parent / 'STRU_FINAL.cif').is_file():
+            trajectory = read_traj_from_md_cif(fileobj.parent, abacus_lines)
+        else:
+            trajectory = read_traj_from_md_stru(fileobj.parent, abacus_lines)
+    elif fileobj.name == 'running_md.log':
+        trajectory = read_traj_from_md_dump(fileobj.parent / 'MD_dump')
+    else:
+        trajectory = read_traj_from_running_log(abacus_lines)
 
     # read the eigenvalues (nframe, nk, nbnd) written by the current run
     eig_files = find_eig_occ_files(fileobj.parent, abacus_lines)
@@ -582,7 +761,16 @@ def read_abacus_out(fileobj,
     for ion_move, _ in iter_header:
         if ion_move not in step_ids:
             step_ids.append(ion_move)
-    if len(step_ids) != len(trajectory):
+    if new_md_output:
+        step_offset = md_log_step_offset(abacus_lines)
+        step_ids = [frame['step'] for frame in trajectory]
+        if step_offset is None:
+            local_steps = [ion_move for ion_move, _ in iter_header]
+            step_offset = max(step_ids) - max(local_steps) if step_ids and local_steps else 0
+        for frame in elecstate:
+            if 'step' in frame:
+                frame['step'] += step_offset
+    elif len(step_ids) != len(trajectory):
         step_ids = list(range(1, len(trajectory) + 1))
     elecstate = align_eig_frames(elecstate, step_ids)
 
@@ -590,7 +778,7 @@ def read_abacus_out(fileobj,
     forces = read_forces_from_running_log(abacus_lines)
 
     # read the stress (nframe, 3, 3), but may be None
-    stress = read_stress_from_running_log(abacus_lines)
+    stress = read_stress_from_running_log(abacus_lines) if not new_md_output else []
 
     # read all kpoints tables (but only want the first, spinless, with ibz2bz)
     k, _, _, _, _ = read_kpoints_from_running_log(abacus_lines)
@@ -608,9 +796,26 @@ def read_abacus_out(fileobj,
         read_energies_from_running_log(abacus_lines)[1],
         iter_header
     )
-    
-    # read the magmom
     magmom = read_magmom_from_running_log(abacus_lines)
+
+    if new_md_output:
+        log_steps = []
+        for ion_move, _ in iter_header:
+            global_step = ion_move + step_offset
+            if global_step not in log_steps:
+                log_steps.append(global_step)
+        if len(log_steps) != len(energies):
+            log_steps = list(range(step_offset + 1, step_offset + len(energies) + 1))
+        selected = [log_steps.index(step) for step in step_ids]
+        energies = [energies[i] for i in selected]
+        if len(forces) == len(log_steps):
+            forces = [forces[i] for i in selected]
+        stress_by_step = read_md_virial_by_step(abacus_lines, fileobj.parent / 'INPUT.info', eslvtyp)
+        stress = [stress_by_step.get(step) for step in step_ids]
+        if len(magmom) == len(log_steps):
+            magmom = [magmom[i] for i in selected]
+        if all(frame['forces'] is not None for frame in trajectory):
+            forces = [frame['forces'] for frame in trajectory]
 
     # roughly check the integrity of data from their length consistency
     assert len(trajectory) == len(energies), \
@@ -671,6 +876,118 @@ class TestLatestIO(unittest.TestCase):
     '''
     here = Path(__file__).parent
     testfiles = here / 'testfiles'
+
+    def test_read_md_stru_frames_and_force(self):
+        import tempfile
+
+        def frame(step, position, force):
+            return (f'# MD step {step}\n\nATOMIC_SPECIES\nH 1.0 auto auto\n'
+                    'LATTICE_CONSTANT\n1.8897270000\nLATTICE_VECTORS\n'
+                    '4 0 0\n0 4 0\n0 0 4\nATOMIC_POSITIONS\nCartesian_angstrom\n'
+                    f'H\n0.0\n1\n{position} 0 0 m 1 1 1 v 0.1 0 0 f {force} 0 0\n')
+
+        with tempfile.TemporaryDirectory() as scratch:
+            directory = Path(scratch)
+            (directory / 'STRU').write_text(frame(1, 1.0, 2.0) + frame(2, 1.5, 3.0))
+            (directory / 'STRU_FINAL').write_text(frame(2, 1.5, 3.0))
+            trajectory = read_traj_from_md_stru(directory)
+            self.assertEqual([item['step'] for item in trajectory], [1, 2])
+            self.assertTrue(np.allclose(trajectory[1]['coords'], [[1.5, 0, 0]]))
+            self.assertTrue(np.allclose(trajectory[1]['forces'], [[3.0, 0, 0]]))
+            self.assertTrue(np.allclose(trajectory[1]['cell'], np.eye(3) * 4.0, atol=1e-5))
+
+            (directory / 'STRU').unlink()
+            numbered = directory / 'STRUC'
+            numbered.mkdir()
+            (numbered / 'STRU1').write_text(frame(1, 1.0, 2.0))
+            (numbered / 'STRU3').write_text(frame(3, 1.8, 4.0))
+            (numbered / 'STRU2.cif').write_text('stale CIF output')
+            (directory / 'STRU_FINAL').unlink()
+            (numbered / 'STRU_FINAL').write_text(frame(4, 2.0, 5.0))
+            self.assertEqual([item['step'] for item in read_traj_from_md_stru(directory)], [1, 3, 4])
+            (directory / 'STRU').write_text(frame(99, 9.0, 9.0))
+            announcements = [f'Write file: {numbered / name}'
+                             for name in ('STRU1', 'STRU3', 'STRU_FINAL')]
+            self.assertEqual([item['step'] for item in read_traj_from_md_stru(directory, announcements)],
+                             [1, 3, 4])
+            (directory / 'STRU').unlink()
+            (numbered / 'STRU1').unlink()
+            (numbered / 'STRU3').unlink()
+            self.assertEqual([item['step'] for item in read_traj_from_md_stru(directory)], [4])
+
+    def test_read_abacus_out_from_new_md_stru(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as scratch:
+            directory = Path(scratch)
+            shutil.copy(self.testfiles / 'pw-symm0-nspin4-gamma-md', directory / 'running_md.log')
+            shutil.copy(self.testfiles / 'nspin4-gamma-eigocc', directory / 'eig_occ.txt')
+            header = ('ATOMIC_SPECIES\nAs 1 auto auto\nGa 1 auto auto\n'
+                      'LATTICE_CONSTANT\n1.8897270000\nLATTICE_VECTORS\n'
+                      '4 0 0\n0 4 0\n0 0 4\nATOMIC_POSITIONS\nCartesian_angstrom\n')
+            def frame(step, x, force):
+                return (f'# MD step {step}\n' + header
+                        + f'As\n0.0\n1\n1 1 1 m 1 1 1 v 0 0 0 f {force} 0 0\n'
+                        + f'Ga\n0.0\n1\n{x} 0 0 m 1 1 1 v 0 0 0 f {-force} 0 0\n')
+            (directory / 'STRU').write_text(frame(1, 0.0, 1.0) + frame(2, 0.1, 2.0))
+            (directory / 'STRU_FINAL').write_text(frame(2, 0.1, 2.0))
+            images = read_abacus_out(directory / 'running_md.log')
+            (directory / 'STRU').unlink()
+            final_only = read_abacus_out(directory / 'running_md.log')
+        self.assertEqual(len(images), 2)
+        self.assertTrue(np.allclose(images[-1].get_forces(), [[2.0, 0, 0], [-2.0, 0, 0]]))
+        self.assertEqual(len(final_only), 1)
+        self.assertTrue(np.allclose(final_only[0].get_forces(), [[2.0, 0, 0], [-2.0, 0, 0]]))
+
+    def test_restarted_md_stru_aligns_energy_and_virial(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as scratch:
+            directory = Path(scratch)
+            log = (self.testfiles / 'pw-symm0-nspin4-gamma-md').read_text()
+            log = log.replace('STEP OF MOLECULAR DYNAMICS: 1',
+                              'STEP OF MOLECULAR DYNAMICS: 6\n MD STEP: 6\n'
+                              ' VIRIAL (kbar):\n 1 0 0\n 0 2 0\n 0 0 3')
+            log = log.replace('STEP OF MOLECULAR DYNAMICS: 2',
+                              'STEP OF MOLECULAR DYNAMICS: 7\n MD STEP: 7\n'
+                              ' VIRIAL (kbar):\n 4 0 0\n 0 5 0\n 0 0 6')
+            (directory / 'running_md.log').write_text(log)
+            (directory / 'INPUT.info').write_text('press1 10\npress2 20\npress3 30\n')
+            shutil.copy(self.testfiles / 'nspin4-gamma-eigocc', directory / 'eig_occ.txt')
+            header = ('ATOMIC_SPECIES\nAs 1 auto auto\nGa 1 auto auto\n'
+                      'LATTICE_CONSTANT\n1.8897270000\nLATTICE_VECTORS\n'
+                      '4 0 0\n0 4 0\n0 0 4\nATOMIC_POSITIONS\nCartesian_angstrom\n')
+            def frame(step, force):
+                return (f'# MD step {step}\n' + header
+                        + f'As\n0.0\n1\n1 1 1 m 1 1 1 v 0 0 0 f {force} 0 0\n'
+                        + f'Ga\n0.0\n1\n0 0 0 m 1 1 1 v 0 0 0 f {-force} 0 0\n')
+            (directory / 'STRU').write_text(frame(6, 1.0) + frame(7, 2.0))
+            (directory / 'STRU_FINAL').write_text(frame(7, 2.0))
+            images = read_abacus_out(directory / 'running_md.log')
+        self.assertEqual(len(images), 2)
+        self.assertTrue(np.allclose(images[0].get_forces(), [[1, 0, 0], [-1, 0, 0]]))
+        self.assertTrue(np.allclose(images[1].get_forces(), [[2, 0, 0], [-2, 0, 0]]))
+        expected = -0.1 * GPa * np.diag([14, 25, 36])
+        self.assertTrue(np.allclose(images[1].get_stress(voigt=False), expected))
+
+    def test_md_cif_and_stale_numbered_cif(self):
+        import tempfile
+        from ase.io import write as write_cif
+
+        with tempfile.TemporaryDirectory() as scratch:
+            directory = Path(scratch)
+            numbered = directory / 'STRUC'
+            numbered.mkdir()
+            (numbered / 'STRU1.cif').write_text('stale CIF')
+            final = directory / 'STRU_FINAL.cif'
+            write_cif(final, Atoms('He', positions=[[0, 0, 0]], cell=np.eye(3) * 4,
+                                   pbc=True), format='cif')
+            final.write_text('# MD step 2\n' + final.read_text())
+            self.assertEqual(read_traj_from_md_stru(directory), [])
+            announcements = [f'Write file: {directory / "STRU_FINAL.cif"}']
+            frames = read_traj_from_md_cif(directory, announcements)
+            self.assertEqual([frame['step'] for frame in frames], [2])
+            self.assertEqual(frames[0]['elem'], ['He'])
 
     def test_read_abacus_out_reorders_calculator_magmoms(self):
         import tempfile

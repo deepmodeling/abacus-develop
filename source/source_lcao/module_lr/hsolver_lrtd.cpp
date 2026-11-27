@@ -39,11 +39,11 @@ namespace LR
         inline void print_eigs(const std::vector<T>& eigs, const std::string& label,
             const double factor)
         {
-            const auto old_precision = std::cout.precision();
-            const auto old_flags = std::cout.flags();
+            const std::streamsize old_precision = std::cout.precision();
+            const std::ios_base::fmtflags old_flags = std::cout.flags();
             const int digits = LR_Util::lr_excitation_energy_digits;
             std::cout << label << std::defaultfloat << std::setprecision(digits) << std::endl;
-            for (auto& e : eigs) { std::cout << e * factor << " "; }
+            for (const T& e : eigs) { std::cout << e * factor << " "; }
             std::cout << std::endl;
             std::cout.precision(old_precision);
             std::cout.flags(old_flags);

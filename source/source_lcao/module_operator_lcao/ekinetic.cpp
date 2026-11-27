@@ -60,7 +60,7 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
 
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
-        auto tau1 = ucell->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell->get_tau(iat1);
         int T1=0;
         int I1=0;
         ucell->iat2iait(iat1, &I1, &T1);
@@ -123,7 +123,7 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 #endif
     for (int iat1 = 0; iat1 < this->ucell->nat; iat1++)
     {
-        auto tau1 = ucell->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell->get_tau(iat1);
         int T1=0; 
         int I1=0;
         ucell->iat2iait(iat1, &I1, &T1);

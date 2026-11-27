@@ -32,7 +32,7 @@ namespace LR
         ModuleBase::timer::start("OperatorLRHxc", "act_with_shared_density");
 
         const int& sl = ispin_ks[0];
-        const auto psil_ks = LR_Util::get_psi_spin(psi_ks, sl, nk);
+        const psi::Psi<T> psil_ks = LR_Util::get_psi_spin(psi_ks, sl, nk);
 
         if (density_cache.count(&this->DM_trans) == 0)
         {
@@ -45,7 +45,7 @@ namespace LR
 
         // V(R)->V(k) 
         std::vector<ct::Tensor> v_hxc_2d(nk, LR_Util::newTensor<T>({ pmat.para_2d().ncloc(), pmat.para_2d().nrloc() }));
-        for (auto& v : v_hxc_2d) v.zero();
+        for (container::Tensor& v : v_hxc_2d) v.zero();
         int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver) ? this->pmat.para_2d().nrloc() : this->pmat.para_2d().ncloc();
         for (int ik = 0;ik < nk;++ik) { folding_HR(*this->hR, v_hxc_2d[ik].data<T>(), this->kv.kvec_d[ik], nrow, 1); }  // V(R) -> V(k)
         // LR_Util::print_HR(*this->hR, this->ucell.nat, "4.VR");
@@ -113,13 +113,13 @@ namespace LR
         // \f[ \tilde{\rho}(r)=\sum_{\mu_j, \mu_b}\tilde{\rho}_{\mu_j,\mu_b}\phi_{\mu_b}(r)\phi_{\mu_j}(r) \f]
         // For a fixed input spin, rho is shared by both output-spin kernels.
         const int nrxx = this->pot.lock()->nrxx;
-        auto& density = density_cache[&this->DM_trans];
+        std::vector<std::vector<double>>& density = density_cache[&this->DM_trans];
         if (density.empty())
         {
             const std::vector<double> zeros(nrxx, 0.0);
             density.assign(1, zeros);  // nspin=1 for transition density
             double* rho = density[0].data();
-            const auto& dmr = this->DM_trans.get_dmr_vec();
+            const std::vector<hamilt::HContainer<double>*>& dmr = this->DM_trans.get_dmr_vec();
             ModuleGint::cal_gint_rho(dmr, 1, &rho, false);
         }
         // 3. v_hxc = f_hxc * rho_trans, evaluated separately for each output spin
@@ -143,7 +143,7 @@ namespace LR
         // \f[ \tilde{\rho}(r)=\sum_{\mu_j, \mu_b}\tilde{\rho}_{\mu_j,\mu_b}\phi_{\mu_b}(r)\phi_{\mu_j}(r) \f]
         const int nrxx = this->pot.lock()->nrxx;
         const int nparts = nk > 1 ? 2 : 1; // real; also imaginary for multi-k
-        auto& density = density_cache[&this->DM_trans];
+        std::vector<std::vector<double>>& density = density_cache[&this->DM_trans];
         if (density.empty())
         {
             module_dm::DensityMatrix<std::complex<double>, double> dm_real_imag(&pmat, 1, kv.kvec_d, nk);
@@ -156,7 +156,7 @@ namespace LR
                 LR_Util::get_DMR_real_imag_part(this->DM_trans, dm_real_imag, part);
                 // nspin=1 for each real/imaginary transition-density component
                 double* rho = density[ipart].data();
-                const auto& dmr = dm_real_imag.get_dmr_vec();
+                const std::vector<hamilt::HContainer<double>*>& dmr = dm_real_imag.get_dmr_vec();
                 ModuleGint::cal_gint_rho(dmr, 1, &rho, false);
             }
         }

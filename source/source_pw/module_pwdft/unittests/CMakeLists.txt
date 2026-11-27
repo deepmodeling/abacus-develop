@@ -3,7 +3,6 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
-
 addtest(
   TARGET MODULE_PW_stress_ewa
   LIBS parameter base device planewave cell_info
@@ -16,13 +15,14 @@ addtest(
 # Exercise the SF shape contract in the test and its copy of stress_ewa.cpp,
 # including when the surrounding ABACUS build defines NDEBUG.
 target_compile_options(MODULE_PW_stress_ewa PRIVATE -UNDEBUG)
-set_tests_properties(MODULE_PW_stress_ewa PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+set_tests_properties(MODULE_PW_stress_ewa PROPERTIES ENVIRONMENT
+                                                     "OMP_NUM_THREADS=1")
 add_test(
   NAME MODULE_PW_stress_ewa_mpi
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
           $<TARGET_FILE:MODULE_PW_stress_ewa> ${MPIEXEC_POSTFLAGS})
-set_tests_properties(MODULE_PW_stress_ewa_mpi PROPERTIES
-  ENVIRONMENT "OMP_NUM_THREADS=1" PROCESSORS 2)
+set_tests_properties(MODULE_PW_stress_ewa_mpi
+                     PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" PROCESSORS 2)
 
 addtest(
   TARGET MODULE_PW_pwdft_soc
@@ -121,3 +121,11 @@ addtest(
   TARGET MODULE_PW_pw_hybrid_source
   LIBS base device
   SOURCES test_pw_hybrid_source.cpp ../pw_hybrid_source.cpp)
+
+addtest(
+  TARGET MODULE_PW_op_pw_meta
+  LIBS parameter base device planewave_serial
+  SOURCES test_op_pw_meta.cpp ../op_pw_meta.cpp ../op_pw.cpp
+          ../../../source_hamilt/operator.cpp ../../../source_psi/psi.cpp)
+# Match planewave_serial's class layout without changing MPI-enabled sibling tests.
+target_compile_options(MODULE_PW_op_pw_meta PRIVATE -U__MPI)

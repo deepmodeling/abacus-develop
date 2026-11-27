@@ -2,18 +2,15 @@
 
 #include "tools.h"
 
-Orthogonal::Orthogonal()
-{
-    test = 0;
-}
-Orthogonal::~Orthogonal()
-{
-}
+Orthogonal::Orthogonal() { test = 0; }
+Orthogonal::~Orthogonal() {}
 
-void Orthogonal::start(SpillageStep& step1, SpillageStep& step2)
+void Orthogonal::start(SpillageStep &step1, SpillageStep &step2)
 {
     if (test == 1)
+    {
         TITLE("Orthogonal", "start");
+    }
     timer::tick("Orthogonal", "start");
 
     Inverse_Matrix inverse;
@@ -57,7 +54,7 @@ void Orthogonal::start(SpillageStep& step1, SpillageStep& step2)
             //				PRINTCM("Sinv",step1.data[istr].Sinv[ik]);
             //			}
 
-            std::complex<double>* sum = new std::complex<double>[nbands];
+            std::complex<double> *sum = new std::complex<double>[nbands];
             for (int iw = 0; iw < nwfc_all; iw++)
             {
                 for (int ie = 0; ie < ne; ie++)
@@ -88,8 +85,8 @@ void Orthogonal::start(SpillageStep& step1, SpillageStep& step2)
                         {
                             for (int iemu = 0; iemu < ne; iemu++)
                             {
-                                first_part += input.Coef.C4(Tmu, Lmu, Nmu, iemu)
-                                              * input.QS_data[istr].Sq1q2[ik](iw, iw00, ie, iemu);
+                                first_part += input.Coef.C4(Tmu, Lmu, Nmu, iemu) *
+                                              input.QS_data[istr].Sq1q2[ik](iw, iw00, ie, iemu);
                             }
                         }
 
@@ -97,8 +94,8 @@ void Orthogonal::start(SpillageStep& step1, SpillageStep& step2)
                         {
                             for (int ib = 0; ib < nbands; ib++)
                             {
-                                sum[ib] += first_part * step1.data[istr].Sinv[ik](mu, nu)
-                                           * step1.data[istr].Qoverlap[ik](nu, ib);
+                                sum[ib] += first_part * step1.data[istr].Sinv[ik](mu, nu) *
+                                           step1.data[istr].Qoverlap[ik](nu, ib);
                             }
                         }
                     }

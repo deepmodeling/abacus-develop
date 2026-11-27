@@ -34,7 +34,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
     ModuleBase::TITLE("RPA_LRI", "out_abfs_overlap");
     ModuleBase::timer::start("RPA_LRI", "out_abfs_overlap");
     const double threshold = 1e-15;
-    const auto format = std::scientific;
+    std::ios_base& (*const format)(std::ios_base&) = std::scientific;
     int prec = 15;
 
     int all_mu_s = 0;
@@ -64,12 +64,12 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
     {
         for (auto& Ip: overlap_abfs_abfs)
         {
-            auto I = Ip.first;
+            TA I = Ip.first;
             for (auto& JPp: Ip.second)
             {
-                auto J = JPp.first.first;
-                auto R = JPp.first.second;
-                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
+                TA J = JPp.first.first;
+                TC R = JPp.first.second;
+                std::array<double, 3> q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
                 RI::Tensor<std::complex<double>> tmp_olp_ss
                     = RI::Global_Func::convert<std::complex<double>>(JPp.second);
                 RI::Tensor<std::complex<double>> tmp_olp_s
@@ -97,17 +97,17 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
         {
             for (int ik = 0; ik != nks_tot; ik++)
             {
-                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
+                std::array<double, 3> q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
                 if (olp_q_ss[I][{J, q}].empty())
                 {
-                    auto mu = index_abfs_s[ucell.iat2it[I]].count_size;
-                    auto nu = index_abfs_s[ucell.iat2it[J]].count_size;
+                    std::size_t mu = index_abfs_s[ucell.iat2it[I]].count_size;
+                    std::size_t nu = index_abfs_s[ucell.iat2it[J]].count_size;
                     olp_q_ss[I][{J, q}] = RI::Tensor<std::complex<double>>({mu, nu});
                 }
                 if (olp_q_s[I][{J, q}].empty())
                 {
-                    auto mu = index_abfs_s[ucell.iat2it[I]].count_size;
-                    auto nu = index_abfs[ucell.iat2it[J]].count_size;
+                    std::size_t mu = index_abfs_s[ucell.iat2it[I]].count_size;
+                    std::size_t nu = index_abfs[ucell.iat2it[J]].count_size;
                     olp_q_s[I][{J, q}] = RI::Tensor<std::complex<double>>({mu, nu});
                 }
                 for (int ir = 0; ir < olp_q_ss[I][{J, q}].shape[0]; ir++)
@@ -132,7 +132,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
     // out_ri_tensor("olp_s.txt", olp_q_s, 0.);
     for (auto& Ip: overlap_abfs_abf)
     {
-        auto I = Ip.first;
+        TA I = Ip.first;
         size_t mu_num_s = index_abfs_s[ucell.iat2it[I]].count_size;
         size_t mu_num = index_abfs[ucell.iat2it[I]].count_size;
 
@@ -141,28 +141,28 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
             std::map<size_t, RI::Tensor<std::complex<double>>> sinvS;
             for (auto& JPp: Ip.second)
             {
-                auto J = JPp.first.first;
-                auto R = JPp.first.second;
+                TA J = JPp.first.first;
+                TC R = JPp.first.second;
                 if (sinvS[J].empty())
                 {
                     sinvS[J] = RI::Tensor<std::complex<double>>(
                         {overlap_abfs_abfs[I][{J, R}].shape[0], overlap_abfs_abf[I][{J, R}].shape[1]});
                 }
             }
-            for (const auto& pair: sinvS)
+            for (const std::pair<const std::size_t, RI::Tensor<std::complex<double>>>& pair: sinvS)
             {
-                auto J = pair.first;
-                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
+                std::size_t J = pair.first;
+                std::array<double, 3> q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
                 for (int K = 0; K != ucell.nat; K++)
                 {
                     // S^{-1}S(I,J;q) = sum_K S_ss(I,K;q) S_s(K,J;q).
                     sinvS[J] += olp_q_ss.at(I).at({K, q}) * olp_q_s.at(K).at({J, q});
                 }
             }
-            for (auto& iJU: sinvS)
+            for (std::pair<const std::size_t, RI::Tensor<std::complex<double>>>& iJU: sinvS)
             {
-                auto iJ = iJU.first;
-                auto& vq_J = iJU.second;
+                std::size_t iJ = iJU.first;
+                RI::Tensor<std::complex<double>>& vq_J = iJU.second;
                 size_t nu_num = index_abfs[ucell.iat2it[iJ]].count_size;
                 ofs << all_mu_s << "   " << all_mu << "   " << mu_s_shift[I] + 1 << "   " << mu_s_shift[I] + mu_num_s
                     << "  " << mu_shift[iJ] + 1 << "   " << mu_shift[iJ] + nu_num << std::endl;
@@ -231,12 +231,12 @@ try
     {
         for (auto& Ip: overlap_abfs_abfs)
         {
-            auto I = Ip.first;
+            TA I = Ip.first;
             for (auto& JPp: Ip.second)
             {
-                auto J = JPp.first.first;
-                auto R = JPp.first.second;
-                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
+                TA J = JPp.first.first;
+                TC R = JPp.first.second;
+                std::array<double, 3> q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
                 RI::Tensor<std::complex<double>> tmp_olp_ss
                     = RI::Global_Func::convert<std::complex<double>>(JPp.second);
                 RI::Tensor<std::complex<double>> tmp_olp_s
@@ -263,17 +263,17 @@ try
         {
             for (int ik = 0; ik != nks_tot; ik++)
             {
-                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
+                std::array<double, 3> q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
                 if (olp_q_ss[I][{J, q}].empty())
                 {
-                    auto mu = index_abfs_s[ucell.iat2it[I]].count_size;
-                    auto nu = index_abfs_s[ucell.iat2it[J]].count_size;
+                    std::size_t mu = index_abfs_s[ucell.iat2it[I]].count_size;
+                    std::size_t nu = index_abfs_s[ucell.iat2it[J]].count_size;
                     olp_q_ss[I][{J, q}] = RI::Tensor<std::complex<double>>({mu, nu});
                 }
                 if (olp_q_s[I][{J, q}].empty())
                 {
-                    auto mu = index_abfs_s[ucell.iat2it[I]].count_size;
-                    auto nu = index_abfs[ucell.iat2it[J]].count_size;
+                    std::size_t mu = index_abfs_s[ucell.iat2it[I]].count_size;
+                    std::size_t nu = index_abfs[ucell.iat2it[J]].count_size;
                     olp_q_s[I][{J, q}] = RI::Tensor<std::complex<double>>({mu, nu});
                 }
                 for (int ir = 0; ir < olp_q_ss[I][{J, q}].shape[0]; ir++)
@@ -296,7 +296,7 @@ try
     std::vector<SinvSRecord> records;
     for (auto& Ip: overlap_abfs_abf)
     {
-        auto I = Ip.first;
+        TA I = Ip.first;
         size_t mu_num_s = index_abfs_s[ucell.iat2it[I]].count_size;
 
         for (int ik = 0; ik != nks_tot; ik++)
@@ -304,28 +304,28 @@ try
             std::map<size_t, RI::Tensor<std::complex<double>>> sinvS;
             for (auto& JPp: Ip.second)
             {
-                auto J = JPp.first.first;
-                auto R = JPp.first.second;
+                TA J = JPp.first.first;
+                TC R = JPp.first.second;
                 if (sinvS[J].empty())
                 {
                     sinvS[J] = RI::Tensor<std::complex<double>>(
                         {overlap_abfs_abfs[I][{J, R}].shape[0], overlap_abfs_abf[I][{J, R}].shape[1]});
                 }
             }
-            for (const auto& pair: sinvS)
+            for (const std::pair<const std::size_t, RI::Tensor<std::complex<double>>>& pair: sinvS)
             {
-                auto J = pair.first;
-                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
+                std::size_t J = pair.first;
+                std::array<double, 3> q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
                 for (int K = 0; K != ucell.nat; K++)
                 {
                     // S^{-1}S(I,J;q) = sum_K S_ss(I,K;q) S_s(K,J;q).
                     sinvS[J] += olp_q_ss.at(I).at({K, q}) * olp_q_s.at(K).at({J, q});
                 }
             }
-            for (auto& iJU: sinvS)
+            for (std::pair<const std::size_t, RI::Tensor<std::complex<double>>>& iJU: sinvS)
             {
-                auto iJ = iJU.first;
-                auto& vq_J = iJU.second;
+                std::size_t iJ = iJU.first;
+                RI::Tensor<std::complex<double>>& vq_J = iJU.second;
                 size_t nu_num = index_abfs[ucell.iat2it[iJ]].count_size;
                 SinvSRecord record;
                 record.iq = static_cast<std::int32_t>(ik + 1);

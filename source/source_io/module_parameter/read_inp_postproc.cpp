@@ -471,7 +471,7 @@ void ReadInput::item_postprocess()
                 const bool lcao = std::any_of(readvalue_items.begin(), readvalue_items.end(), [](const Input_Item* input) {
                     return input->label == "basis_type" && input->str_values.front() == "lcao";
                 });
-                const auto& inp = para.inp;
+                const Input_para& inp = para.inp;
                 para.input.out_wannier_spn = inp.towannier90 && inp.calculation == "nscf" && lcao
                                              && inp.wannier_method == 2 && inp.nspin == 4;
             }

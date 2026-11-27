@@ -62,7 +62,7 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
     this->nloc_per_state = nk * (openshell ? paraX_[0].size() + paraX_[1].size() : paraX_[0].size());
 
     this->X.resize(openshell ? 1 : nspin, LR_Util::newTensor<T>({nstates, nloc_per_state}));
-    for (auto &x : X)
+    for (container::Tensor& x : X)
     {
         x.zero();
     }
@@ -261,7 +261,7 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int *desc_src)
 #else
         for (int ib = 0; ib < this->nbands_z_; ++ib)
         {
-            const auto *start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
+            const T* start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
             std::copy(start, start + this->nbasis, &(*this->psi_ks_z_)(ik, ib, 0));
         }
 #endif

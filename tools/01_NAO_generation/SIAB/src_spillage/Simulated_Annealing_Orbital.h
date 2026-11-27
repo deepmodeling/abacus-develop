@@ -6,16 +6,13 @@ class Metropolis;
 class Metropolis::Simulated_Annealing_Orbital : public Simulated_Annealing
 {
   public:
-    Simulated_Annealing_Orbital(Metropolis* metropolis_in, SpillageStep& Level_in)
+    Simulated_Annealing_Orbital(Metropolis *metropolis_in, SpillageStep &Level_in)
         : Simulated_Annealing(), metropolis(metropolis_in), Level(Level_in)
     {
     }
 
   protected:
-    virtual void preprocess_all_temperature()
-    {
-        metropolis->preprocess_all_temperature(Level);
-    }
+    virtual void preprocess_all_temperature() { metropolis->preprocess_all_temperature(Level); }
     virtual void preprocess_each_temperature(size_t itemperature)
     {
         metropolis->Psi2.ofso << "spillage_ntemp = " << itemperature << " kappa = " << metropolis->kappa << endl;
@@ -24,10 +21,7 @@ class Metropolis::Simulated_Annealing_Orbital : public Simulated_Annealing
     {
         metropolis->update_t(); // change temperature
     }
-    virtual void preprocess_each_step(size_t itemperature, size_t istep)
-    {
-        metropolis->small_jql();
-    }
+    virtual void preprocess_each_step(size_t itemperature, size_t istep) { metropolis->small_jql(); }
     virtual void cal_each_step(size_t itemperature, size_t istep)
     {
         preprocess_each_step_beyondloop(itemperature, istep);
@@ -40,7 +34,9 @@ class Metropolis::Simulated_Annealing_Orbital : public Simulated_Annealing
             metropolis->info.set_ic(ic).unpack_ic(Level);
             const int T = Level.wayc[ic].type; // get the type index of this radial wave function.
             if (Level.info[T].state == "skip")
+            {
                 continue; // if "skip", the C4 will not changed in this 'Big step' // mohan add 2009-01-27
+            }
             for (int ie = 0; ie < Level.ne; ie++)
             {
                 metropolis->info.set_ie(ie);
@@ -48,7 +44,7 @@ class Metropolis::Simulated_Annealing_Orbital : public Simulated_Annealing
                 {
                     this->Simulated_Annealing::cal_each_step(itemperature, istep);
                 }
-                catch (Small_Jlq& e)
+                catch (Small_Jlq &e)
                 {
                     continue;
                 }
@@ -56,18 +52,13 @@ class Metropolis::Simulated_Annealing_Orbital : public Simulated_Annealing
         }
         reprocess_each_step_beyondloop(itemperature, istep);
     }
-    virtual void preprocess_each_step_beyondloop(size_t itemperature, size_t istep)
-    {
-    }
+    virtual void preprocess_each_step_beyondloop(size_t itemperature, size_t istep) {}
     virtual void reprocess_each_step_beyondloop(size_t itemperature, size_t istep)
     {
         metropolis->ofs_1(istep, this->Level);
         metropolis->norm_C4(istep, this->Level, this->step_num);
     }
-    virtual void move_variable(size_t itemperature, size_t istep)
-    {
-        metropolis->trial_c4();
-    }
+    virtual void move_variable(size_t itemperature, size_t istep) { metropolis->trial_c4(); }
     virtual void accept_process(double new_function, size_t itemperature, size_t istep)
     {
         metropolis->accept_process(this->Level);
@@ -76,14 +67,14 @@ class Metropolis::Simulated_Annealing_Orbital : public Simulated_Annealing
     {
         metropolis->reject_process();
     }
-    Metropolis* metropolis;
-    SpillageStep& Level;
+    Metropolis *metropolis;
+    SpillageStep &Level;
 };
 
 class Metropolis::Simulated_Annealing_Orbital_Spillage : public Simulated_Annealing_Orbital
 {
   public:
-    Simulated_Annealing_Orbital_Spillage(Metropolis* metropolis_in, SpillageStep& Level_in)
+    Simulated_Annealing_Orbital_Spillage(Metropolis *metropolis_in, SpillageStep &Level_in)
         : Simulated_Annealing_Orbital(metropolis_in, Level_in)
     {
     }
@@ -94,10 +85,7 @@ class Metropolis::Simulated_Annealing_Orbital_Spillage : public Simulated_Anneal
         metropolis->init_spi_states(itemperature);
         Simulated_Annealing_Orbital::preprocess_each_temperature(itemperature);
     }
-    virtual void reprocess_each_temperature(size_t itemperature)
-    {
-        metropolis->cout_1(itemperature);
-    }
+    virtual void reprocess_each_temperature(size_t itemperature) { metropolis->cout_1(itemperature); }
     virtual void preprocess_each_step_beyondloop(size_t itemperature, size_t istep)
     {
         metropolis->file_finish_metropolis(istep);
@@ -119,7 +107,7 @@ class Metropolis::Simulated_Annealing_Orbital_Spillage : public Simulated_Anneal
 class Metropolis::Simulated_Annealing_Orbital_Kinetic : public Simulated_Annealing_Orbital
 {
   public:
-    Simulated_Annealing_Orbital_Kinetic(Metropolis* metropolis_in, SpillageStep& Level_in)
+    Simulated_Annealing_Orbital_Kinetic(Metropolis *metropolis_in, SpillageStep &Level_in)
         : Simulated_Annealing_Orbital(metropolis_in, Level_in)
     {
     }

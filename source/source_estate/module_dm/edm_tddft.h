@@ -1,22 +1,25 @@
 #ifndef EDM_TDDFT_H
 #define EDM_TDDFT_H
 
-#include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_cell/klist.h"
-#include "source_estate/module_dm/dm_holder.h"
-#include "source_hamilt/hamilt.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/matrix_block.h"
+#include "source_base/parallel_blkcyc.h"
 
 namespace module_dm
 {
-void edm_tddft(Parallel_Orbitals& pv,
-                   Setup_DM<std::complex<double>>& dmat,
-                   K_Vectors& kv,
-                   hamilt::Hamilt<std::complex<double>>* p_hamilt);
+// Compute one k point from host matrices in the supplied block-cyclic layout.
+// H, S and DMK are borrowed, read-only inputs; EDM keeps the DMK storage convention.
+void edm_tddft(const Parallel_Blkcyclic& layout,
+              const ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+              const ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
+              std::complex<double>* dmk,
+              ModuleBase::ComplexMatrix& edmk);
 
 template <typename Device>
-void edm_tddft_lapack(Parallel_Orbitals& pv,
-                                 Setup_DM<std::complex<double>>& dmat,
-                                 K_Vectors& kv,
-                                 hamilt::Hamilt<std::complex<double>>* p_hamilt);
+void edm_tddft_lapack(const Parallel_Blkcyclic& layout,
+                     const ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+                     const ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
+                     std::complex<double>* dmk,
+                     ModuleBase::ComplexMatrix& edmk);
 } // namespace module_dm
 #endif // EDM_TDDFT_H

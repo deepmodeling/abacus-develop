@@ -26,7 +26,9 @@ Metropolis::~Metropolis()
 void Metropolis::init(void)
 {
     if (test == 1)
+    {
         TITLE("Metropolis", "init");
+    }
 
     bool begin = false;
 
@@ -117,7 +119,7 @@ void Metropolis::init(void)
 }
 
 // be called in MultiZeta::init(), reset the start temperature.
-void Metropolis::reset_temperature(const int& istep)
+void Metropolis::reset_temperature(const int &istep)
 {
     temperature = this->spi_ini_temp;
     for (int i = 0; i < istep; i++)
@@ -128,7 +130,7 @@ void Metropolis::reset_temperature(const int& istep)
     return;
 }
 
-void Metropolis::move_various_temperature(SpillageStep& Level)
+void Metropolis::move_various_temperature(SpillageStep &Level)
 {
     timer::tick("Metropolis", "move_various_t");
 

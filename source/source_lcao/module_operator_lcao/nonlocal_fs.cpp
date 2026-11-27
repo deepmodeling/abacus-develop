@@ -35,7 +35,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     { 
         // skip the atoms without plus-U
-        auto tau0 = ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int I0 = 0;
         int T0 = 0;
         ucell->iat2iait(iat0, &I0, &T0);
@@ -72,8 +72,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            auto all_indexes = paraV->get_indexes_row(iat1);
-            auto col_indexes = paraV->get_indexes_col(iat1);
+            std::vector<int> all_indexes = paraV->get_indexes_row(iat1);
+            std::vector<int> col_indexes = paraV->get_indexes_col(iat1);
             // insert col_indexes into all_indexes to get universal set with no repeat elements
             all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
             std::sort(all_indexes.begin(), all_indexes.end());
@@ -86,7 +86,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                 // If we are calculating force, we need also to store the gradient
                 // and size of outer vector is then 4
                 // inner loop : all projectors (L0,M0)
-                auto qn1 = OperatorForceStress::get_orbital_qn(*atom1, iw1);
+                OperatorForceStress::OrbitalQuantumNumbers qn1 = OperatorForceStress::get_orbital_qn(*atom1, iw1);
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
                 intor_->snap(T1, qn1.L, qn1.N, qn1.M, T0, dtau * this->ucell->lat0, true /*cal_deri*/, nlm);
@@ -235,8 +235,8 @@ inline void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace;
     OperatorForceStress::setup_step_trace(npol, col_indexes.size(), step_trace);
@@ -302,8 +302,8 @@ inline void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace;
     OperatorForceStress::setup_step_trace(npol, col_indexes.size(), step_trace);
@@ -364,8 +364,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
     // calculate the local matrix
     const double* tmp_d = nullptr;
     const double* dm_pointer = dmR_pointer->get_pointer();
@@ -415,8 +415,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
     // calculate the local matrix
     const double* tmp_d = nullptr;
     const double* dm_pointer = dmR_pointer->get_pointer();

@@ -29,23 +29,23 @@ void distribute_pvdpR_sparse(const int cspin,
     std::vector<int> nonzero_num(total_R_num);
     std::vector<int> minus_nonzero_num(total_R_num);
     int count = 0;
-    for (const auto& R_coor: hs_arrays.all_R_coor)
+    for (const Abfs::Vector3_Order<int>& R_coor: hs_arrays.all_R_coor)
     {
-        auto iter = pvdpR_sparse.find(R_coor);
+        std::map<Abfs::Vector3_Order<int>, std::map<std::size_t, std::map<std::size_t, double>>>::const_iterator iter = pvdpR_sparse.find(R_coor);
         if (iter != pvdpR_sparse.end())
         {
-            for (auto& row_loop: iter->second)
+            for (const std::pair<const std::size_t, std::map<std::size_t, double>>& row_loop: iter->second)
             {
                 nonzero_num[count] += row_loop.second.size();
             }
         }
 
-        auto minus_R_coor = -1 * R_coor;
+        ModuleBase::Vector3<int> minus_R_coor = -1 * R_coor;
 
         iter = pvdpR_sparse.find(minus_R_coor);
         if (iter != pvdpR_sparse.end())
         {
-            for (auto& row_loop: iter->second)
+            for (const std::pair<const std::size_t, std::map<std::size_t, double>>& row_loop: iter->second)
             {
                 minus_nonzero_num[count] += row_loop.second.size();
             }
@@ -60,26 +60,26 @@ void distribute_pvdpR_sparse(const int cspin,
     count = 0;
 
     const std::vector<int>& trace_lo = ModuleGint::Gint::get_gint_info().get_trace_lo();
-    for (const auto& R_coor: hs_arrays.all_R_coor)
+    for (const Abfs::Vector3_Order<int>& R_coor: hs_arrays.all_R_coor)
     {
         if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
         {
-            auto minus_R_coor = -1 * R_coor;
+            ModuleBase::Vector3<int> minus_R_coor = -1 * R_coor;
 
             for (int row = 0; row < nlocal; ++row)
             {
                 tmp.assign(tmp.size(), 0);
 
-                auto iter = pvdpR_sparse.find(R_coor);
+                std::map<Abfs::Vector3_Order<int>, std::map<std::size_t, std::map<std::size_t, double>>>::const_iterator iter = pvdpR_sparse.find(R_coor);
                 if (iter != pvdpR_sparse.end())
                 {
 
                     if (trace_lo[row] >= 0)
                     {
-                        auto row_iter = iter->second.find(row);
+                        std::map<std::size_t, std::map<std::size_t, double>>::const_iterator row_iter = iter->second.find(row);
                         if (row_iter != iter->second.end())
                         {
-                            for (auto& value: row_iter->second)
+                            for (const std::pair<const std::size_t, double>& value: row_iter->second)
                             {
                                 tmp[value.first] = value.second;
                             }
@@ -87,17 +87,17 @@ void distribute_pvdpR_sparse(const int cspin,
                     }
                 }
 
-                auto minus_R_iter = pvdpR_sparse.find(minus_R_coor);
+                std::map<Abfs::Vector3_Order<int>, std::map<std::size_t, std::map<std::size_t, double>>>::const_iterator minus_R_iter = pvdpR_sparse.find(minus_R_coor);
                 if (minus_R_iter != pvdpR_sparse.end())
                 {
                     for (int col = 0; col < row; ++col)
                     {
                         if (trace_lo[col] >= 0)
                         {
-                            auto row_iter = minus_R_iter->second.find(col);
+                            std::map<std::size_t, std::map<std::size_t, double>>::const_iterator row_iter = minus_R_iter->second.find(col);
                             if (row_iter != minus_R_iter->second.end())
                             {
-                                auto col_iter = row_iter->second.find(row);
+                                std::map<std::size_t, double>::const_iterator col_iter = row_iter->second.find(row);
                                 if (col_iter != row_iter->second.end())
                                 {
                                     tmp[col] = col_iter->second;
@@ -175,7 +175,7 @@ void cal_dvlocal_R_sparse(const hamilt::HContainer<double>& pvdpRx,
 
     for (int iap = 0; iap < pvdpRx.size_atom_pairs(); iap++)
     {
-        const auto& ap = pvdpRx.get_atom_pair(iap);
+        const hamilt::AtomPair<double>& ap = pvdpRx.get_atom_pair(iap);
         const int iat1 = ap.get_atom_i();
         const int iat2 = ap.get_atom_j();
         const int it1 = ucell.iat2it[iat1];

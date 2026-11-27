@@ -30,11 +30,11 @@ std::vector<std::vector<int>> collect_abfs_l_nchi(
 {
     std::vector<std::vector<int>> abfs_l_nchi;
     abfs_l_nchi.reserve(abfs.size());
-    for (const auto& abfs_type: abfs)
+    for (const std::vector<std::vector<Numerical_Orbital_Lm>>& abfs_type: abfs)
     {
         std::vector<int> shell_counts;
         shell_counts.reserve(abfs_type.size());
-        for (const auto& abfs_l: abfs_type)
+        for (const std::vector<Numerical_Orbital_Lm>& abfs_l: abfs_type)
         {
             shell_counts.push_back(static_cast<int>(abfs_l.size()));
         }
@@ -49,7 +49,7 @@ std::vector<std::vector<int>> collect_wfc_l_nchi(const UnitCell& ucell)
     wfc_l_nchi.reserve(static_cast<std::size_t>(ucell.ntype));
     for (int itype = 0; itype < ucell.ntype; ++itype)
     {
-        const auto& atom = ucell.atoms[itype];
+        const Atom& atom = ucell.atoms[itype];
         if (atom.nwl < 0 || atom.l_nchi.size() < static_cast<std::size_t>(atom.nwl + 1))
         {
             throw std::runtime_error("LibRPA v1 basis output found inconsistent AO shell counts.");
@@ -142,7 +142,7 @@ void write_librpa_split_basis_file(const UnitCell& ucell,
     }
     for (int itype = 0; itype < ucell.ntype; ++itype)
     {
-        const auto& shell_counts = type_shell_counts[static_cast<std::size_t>(itype)];
+        const std::vector<int>& shell_counts = type_shell_counts[static_cast<std::size_t>(itype)];
         int nshell = 0;
         for (const int count: shell_counts)
         {
@@ -174,7 +174,7 @@ try
     }
     ModuleBase::TITLE("DFT_RPA_interface", "out_librpa_basis_v1");
 
-    const auto basis_method = this->select_coulomb_basis_method_(exx_lri);
+    const Conv_Coulomb_Pot_K::Coulomb_Method basis_method = this->select_coulomb_basis_method_(exx_lri);
     std::vector<int> type_naux(static_cast<std::size_t>(ucell.ntype), 0);
     std::vector<int> type_nw(static_cast<std::size_t>(ucell.ntype), 0);
     int total_wfc = 0;
@@ -195,8 +195,8 @@ try
         total_aux += type_naux[static_cast<std::size_t>(it)] * ucell.atoms[it].na;
     }
 
-    const auto wfc_l_nchi = RpaLriDetail::collect_wfc_l_nchi(ucell);
-    const auto aux_l_nchi = RpaLriDetail::collect_abfs_l_nchi(exx_lri->abfs);
+    const std::vector<std::vector<int>> wfc_l_nchi = RpaLriDetail::collect_wfc_l_nchi(ucell);
+    const std::vector<std::vector<int>> aux_l_nchi = RpaLriDetail::collect_abfs_l_nchi(exx_lri->abfs);
     const std::string wfc_filename = this->runtime.input.rpa_outdir + "wfc_basis.txt";
     const std::string aux_output_filename = this->runtime.input.rpa_outdir + aux_filename;
     const std::string legacy_output_filename = this->runtime.input.rpa_outdir + legacy_filename;
@@ -225,7 +225,7 @@ try
     const auto write_legacy_shells = [&ofs](const std::vector<std::vector<int>>& shell_counts_by_type) {
         for (std::size_t itype = 0; itype < shell_counts_by_type.size(); ++itype)
         {
-            const auto& shell_counts = shell_counts_by_type[itype];
+            const std::vector<int>& shell_counts = shell_counts_by_type[itype];
             int nshell = 0;
             for (const int count: shell_counts)
             {

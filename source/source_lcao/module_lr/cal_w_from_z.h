@@ -139,10 +139,10 @@ namespace LR
         std::vector<ct::Tensor> dm_diff_2d;
         auto cal_dm_trans = [&psi_ks, nk, &dm_trans_2d, &px, &pc, naos, &nocc, &nvirt, &pmat, &DM_trans](const int is, const T* const x_ptr)->void //DX
             {
-                const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
+                const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
 #ifdef __MPI
                 dm_trans_2d = cal_dm_trans_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                for (auto& t: dm_trans_2d)
+                for (container::Tensor& t: dm_trans_2d)
                     LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
 #else
                 dm_trans_2d = cal_dm_trans_blas(x_ptr, psi_ks_is, nocc[is], nvirt[is]);
@@ -156,10 +156,10 @@ namespace LR
             };
         auto cal_dm_diff_relaxed = [&psi_ks, nk, &px, &pc, naos, &nocc, &nvirt, &pmat, &dm_diff_2d, &DM_diff_relaxed](const int& is, const T* const x_ptr, const T* const z_ptr)->void  // T+DZ
             {
-                const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
+                const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
 #ifdef __MPI
                 std::vector<ct::Tensor> z_2d = cal_dm_trans_pblas(z_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                for (auto& t: z_2d)
+                for (container::Tensor& t: z_2d)
                     LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
 #else
                 std::vector<ct::Tensor> z_2d = cal_dm_trans_blas(z_ptr, psi_ks_is, nocc[is], nvirt[is]);
@@ -296,12 +296,12 @@ namespace LR
         std::vector<ct::Tensor> dm_buf;
         auto set_dm_diff_relaxed = [&psi_ks, nk, X, Z, &off_x, &px, &pc, naos, &nocc, &nvirt, &pmat, &dm_buf, &DM_diff_relaxed](const int is)->void
             {
-                const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
+                const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
                 const T* const x_ptr = X + off_x[is];
                 const T* const z_ptr = Z + off_x[is];
 #ifdef __MPI
                 std::vector<ct::Tensor> z_2d = cal_dm_trans_pblas(z_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                for (auto& t: z_2d)
+                for (container::Tensor& t: z_2d)
                 {
                     LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
                 }

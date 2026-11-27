@@ -90,6 +90,7 @@ TEST_F(DosPWTest,Dos1)
 			dosp.emin_ev,
 			two_fermi,
 			out_app_flag,
+			6,
 			bndpar,
 			global_out_dir,
 			ofs);
@@ -169,6 +170,7 @@ TEST_F(DosPWTest,Dos2)
 			dosp.emin_ev,
 			two_fermi,
 			out_app_flag,
+			6,
 			bndpar,
 			global_out_dir,
             ofs);

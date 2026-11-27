@@ -23,7 +23,7 @@ void ReadInput::item_model()
         item.default_value = "False";
         item.unit = "";
         item.check_value = [](const Input_Item&, const Parameter& para) {
-            const auto& input = para.input;
+            const Input_para& input = para.input;
             const bool lr = input.esolver_type == "lr" || input.esolver_type == "ks-lr";
             const bool forces = input.cal_force || input.calculation == "relax";
             if (lr && forces && input.efield_flag)

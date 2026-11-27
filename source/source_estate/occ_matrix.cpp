@@ -200,11 +200,12 @@ void OccupationMatrix::write_to_flat(const UnitCell& cell,
         {
             continue;
         }
-        const int size = (2 * target_l + 1) * (2 * target_l + 1);
+        const ModuleBase::matrix& occ0 = occ_[iat][target_l][0];
+        const int size = occ0.nr * occ0.nc;
 
         for (int mm = 0; mm < size; mm++)
         {
-            uom[index[iat] + mm] = occ_[iat][target_l][0].c[mm];
+            uom[index[iat] + mm] = occ0.c[mm];
         }
         if (nspin_ == 2)
         {

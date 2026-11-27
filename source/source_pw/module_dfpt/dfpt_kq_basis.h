@@ -50,59 +50,33 @@ class DFPT_KQ_Basis
      * @param q_cart perturbation wavevector in Cartesian coordinates
      * @param ik index of the ground-state k point
      */
-    void init(const ModulePW::PW_Basis_K* pw_wfc,
-              const ModulePW::PW_Basis* pw_rho,
-              const ModuleBase::Vector3<double>& q_cart,
-              int ik);
+    void init(
+        const ModulePW::PW_Basis_K *pw_wfc,
+        const ModulePW::PW_Basis *pw_rho,
+        const ModuleBase::Vector3<double> &q_cart,
+        int ik);
 
     void clear();
 
-    bool is_valid() const
-    {
-        return pw_wfc_ != nullptr;
-    }
+    bool is_valid() const { return pw_wfc_ != nullptr; }
     ///< number of k+q plane waves on this processor
-    int get_npwk() const
-    {
-        return npwk_;
-    }
+    int get_npwk() const { return npwk_; }
     ///< index of the G vector in the charge-density basis (-1 if the shared
     ///< FFT cell position carries no local rho-grid G)
-    int get_ig_rho(int igl) const
-    {
-        return ig_rho_[igl];
-    }
+    int get_ig_rho(int igl) const { return ig_rho_[igl]; }
     ///< G in Cartesian coordinates
-    ModuleBase::Vector3<double> get_gcar(int igl) const
-    {
-        return gcar_[igl];
-    }
+    ModuleBase::Vector3<double> get_gcar(int igl) const { return gcar_[igl]; }
     ///< G + (k+q) in Cartesian coordinates
-    ModuleBase::Vector3<double> get_gpluskq(int igl) const
-    {
-        return gcar_[igl] + kplusq_c_;
-    }
+    ModuleBase::Vector3<double> get_gpluskq(int igl) const { return gcar_[igl] + kplusq_c_; }
     ///< |G + (k+q)|^2 in units of 1/lat0^2
-    double get_gk2(int igl) const
-    {
-        return gk2_[igl];
-    }
+    double get_gk2(int igl) const { return gk2_[igl]; }
     ///< k+q wavevector in Cartesian coordinates
-    ModuleBase::Vector3<double> get_kplusq() const
-    {
-        return kplusq_c_;
-    }
-    const std::vector<double>& get_gk2_all() const
-    {
-        return gk2_;
-    }
-    const std::vector<ModuleBase::Vector3<double>>& get_gcar_all() const
-    {
-        return gcar_;
-    }
+    ModuleBase::Vector3<double> get_kplusq() const { return kplusq_c_; }
+    const std::vector<double> &get_gk2_all() const { return gk2_; }
+    const std::vector<ModuleBase::Vector3<double>> &get_gcar_all() const { return gcar_; }
 
   private:
-    const ModulePW::PW_Basis_K* pw_wfc_ = nullptr;  ///< ground-state k-basis
+    const ModulePW::PW_Basis_K *pw_wfc_ = nullptr;  ///< ground-state k-basis
     ModuleBase::Vector3<double> kplusq_c_;          ///< k+q in Cartesian coordinates
     int npwk_ = 0;                                  ///< number of k+q plane waves
     std::vector<int> ig_rho_;                       ///< k+q index -> charge-grid G index

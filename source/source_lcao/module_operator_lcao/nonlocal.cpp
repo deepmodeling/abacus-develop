@@ -53,14 +53,14 @@ void Nonlocal<OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
     ModuleBase::TITLE("Nonlocal", "initialize_HR");
     ModuleBase::timer::start("Nonlocal", "initialize_HR");
 
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    const Parallel_Orbitals* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
     {
-        auto tau0 = ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
         AdjacentAtomInfo adjs;
@@ -138,7 +138,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::calculate_HR()
 #endif
         for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
         {
-            auto tau0 = ucell->get_tau(iat0);
+            ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
             int T0, I0;
             ucell->iat2iait(iat0, &I0, &T0);
             AdjacentAtomInfo& adjs = this->adjs_all[iat0];
@@ -154,14 +154,14 @@ void Nonlocal<OperatorLCAO<TK, TR>>::calculate_HR()
                 const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
                 const Atom* atom1 = &ucell->atoms[T1];
 
-                auto all_indexes = paraV->get_indexes_row(iat1);
+                std::vector<int> all_indexes = paraV->get_indexes_row(iat1);
 #ifdef _OPENMP
                 if (atom_row_list.find(iat1) == atom_row_list.end())
                 {
                     all_indexes.clear();
                 }
 #endif
-                auto col_indexes = paraV->get_indexes_col(iat1);
+                std::vector<int> col_indexes = paraV->get_indexes_col(iat1);
                 // insert col_indexes into all_indexes to get universal set with no repeat elements
                 all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
                 std::sort(all_indexes.begin(), all_indexes.end());
@@ -245,8 +245,8 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_HR_IJR(
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
     double olm[3] = {0, 0, 0};
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    std::vector<int> row_indexes = paraV->get_indexes_row(iat1);
+    std::vector<int> col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol * npol, 0);
     for (int is = 0; is < npol; is++)

@@ -53,9 +53,13 @@ void Plot_Psi::allocate(void)
     this->meshL = (std::log(xmax * zed) - xmin) / dx;
     // mesh should be odd.
     if (meshU % 2 == 0)
+    {
         meshU++;
+    }
     if (meshL % 2 == 0)
+    {
         meshL++;
+    }
 
     /*
     cout << "\n dr = " << dr;
@@ -107,10 +111,12 @@ void Plot_Psi::radial_wave_function(void)
     for (int it = 0; it < NTYPE; it++)
     {
         if (test == 2)
+        {
             cout << "\n mz.lmax_type[" << it << "]=" << mz.lmax_type[it];
+        }
         for (int L = 0; L < mz.lmax_type[it] + 1; L++)
         {
-            double* eigen1 = new double[ne];
+            double *eigen1 = new double[ne];
             for (int ie = 0; ie < ne; ie++)
             {
                 eigen1[ie] = mz.metro.Psi2.eigenvalue(L, ie);
@@ -120,8 +126,10 @@ void Plot_Psi::radial_wave_function(void)
             for (int N = 0; N < mz.l_nchi(it, L); N++)
             {
                 if (test == 2)
+                {
                     cout << "\n T=" << it << " L=" << L << " N=" << N;
-                double* c4 = new double[ne];
+                }
+                double *c4 = new double[ne];
 
                 for (int ie = 0; ie < ne; ie++)
                 {
@@ -158,8 +166,8 @@ void Plot_Psi::radial_wave_function(void)
                 }
                 mz.metro.Psi2.ofsk << "\n Total kinetic energy = " << kin_sum;
 
-                double* psi1 = new double[meshU];
-                double* psi2 = new double[meshL];
+                double *psi1 = new double[meshU];
+                double *psi2 = new double[meshL];
                 this->get_psi(meshU, rU, L, psi1, c4, eigen1, 0);
                 this->get_psi(meshL, rL, L, psi2, c4, eigen1, 1);
 
@@ -194,9 +202,11 @@ void Plot_Psi::radial_wave_function(void)
     this->dk = 0.01;
     this->meshK = 1500; // (1500*0.01)^2 * 2 = 450 Rydberg.
     if (meshK % 2 == 0)
+    {
         meshK++;
+    }
     this->psiUK.create(total_nchi, meshK);
-    double* psi = new double[meshU];
+    double *psi = new double[meshU];
     ichi = 0;
     for (int it = 0; it < NTYPE; it++)
     {
@@ -326,7 +336,7 @@ void Plot_Psi::print_orbitalsU_used(void) const
 
         for (int L = 0; L < mz.lmax_type[it] + 1; L++)
         {
-            double* eigen1 = new double[ne];
+            double *eigen1 = new double[ne];
             for (int ie = 0; ie < ne; ie++)
             {
                 eigen1[ie] = mz.metro.Psi2.eigenvalue(L, ie);
@@ -339,7 +349,9 @@ void Plot_Psi::print_orbitalsU_used(void) const
                 for (int ir = start; ir < meshU; ir++)
                 {
                     if (ir % 4 == 0)
+                    {
                         f1 << endl;
+                    }
                     f1 << " " << this->psiU(ichi, ir);
                 }
                 ++ichi;
@@ -374,7 +386,7 @@ void Plot_Psi::print_orbitalsL_used(void) const
 
         for (int L = 0; L < mz.lmax_type[it] + 1; L++)
         {
-            double* eigen1 = new double[ne];
+            double *eigen1 = new double[ne];
             for (int ie = 0; ie < ne; ie++)
             {
                 eigen1[ie] = mz.metro.Psi2.eigenvalue(L, ie);
@@ -387,7 +399,9 @@ void Plot_Psi::print_orbitalsL_used(void) const
                 for (int ir = 0; ir < meshL; ir++)
                 {
                     if (ir % 4 == 0)
+                    {
                         f1 << endl;
+                    }
                     f1 << " " << this->psiL(ichi, ir);
                 }
                 ++ichi;
@@ -398,17 +412,18 @@ void Plot_Psi::print_orbitalsL_used(void) const
     return;
 }
 
-void Plot_Psi::get_psi(const int& mesh,
-                       const double* r,
-                       const int& l,
-                       double* psi,
-                       double* c4,
-                       const double* eigen1,
-                       bool logmesh) const
+void Plot_Psi::get_psi(
+    const int &mesh,
+    const double *r,
+    const int &l,
+    double *psi,
+    double *c4,
+    const double *eigen1,
+    bool logmesh) const
 {
     // (1) get psi1
-    double* jle = new double[mesh];
-    double* g = new double[mesh]; // smooth function
+    double *jle = new double[mesh];
+    double *g = new double[mesh]; // smooth function
 
     if (SMOOTH)
     {
@@ -449,8 +464,8 @@ void Plot_Psi::get_psi(const int& mesh,
 
     // (2)normalization
     double norm;
-    double* function = new double[mesh];
-    double* rab = new double[mesh];
+    double *function = new double[mesh];
+    double *rab = new double[mesh];
 
     // mohan fix bug 2010-04-13
     if (logmesh)
@@ -496,7 +511,11 @@ void Plot_Psi::get_psi(const int& mesh,
     return;
 }
 
-void Plot_Psi::establish_ecut(ofstream& ofs, const int& ichi, double* psi, const int& L)
+void Plot_Psi::establish_ecut(
+    ofstream &ofs,
+    const int &ichi,
+    double *psi,
+    const int &L)
 {
     //(1) init the parameters
     double pi = 3.1415926535;
@@ -509,8 +528,8 @@ void Plot_Psi::establish_ecut(ofstream& ofs, const int& ichi, double* psi, const
 
     // (2) check the norm of psi
     double norm = 0.0;
-    double* function = new double[meshU];
-    double* rab = new double[meshU];
+    double *function = new double[meshU];
+    double *rab = new double[meshU];
     for (int ir = 0; ir < meshU; ir++)
     {
         rab[ir] = dr;
@@ -520,8 +539,8 @@ void Plot_Psi::establish_ecut(ofstream& ofs, const int& ichi, double* psi, const
     ofs << "Psi(r) norm=" << norm * fpi << endl;
 
     // (3) get psik
-    double* psik = new double[meshK];
-    double* jj = new double[meshU];
+    double *psik = new double[meshK];
+    double *jj = new double[meshU];
     for (int ik = 0; ik < meshK; ik++)
     {
         double q = ik * this->dk;
@@ -541,8 +560,8 @@ void Plot_Psi::establish_ecut(ofstream& ofs, const int& ichi, double* psi, const
 
     // (4) prepare for the integral of psik.
     double normk = 0.0;
-    double* rabk = new double[meshK];
-    double* functionk = new double[meshK];
+    double *rabk = new double[meshK];
+    double *functionk = new double[meshK];
     for (int ik = 0; ik < meshK; ik++)
     {
         rabk[ik] = dk;
@@ -598,7 +617,7 @@ void Plot_Psi::establish_ecut(ofstream& ofs, const int& ichi, double* psi, const
 }
 
 // Peize Lin add 2015-11-20
-void Plot_Psi::orthogonalization(const int& mesh, double* r, const matrix& psi)
+void Plot_Psi::orthogonalization(const int &mesh, double *r, const matrix &psi)
 {
     Gram_Schmidt_Orth<double, double> gs_orth;
     gs_orth.set_coordinate(1);
@@ -606,14 +625,14 @@ void Plot_Psi::orthogonalization(const int& mesh, double* r, const matrix& psi)
     gs_orth.set_rab_element(this->dr);
     gs_orth.set_r(r);
 
-    double* tmp_index(psi.c);
+    double *tmp_index(psi.c);
 
     for (int it = 0; it < NTYPE; it++)
     {
         for (int L = 0; L < mz.lmax_type[it] + 1; L++)
         {
             gs_orth.set_func_num(mz.l_nchi(it, L));
-            double** psi_TL = new double*[mz.l_nchi(it, L)];
+            double **psi_TL = new double *[mz.l_nchi(it, L)];
             for (int N = 0; N < mz.l_nchi(it, L); N++)
             {
                 psi_TL[N] = tmp_index;

@@ -136,10 +136,10 @@ namespace LR
 
             this->cal_dm_trans = [&, this](const int& is, const T* const X)->void
                 {
-                    const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks_in, is, nk);
+                    const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks_in, is, nk);
 #ifdef __MPI
                     std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X, pX[is], psi_ks_is, pc_in, naos, nocc[is], nvirt[is], pmat_in.para_2d(), (T)1.0 / (T)nk);
-                    if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat_in.para_2d());
+                    if (this->tdm_sym) for (container::Tensor& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat_in.para_2d());
 #else
                     std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_blas(X, psi_ks_is, nocc[is], nvirt[is], (T)1.0 / (T)nk);
                     if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);

@@ -118,7 +118,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
 {
     ModuleBase::timer::start("LR_Util", "cal_velocity_mo");
     LCAO_Orbitals orb;
-    const auto& inp = PARAM.inp;
+    const Input_para& inp = PARAM.inp;
     two_center_bundle.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
                                         inp.out_element_info, inp.cal_force);
 

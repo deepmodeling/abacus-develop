@@ -1,7 +1,7 @@
 #include "inverse_matrix_perturbe.h"
 
 #include <iostream>
-ComplexMatrix& Inverse_Matrix_Perturbe::cal_inverse()
+ComplexMatrix &Inverse_Matrix_Perturbe::cal_inverse()
 {
     // std::cout<<"@";
     this->I = *this->A_inverse;
@@ -33,7 +33,7 @@ ComplexMatrix& Inverse_Matrix_Perturbe::cal_inverse()
     return this->I;
 }
 
-void Inverse_Matrix_Perturbe::init(const int& dim)
+void Inverse_Matrix_Perturbe::init(const int &dim)
 {
     this->I.create(dim, dim);
     return;

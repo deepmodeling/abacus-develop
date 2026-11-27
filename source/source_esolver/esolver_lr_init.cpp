@@ -277,8 +277,8 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell &ucell)
         // leaving `psi_ks` uninitialized in every non-MPI build)
         for (int ib = 0; ib < this->nbands; ++ib)
         {
-            const auto *start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
-            auto *to = &(*this->psi_ks)(ik, ib, 0);
+            const T* start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
+            T* to = &(*this->psi_ks)(ik, ib, 0);
             std::copy(start, start + this->nbasis, to);
         }
 #endif

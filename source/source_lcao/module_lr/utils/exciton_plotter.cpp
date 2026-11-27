@@ -229,7 +229,7 @@ void OrbitalEvaluator::init(const LCAO_Orbitals& orb, const UnitCell& ucell)
     {
         const Numerical_Orbital& no = orb.Phi[it];
         const Atom& atom = ucell.atoms[it];
-        auto& td = atypes_[it];
+        OrbitalEvaluator::AtomTypeData& td = atypes_[it];
 
         td.nw = atom.nw;
         td.nwl = atom.nwl;
@@ -243,7 +243,7 @@ void OrbitalEvaluator::init(const LCAO_Orbitals& orb, const UnitCell& ucell)
             {
                 const int l = atom.iw2l[iw];
                 const int n = atom.iw2n[iw];
-                const auto& phi_ln = no.PhiLN(l, n);
+                const Numerical_Orbital_Lm& phi_ln = no.PhiLN(l, n);
 
                 AtomTypeData::RadialBlock block;
                 block.begin_iw = iw;
@@ -260,7 +260,7 @@ void OrbitalEvaluator::init(const LCAO_Orbitals& orb, const UnitCell& ucell)
 /// @brief Replicates the cubic Hermite interpolation from GintAtom::set_phi()
 void OrbitalEvaluator::eval_phi(const int it, const ModuleBase::Vector3<double>& dr, double* phi_out) const
 {
-    const auto& td = atypes_[it];
+    const OrbitalEvaluator::AtomTypeData& td = atypes_[it];
     const double dist = dr.norm() < 1e-9 ? 1e-9 : dr.norm();
     if (dist > td.rcut)
     {
@@ -281,11 +281,11 @@ void OrbitalEvaluator::eval_phi(const int it, const ModuleBase::Vector3<double>&
     const double c2 = (dx - 2.0 * dx2 + dx3) * td.dr_uniform;
     const double c4 = (dx3 - dx2) * td.dr_uniform;
 
-    const auto* blocks = td.radial_blocks.data();
+    OrbitalEvaluator::AtomTypeData::RadialBlock const* blocks = td.radial_blocks.data();
     const int num_blocks = td.radial_blocks.size();
     for (int ib = 0; ib < num_blocks; ++ib)
     {
-        const auto& block = blocks[ib];
+        const OrbitalEvaluator::AtomTypeData::RadialBlock& block = blocks[ib];
         const double* psi_uniform = block.psi_uniform;
         const double* dpsi_uniform = block.dpsi_uniform;
         const double psi
@@ -321,7 +321,7 @@ void OrbitalEvaluator::eval_phi_all_bloch(const ModuleBase::Vector3<double>& r,
     // Determine how many lattice translations to check in each direction.
     // nR = ceil(rcut / min(|a|,|b|,|c|)) + 1 ensures all overlapping orbitals are captured.
     double max_rcut = 0.0;
-    for (const auto& td: atypes_)
+    for (const OrbitalEvaluator::AtomTypeData& td: atypes_)
         max_rcut = std::max(max_rcut, td.rcut);
     const int nR = static_cast<int>(std::ceil(max_rcut / std::min({a.norm(), b.norm(), c.norm()}))) + 1;
 
@@ -375,7 +375,7 @@ std::vector<container::Tensor> ExcitonPlotter<T>::cal_effective_dmk_hole(const i
     const int offset_b = istate * this->ldim;
     const int nocc = this->nocc[0];
     const int nvirt = this->nvirt[0];
-    const auto data_type = container::DataTypeToEnum<T>::value;
+    const container::DataType data_type = container::DataTypeToEnum<T>::value;
     std::vector<container::Tensor> result(this->nk,
                                           container::Tensor(data_type, DEV::CpuDevice, {this->naos, this->naos}));
     const T alpha(1.0);
@@ -426,7 +426,7 @@ std::vector<container::Tensor> ExcitonPlotter<T>::cal_effective_dmk_elec(const i
     const int offset_b = istate * this->ldim;
     const int nocc = this->nocc[0];
     const int nvirt = this->nvirt[0];
-    const auto data_type = container::DataTypeToEnum<T>::value;
+    const container::DataType data_type = container::DataTypeToEnum<T>::value;
     std::vector<container::Tensor> result(this->nk,
                                           container::Tensor(data_type, DEV::CpuDevice, {this->naos, this->naos}));
     const T alpha(1.0);
@@ -477,7 +477,7 @@ void ExcitonPlotter<T>::plot_average_density(const int istate, const std::string
     {
         ModuleBase::WARNING_QUIT("ExcitonPlotter", "Unknown average density type: " + type + ". Use hole or elec.");
     }
-    const auto dmk = type == "hole" ? cal_effective_dmk_hole(istate) : cal_effective_dmk_elec(istate);
+    const std::vector<container::Tensor> dmk = type == "hole" ? cal_effective_dmk_hole(istate) : cal_effective_dmk_elec(istate);
     module_dm::DensityMatrix<T, double> dm(&this->pmat, this->nspin_x, this->kv.kvec_d, this->nk);
     for (int ik = 0; ik < this->nk; ++ik)
     {
@@ -537,7 +537,7 @@ void ExcitonPlotter<T>::plot_average_slice(const int istate,
         ModuleBase::WARNING_QUIT("ExcitonPlotter", "Unknown average density type: " + type + ". Use hole or elec.");
     }
 
-    const auto dmk = type == "hole" ? cal_effective_dmk_hole(istate) : cal_effective_dmk_elec(istate);
+    const std::vector<container::Tensor> dmk = type == "hole" ? cal_effective_dmk_hole(istate) : cal_effective_dmk_elec(istate);
     const SliceGeometry geom = make_slice_geometry(this->ucell, this->kv, plane, slice_pos, npoints, range);
     const double du = (geom.u_end - geom.u_start) / (geom.nu - 1);
     const double dv = (geom.v_end - geom.v_start) / (geom.nv - 1);
@@ -704,7 +704,7 @@ void ExcitonPlotter<T>::plot_cond_slice(const int istate,
     {
         ModuleBase::WARNING_QUIT("ExcitonPlotter", "Unknown conditional slice type: " + type + ". Use elec or hole.");
     }
-    const auto coefficients = build_conditional_coefficients(istate, r_fix_in, plot_electron);
+    const std::vector<std::vector<std::complex<double>>> coefficients = build_conditional_coefficients(istate, r_fix_in, plot_electron);
     const SliceGeometry geom = make_slice_geometry(this->ucell, this->kv, plane, slice_pos, npoints, range);
     const double du = (geom.u_end - geom.u_start) / (geom.nu - 1);
     const double dv = (geom.v_end - geom.v_start) / (geom.nv - 1);

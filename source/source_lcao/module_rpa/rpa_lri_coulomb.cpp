@@ -43,15 +43,15 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
         = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_cut, ucell, this->orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, TC>>>> list_As_Vs_atoms
         = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
-    const auto list_A0_pair_R = list_As_Vs_atoms.first;
-    const auto list_A1_pair_R = list_As_Vs_atoms.second[0];
+    const std::vector<int> list_A0_pair_R = list_As_Vs_atoms.first;
+    const std::vector<std::pair<int, std::array<int, 3>>> list_A1_pair_R = list_As_Vs_atoms.second[0];
     std::set<TA> atoms00;
     std::set<TA> atoms01;
-    for (const auto& I: list_A0_pair_R)
+    for (const int& I: list_A0_pair_R)
     {
         atoms00.insert(I);
     }
-    for (const auto& JR: list_A1_pair_R)
+    for (const std::pair<int, std::array<int, 3>>& JR: list_A1_pair_R)
     {
         atoms01.insert(JR.first);
     }
@@ -113,7 +113,7 @@ Conv_Coulomb_Pot_K::Coulomb_Method RPA_LRI<T, Tdata>::select_coulomb_basis_metho
 template <typename T, typename Tdata>
 std::vector<int> RPA_LRI<T, Tdata>::collect_atom_naux_(const UnitCell& ucell, Exx_LRI<double>* exx_lri) const
 {
-    const auto basis_method = this->select_coulomb_basis_method_(exx_lri);
+    const Conv_Coulomb_Pot_K::Coulomb_Method basis_method = this->select_coulomb_basis_method_(exx_lri);
     std::vector<int> atom_naux(static_cast<std::size_t>(ucell.nat), 0);
     for (int I = 0; I != ucell.nat; ++I)
     {
@@ -157,15 +157,15 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_ewald, ucell, this->orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, TC>>>> list_As_Vs_atoms
         = RI::Distribute_Equally::distribute_atoms(mpi_comm, atoms, period_Vs, 2, false);
-    const auto list_A0_pair_R = list_As_Vs_atoms.first;
-    const auto list_A1_pair_R = list_As_Vs_atoms.second[0];
+    const std::vector<int> list_A0_pair_R = list_As_Vs_atoms.first;
+    const std::vector<std::pair<int, std::array<int, 3>>> list_A1_pair_R = list_As_Vs_atoms.second[0];
     std::set<TA> atoms00;
     std::set<TA> atoms01;
-    for (const auto& I: list_A0_pair_R)
+    for (const int& I: list_A0_pair_R)
     {
         atoms00.insert(I);
     }
-    for (const auto& JR: list_A1_pair_R)
+    for (const std::pair<int, std::array<int, 3>>& JR: list_A1_pair_R)
     {
         atoms01.insert(JR.first);
     }
@@ -211,7 +211,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
 
     int all_mu = 0;
     std::vector<int> mu_shift(ucell.nat);
-    const auto basis_method = this->select_coulomb_basis_method_(exx_lri);
+    const Conv_Coulomb_Pot_K::Coulomb_Method basis_method = this->select_coulomb_basis_method_(exx_lri);
     for (int I = 0; I != ucell.nat; I++)
     {
         mu_shift[I] = all_mu;
@@ -228,7 +228,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
     ofs << std::fixed << std::setprecision(15);
     for (auto& Ip: Vs)
     {
-        auto I = Ip.first;
+        TA I = Ip.first;
         size_t mu_num = exx_lri->exx_objs.at(basis_method).cv.get_index_abfs_size(ucell.iat2it[I]);
 
         for (int ik = 0; ik != nks_tot; ik++)
@@ -236,9 +236,9 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
             std::map<size_t, RI::Tensor<std::complex<double>>> Vq_k_IJ;
             for (auto& JPp: Ip.second)
             {
-                auto J = JPp.first.first;
+                TA J = JPp.first.first;
 
-                auto R = JPp.first.second;
+                TC R = JPp.first.second;
                 if (J < I)
                 {
                     continue;
@@ -253,10 +253,10 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
                 }
                 Vq_k_IJ[J] = Vq_k_IJ[J] + tmp_VR * kphase;
             }
-            for (auto& vq_Jp: Vq_k_IJ)
+            for (std::pair<const std::size_t, RI::Tensor<std::complex<double>>>& vq_Jp: Vq_k_IJ)
             {
-                auto iJ = vq_Jp.first;
-                auto& vq_J = vq_Jp.second;
+                std::size_t iJ = vq_Jp.first;
+                RI::Tensor<std::complex<double>>& vq_J = vq_Jp.second;
                 size_t nu_num = exx_lri->exx_objs.at(basis_method).cv.get_index_abfs_size(ucell.iat2it[iJ]);
                 ofs << all_mu << "   " << mu_shift[I] + 1 << "   " << mu_shift[I] + mu_num << "  " << mu_shift[iJ] + 1
                     << "   " << mu_shift[iJ] + nu_num << std::endl;

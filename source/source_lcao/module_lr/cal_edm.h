@@ -349,7 +349,7 @@ namespace LR
             {
 #ifdef __MPI
                 dmx_buf = cal_dm_trans_pblas(X + off_x[is], px[is], psi_ks_spin[is], pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                for (auto& t: dmx_buf)
+                for (container::Tensor& t: dmx_buf)
                 {
                     LR_Util::mattrans(t.data<T>(), naos, pmat.para_2d());
                 }

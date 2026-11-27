@@ -208,10 +208,10 @@ void snap_psibeta_atom_batch_gpu(
             }
 
             const std::tuple<int, int, int> radial_key(T1, L1, N1);
-            auto radial_mapping = orbital_radial_mappings.find(radial_key);
+            std::map<std::tuple<int, int, int>, OrbitalRadialMapping>::iterator radial_mapping = orbital_radial_mappings.find(radial_key);
             if (radial_mapping == orbital_radial_mappings.end())
             {
-                const auto& phi_ln = orb.Phi[T1].PhiLN(L1, N1);
+                const Numerical_Orbital_Lm& phi_ln = orb.Phi[T1].PhiLN(L1, N1);
                 const double* phi_psi = phi_ln.getPsi();
                 const double* phi_radial = phi_ln.getRadial();
 
@@ -271,7 +271,7 @@ void snap_psibeta_atom_batch_gpu(
 
     for (int ip = 0; ip < nproj; ip++)
     {
-        const auto& proj = infoNL_.get_Beta(T0).Proj[ip];
+        const Numerical_Nonlocal_Lm& proj = infoNL_.get_Beta(T0).Proj[ip];
         const int L0 = proj.getL();
         const int mesh = proj.getNr();
         const double rcut = proj.getRcut();

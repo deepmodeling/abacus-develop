@@ -350,7 +350,7 @@ void SphericalBesselTransformer::Impl::_rfft_prepare(const int n)
         {
             fftw_destroy_plan(rfft_plan_);
         }
-        auto* out = reinterpret_cast<fftw_complex*>(f_); // in-place transform
+        fftw_complex* out = reinterpret_cast<fftw_complex*>(f_); // in-place transform
         rfft_plan_ = fftw_plan_dft_r2c_1d(n, f_, out, fftw_plan_flag_);
 
         sz_planned_ = n;

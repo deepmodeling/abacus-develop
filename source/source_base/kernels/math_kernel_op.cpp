@@ -7,6 +7,43 @@
 namespace ModuleBase
 {
 
+template <>
+void trmm_op<std::complex<float>, base_device::DEVICE_CPU>::operator()(
+    const char& side, const char& uplo, const char& trans, const char& diag,
+    const int& m, const int& n, const std::complex<float>* alpha,
+    const std::complex<float>* a, const int& lda, std::complex<float>* b, const int& ldb)
+{
+    if (m == 0 || n == 0)
+    {
+        return;
+    }
+    ctrmm_(&side, &uplo, &trans, &diag, &m, &n, alpha, a, &lda, b, &ldb);
+}
+
+template <>
+void trmm_op<std::complex<double>, base_device::DEVICE_CPU>::operator()(
+    const char& side, const char& uplo, const char& trans, const char& diag,
+    const int& m, const int& n, const std::complex<double>* alpha,
+    const std::complex<double>* a, const int& lda, std::complex<double>* b, const int& ldb)
+{
+    if (m == 0 || n == 0)
+    {
+        return;
+    }
+    ztrmm_(&side, &uplo, &trans, &diag, &m, &n, alpha, a, &lda, b, &ldb);
+}
+
+
+void gram_herk_cpu(int ld, int dim, int bands, const std::complex<double>* x,
+                   std::complex<double>* output)
+{
+    const char uplo = 'U';
+    const char trans = 'C';
+    const double one = 1.0;
+    const double zero = 0.0;
+    zherk_(&uplo, &trans, &bands, &dim, &one, x, &ld, &zero, output, &bands);
+}
+
 template <typename T>
 struct gemv_op<T, base_device::DEVICE_CPU>
 {

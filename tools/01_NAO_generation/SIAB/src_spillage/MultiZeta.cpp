@@ -112,19 +112,27 @@ void MultiZeta::init(void)
         // Peize Lin test
         for (size_t istr = 0; istr < STRNUM; ++istr)
         {
-            Step_Data* Stru = &this->Level[is].data[istr];
+            Step_Data *Stru = &this->Level[is].data[istr];
             for (int ik = 0; ik < Stru->nks; ik++)
             {
                 // cout<<"ik:\t"<<ik<<endl;
                 // cout_matrix( Stru->Strial[ik]);
                 // cout_matrix( Stru->inverse_S[ik].get_inverse());
                 for (size_t i = 0; i < Stru->Strial[ik].nr; ++i)
+                {
                     for (size_t j = 0; j < i; ++j)
+                    {
                         Stru->Strial[ik](i, j) = conj(Stru->Strial[ik](j, i));
+                    }
+                }
                 ComplexMatrix inverse_tmp(Stru->inverse_S[ik].get_inverse());
                 for (size_t i = 0; i < inverse_tmp.nr; ++i)
+                {
                     for (size_t j = 0; j < i; ++j)
+                    {
                         inverse_tmp(i, j) = conj(inverse_tmp(j, i));
+                    }
+                }
                 // cout_matrix( Stru->Strial[ik] * inverse_tmp);
             }
         }
@@ -144,7 +152,9 @@ void MultiZeta::set_levels(void)
     if (MY_RANK == 0)
     {
         if (SCAN_BEGIN(input.ifs, "<OPTIMIZE>"))
+        {
             begin = true;
+        }
     }
 
 #ifdef __MPI

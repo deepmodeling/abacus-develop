@@ -6,14 +6,14 @@
 // (compute_drho / drhoc / v_hartree_q) stay in dfpt_rho.cpp.
 // ============================================================
 
-#include "dfpt_rho.h"
 #include "dfpt_pw_data.h"
+#include "dfpt_rho.h"
 
+#include "source_base/module_mixing/broyden_mixing.h"
+#include "source_base/module_mixing/plain_mixing.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_base/module_mixing/plain_mixing.h"
-#include "source_base/module_mixing/broyden_mixing.h"
-#include "source_base/parallel_reduce.h"
 
 #include <cmath>
 #include <complex>
@@ -79,7 +79,7 @@ void DFPT_Rho::reset_mixing(int q_idx)
     ModuleBase::timer::end("DFPT_Rho", "reset_mixing");
 }
 
-void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
+void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Rho", "mix_drho");
     ModuleBase::timer::start("DFPT_Rho", "mix_drho");
@@ -105,7 +105,7 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
     {
         drho_in_[q_idx].assign(1, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
     }
-    const std::vector<std::complex<double>>& rin = drho_in_[q_idx][0];
+    const std::vector<std::complex<double>> &rin = drho_in_[q_idx][0];
     std::vector<std::complex<double>> mixed(npw);
     const double w2_floor = 1.0e-12; ///< empirical parameter: |G+q|^2 zero-shell guard (1/lat0^2, Kerker freeze)
     // the fractional q is needed both by the Kerker screen and by the
@@ -122,51 +122,47 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
         }
         if (broyden_mdata_[q_idx] == nullptr)
         {
-            broyden_mdata_[q_idx] = std::unique_ptr<Base_Mixing::Mixing_Data>(
-                new Base_Mixing::Mixing_Data());
+            broyden_mdata_[q_idx] = std::unique_ptr<Base_Mixing::Mixing_Data>(new Base_Mixing::Mixing_Data());
             broyden_mixer_->init_mixing_data(*broyden_mdata_[q_idx], npw, sizeof(std::complex<double>));
         }
-        Base_Mixing::Mixing_Data& mdata = *broyden_mdata_[q_idx];
+        Base_Mixing::Mixing_Data &mdata = *broyden_mdata_[q_idx];
         // push the current in/out pair into the history, then solve for
         // the Broyden coefficients and mix
-        auto screen = std::function<void(std::complex<double>*)>();
+        std::function<void(std::complex<double> *)> screen = std::function<void(std::complex<double> *)>();
         // the Broyden push_data calls mix(data, data_in, F) unconditionally
         // (broyden_mixing.cpp:47, no nullptr guard): provide the plain
         // preliminary mix data = data_in + beta * F
         const double beta = mix_beta_;
-        auto combine =
-            std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)>(
-                [npw, beta](std::complex<double>* data,
-                            const std::complex<double>* data_in,
-                            const std::complex<double>* F) {
-                    for (int i = 0; i < npw; ++i)
+        std::function<void(std::complex<double> *, const std::complex<double> *, const std::complex<double> *)>
+            combine =
+                std::function<void(std::complex<double> *, const std::complex<double> *, const std::complex<double> *)>(
+                    [npw, beta](
+                        std::complex<double> *data, const std::complex<double> *data_in, const std::complex<double> *F)
                     {
-                        data[i] = data_in[i] + beta * F[i];
-                    }
-                });
-        broyden_mixer_->push_data(mdata,
-                                  rin.data(),
-                                  out.data(),
-                                  screen,
-                                  combine,
-                                  true);
+                        for (int i = 0; i < npw; ++i)
+                        {
+                            data[i] = data_in[i] + beta * F[i];
+                        }
+                    });
+        broyden_mixer_->push_data(mdata, rin.data(), out.data(), screen, combine, true);
         // the inner product is a pool-global quantity: each rank only
         // holds its G-shell share, so the partial sum must be reduced
         // before the Gram system is assembled (otherwise every rank
         // solves a different least-squares problem)
-        broyden_mixer_->cal_coef(mdata,
-            std::function<double(std::complex<double>*, std::complex<double>*)>(
-            [npw](std::complex<double>* a, std::complex<double>* b) {
-                double s = 0.0;
-                for (int i = 0; i < npw; ++i)
-                {
-                    s += (a[i] * std::conj(b[i])).real();
-                }
+        broyden_mixer_->cal_coef(
+            mdata, std::function<double(std::complex<double> *, std::complex<double> *)>(
+                       [npw](std::complex<double> *a, std::complex<double> *b)
+                       {
+                           double s = 0.0;
+                           for (int i = 0; i < npw; ++i)
+                           {
+                               s += (a[i] * std::conj(b[i])).real();
+                           }
 #ifdef __MPI
-                Parallel_Reduce::reduce_pool(s);
+                           Parallel_Reduce::reduce_pool(s);
 #endif
-                return s;
-            }));
+                           return s;
+                       }));
         broyden_mixer_->mix_data(mdata, mixed.data());
     }
     else if (mix_type_ == "rho_kerker")
@@ -185,11 +181,8 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
             rin_s[ig] = f * rin[ig];
             out_s[ig] = f * out[ig];
         }
-        mixer_->plain_mix(mixed_s.data(),
-                          rin_s.data(),
-                          out_s.data(),
-                          npw,
-                          std::function<void(std::complex<double>*)>());
+        mixer_->plain_mix(
+            mixed_s.data(), rin_s.data(), out_s.data(), npw, std::function<void(std::complex<double> *)>());
         // add back the screened-out part: mixed = rin + beta f (out - rin),
         // i.e. a plain mix with the per-shell coefficient beta f_g while
         // the stored density stays physical (not screen-scaled)
@@ -200,7 +193,7 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
     }
     else
     {
-        mixer_->plain_mix(mixed.data(), rin.data(), out.data(), npw, std::function<void(std::complex<double>*)>());
+        mixer_->plain_mix(mixed.data(), rin.data(), out.data(), npw, std::function<void(std::complex<double> *)>());
     }
     // relative residual ||out - in|| / ||out||; the norms are pool-global
     // quantities (each rank sums its G shells only)
@@ -228,7 +221,7 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
     ModuleBase::timer::end("DFPT_Rho", "mix_drho");
 }
 
-double DFPT_Rho::get_residual(int q_idx, DFPT_PW_Data& data) const
+double DFPT_Rho::get_residual(int q_idx, DFPT_PW_Data &data) const
 {
     ModuleBase::TITLE("DFPT_Rho", "get_residual");
     ModuleBase::timer::start("DFPT_Rho", "get_residual");

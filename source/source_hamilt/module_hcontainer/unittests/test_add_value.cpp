@@ -41,9 +41,9 @@ class AddValueTest : public ::testing::Test
     // fill: { {i, j, values}, ... }  where values.size() == nw(i) * nw(j)
     hamilt::HContainer<double> *make_hc(const std::vector<std::tuple<int, int, std::vector<double>>> &fill)
     {
-        auto *hc = new hamilt::HContainer<double>(&paraV);
+        hamilt::HContainer<double>* hc = new hamilt::HContainer<double>(&paraV);
         insert_all_pairs(hc);
-        for (auto &item : fill)
+        for (const std::tuple<int, int, std::vector<double>>& item : fill)
         {
             int i = std::get<0>(item);
             int j = std::get<1>(item);
@@ -68,7 +68,7 @@ class AddValueTest : public ::testing::Test
         const std::vector<double> &vals_000,
         const std::vector<double> &vals_R)
     {
-        auto *hc = new hamilt::HContainer<double>(&paraV);
+        hamilt::HContainer<double>* hc = new hamilt::HContainer<double>(&paraV);
         insert_all_pairs(hc);
         // Register extra R vector
         hc->get_atom_pair(i, j).get_HR_values(rx, ry, rz);
@@ -98,12 +98,12 @@ class AddValueTest : public ::testing::Test
 TEST_F(AddValueTest, intersection_same_sparsity)
 {
     // pair(0,1): 2×3=6 elements; pair(1,0): 3×2=6 elements
-    auto *dst = make_hc(
+    hamilt::HContainer<double>* dst = make_hc(
         {
             {0, 1, {1, 2, 3, 4, 5, 6}},
             {1, 0, {7, 8, 9, 10, 11, 12}},
         });
-    auto *src = make_hc(
+    hamilt::HContainer<double>* src = make_hc(
         {
             {0, 1, {10, 20, 30, 40, 50, 60}},
             {1, 0, {70, 80, 90, 100, 110, 120}},
@@ -127,8 +127,8 @@ TEST_F(AddValueTest, intersection_same_sparsity)
 // 2. factor parameter: this += 2.0 * other
 TEST_F(AddValueTest, intersection_factor)
 {
-    auto *dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
-    auto *src = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
 
     dst->add_value_intersection(*src, 2.0);
 
@@ -143,8 +143,8 @@ TEST_F(AddValueTest, intersection_factor)
 // 3. Negative factor: this += -1.0 * other
 TEST_F(AddValueTest, intersection_negative_factor)
 {
-    auto *dst = make_hc({{0, 1, {10, 20, 30, 40, 50, 60}}});
-    auto *src = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {10, 20, 30, 40, 50, 60}}});
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
 
     dst->add_value_intersection(*src, -1.0);
 
@@ -162,9 +162,9 @@ TEST_F(AddValueTest, intersection_negative_factor)
 TEST_F(AddValueTest, intersection_partial_overlap)
 {
     // dst only fills (0,1); (1,0) stays 0 (zero-allocated by make_hc)
-    auto *dst = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
     // src fills both (0,1) and (1,0)
-    auto *src = make_hc(
+    hamilt::HContainer<double>* src = make_hc(
         {
             {0, 1, {10, 20, 30, 40, 50, 60}},
             {1, 0, {99, 99, 99, 99, 99, 99}},
@@ -190,9 +190,9 @@ TEST_F(AddValueTest, intersection_partial_overlap)
 TEST_F(AddValueTest, intersection_multi_R)
 {
     // dst: (0,1) has R=(0,0,0) and R=(1,0,0)
-    auto *dst = make_hc_multiR(0, 1, 1, 0, 0, {1, 0, 0, 0, 0, 0}, {2, 0, 0, 0, 0, 0});
+    hamilt::HContainer<double>* dst = make_hc_multiR(0, 1, 1, 0, 0, {1, 0, 0, 0, 0, 0}, {2, 0, 0, 0, 0, 0});
     // src: (0,1) has only R=(0,0,0)
-    auto *src = make_hc({{0, 1, {10, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {10, 0, 0, 0, 0, 0}}});
 
     dst->add_value_intersection(*src, 1.0);
 
@@ -213,8 +213,8 @@ TEST_F(AddValueTest, intersection_multi_R)
 //    (old code produced all zeros here; correct after bug fix)
 TEST_F(AddValueTest, union_basic_sum)
 {
-    auto *dst = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
-    auto *src = make_hc({{0, 1, {10, 20, 30, 40, 50, 60}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {10, 20, 30, 40, 50, 60}}});
 
     dst->add_value_union(*src, 1.0);
 
@@ -231,8 +231,8 @@ TEST_F(AddValueTest, union_basic_sum)
 //    (old add_value_union zeroed out other; this test specifically checks the fix)
 TEST_F(AddValueTest, union_does_not_corrupt_other)
 {
-    auto *dst = make_hc({}); // all pairs default to 0
-    auto *src = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
+    hamilt::HContainer<double>* dst = make_hc({}); // all pairs default to 0
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {1, 2, 3, 4, 5, 6}}});
 
     dst->add_value_union(*src, 1.0);
 
@@ -254,8 +254,8 @@ TEST_F(AddValueTest, union_does_not_corrupt_other)
 // 8. factor parameter: this += 2.0 * other
 TEST_F(AddValueTest, union_factor)
 {
-    auto *dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
-    auto *src = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* src = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
 
     dst->add_value_union(*src, 2.0);
 
@@ -270,11 +270,11 @@ TEST_F(AddValueTest, union_factor)
 //    also verifies that each term's data is not corrupted after each call
 TEST_F(AddValueTest, union_accumulate_three_terms)
 {
-    auto *sum = make_hc({});
+    hamilt::HContainer<double>* sum = make_hc({});
 
-    auto *t1 = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
-    auto *t2 = make_hc({{0, 1, {0, 2, 0, 0, 0, 0}}});
-    auto *t3 = make_hc({{0, 1, {0, 0, 3, 0, 0, 0}}});
+    hamilt::HContainer<double>* t1 = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* t2 = make_hc({{0, 1, {0, 2, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* t3 = make_hc({{0, 1, {0, 0, 3, 0, 0, 0}}});
 
     sum->add_value_union(*t1, 1.0);
     sum->add_value_union(*t2, 1.0);
@@ -300,9 +300,9 @@ TEST_F(AddValueTest, union_accumulate_three_terms)
 TEST_F(AddValueTest, union_new_R_from_other)
 {
     // dst: (0,1) has only R=(0,0,0), value 1
-    auto *dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* dst = make_hc({{0, 1, {1, 0, 0, 0, 0, 0}}});
     // src: (0,1) has R=(0,0,0) and R=(1,0,0)
-    auto *src = make_hc_multiR(0, 1, 1, 0, 0, {10, 0, 0, 0, 0, 0}, {99, 0, 0, 0, 0, 0});
+    hamilt::HContainer<double>* src = make_hc_multiR(0, 1, 1, 0, 0, {10, 0, 0, 0, 0, 0}, {99, 0, 0, 0, 0, 0});
 
     dst->add_value_union(*src, 1.0);
 
@@ -325,10 +325,10 @@ TEST_F(AddValueTest, union_new_R_from_other)
 // 11. Multiple unions followed by intersection: verifies the two operations compose correctly
 TEST_F(AddValueTest, union_then_intersection)
 {
-    auto *acc = make_hc({});
-    auto *t1 = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
-    auto *t2 = make_hc({{0, 1, {0, 5, 0, 0, 0, 0}}});
-    auto *ref = make_hc({{0, 1, {2, 2, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* acc = make_hc({});
+    hamilt::HContainer<double>* t1 = make_hc({{0, 1, {3, 0, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* t2 = make_hc({{0, 1, {0, 5, 0, 0, 0, 0}}});
+    hamilt::HContainer<double>* ref = make_hc({{0, 1, {2, 2, 0, 0, 0, 0}}});
 
     acc->add_value_union(*t1, 1.0);
     acc->add_value_union(*t2, 1.0);

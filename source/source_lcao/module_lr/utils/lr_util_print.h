@@ -24,8 +24,8 @@ namespace LR_Util
                                          const int nstates, const std::string& channel,
                                          const int energy_precision)
     {
-        const auto flags = log.flags();
-        const auto precision = log.precision();
+        const std::ios_base::fmtflags flags = log.flags();
+        const std::streamsize precision = log.precision();
         log << " LR excitation energies: " << channel << '\n';
         log << " State   Excitation Energy (Ry, eV)\n";
         const int digits = energy_precision > 0 ? energy_precision : 6;

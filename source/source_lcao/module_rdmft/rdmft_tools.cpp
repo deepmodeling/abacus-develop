@@ -191,12 +191,12 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driv
     ModuleBase::timer::start("Veff", "initialize_HR");
 
     this->nspin = PARAM.inp.nspin;
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    const Parallel_Orbitals* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)
     {
-        auto tau1 = ucell_in->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell_in->get_tau(iat1);
         int T1 = 0;
         int I1 = 0;
         ucell_in->iat2iait(iat1, &I1, &T1);
@@ -278,7 +278,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
         ModuleBase::matrix vofk = *vloc_;
         vofk.zero_out();
         ModuleBase::matrix v_matrix_XC(this->nspin, charge_->nrxx);
-        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, rho_basis_, etxc, vtxc, &vofk);
+        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, false, rho_basis_, etxc, vtxc, &vofk);
         potXC.cal_v_eff(charge_, ucell, v_matrix_XC);
 
         // if need meta-GGA, go to study veff_lcao.cpp and modify the code
@@ -360,7 +360,7 @@ void Veff_rdmft<double, double>::contributeHR()
         ModuleBase::matrix vofk = *vloc_;
         vofk.zero_out();
         ModuleBase::matrix v_matrix_XC(this->nspin, charge_->nrxx);
-        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, rho_basis_, etxc, vtxc, &vofk);
+        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, false, rho_basis_, etxc, vtxc, &vofk);
         potXC.cal_v_eff(charge_, ucell, v_matrix_XC);
         
         for(int is=0; is<this->nspin; ++is)

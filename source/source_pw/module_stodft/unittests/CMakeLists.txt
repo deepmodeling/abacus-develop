@@ -1,0 +1,51 @@
+# These tests exercise CPU code only and link no GPU kernels.
+abacus_disable_feature_definitions(__MPI)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
+
+# Sto_Func is a scalar CPU utility; its tests also run in serial builds.
+addtest(TARGET MODULE_PW_sto_func SOURCES test_sto_func.cpp ../sto_func.cpp)
+
+# Preserve the existing MPI-build requirement of the remaining tests.
+if(ENABLE_MPI)
+  addtest(
+    TARGET MODULE_PW_Sto_Tool_UTs
+    LIBS parameter psi base device
+    SOURCES ../sto_tool.cpp test_sto_tool.cpp)
+
+  addtest(
+    TARGET MODULE_PW_Sto_Hamilt_UTs
+    LIBS parameter psi base device planewave_serial symmetry
+    SOURCES ../sto_hamilt_pw.cpp
+            test_sto_hamilt_pw.cpp
+            ../../../source_hamilt/operator.cpp
+            ../../../source_cell/klist.cpp
+            ../../../source_cell/klist_io.cpp
+            ../../../source_cell/parallel_kpoints.cpp
+            ../../../source_cell/reciprocal_grid.cpp)
+
+  addtest(
+    TARGET MODULE_PW_Sto_HSolver_UTs
+    LIBS parameter psi device base container MPI::MPI_CXX
+    SOURCES
+      test_sto_hsolver_pw.cpp
+      ../sto_hsolver_pw.cpp
+      ../../../source_hsolver/hsolver_pw.cpp
+      ../../../source_hsolver/diago_bpcg.cpp
+      ../../../source_hsolver/diago_dav_subspace.cpp
+      ../../../source_hsolver/diago_lobpcg.cpp
+      ../../../source_hsolver/lobpcg_subspace.cpp
+      ../../../source_hsolver/lobpcg_recovery.cpp
+      ../../../source_hsolver/dense_eigensolver.cpp
+      ../../../source_hsolver/module_linalg/linear_algebra.cpp
+      ../../../source_hsolver/diag_const_nums.cpp
+      ../../../source_hsolver/diago_iter_assist.cpp
+      ../../../source_hsolver/para_lin_tf.cpp
+      ../../../source_estate/elecstate_tools.cpp
+      ../../../source_estate/occupy.cpp
+      ../../../source_base/module_fft/fft_bundle.cpp
+      ../../../source_base/module_fft/fft_cpu.cpp
+      # This test calls MPI_Init in main() and its mocks take MPI_Comm arguments
+      # unconditionally, so it must keep __MPI even though this directory disables it.
+    KEEP_FEATURE_DEFINITIONS __MPI)
+endif()

@@ -81,12 +81,14 @@ struct Input_para
 
     // ==============   #Parameters (2.Electronic structure) ===========================
     std::string ks_solver = "default"; ///< xiaohui add 2013-09-01
+    double lcao_sk_cut = 0.0; ///< relative cutoff for AO overlap eigenvalues
     std::string basis_type = "pw";     ///< xiaohui add 2013-09-01, for structural adjustment
     int nbands = 0;                    ///< number of bands
     double nelec = 0.0;                ///< total number of electrons
     double nelec_delta = 0.0;          ///< change in the number of total electrons
     double nupdown = 0.0;
     std::string dft_functional = "default"; ///< input DFT functional.
+    std::string device_xc = "cpu"; ///< Device for Libxc LDA/GGA potential evaluation.
     int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized mapped-density LCA.
     double xc_temperature = 0.0;            ///< only relevant if finite temperature functional is used
     double pseudo_rcut = 15.0;              ///< cut-off radius for calculating msh
@@ -97,6 +99,7 @@ struct Input_para
     double pw_diag_thr = 0.01;      ///< used in cg method
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
+    std::string lobpcg_locking = "hard"; ///< hard freezes converged vectors; soft keeps them in RR
     int diago_cg_prec = 1;          ///< mohan add 2012-03-31
     int diag_subspace = 0;          // 0: Lapack, 1: elpa, 2: scalapack
     bool use_k_continuity = false;  ///< whether to use k-point continuity for initializing wave functions
@@ -457,7 +460,7 @@ struct Input_para
     int dfpt_broyden_ndim = 8;                ///< Broyden history depth (broyden variants)
 
     // ==============   #Parameters (11.Output) ===========================
-    int out_stru = 1;                         ///< output stru file each ion step
+    int out_stru = 1;                         ///< 0: none, 1: ABACUS STRU, 2: CIF geometry
                                               ///< 0: no output, 1: STRU format, 2: CIF format
     int out_freq_elec = 0;                    ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                     ///< the frequency ( >= 0 ) of ionic step to output charge density;
@@ -471,7 +474,7 @@ struct Input_para
     std::vector<int> out_sol = {0, 8};        ///< output the implicit-solvent dielectric function and cavity
     int out_wfc_pw = 0;                       ///< 0: no; 1: txt; 2: dat
     std::vector<int> out_band = {0, 8};       ///< band calculation pengfei 2014-10-13
-    int out_dos = 0;                          ///< dos calculation. mohan add 20090909
+    std::vector<int> out_dos = {0, 6};        ///< DOS/PDOS output: [enable, precision]
     std::vector<int> out_ldos = {0, 3};       ///< ldos calculation
     bool out_mul = false;                     ///< qifeng add 2019-9-10
     bool out_proj_band = false;               ///< projected band structure calculation jiyy add 2022-05-11
@@ -504,8 +507,8 @@ struct Input_para
     std::vector<int> out_mat_dh_vh = {0, 8};  ///< output Hartree dH/dR (dV^H/dR) matrices
     std::vector<int> out_mat_dh_vxc = {0, 8}; ///< output XC dH/dR (dV^XC/dR) matrices
     std::vector<int> out_mat_ds = {0, 8};     ///< output dS/dR matrices with precision
-    bool out_mat_xc = false;                  ///< output exchange-correlation matrix in
-                                              ///< KS-orbital representation.
+    std::vector<int> out_mat_xc = {0, 8};     ///< output exchange-correlation matrix in
+                                              ///< KS-orbital representation: [enable, precision]
     std::vector<int> out_mat_xc2 = {0, 8};    ///< output Vxc(R) matrix with precision
     bool out_eband = false;                   ///< output the band energy terms separately
     bool out_eband_terms_compat = false;      ///< legacy alias out_eband_terms for out_eband
@@ -516,7 +519,6 @@ struct Input_para
                                             ///< 1: append to the same fixed file; 2: write to subdirectory
                                             ///< (PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/) with a g{step} suffix
                                             ///< liuyu 2023-03-20, modified 2025-10-16
-    int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output
     std::vector<int> out_mat_t = {0, 8};     ///< output T(R) matrix with precision
     bool out_element_info = false;           ///< output information of all elements
     std::vector<int> out_mat_r = {0, 8};     ///< output r(R) matrix with precision
@@ -681,6 +683,7 @@ struct Input_para
                                                             ///< the evaluation of Fock exchange
     double exx_mixing_beta = 1.0;                           ///< mixing_beta for outer-loop when exx_separate_loop=1
     std::string exx_real_number = "default";                ///< exx calculated in real or complex
+    std::string device_exx = "cpu";                        ///< computing device for LCAO EXX tensor contractions
     double exx_pca_threshold = 0.0001;                      ///< threshold to screen on-site ABFs in exx
     double exx_c_threshold = 0.0001;                        ///< threshold to screen C matrix in exx
     double exx_v_threshold = 0.1;                           ///< threshold to screen C matrix in exx

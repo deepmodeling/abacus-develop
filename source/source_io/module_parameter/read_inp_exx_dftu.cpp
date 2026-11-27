@@ -238,6 +238,37 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("device_exx");
+        item.annotation = "computing device for LCAO EXX tensor contractions";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = R"(Selects the LibRI tensor-contraction device for LCAO Kohn-Sham exact exchange.
+* cpu: retain CPU contractions, including when device=gpu.
+* gpu: use the experimental GPU backend; requires ENABLE_LIBRI_GPU=ON and device=gpu.
+LR and RDMFT exchange engines retain CPU contractions, including when LR reuses
+Kohn-Sham exchange geometry.
+For GPU contractions, all MPI ranks on a node must see the same allocated GPU
+list, with at least as many visible GPUs as local ranks; per-rank single-GPU
+masking is unsupported.)";
+        item.default_value = "cpu";
+        item.set_availability("basis_type==lcao");
+        read_sync_string(input.device_exx);
+        item.domain.set_choices({"cpu", "gpu"});
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.device_exx == "gpu")
+            {
+                if (para.input.basis_type != "lcao" || para.input.device != "gpu")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "device_exx=gpu requires basis_type=lcao and device=gpu");
+                }
+#ifndef __GPU_RI
+                ModuleBase::WARNING_QUIT("ReadInput", "device_exx=gpu requires a build with ENABLE_LIBRI_GPU=ON");
+#endif
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_pca_threshold");
         item.annotation = "threshold to screen on-site ABFs in exx";
         item.category = "Exact Exchange (LCAO)";
@@ -512,7 +543,7 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
             }
             if (para.input.basis_type == "pw" && para.input.exx_singularity_correction == "limits")
             {
-                const auto gamma_item = std::find_if(this->input_lists.begin(), this->input_lists.end(),
+                const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator gamma_item = std::find_if(this->input_lists.begin(), this->input_lists.end(),
                     [](const std::pair<std::string, Input_Item>& entry) {
                         return entry.first == "exx_gamma_extra";
                     });
@@ -533,7 +564,7 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
                 if (scheme == "limits")
                 {
                     bool has_fock = false;
-                    for (const auto& alpha : para.input.exx_fock_alpha)
+                    for (const std::string& alpha : para.input.exx_fock_alpha)
                     {
                         has_fock = has_fock || std::stod(alpha) != 0.0;
                     }
@@ -611,7 +642,8 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
         item.annotation = "whether to reduce real-space sector in Hexx calculation";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Boolean";
-        item.description = R"(* False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
+        item.description =
+            R"(* False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
 * True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
 For multi-k calculations, D(k) is averaged over the unitary little group of each irreducible k point before star expansion, for either setting.)";
         item.default_value = "True";
@@ -691,7 +723,7 @@ void ReadInput::item_dftu()
         read_sync_int(input.dft_plus_u);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
-            for (auto& val: para.input.l_channel)
+            for (int& val: para.input.l_channel)
             {
                 if (val != -1)
                 {
@@ -770,7 +802,7 @@ void ReadInput::item_dftu()
                                          "orbital_corr should have the same "
                                          "number of elements as ntype");
             }
-            for (auto& val: para.input.l_channel)
+            for (const int& val: para.input.l_channel)
             {
                 if (val < -1 || val > 3)
                 {
@@ -810,7 +842,7 @@ void ReadInput::item_dftu()
                                          "hubbard_u should have the same "
                                          "number of elements as ntype");
             }
-            for (auto& value: para.sys.hubbard_u)
+            for (const double& value: para.sys.hubbard_u)
             {
                 if (value < -1.0e-3)
                 {
@@ -872,7 +904,7 @@ void ReadInput::item_dftu()
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
-            for (auto& val: para.input.l_channel)
+            for (int& val: para.input.l_channel)
             {
                 if (val != -1)
                 {
