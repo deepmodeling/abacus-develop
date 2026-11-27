@@ -7,6 +7,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 
+#include <cstdlib>
 #include <string>
 
 namespace ModuleDFPT
@@ -74,6 +75,38 @@ void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
         ig_of_cell[(ix * pw_rho->ny + iy) * pw_rho->nz + iz] = ig;
     }
 
+    // q = 0: the k+q ball IS the ground-state k ball of this k (same
+    // center, same cutoff), so it is enumerated in the ground-state stick
+    // layout order (the ig2isz traversal order -- the same order the
+    // historical first reservoir produced). The storage order is
+    // load-bearing for the q = 0 legs: the position/field response builds
+    // its right-hand side directly in this order (dfpt_pw_q0.cpp), and
+    // every consumer of this basis must stay in the same order. The exact
+    // scan below must preserve that contract for q != 0, whose ball no GS
+    // order can express.
+    if (q_cart.norm2() < 1.0e-12)
+    {
+        // per-k ground-state order: the production arrays (npwk/gcar/gk2/
+        // igl2isz_k) are exactly what dfpt_pw_q0.cpp reads
+        const int npwk_k = pw_wfc_->npwk[ik];
+        for (int igl = 0; igl < npwk_k; ++igl)
+        {
+            gcar_.push_back(pw_wfc_->getgcar(ik, igl));
+            gk2_.push_back(pw_wfc_->gk2[igl + ik * pw_wfc_->npwk_max]);
+            const int isz = pw_wfc_->igl2isz_k[igl + ik * pw_wfc_->npwk_max];
+            const int iz = isz % pw_wfc_->nz;
+            const int is = isz / pw_wfc_->nz;
+            const int ixy = pw_wfc_->is2fftixy[is];
+            const int ix = ixy / pw_wfc_->fftny;
+            const int iy = ixy % pw_wfc_->fftny;
+            const int cell = ((ix * pw_wfc_->ny) + iy) * pw_wfc_->nz + iz;
+            ig_rho_.push_back(ig_of_cell[cell]);
+        }
+        npwk_ = static_cast<int>(gcar_.size());
+        ModuleBase::timer::end("DFPT_KQ_Basis", "init");
+        return;
+    }
+
     // single-source enumeration over the full shared FFT cell: every integer
     // G with |G + (k+q)|^2 <= gk_ecut is a member of the k+q ball, and each
     // is carried by exactly one FFT cell (the half-space wrap makes the
@@ -115,6 +148,7 @@ void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
                 gcar_.push_back(gcar);
                 gk2_.push_back(gk2);
                 ig_rho_.push_back(ig);
+
             }
         }
     }

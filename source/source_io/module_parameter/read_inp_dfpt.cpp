@@ -11,16 +11,15 @@ void ReadInput::item_dfpt()
     const std::string category = "Density functional perturbation theory";
     {
         Input_Item item("dfpt_qmesh");
-        item.annotation = "Monkhorst-Pack q mesh for DFPT, should be >= 1, "
-                          "and commensurate with the KPT mesh";
+        item.annotation = "Monkhorst-Pack q mesh for DFPT, should be >= 1";
         item.category = category;
         item.type = "Vector of Int (1 or 3 values)";
         item.description = "Set the Monkhorst-Pack q mesh (gamma-centered) for DFPT phonon "
-                           "calculations. The q mesh must be commensurate with the ground-state "
-                           "k mesh: k + q must be a point of the k list (modulo a reciprocal "
-                           "lattice vector). For example, a 4x4x4 KPT mesh is commensurate with "
-                           "dfpt_qmesh values of 1, 2, or 4 along each direction. This parameter "
-                           "is ignored when dfpt_qfile is set.";
+                           "calculations. Any q mesh is supported: q points need not be "
+                           "commensurate with the ground-state k mesh (the k+q occupied "
+                           "states are obtained by an nscf diagonalization). For example, a "
+                           "4x4x4 KPT mesh admits dfpt_qmesh values of 1, 2, 3, or 4 along "
+                           "each direction. This parameter is ignored when dfpt_qfile is set.";
         item.default_value = "1 1 1";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
@@ -60,12 +59,13 @@ void ReadInput::item_dfpt()
         item.description = "Set the file containing the q points for DFPT, in the same format "
                            "as the KPT file (Q_POINTS card: Gamma/Monkhorst-Pack mesh, or an "
                            "explicit Direct/Cartesian list; symmetry reduction is not applied "
-                           "to file q lists). When set, it overrides dfpt_qmesh. Each q point "
-                           "must still be commensurate with the ground-state k mesh. When "
-                           "dfpt_compute_q0 is true, Gamma must be the FIRST q point and must "
-                           "appear exactly once (the run rejects [X, Gamma] and [Gamma, X, "
-                           "Gamma] orderings at input time, regardless of dfpt_out_dyn); "
-                           "arbitrary orderings are allowed when dfpt_compute_q0 is false.";
+                           "to file q lists). When set, it overrides dfpt_qmesh. Any q point "
+                           "is supported: q points need not be commensurate with the "
+                           "ground-state k mesh. When dfpt_compute_q0 is true, Gamma must be "
+                           "the FIRST q point and must appear exactly once (the run rejects "
+                           "[X, Gamma] and [Gamma, X, Gamma] orderings at input time, "
+                           "regardless of dfpt_out_dyn); arbitrary orderings are allowed "
+                           "when dfpt_compute_q0 is false.";
         item.default_value = "\"\"";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             if (item.get_size() == 0)

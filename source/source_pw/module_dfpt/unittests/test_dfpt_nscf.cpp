@@ -163,8 +163,10 @@ TEST(DFPTNscfTest, DeterministicAcrossCalls)
     d[3] = 0.7;
     d[19] = 1.2;
     DiagonalOperator op(d);
-    std::vector<std::vector<std::complex<double>>> p1, p2;
-    std::vector<double> e1, e2;
+    std::vector<std::vector<std::complex<double>>> p1;
+    std::vector<std::vector<std::complex<double>>> p2;
+    std::vector<double> e1;
+    std::vector<double> e2;
     ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, approx_precond(d), 4, 200, 1e-9, p1, e1);
     ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, approx_precond(d), 4, 200, 1e-9, p2, e2);
     ASSERT_EQ(e1.size(), e2.size());
@@ -172,6 +174,25 @@ TEST(DFPTNscfTest, DeterministicAcrossCalls)
     {
         EXPECT_DOUBLE_EQ(e1[j], e2[j]);
     }
+}
+
+TEST(DFPTNscfTest, FullDimensionSingleBandExact)
+{
+    // n = nwant = 1: the compressed basis spans the whole space, so the
+    // reseed has no independent component and must be discarded (a kept
+    // rank-deficient reseed would inject a spurious zero Ritz pair). The
+    // initial Ritz state is already exact; assert the eigenvalue, the
+    // converged status, and the unit norm survive the full-dimension path.
+    std::vector<double> d(1, 2.5);
+    DiagonalOperator op(d);
+    std::vector<std::vector<std::complex<double>>> psi;
+    std::vector<double> eig;
+    const int it = ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, approx_precond(d), 1, 50, 1e-9, psi, eig);
+    EXPECT_EQ(0, it);
+    ASSERT_EQ(1u, psi.size());
+    ASSERT_EQ(1u, eig.size());
+    EXPECT_NEAR(2.5, eig[0], 1e-10);
+    EXPECT_NEAR(1.0, std::abs(psi[0][0]), 1e-10);
 }
 
 } // namespace
@@ -184,18 +205,32 @@ namespace
 // proportional to (i, 1)/sqrt(2) (or any phase multiple)
 TEST(DFPTNscfTest, ZheevRoundTripProbe)
 {
+    // M = [[2, i], [-i, 3]]: spectrum = (5 +/- sqrt(5))/2 = 1.38197/3.61803.
+    // The round-trip (transpose in, transpose out) must preserve the
+    // eigenvector convention, checked through the full Rayleigh quotient
+    // and pairwise orthonormality on the ORIGINAL matrix.
     ModuleBase::ComplexMatrix m(2, 2, true);
     m(0, 0) = {2, 0};
     m(1, 1) = {3, 0};
     m(0, 1) = {0, 1};
     m(1, 0) = {0, -1};
+    const double lam_lo = (5.0 - std::sqrt(5.0)) / 2.0;
+    const double lam_hi = (5.0 + std::sqrt(5.0)) / 2.0;
     std::vector<double> w(2);
     std::vector<std::complex<double>> work(40);
     std::vector<double> rwork(40);
     int info = 0;
     LapackConnector::zheev('V', 'U', 2, m, 2, w.data(), work.data(), 40, rwork.data(), &info);
-    std::cout << "PROBE eig: " << w[0] << " " << w[1] << std::endl;
-    std::cout << "PROBE vec0 = (" << m(0, 0) << ", " << m(1, 0) << ")" << std::endl;
-    std::cout << "PROBE vec1 = (" << m(0, 1) << ", " << m(1, 1) << ")" << std::endl;
+    ASSERT_EQ(0, info);
+    EXPECT_NEAR(lam_lo, w[0], 1e-12);
+    EXPECT_NEAR(lam_hi, w[1], 1e-12);
+    // orthonormal columns
+    std::complex<double> dot = std::conj(m(0, 0)) * m(0, 1) + std::conj(m(1, 0)) * m(1, 1);
+    EXPECT_NEAR(0.0, std::abs(dot), 1e-12);
+    // H * v_j = w_j * v_j on the original matrix entries
+    const std::complex<double> hv0 = std::complex<double>(2, 0) * m(0, 0) + std::complex<double>(0, 1) * m(1, 0);
+    EXPECT_NEAR(std::abs(hv0 - w[0] * m(0, 0)), 0.0, 1e-12);
+    const std::complex<double> hv1 = std::complex<double>(2, 0) * m(0, 1) + std::complex<double>(0, 1) * m(1, 1);
+    EXPECT_NEAR(std::abs(hv1 - w[1] * m(0, 1)), 0.0, 1e-12);
 }
 } // namespace

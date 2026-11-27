@@ -308,8 +308,19 @@ int DFPT_NSCF::lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
                 t[l] = std::complex<double>(uni(gen), uni(gen));
             }
             keep_basis.push_back(std::move(t));
-            orthogonalize(keep_basis, keep, 0, keep, n);
-            basis = std::move(keep_basis);
+            if (keep < n && orthogonalize(keep_basis, keep, 0, keep, n))
+            {
+                basis = std::move(keep_basis);
+            }
+            else
+            {
+                // the reseed has no independent component (keep == n, the
+                // compressed basis already spans the full space) or it is
+                // linearly dependent: keeping either case would leave a
+                // rank-deficient basis with a spurious zero Ritz pair
+                keep_basis.pop_back();
+                basis = std::move(keep_basis);
+            }
         }
         int kept_count = 0;
         for (int j = 0; j < nwant; ++j)
@@ -321,6 +332,10 @@ int DFPT_NSCF::lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
                 const double floor_den = 0.1; ///< empirical parameter: denominator clamp
                 const double use = std::fabs(denom) < floor_den ? (denom >= 0.0 ? floor_den : -floor_den) : denom;
                 t[l] = res[j][l] / use;
+            }
+            if (static_cast<int>(basis.size()) >= n)
+            {
+                break; // the subspace already spans the whole space
             }
             const int base = static_cast<int>(basis.size());
             basis.push_back(std::move(t));
@@ -353,7 +368,10 @@ int DFPT_NSCF::lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
             }
             const int base = static_cast<int>(basis.size());
             basis.push_back(std::move(t));
-            orthogonalize(basis, base, 0, base, n);
+            if (!orthogonalize(basis, base, 0, base, n))
+            {
+                basis.pop_back();
+            }
         }
     }
 

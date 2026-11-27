@@ -18,6 +18,7 @@
 #include "source_base/tool_title.h"
 #include <cmath>
 #include <cstdlib>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <vector>
@@ -290,7 +291,7 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx)
                     const std::vector<int> key = {static_cast<int>(std::round(gf.x)),
                                                   static_cast<int>(std::round(gf.y)),
                                                   static_cast<int>(std::round(gf.z))};
-                    const auto it = jgl_of_n.find(key);
+                    const std::map<std::vector<int>, int>::const_iterator it = jgl_of_n.find(key);
                     if (it != jgl_of_n.end())
                     {
                         state[igl] = gs_psi_(ik, m, it->second);
