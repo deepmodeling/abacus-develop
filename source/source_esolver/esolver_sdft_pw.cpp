@@ -259,7 +259,8 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(BaseCell &basecell)
         sto_dos.decide_param(
             this->inp_->dos_nche, this->inp_->emin_sto, this->inp_->emax_sto, PARAM.globalv.dos_setemin,
             PARAM.globalv.dos_setemax, this->inp_->dos_emin_ev, this->inp_->dos_emax_ev, this->inp_->dos_scale);
-        sto_dos.caldos(this->inp_->dos_sigma, this->inp_->dos_edelta_ev, this->inp_->npart_sto);
+        sto_dos.caldos(this->inp_->dos_sigma, this->inp_->dos_edelta_ev, this->inp_->npart_sto,
+                       PARAM.globalv.global_dos_dir, this->istep_, this->inp_->out_app_flag);
     }
 
     // 4) sKG cost memory, and it should be placed at the end of the program

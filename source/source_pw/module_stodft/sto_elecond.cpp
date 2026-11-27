@@ -2,6 +2,7 @@
 
 #include "source_base/complexmatrix.h"
 #include "source_base/constants.h"
+#include "source_base/fs_compat.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/module_container/ATen/tensor.h"
 #include "source_base/parallel_comm.h"
@@ -128,16 +129,20 @@ loop:
 
     std::cout << "set N order of Chebyshev for KG as " << nche_new << std::endl;
 
-    std::stringstream ss;
-    ss << PARAM.globalv.global_out_dir << "Chebycoef.txt";
-    std::ofstream cheofs(ss.str());
-
-    for (int i = 1; i < nche_guess; ++i)
+    // Keep the final-only Chebyshev coefficient report with the DOS outputs.
+    // Only the master rank writes it to avoid concurrent writes to one file.
+    if (GlobalV::MY_RANK == 0)
     {
-        double error = std::abs(chet.coef_complex[i] / chet.coef_complex[0]);
-        cheofs << std::setw(5) << i << std::setw(20) << error << std::endl;
+        ModuleBase::ensure_directory(PARAM.globalv.global_dos_dir);
+        const std::string chebycoef_file = PARAM.globalv.global_dos_dir + "Chebycoef.txt";
+        std::ofstream cheofs(chebycoef_file.c_str());
+        for (int i = 1; i < nche_guess; ++i)
+        {
+            double error = std::abs(chet.coef_complex[i] / chet.coef_complex[0]);
+            cheofs << std::setw(5) << i << std::setw(20) << error << std::endl;
+        }
+        cheofs.close();
     }
-    cheofs.close();
 
     if (nche_new >= 1000)
     {
