@@ -27,10 +27,11 @@
 namespace ModuleDFPT
 {
 
-void DFPT_PW::Impl::vel_diag_part(int ik,
-                                  int a,
-                                  int nbands,
-                                  std::vector<std::vector<std::complex<double>>>& vel) const
+void DFPT_PW::Impl::vel_diag_part(
+    int ik,
+    int a,
+    int nbands,
+    std::vector<std::vector<std::complex<double>>> &vel) const
 {
     // dH/dk_a |psi> diagonal kinetic part:
     //   - d/dk_a ( (hbar^2/2m) (k+G)^2 ) = hbar^2 (k+G)_a,
@@ -48,15 +49,16 @@ void DFPT_PW::Impl::vel_diag_part(int ik,
     }
 }
 
-void DFPT_PW::Impl::vel_nl_per_atom(int ik,
-                                    int a,
-                                    int it,
-                                    int ia,
-                                    int nbands,
-                                    const std::vector<ModuleBase::Vector3<double>>& gk,
-                                    std::vector<std::vector<std::complex<double>>>& vel)
+void DFPT_PW::Impl::vel_nl_per_atom(
+    int ik,
+    int a,
+    int it,
+    int ia,
+    int nbands,
+    const std::vector<ModuleBase::Vector3<double>> &gk,
+    std::vector<std::vector<std::complex<double>>> &vel)
 {
-    const pseudo& ncpp = ucell_->atoms[it].ncpp;
+    const pseudo &ncpp = ucell_->atoms[it].ncpp;
     const int nh = ncpp.nh;
     if (nh == 0)
     {
@@ -136,12 +138,13 @@ void DFPT_PW::Impl::vel_nl_per_atom(int ik,
     }
 }
 
-void DFPT_PW::Impl::pos_per_band_solve(int ik,
-                                       int a,
-                                       int nbands,
-                                       int lin_max,
-                                       double lin_thr,
-                                       std::vector<std::vector<std::vector<std::complex<double>>>>& yvec)
+void DFPT_PW::Impl::pos_per_band_solve(
+    int ik,
+    int a,
+    int nbands,
+    int lin_max,
+    double lin_thr,
+    std::vector<std::vector<std::vector<std::complex<double>>>> &yvec)
 {
     const bool dbg = (getenv("DFPT_DEBUG") != nullptr);
     const double tpiba = ucell_->tpiba;
@@ -184,13 +187,14 @@ void DFPT_PW::Impl::pos_per_band_solve(int ik,
     }
 }
 
-void DFPT_PW::Impl::efield_per_band_solve(int ik,
-                                          int a,
-                                          int nbands,
-                                          int lin_max,
-                                          double lin_thr,
-                                          const std::vector<std::vector<std::vector<std::complex<double>>>>& yr,
-                                          const std::vector<std::vector<std::complex<double>>>& dv_sc)
+void DFPT_PW::Impl::efield_per_band_solve(
+    int ik,
+    int a,
+    int nbands,
+    int lin_max,
+    double lin_thr,
+    const std::vector<std::vector<std::vector<std::complex<double>>>> &yr,
+    const std::vector<std::vector<std::complex<double>>> &dv_sc)
 {
     (void)a; // used only by caller-index semantics, kept future-proof
     for (int ib = 0; ib < nbands; ++ib)
@@ -199,8 +203,7 @@ void DFPT_PW::Impl::efield_per_band_solve(int ik,
         {
             continue;
         }
-        if (yr[ik][ib].empty() || static_cast<int>(dv_sc.size()) != nbands
-            || yr[ik][ib].size() != dv_sc[ib].size())
+        if (yr[ik][ib].empty() || static_cast<int>(dv_sc.size()) != nbands || yr[ik][ib].size() != dv_sc[ib].size())
         {
             continue;
         }
@@ -218,12 +221,15 @@ void DFPT_PW::Impl::efield_per_band_solve(int ik,
     }
 }
 
-void DFPT_PW::Impl::stash_dpsi_efield(int q_idx, int a, int nk, int nbands)
+void DFPT_PW::Impl::stash_dpsi_efield(
+    int q_idx,
+    int a,
+    int nk,
+    int nbands)
 {
     // stash dpsi^E,a before any later solve reuses the slots
     std::vector<std::vector<std::vector<std::complex<double>>>> de(
-        nk,
-        std::vector<std::vector<std::complex<double>>>(nbands));
+        nk, std::vector<std::vector<std::complex<double>>>(nbands));
     for (int ik = 0; ik < nk; ++ik)
     {
         for (int ib = 0; ib < nbands; ++ib)
@@ -262,8 +268,7 @@ void DFPT_PW::Impl::solve_pos_resp(int q_idx)
     for (int a = 0; a < 3; ++a)
     {
         std::vector<std::vector<std::vector<std::complex<double>>>> yvec(
-            nk,
-            std::vector<std::vector<std::complex<double>>>(nbands));
+            nk, std::vector<std::vector<std::complex<double>>>(nbands));
         for (int ik = 0; ik < nk; ++ik)
         {
             if (occ_kq_[ik].empty())

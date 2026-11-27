@@ -6,14 +6,19 @@ addtest(
   LIBS parameter base device
   SOURCES test_csr_file_reader.cpp test_csr_reader.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_BASE_filename
   LIBS parameter base device
   SOURCES test_filename.cpp
 )
 
-AddTest(
+addtest(
   TARGET MODULE_BASE_integral
-  LIBS parameter
+  LIBS parameter base device
   SOURCES test_math_integral.cpp ../math_integral.cpp
 )
+
+addtest(
+  TARGET MODULE_BASE_net_force
+  LIBS parameter base device
+  SOURCES test_mathzone.cpp)

@@ -14,17 +14,20 @@ Coefficients::Coefficients()
 Coefficients::~Coefficients()
 {
     if (TEST1)
+    {
         cout << "\n ~Coefficients()" << endl;
+    }
     delete[] output_c4_name;
 }
 
-void Coefficients::init(const int& ntype_in,
-                        const int& lmax_in,
-                        const int& nmax_in,
-                        const double& ecut_in,
-                        const double& ecut_jlq_in, // mohan add 2009-07-23
-                        const double& rcut_in,
-                        const double& tolerence_in)
+void Coefficients::init(
+    const int &ntype_in,
+    const int &lmax_in,
+    const int &nmax_in,
+    const double &ecut_in,
+    const double &ecut_jlq_in, // mohan add 2009-07-23
+    const double &rcut_in,
+    const double &tolerence_in)
 {
     TITLE(ofs_running, "Coefficients", "Constructor");
 
@@ -71,14 +74,15 @@ void Coefficients::init(const int& ntype_in,
 void Coefficients::allocate_C4(void)
 {
     if (test == 1)
+    {
         TITLE("Coefficients", "allocate_C4");
+    }
 
     this->C4.create(ntype, lmax + 1, nmax, enumber);
     this->C4_old.create(ntype, lmax + 1, nmax, enumber);
-    this->C4_accumulate.create(ntype,
-                               lmax + 1,
-                               nmax,
-                               enumber);                        // mohan add 2009-09-25
+    this->C4_accumulate.create(
+        ntype, lmax + 1, nmax,
+        enumber);                                               // mohan add 2009-09-25
                                                                 //	this->acc_count.create(ntype, lmax+1, nmax, enumber);
     this->accept_number.create(ntype, lmax + 1, nmax, enumber); // mohan add 2009-10-16
     this->accept_rate.create(ntype, lmax + 1, nmax, enumber);   // mohan add 2009-10-31
@@ -126,7 +130,9 @@ void Coefficients::allocate_C4(void)
                         this->C4_old(it, il, in, ie) = 0.0;
                     }
                     if (ie % 4 == 0)
+                    {
                         ofs_running << endl;
+                    }
                     ofs_running << setw(20) << C4_old(it, il, in, ie);
                 }
             }
@@ -208,14 +214,18 @@ void Coefficients::allocate_C4(void)
                                     ifs >> C4(it, il, in, ie);
                                     C4_old(it, il, in, ie) = C4(it, il, in, ie);
                                     if (ie % 4 == 0)
+                                    {
                                         cout << endl;
+                                    }
                                     cout << setiosflags(ios::fixed) << setprecision(20) << setiosflags(ios::showpoint)
                                          << setw(25) << C4_old(it, il, in, ie);
                                 }
                                 ++count_nchi;
                                 // if count_nchi == nchi_in, all needed C4 have been read in!
                                 if (count_nchi == nchi_in)
+                                {
                                     return;
+                                }
                             }
                         }
                     }
@@ -242,7 +252,11 @@ void Coefficients::copy_c4_to_old(void)
     return;
 }
 
-void Coefficients::trial_c4(const int& t, const int& l, const int& n, const int& ie)
+void Coefficients::trial_c4(
+    const int &t,
+    const int &l,
+    const int &n,
+    const int &ie)
 {
     // (1)
     this->C4_old(t, l, n, ie) = this->C4(t, l, n, ie);
@@ -290,7 +304,11 @@ void Coefficients::accumulating_C4( const int &t, const int &l, const int &n, co
 }
 */
 
-void Coefficients::update_c4(const int& t, const int& l, const int& n, const int& ie)
+void Coefficients::update_c4(
+    const int &t,
+    const int &l,
+    const int &n,
+    const int &ie)
 {
     //===============================================
     // store the new c4 parameters(random accepted!!
@@ -303,7 +321,11 @@ void Coefficients::update_c4(const int& t, const int& l, const int& n, const int
     return;
 }
 
-void Coefficients::go_back_c4(const int& t, const int& l, const int& n, const int& ie)
+void Coefficients::go_back_c4(
+    const int &t,
+    const int &l,
+    const int &n,
+    const int &ie)
 {
     //==================================
     // give up the random added number;

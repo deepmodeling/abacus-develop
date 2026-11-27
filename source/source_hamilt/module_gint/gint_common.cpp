@@ -39,7 +39,7 @@ void cast_hcontainer_values(const HContainer<Tin> &src, HContainer<Tout> &dst)
 template <typename Tout, typename Tin>
 HContainer<Tout> make_cast_hcontainer(const HContainer<Tin> &src)
 {
-    const auto ijr_info = src.get_ijr_info();
+    const std::vector<int> ijr_info = src.get_ijr_info();
 
     if (src.get_paraV() != nullptr)
     {
@@ -59,12 +59,12 @@ HContainer<Tout> make_cast_hcontainer(const HContainer<Tin> &src)
     }
     for (int iap = 0; iap < src.size_atom_pairs(); ++iap)
     {
-        const auto &src_ap = src.get_atom_pair(iap);
+        const hamilt::AtomPair<Tin>& src_ap = src.get_atom_pair(iap);
         hamilt::AtomPair<Tout> dst_ap(src_ap.get_atom_i(), src_ap.get_atom_j());
         dst_ap.set_size(src_ap.get_col_size(), src_ap.get_row_size());
         for (int ir = 0; ir < src_ap.get_R_size(); ++ir)
         {
-            const auto r_index = src_ap.get_R_index(ir);
+            const ModuleBase::Vector3<int> r_index = src_ap.get_R_index(ir);
             dst_ap.get_HR_values(r_index.x, r_index.y, r_index.z);
         }
         dst.insert_pair(dst_ap);
@@ -81,7 +81,7 @@ void compose_hr_gint(HContainer<T> &hr_gint)
     ModuleBase::timer::start("Gint", "compose_hr_gint");
     for (int iap = 0; iap < hr_gint.size_atom_pairs(); iap++)
     {
-        auto &ap = hr_gint.get_atom_pair(iap);
+        hamilt::AtomPair<T>& ap = hr_gint.get_atom_pair(iap);
         const int iat1 = ap.get_atom_i();
         const int iat2 = ap.get_atom_j();
         if (iat1 > iat2)
@@ -95,9 +95,9 @@ void compose_hr_gint(HContainer<T> &hr_gint)
 #endif
             for (int ir = 0; ir < ap.get_R_size(); ir++)
             {
-                auto R_index = ap.get_R_index(ir);
-                auto upper_mat = upper_ap->find_matrix(-R_index);
-                auto lower_mat = lower_ap->find_matrix(R_index);
+                ModuleBase::Vector3<int> R_index = ap.get_R_index(ir);
+                const hamilt::BaseMatrix<T>* upper_mat = upper_ap->find_matrix(-R_index);
+                const hamilt::BaseMatrix<T>* lower_mat = lower_ap->find_matrix(R_index);
                 for (int irow = 0; irow < upper_mat->get_row_size(); ++irow)
                 {
                     for (int icol = 0; icol < upper_mat->get_col_size(); ++icol)
@@ -156,7 +156,7 @@ void merge_hr_part_to_hR(
     Parallel_Orbitals *pv = new Parallel_Orbitals();
     pv->para_2d().set(mg, ng, nb, blacs_ctxt);
     pv->set_atomic_trace(iat2iwt.data(), ucell_in->nat, mg);
-    auto ijr_info = hR->get_ijr_info();
+    std::vector<int> ijr_info = hR->get_ijr_info();
     hR_tmp = new hamilt::HContainer<std::complex<double>>(pv, nullptr, &ijr_info);
 #endif
 
@@ -327,7 +327,7 @@ void dm_2d_to_gint(
         int ng = dm[0]->get_paraV()->para_2d().ncglb() / 2;
         int nb = dm[0]->get_paraV()->para_2d().nb() / 2;
         const UnitCell *ucell = gint_info.get_ucell();
-        auto ijr_info = dm[0]->get_ijr_info();
+        std::vector<int> ijr_info = dm[0]->get_ijr_info();
 #ifdef __MPI
         int blacs_ctxt = dm[0]->get_paraV()->para_2d().ictxt();
         std::vector<int> iat2iwt(ucell->nat);
@@ -348,7 +348,7 @@ void dm_2d_to_gint(
         {
             for (int iap = 0; iap < dm[0]->size_atom_pairs(); ++iap)
             {
-                auto &ap = dm[0]->get_atom_pair(iap);
+                hamilt::AtomPair<TDM>& ap = dm[0]->get_atom_pair(iap);
                 int iat1 = ap.get_atom_i();
                 int iat2 = ap.get_atom_j();
                 for (int ir = 0; ir < ap.get_R_size(); ++ir)

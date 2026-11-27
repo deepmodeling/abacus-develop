@@ -291,7 +291,7 @@ void PhiOperator::set_phi(T *phi) const
 {
     for (int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
-        const auto atom = biggrid_->get_atom(i);
+        const GintAtom* const atom = biggrid_->get_atom(i);
         atom->set_phi(atom_rcoords_[i], cols_, phi);
         phi += atom->get_nw();
     }
@@ -310,12 +310,12 @@ void PhiOperator::phi_mul_dm(
 
     for (int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
-        const auto atom_i = biggrid_->get_atom(i);
+        const GintAtom* const atom_i = biggrid_->get_atom(i);
         const Vec3i r_i = atom_i->get_R();
 
         if (is_symm)
         {
-            const auto dm_mat = dm.find_matrix(atom_i->get_iat(), atom_i->get_iat(), 0, 0, 0);
+            const hamilt::BaseMatrix<Tin>* const dm_mat = dm.find_matrix(atom_i->get_iat(), atom_i->get_iat(), 0, 0, 0);
             constexpr Tin alpha = 1.0;
             constexpr Tin beta = 1.0;
             BlasConnector::symm_cm(
@@ -327,9 +327,9 @@ void PhiOperator::phi_mul_dm(
 
         for (int j = start; j < biggrid_->get_atoms_num(); ++j)
         {
-            const auto atom_j = biggrid_->get_atom(j);
+            const GintAtom* const atom_j = biggrid_->get_atom(j);
             const Vec3i r_j = atom_j->get_R();
-            const auto dm_mat = dm.find_matrix(atom_i->get_iat(), atom_j->get_iat(), r_i - r_j);
+            const hamilt::BaseMatrix<Tin>* const dm_mat = dm.find_matrix(atom_i->get_iat(), atom_j->get_iat(), r_i - r_j);
 
             if (dm_mat == nullptr)
             {
@@ -386,14 +386,14 @@ void PhiOperator::phi_mul_phi(
     std::vector<Tin> tmp_hr;
     for (int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
-        const auto atom_i = biggrid_->get_atom(i);
+        const GintAtom* const atom_i = biggrid_->get_atom(i);
         const Vec3i& r_i = atom_i->get_R();
         const int iat_i = atom_i->get_iat();
         const int n_i = atoms_phi_len_[i];
 
         for (int j = 0; j < biggrid_->get_atoms_num(); ++j)
         {
-            const auto atom_j = biggrid_->get_atom(j);
+            const GintAtom* const atom_j = biggrid_->get_atom(j);
             const Vec3i& r_j = atom_j->get_R();
             const int iat_j = atom_j->get_iat();
             const int n_j = atoms_phi_len_[j];
@@ -407,7 +407,7 @@ void PhiOperator::phi_mul_phi(
                 continue;
             }
 
-            const auto result = hr.find_matrix(iat_i, iat_j, r_i - r_j);
+            hamilt::BaseMatrix<double>* const result = hr.find_matrix(iat_i, iat_j, r_i - r_j);
 
             if (result == nullptr)
             {

@@ -101,15 +101,15 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
         // MPI: {ia0, {ia1, R}} to {ia0, ia1}
         const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, TC>>>> list_As_Vs_atoms
             = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
-        const auto list_A0_pair_R = list_As_Vs_atoms.first;
-        const auto list_A1_pair_R = list_As_Vs_atoms.second[0];
+        const std::vector<int> list_A0_pair_R = list_As_Vs_atoms.first;
+        const std::vector<std::pair<int, std::array<int, 3>>> list_A1_pair_R = list_As_Vs_atoms.second[0];
         std::set<TA> atoms00;
         std::set<TA> atoms01;
-        for (const auto& I: list_A0_pair_R)
+        for (const int& I: list_A0_pair_R)
         {
             atoms00.insert(I);
         }
-        for (const auto& JR: list_A1_pair_R)
+        for (const std::pair<int, std::array<int, 3>>& JR: list_A1_pair_R)
         {
             atoms01.insert(JR.first);
         }
@@ -167,7 +167,7 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
     m_abfs_abfs.init_radial_table();
     // get Rlist
     const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
-    const auto R_period = RI_Util::get_Born_von_Karmen_cells(period);
+    const std::vector<std::array<int, 3>> R_period = RI_Util::get_Born_von_Karmen_cells(period);
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> overlap_abfs_abfs;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> overlap_abfs_abf;
 
@@ -182,7 +182,7 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
     const ModuleBase::Element_Basis_Index::IndexLNM index_abfs
         = ModuleBase::Element_Basis_Index::construct_index(range_abfs);
 
-    auto orb_cutoff_ = orb.cutoffs();
+    std::vector<double> orb_cutoff_ = orb.cutoffs();
     const std::array<Tcell, Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(2, ucell, orb_cutoff_);
     std::vector<TA> atoms(ucell.nat);
     for (int iat = 0; iat < ucell.nat; ++iat)
@@ -284,15 +284,15 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
     const std::array<Tcell, Ndim> period_Vs_IJ = LRI_CV_Tools::cal_latvec_range<Tcell>(2, ucell, orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, TC>>>> list_As_Vs_atoms
         = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
-    const auto list_A0_pair_R = list_As_Vs_atoms.first;
-    const auto list_A1_pair_R = list_As_Vs_atoms.second[0];
+    const std::vector<int> list_A0_pair_R = list_As_Vs_atoms.first;
+    const std::vector<std::pair<int, std::array<int, 3>>> list_A1_pair_R = list_As_Vs_atoms.second[0];
     std::set<TA> atoms00;
     std::set<TA> atoms01;
-    for (const auto& I: list_A0_pair_R)
+    for (const int& I: list_A0_pair_R)
     {
         atoms00.insert(I);
     }
-    for (const auto& JR: list_A1_pair_R)
+    for (const std::pair<int, std::array<int, 3>>& JR: list_A1_pair_R)
     {
         atoms01.insert(JR.first);
     }
@@ -333,16 +333,16 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
     {
         for (auto& Ip: overlap_abfs_abfs)
         {
-            auto I = Ip.first;
+            int I = Ip.first;
             size_t mu_s_I = index_abfs_s[ucell.iat2it[I]].count_size;
             for (auto& JPp: Ip.second)
             {
-                auto J = JPp.first.first;
-                auto q = JPp.first.second;
+                int J = JPp.first.first;
+                std::array<double, 3> q = JPp.first.second;
                 if (q != RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]))
                     continue;
                 // std::cout << "IJ: " << I << "," << J << std::endl;
-                auto mu_s_J = index_abfs_s[ucell.iat2it[J]].count_size;
+                std::size_t mu_s_J = index_abfs_s[ucell.iat2it[J]].count_size;
                 for (int ir = 0; ir < mu_s_I; ir++)
                 {
                     for (int ic = 0; ic < mu_s_J; ic++)
@@ -366,7 +366,7 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
         {
             for (int ic = ir; ic < all_mu_s; ic++)
             {
-                auto delta = std::abs(olp_all(ir, ic) - std::conj(olp_all(ic, ir)));
+                double delta = std::abs(olp_all(ir, ic) - std::conj(olp_all(ic, ir)));
                 if (delta > 1e-10)
                 {
                     std::cout << "Warning: olp_all is not Hermitian!" << std::endl;
@@ -376,7 +376,7 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
             }
         }
         // out_pure_ri_tensor("olp_all.txt", olp_all, 0.);
-        auto olp_inv = LRI_CV_Tools::cal_I(olp_all,
+        RI::Tensor<std::complex<double>> olp_inv = LRI_CV_Tools::cal_I(olp_all,
                                            Inverse_Matrix<std::complex<double>>::Method::syev,
                                            this->info.shrink_LU_inv_thr);
         for (int ir = 0; ir < all_mu_s; ir++)
@@ -389,15 +389,15 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
         // out_pure_ri_tensor("olp_inv.txt", olp_inv, 0.);
         for (auto& Ip: overlap_abfs_abfs)
         {
-            auto I = Ip.first;
+            int I = Ip.first;
             size_t mu_s_I = index_abfs_s[ucell.iat2it[I]].count_size;
             for (auto& JPp: Ip.second)
             {
-                auto q = JPp.first.second;
+                std::array<double, 3> q = JPp.first.second;
                 if (q != RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]))
                     continue;
-                auto J = JPp.first.first;
-                auto mu_s_J = index_abfs_s[ucell.iat2it[J]].count_size;
+                int J = JPp.first.first;
+                std::size_t mu_s_J = index_abfs_s[ucell.iat2it[J]].count_size;
 
                 for (int ir = 0; ir < mu_s_I; ir++)
                 {

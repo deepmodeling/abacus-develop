@@ -27,10 +27,11 @@ namespace
 {
 constexpr double jacobi_tolerance = 1.0e-10;
 
-inline void jacobi_rotate(std::vector<std::vector<double>>& matrix,
-                          const int p,
-                          const int q,
-                          const int size)
+inline void jacobi_rotate(
+    std::vector<std::vector<double>> &matrix,
+    const int p,
+    const int q,
+    const int size)
 {
     if (std::abs(matrix[p][q]) <= jacobi_tolerance)
     {
@@ -38,9 +39,8 @@ inline void jacobi_rotate(std::vector<std::vector<double>>& matrix,
     }
 
     const double ratio = (matrix[q][q] - matrix[p][p]) / (2.0 * matrix[p][q]);
-    const double tangent = ratio >= 0.0
-                               ? 1.0 / (ratio + std::sqrt(1.0 + ratio * ratio))
-                               : -1.0 / (-ratio + std::sqrt(1.0 + ratio * ratio));
+    const double tangent = ratio >= 0.0 ? 1.0 / (ratio + std::sqrt(1.0 + ratio * ratio))
+                                        : -1.0 / (-ratio + std::sqrt(1.0 + ratio * ratio));
     const double cosine = 1.0 / std::sqrt(1.0 + tangent * tangent);
     const double sine = tangent * cosine;
 
@@ -61,8 +61,7 @@ inline void jacobi_rotate(std::vector<std::vector<double>>& matrix,
     }
 }
 
-inline std::vector<double> calculate_eigenvalues(std::vector<std::vector<double>>& matrix,
-                                                 const int size)
+inline std::vector<double> calculate_eigenvalues(std::vector<std::vector<double>> &matrix, const int size)
 {
     std::vector<double> eigenvalues(size);
     if (size == 1)
@@ -100,8 +99,7 @@ inline std::vector<double> calculate_eigenvalues(std::vector<std::vector<double>
     return eigenvalues;
 }
 
-inline std::vector<double> calculate_spinor_eigenvalues(const SocCompactBlocks& blocks,
-                                                        const int orbital_size)
+inline std::vector<double> calculate_spinor_eigenvalues(const SocCompactBlocks &blocks, const int orbital_size)
 {
     const int spinor_size = 2 * orbital_size;
     ModuleBase::ComplexMatrix spinor_matrix(spinor_size, spinor_size);
@@ -111,15 +109,12 @@ inline std::vector<double> calculate_spinor_eigenvalues(const SocCompactBlocks& 
         {
             const int index = row * orbital_size + column;
             spinor_matrix(row, column) = blocks.up_up[index];
-            spinor_matrix(row, column + orbital_size)
-                = std::complex<double>(blocks.up_down_real[index],
-                                       blocks.up_down_imag[index]);
+            spinor_matrix(row, column + orbital_size) =
+                std::complex<double>(blocks.up_down_real[index], blocks.up_down_imag[index]);
             const int transposed_index = column * orbital_size + row;
-            spinor_matrix(row + orbital_size, column)
-                = std::complex<double>(blocks.up_down_real[transposed_index],
-                                       -blocks.up_down_imag[transposed_index]);
-            spinor_matrix(row + orbital_size, column + orbital_size)
-                = blocks.down_down[index];
+            spinor_matrix(row + orbital_size, column) =
+                std::complex<double>(blocks.up_down_real[transposed_index], -blocks.up_down_imag[transposed_index]);
+            spinor_matrix(row + orbital_size, column + orbital_size) = blocks.down_down[index];
         }
     }
 
@@ -128,48 +123,31 @@ inline std::vector<double> calculate_spinor_eigenvalues(const SocCompactBlocks& 
     std::vector<double> rwork(std::max(1, 3 * spinor_size - 2), 0.0);
     int info = 0;
     int lwork = -1;
-    LapackConnector::zheev('N',
-                           'U',
-                           spinor_size,
-                           spinor_matrix,
-                           spinor_size,
-                           eigenvalues.data(),
-                           work.data(),
-                           lwork,
-                           rwork.data(),
-                           &info);
+    LapackConnector::zheev(
+        'N', 'U', spinor_size, spinor_matrix, spinor_size, eigenvalues.data(), work.data(), lwork, rwork.data(), &info);
     if (info != 0)
     {
-        ModuleBase::WARNING_QUIT("calculate_spinor_eigenvalues",
-                                 "LAPACK zheev workspace query failed");
+        ModuleBase::WARNING_QUIT("calculate_spinor_eigenvalues", "LAPACK zheev workspace query failed");
     }
 
     lwork = std::max(1, static_cast<int>(work[0].real()));
     work.resize(lwork);
-    LapackConnector::zheev('N',
-                           'U',
-                           spinor_size,
-                           spinor_matrix,
-                           spinor_size,
-                           eigenvalues.data(),
-                           work.data(),
-                           lwork,
-                           rwork.data(),
-                           &info);
+    LapackConnector::zheev(
+        'N', 'U', spinor_size, spinor_matrix, spinor_size, eigenvalues.data(), work.data(), lwork, rwork.data(), &info);
     if (info != 0)
     {
-        ModuleBase::WARNING_QUIT("calculate_spinor_eigenvalues",
-                                 "LAPACK zheev diagonalization failed");
+        ModuleBase::WARNING_QUIT("calculate_spinor_eigenvalues", "LAPACK zheev diagonalization failed");
     }
     return eigenvalues;
 }
 
 } // namespace
 
-static SocCompactBlocks extract_soc_compact_blocks(const Plus_U_Base& dftu,
-                                                   const int iat,
-                                                   const int l,
-                                                   const OccmatSocLayout& layout)
+static SocCompactBlocks extract_soc_compact_blocks(
+    const Plus_U_Base &dftu,
+    const int iat,
+    const int l,
+    const OccmatSocLayout &layout)
 {
     const int size = 2 * l + 1;
     const int block_size = size * size;
@@ -179,10 +157,10 @@ static SocCompactBlocks extract_soc_compact_blocks(const Plus_U_Base& dftu,
     blocks.up_down_imag.resize(block_size, 0.0);
     blocks.down_down.resize(block_size, 0.0);
 
-    const OccupationMatrix& occmat = dftu.occmat();
+    const OccupationMatrix &occmat = dftu.occmat();
     if (layout == SOC_LAYOUT_PAULI)
     {
-        const ModuleBase::matrix& occ = occmat.mat(iat, l, 0);
+        const ModuleBase::matrix &occ = occmat.mat(iat, l, 0);
         for (int index = 0; index < block_size; ++index)
         {
             const double charge = occ.c[0 * block_size + index];
@@ -214,7 +192,7 @@ static SocCompactBlocks extract_soc_compact_blocks(const Plus_U_Base& dftu,
     return blocks;
 }
 
-static void write_matrix(std::ostream& os, const double* matrix, const int size)
+static void write_matrix(std::ostream &os, const double *matrix, const int size)
 {
     for (int row = 0; row < size; ++row)
     {
@@ -226,12 +204,13 @@ static void write_matrix(std::ostream& os, const double* matrix, const int size)
     }
 }
 
-static void write_collinear_atom(const Plus_U_Base& dftu,
-                                 const UnitCell& ucell,
-                                 std::ostream& os,
-                                 const int type,
-                                 const int iat,
-                                 const int l)
+static void write_collinear_atom(
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    std::ostream &os,
+    const int type,
+    const int iat,
+    const int l)
 {
     const int size = 2 * l + 1;
     double electron_count[2] = {0.0, 0.0};
@@ -246,8 +225,7 @@ static void write_collinear_atom(const Plus_U_Base& dftu,
     os << "\n " << ucell.atoms[type].label;
     os << " Atom " << iat + 1;
     os << " L " << l;
-    os << " mag " << std::fixed << std::setprecision(8)
-       << electron_count[0] - electron_count[1] << std::endl;
+    os << " mag " << std::fixed << std::setprecision(8) << electron_count[0] - electron_count[1] << std::endl;
 
     os << std::fixed << std::setprecision(8);
     for (int spin = 0; spin < 2; ++spin)
@@ -258,13 +236,14 @@ static void write_collinear_atom(const Plus_U_Base& dftu,
     }
 }
 
-static void write_soc_atom(const Plus_U_Base& dftu,
-                           const UnitCell& ucell,
-                           std::ostream& os,
-                           const int type,
-                           const int iat,
-                           const int l,
-                           const OccmatSocLayout& layout)
+static void write_soc_atom(
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    std::ostream &os,
+    const int type,
+    const int iat,
+    const int l,
+    const OccmatSocLayout &layout)
 {
     const int size = 2 * l + 1;
     const SocCompactBlocks blocks = extract_soc_compact_blocks(dftu, iat, l, layout);
@@ -286,9 +265,8 @@ static void write_soc_atom(const Plus_U_Base& dftu,
     os << "\n " << ucell.atoms[type].label;
     os << " Atom " << iat + 1;
     os << " L " << l;
-    os << " mag " << std::fixed << std::setprecision(8)
-       << magnetization_x << " " << magnetization_y << " " << magnetization_z
-       << std::endl;
+    os << " mag " << std::fixed << std::setprecision(8) << magnetization_x << " " << magnetization_y << " "
+       << magnetization_z << std::endl;
     os << std::fixed << std::setprecision(8);
 
     os << " spin 1 nelec " << electron_up << std::endl;
@@ -301,10 +279,11 @@ static void write_soc_atom(const Plus_U_Base& dftu,
     write_matrix(os, blocks.down_down.data(), size);
 }
 
-void write_occup_m(const Plus_U_Base& dftu,
-                   const UnitCell& ucell,
-                   std::ostream& os,
-                   const OccmatSocLayout& soc_layout)
+void write_occup_m(
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    std::ostream &os,
+    const OccmatSocLayout &soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "write_occup_m");
     const int nspin = dftu.occmat().nspin();
@@ -330,10 +309,11 @@ void write_occup_m(const Plus_U_Base& dftu,
     }
 }
 
-void write_occup_eigenvalues(const Plus_U_Base& dftu,
-                             const UnitCell& ucell,
-                             std::ostream& os,
-                             const OccmatSocLayout& soc_layout)
+void write_occup_eigenvalues(
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    std::ostream &os,
+    const OccmatSocLayout &soc_layout)
 {
     const int nspin = dftu.occmat().nspin();
     for (int type = 0; type < ucell.ntype; ++type)

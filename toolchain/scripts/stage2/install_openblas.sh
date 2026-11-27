@@ -82,7 +82,7 @@ case "${with_openblas}" in
           CC="${CC}" \
           FC="${FC}" \
           PREFIX="${pkg_install_dir}" \
-          >make.log 2>&1; then
+          > make.log 2>&1; then
           tail -n "${LOG_LINES}" make.log
           make clean
           BUILD_DYNAMIC=1
@@ -100,13 +100,13 @@ case "${with_openblas}" in
           CC="${CC}" \
           FC="${FC}" \
           PREFIX="${pkg_install_dir}" \
-          >make.log 2>&1; then
+          > make.log 2>&1; then
           tail -n "${LOG_LINES}" make.log
           exit 1
         fi
       fi
       if ! make MAKE_NB_JOBS=0 PREFIX="${pkg_install_dir}" install \
-        >install.log 2>&1; then
+        > install.log 2>&1; then
         tail -n "${LOG_LINES}" install.log
         exit 1
       fi
@@ -127,8 +127,8 @@ case "${with_openblas}" in
     check_lib -lopenblas "OpenBLAS"
     OPENBLAS_LIBS="-lopenblas"
     # detect separate omp builds
-    check_lib -lopenblas_openmp 2>/dev/null && OPENBLAS_LIBS="-lopenblas_openmp"
-    check_lib -lopenblas_omp 2>/dev/null && OPENBLAS_LIBS="-lopenblas_omp"
+    check_lib -lopenblas_openmp 2> /dev/null && OPENBLAS_LIBS="-lopenblas_openmp"
+    check_lib -lopenblas_omp 2> /dev/null && OPENBLAS_LIBS="-lopenblas_omp"
     add_include_from_paths OPENBLAS_CFLAGS "openblas_config.h" $INCLUDE_PATHS
     add_lib_from_paths OPENBLAS_LDFLAGS "libopenblas.*" $LIB_PATHS
     ;;
@@ -143,22 +143,22 @@ case "${with_openblas}" in
     OPENBLAS_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
     OPENBLAS_LIBS="-lopenblas"
     # detect separate omp builds
-    (__libdir="${pkg_install_dir}/lib" LIB_PATHS="__libdir" check_lib -lopenblas_openmp 2>/dev/null) &&
+    (__libdir="${pkg_install_dir}/lib" LIB_PATHS="__libdir" check_lib -lopenblas_openmp 2> /dev/null) &&
       OPENBLAS_LIBS="-lopenblas_openmp"
-    (__libdir="${pkg_install_dir}/lib" LIB_PATHS="__libdir" check_lib -lopenblas_omp 2>/dev/null) &&
+    (__libdir="${pkg_install_dir}/lib" LIB_PATHS="__libdir" check_lib -lopenblas_omp 2> /dev/null) &&
       OPENBLAS_LIBS="-lopenblas_omp"
     ;;
 esac
 if [ "$with_openblas" != "__DONTUSE__" ]; then
   if [ "$with_openblas" != "__SYSTEM__" ]; then
-    cat <<EOF >"${BUILDDIR}/setup_openblas"
+    cat << EOF > "${BUILDDIR}/setup_openblas"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
   fi
-  cat <<EOF >>"${BUILDDIR}/setup_openblas"
+  cat << EOF >> "${BUILDDIR}/setup_openblas"
 export OPENBLAS_ROOT="${pkg_install_dir}"
 export OPENBLAS_CFLAGS="${OPENBLAS_CFLAGS}"
 export OPENBLAS_LDFLAGS="${OPENBLAS_LDFLAGS}"

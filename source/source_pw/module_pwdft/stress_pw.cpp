@@ -1,32 +1,33 @@
 #include "stress_pw.h"
 
+#include "source_base/global_variable.h" // use GlobalC
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include "source_base/global_variable.h" // use GlobalC
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_io/module_output/output_log.h"
-#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_io/module_output/output_log.h"
 
 template <typename FPTYPE, typename Device>
-void Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
-                                           const bool domag,
-                                           const bool domag_z,
-                                           const int gga_grad,
-                                           const bool gamma_only_pw,
-                                           ModuleBase::matrix& sigmatot,
-                                           UnitCell& ucell,
-                                           const vdw::VdwResult* vdw_result,
-                                           Plus_U_Base& dftu,
-                                           const pseudopot_cell_vl& locpp,
-                                           const pseudopot_cell_vnl& nlpp,
-                                           ModulePW::PW_Basis* rho_basis,
-                                           ModuleSymmetry::Symmetry* p_symm,
-                                           Structure_Factor* p_sf,
-                                           K_Vectors* p_kv,
-                                           ModulePW::PW_Basis_K* wfc_basis,
-                                           const General_Exx_Info& exx_info,
-                                           const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in)
+void Stress_PW<FPTYPE, Device>::cal_stress(
+    const int nspin,
+    const bool domag,
+    const bool domag_z,
+    const int gga_grad,
+    const bool gamma_only_pw,
+    ModuleBase::matrix &sigmatot,
+    UnitCell &ucell,
+    const vdw::VdwResult *vdw_result,
+    Plus_U_Base &dftu,
+    const pseudopot_cell_vl &locpp,
+    const pseudopot_cell_vnl &nlpp,
+    ModulePW::PW_Basis *rho_basis,
+    ModuleSymmetry::Symmetry *p_symm,
+    Structure_Factor *p_sf,
+    K_Vectors *p_kv,
+    ModulePW::PW_Basis_K *wfc_basis,
+    const General_Exx_Info &exx_info,
+    const psi::Psi<std::complex<FPTYPE>, Device> *d_psi_in)
 {
     ModuleBase::TITLE("Stress_PW", "cal_stress");
     ModuleBase::timer::start("Stress_PW", "cal_stress");
@@ -96,26 +97,21 @@ void Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
     {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    this->stress_gga(ucell, sigmaxc, rho_basis, pelec->charge,
-        nspin, domag, domag_z, gga_grad);
+    this->stress_gga(ucell, sigmaxc, rho_basis, pelec->charge, nspin, domag, domag_z, gga_grad);
     if (XC_Functional::get_ked_flag())
     {
-        this->stress_mgga(ucell,
-                          sigmaxc,
-                          this->pelec->wg,
-                          this->pelec->pot->get_eff_vofk(),
-                          pelec->charge,
-                          p_kv,
-                          wfc_basis,
-                          d_psi_in);
+        this->stress_mgga(
+            ucell, sigmaxc, this->pelec->wg, this->pelec->pot->get_eff_vofk(), pelec->charge, p_kv, wfc_basis,
+            d_psi_in);
     }
 
     // local contribution
     this->stress_loc(ucell, sigmaloc, rho_basis, locpp.vloc, p_sf, 1, pelec->charge);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, ucell, p_sf, 1, locpp.numeric, pelec->charge,
-        nspin, domag, domag_z, gga_grad, gamma_only_pw);
+    this->stress_cc(
+        sigmaxcc, rho_basis, ucell, p_sf, 1, locpp.numeric, pelec->charge, nspin, domag, domag_z, gga_grad,
+        gamma_only_pw);
 
     // nonlocal
     this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, nlpp, ucell);
@@ -148,15 +144,14 @@ void Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
         this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell, exx_info);
     }
 
-
     for (int ipol = 0; ipol < 3; ipol++)
     {
         for (int jpol = 0; jpol < 3; jpol++)
         {
-            sigmatot(ipol, jpol) = sigmakin(ipol, jpol) + sigmahar(ipol, jpol) + sigmanl(ipol, jpol)
-                                   + sigmaxc(ipol, jpol) + sigmaxcc(ipol, jpol) + sigmaewa(ipol, jpol)
-                                   + sigmaloc(ipol, jpol) + sigmavdw(ipol, jpol) + sigmaonsite(ipol, jpol)
-                                   + sigmaexx(ipol, jpol);
+            sigmatot(ipol, jpol) = sigmakin(ipol, jpol) + sigmahar(ipol, jpol) + sigmanl(ipol, jpol) +
+                                   sigmaxc(ipol, jpol) + sigmaxcc(ipol, jpol) + sigmaewa(ipol, jpol) +
+                                   sigmaloc(ipol, jpol) + sigmavdw(ipol, jpol) + sigmaonsite(ipol, jpol) +
+                                   sigmaexx(ipol, jpol);
         }
     }
 
@@ -166,7 +161,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
     }
 
     const bool ry = false;
-    const bool screen = PARAM.inp.test_stress;
+    const bool screen = PARAM.inp.test_stress && PARAM.inp.calculation != "md";
     const bool screen_normal = true;
     ModuleIO::print_stress("TOTAL-STRESS", sigmatot, screen_normal, ry, GlobalV::ofs_running);
 
@@ -195,7 +190,6 @@ void Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
     ModuleBase::timer::end("Stress_PW", "cal_stress");
     return;
 }
-
 
 template class Stress_PW<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))

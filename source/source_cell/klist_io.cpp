@@ -326,7 +326,7 @@ void bcast_kstars(std::vector<std::map<int, ModuleBase::Vector3<double>>>& kstar
     {
         int starsize = kstars[ikibz].size();
         Parallel_Common::bcast_int(starsize);
-        auto ks = kstars[ikibz].begin();
+        std::map<int, ModuleBase::Vector3<double>>::iterator ks = kstars[ikibz].begin();
         for (int ik = 0; ik < starsize; ++ik)
         {
             int isym = 0;

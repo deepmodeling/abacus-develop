@@ -2,7 +2,11 @@
 
 #include "../src_spillage/common.h"
 
-void heapAjust(double* r, int* ind, int s, int m)
+void heapAjust(
+    double *r,
+    int *ind,
+    int s,
+    int m)
 {
     int j, ic;
     double rc;
@@ -12,10 +16,14 @@ void heapAjust(double* r, int* ind, int s, int m)
     for (j = 2 * s; j <= m; j *= 2)
     {
         if (j < m && (r[j] < r[j + 1]))
+        {
             j++;
+        }
 
         if (!(rc < r[j]))
+        {
             break;
+        }
 
         r[s] = r[j];
 
@@ -30,7 +38,7 @@ void heapAjust(double* r, int* ind, int s, int m)
     return;
 }
 
-void heapsort(const int n, double* r, int* ind)
+void heapsort(const int n, double *r, int *ind)
 {
     timer::tick("mymath", "heapsort");
     int i, ic;
@@ -84,7 +92,7 @@ c adapted from Numerical Recipes pg. 329 (new edition)
 *********************************************************************/
 
 // from hpsort.f90
-void hpsort(int n, double* ra, int* ind)
+void hpsort(int n, double *ra, int *ind)
 {
     int i, ir, j, k, iind;
     double rra;
@@ -92,11 +100,15 @@ void hpsort(int n, double* ra, int* ind)
     if (ind[1] == 0)
     {
         for (i = 1; i <= n; i++)
+        {
             ind[i] = i;
+        }
     }
 
     if (n < 2)
+    {
         return; // nothing to order
+    }
 
     k = n / 2 + 1;
 
@@ -141,7 +153,9 @@ void hpsort(int n, double* ra, int* ind)
                 else if (ra[j] == ra[j + 1])
                 {
                     if (ind[j] < ind[j + 1])
+                    {
                         j = j + 1;
+                    }
                 }
             }
 
@@ -162,10 +176,14 @@ void hpsort(int n, double* ra, int* ind)
                     j = j + j;
                 }
                 else
+                {
                     j = ir + 1; // set j to terminate do-while loop
+                }
             }
-            else            // this is the right place for rra
+            else // this is the right place for rra
+            {
                 j = ir + 1; // set j to terminate do-while loop
+            }
         }
 
         ra[i] = rra;

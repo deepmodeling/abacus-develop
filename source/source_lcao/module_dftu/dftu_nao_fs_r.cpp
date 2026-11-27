@@ -232,7 +232,7 @@ void cal_fs_nao_r_impl(const UnitCell* ucell,
             const int tlp1 = 2 * target_L + 1;
             const AdjacentAtomInfo& adjs = adjs_all[atom_index_all[iat0]];
 
-            auto nlm_tot = build_nlm(ucell, intor, pv, iat0, T0, target_L, adjs);
+            std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot = build_nlm(ucell, intor, pv, iat0, T0, target_L, adjs);
 
             // first iteration to calculate occupation matrix
             std::vector<double> occ(tlp1 * tlp1 * nspin, 0);

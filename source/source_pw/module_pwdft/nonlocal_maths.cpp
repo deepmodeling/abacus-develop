@@ -4,7 +4,7 @@ namespace hamilt
 {
 
 template <typename FPTYPE, typename Device>
-Nonlocal_maths<FPTYPE, Device>::Nonlocal_maths(const pseudopot_cell_vnl* nlpp_in, const UnitCell* ucell_in)
+Nonlocal_maths<FPTYPE, Device>::Nonlocal_maths(const pseudopot_cell_vnl *nlpp_in, const UnitCell *ucell_in)
 {
     this->device = base_device::get_device_type(this->ctx);
     this->nhtol_ = nlpp_in->nhtol;
@@ -13,9 +13,8 @@ Nonlocal_maths<FPTYPE, Device>::Nonlocal_maths(const pseudopot_cell_vnl* nlpp_in
 }
 
 template <typename FPTYPE, typename Device>
-Nonlocal_maths<FPTYPE, Device>::Nonlocal_maths(const ModuleBase::matrix& nhtol,
-                                               const int lmax,
-                                               const UnitCell* ucell_in)
+Nonlocal_maths<FPTYPE, Device>::Nonlocal_maths(
+    const ModuleBase::matrix &nhtol, const int lmax, const UnitCell *ucell_in)
 {
     this->device = base_device::get_device_type(this->ctx);
     this->nhtol_ = nhtol;
@@ -26,7 +25,7 @@ Nonlocal_maths<FPTYPE, Device>::Nonlocal_maths(const ModuleBase::matrix& nhtol,
 // prepare a memory block containing information of vector G+k, this function can be named as eval_q or eval_gk
 // seems this operation is not on gpu
 template <typename FPTYPE, typename Device>
-std::vector<FPTYPE> Nonlocal_maths<FPTYPE, Device>::cal_gk(int ik, const ModulePW::PW_Basis_K* pw_basis)
+std::vector<FPTYPE> Nonlocal_maths<FPTYPE, Device>::cal_gk(int ik, const ModulePW::PW_Basis_K *pw_basis)
 {
     int npw = pw_basis->npwk[ik];
     std::vector<FPTYPE> gk(npw * 5);
@@ -35,14 +34,15 @@ std::vector<FPTYPE> Nonlocal_maths<FPTYPE, Device>::cal_gk(int ik, const ModuleP
     {
         // written in memory block from 0 to 3*npw. This is like a matrix with npw rows and 3 columns
         q = pw_basis->getgpluskcar(ik, ig);
-        gk[ig * 3]     = q.x;
+        gk[ig * 3] = q.x;
         gk[ig * 3 + 1] = q.y;
         gk[ig * 3 + 2] = q.z;
         // the following written in memory block from 3*npw to 5*npw, the excess 2*npw is for norm and 1/norm
         // for memory consecutive consideration, there are blocks storing the norm and 1/norm.
         FPTYPE norm = sqrt(q.norm2());
         gk[3 * npw + ig] = norm * this->ucell_->tpiba; // one line with length npw, storing the norm
-        gk[4 * npw + ig] = norm < 1e-8 ? 0.0 : 1.0 / norm * this->ucell_->tpiba; // one line with length npw, storing 1/norm
+        gk[4 * npw + ig] =
+            norm < 1e-8 ? 0.0 : 1.0 / norm * this->ucell_->tpiba; // one line with length npw, storing 1/norm
     }
     return gk;
 }
@@ -50,7 +50,11 @@ std::vector<FPTYPE> Nonlocal_maths<FPTYPE, Device>::cal_gk(int ik, const ModuleP
 // tabulate the spherical haromonic functions up to lmax. The q vector is given as input.
 // I would rather call this function as cal_ylm_cpu2gpu, distincting from the pure cpu implementation
 template <typename FPTYPE, typename Device>
-void Nonlocal_maths<FPTYPE, Device>::cal_ylm(int lmax, int npw, const FPTYPE* q, FPTYPE* ylm)
+void Nonlocal_maths<FPTYPE, Device>::cal_ylm(
+    int lmax,
+    int npw,
+    const FPTYPE *q,
+    FPTYPE *ylm)
 {
     const int ntot_ylm = (lmax + 1) * (lmax + 1);
     if (this->device == base_device::GpuDevice)
@@ -75,7 +79,11 @@ void Nonlocal_maths<FPTYPE, Device>::cal_ylm(int lmax, int npw, const FPTYPE* q,
 // this function calculate the numerical derivate of the spherical harmonic functions respect to the G vector...
 // maybe called eval_dylmdq_cpu2gpu?
 template <typename FPTYPE, typename Device>
-void Nonlocal_maths<FPTYPE, Device>::cal_ylm_deri(int lmax, int npw, const FPTYPE* q, FPTYPE* out)
+void Nonlocal_maths<FPTYPE, Device>::cal_ylm_deri(
+    int lmax,
+    int npw,
+    const FPTYPE *q,
+    FPTYPE *out)
 {
     const int ntot_ylm = (lmax + 1) * (lmax + 1);
 
@@ -122,14 +130,15 @@ std::vector<std::complex<FPTYPE>> Nonlocal_maths<FPTYPE, Device>::cal_pref(int i
 // cal_vkb
 // cpu version first, gpu version later
 template <typename FPTYPE, typename Device>
-void Nonlocal_maths<FPTYPE, Device>::cal_vkb(int it,
-                                             int ia,
-                                             int npw,
-                                             const FPTYPE* vq_in,
-                                             const FPTYPE* ylm_in,
-                                             const std::complex<FPTYPE>* sk_in,
-                                             const std::complex<FPTYPE>* pref_in,
-                                             std::complex<FPTYPE>* vkb_out)
+void Nonlocal_maths<FPTYPE, Device>::cal_vkb(
+    int it,
+    int ia,
+    int npw,
+    const FPTYPE *vq_in,
+    const FPTYPE *ylm_in,
+    const std::complex<FPTYPE> *sk_in,
+    const std::complex<FPTYPE> *pref_in,
+    std::complex<FPTYPE> *vkb_out)
 {
     int ih = 0;
     // loop over all beta functions
@@ -140,9 +149,9 @@ void Nonlocal_maths<FPTYPE, Device>::cal_vkb(int it,
         for (int m = 0; m < 2 * l + 1; m++)
         {
             int lm = l * l + m;
-            std::complex<FPTYPE>* vkb_ptr = &vkb_out[ih * npw];
-            const FPTYPE* ylm_ptr = &ylm_in[lm * npw];
-            const FPTYPE* vq_ptr = &vq_in[ib * npw];
+            std::complex<FPTYPE> *vkb_ptr = &vkb_out[ih * npw];
+            const FPTYPE *ylm_ptr = &ylm_in[lm * npw];
+            const FPTYPE *vq_ptr = &vq_in[ib * npw];
             // loop over all G-vectors
             for (int ig = 0; ig < npw; ig++)
             {
@@ -156,19 +165,20 @@ void Nonlocal_maths<FPTYPE, Device>::cal_vkb(int it,
 // cal_vkb
 // cpu version first, gpu version later
 template <typename FPTYPE, typename Device>
-void Nonlocal_maths<FPTYPE, Device>::cal_vkb_deri(int it,
-                                                  int ia,
-                                                  int npw,
-                                                  int ipol,
-                                                  int jpol,
-                                                  const FPTYPE* vq_in,
-                                                  const FPTYPE* vq_deri_in,
-                                                  const FPTYPE* ylm_in,
-                                                  const FPTYPE* ylm_deri_in,
-                                                  const std::complex<FPTYPE>* sk_in,
-                                                  const std::complex<FPTYPE>* pref_in,
-                                                  const FPTYPE* gk_in,
-                                                  std::complex<FPTYPE>* vkb_out)
+void Nonlocal_maths<FPTYPE, Device>::cal_vkb_deri(
+    int it,
+    int ia,
+    int npw,
+    int ipol,
+    int jpol,
+    const FPTYPE *vq_in,
+    const FPTYPE *vq_deri_in,
+    const FPTYPE *ylm_in,
+    const FPTYPE *ylm_deri_in,
+    const std::complex<FPTYPE> *sk_in,
+    const std::complex<FPTYPE> *pref_in,
+    const FPTYPE *gk_in,
+    std::complex<FPTYPE> *vkb_out)
 {
     const int x1 = (this->lmax_ + 1) * (this->lmax_ + 1);
     int ih = 0;
@@ -180,9 +190,9 @@ void Nonlocal_maths<FPTYPE, Device>::cal_vkb_deri(int it,
         for (int m = 0; m < 2 * l + 1; m++)
         {
             const int lm = l * l + m;
-            std::complex<FPTYPE>* vkb_ptr = &vkb_out[ih * npw];
-            const FPTYPE* ylm_ptr = &ylm_in[lm * npw];
-            const FPTYPE* vq_ptr = &vq_in[nb * npw];
+            std::complex<FPTYPE> *vkb_ptr = &vkb_out[ih * npw];
+            const FPTYPE *ylm_ptr = &ylm_in[lm * npw];
+            const FPTYPE *vq_ptr = &vq_in[nb * npw];
             // set vkb to zero
             for (int ig = 0; ig < npw; ig++)
             {
@@ -199,21 +209,21 @@ void Nonlocal_maths<FPTYPE, Device>::cal_vkb_deri(int it,
             }
             // second term: ylm_deri * vq_deri * sk * pref
             //  loop over all G-vectors
-            const FPTYPE* ylm_deri_ptr1 = &ylm_deri_in[(ipol * x1 + lm) * npw];
-            const FPTYPE* ylm_deri_ptr2 = &ylm_deri_in[(jpol * x1 + lm) * npw];
-            const FPTYPE* vq_deri_ptr = &vq_deri_in[nb * npw];
-            const FPTYPE* qnorm = &gk_in[4 * npw];
+            const FPTYPE *ylm_deri_ptr1 = &ylm_deri_in[(ipol * x1 + lm) * npw];
+            const FPTYPE *ylm_deri_ptr2 = &ylm_deri_in[(jpol * x1 + lm) * npw];
+            const FPTYPE *vq_deri_ptr = &vq_deri_in[nb * npw];
+            const FPTYPE *qnorm = &gk_in[4 * npw];
             for (int ig = 0; ig < npw; ig++)
             {
-                vkb_ptr[ig] -= (gk_in[ig * 3 + ipol] * ylm_deri_ptr2[ig] + gk_in[ig * 3 + jpol] * ylm_deri_ptr1[ig])
-                               * vq_ptr[ig] * sk_in[ig] * pref_in[ih];
+                vkb_ptr[ig] -= (gk_in[ig * 3 + ipol] * ylm_deri_ptr2[ig] + gk_in[ig * 3 + jpol] * ylm_deri_ptr1[ig]) *
+                               vq_ptr[ig] * sk_in[ig] * pref_in[ih];
             }
             // third term: ylm * vq_deri * sk * pref
             //  loop over all G-vectors
             for (int ig = 0; ig < npw; ig++)
             {
-                vkb_ptr[ig] -= 2.0 * ylm_ptr[ig] * vq_deri_ptr[ig] * sk_in[ig] * pref_in[ih] * gk_in[ig * 3 + ipol]
-                               * gk_in[ig * 3 + jpol] * qnorm[ig];
+                vkb_ptr[ig] -= 2.0 * ylm_ptr[ig] * vq_deri_ptr[ig] * sk_in[ig] * pref_in[ih] * gk_in[ig * 3 + ipol] *
+                               gk_in[ig * 3 + jpol] * qnorm[ig];
             }
             ih++;
         }
@@ -221,17 +231,18 @@ void Nonlocal_maths<FPTYPE, Device>::cal_vkb_deri(int it,
 }
 
 template <typename FPTYPE, typename Device>
-void Nonlocal_maths<FPTYPE, Device>::prepare_vkb_ptr(int nbeta,
-                                                     double* nhtol,
-                                                     int nhtol_nc,
-                                                     int npw,
-                                                     int it,
-                                                     std::complex<FPTYPE>* vkb_out,
-                                                     std::complex<FPTYPE>** vkb_ptrs,
-                                                     FPTYPE* ylm_in,
-                                                     FPTYPE** ylm_ptrs,
-                                                     FPTYPE* vq_in,
-                                                     FPTYPE** vq_ptrs)
+void Nonlocal_maths<FPTYPE, Device>::prepare_vkb_ptr(
+    int nbeta,
+    double *nhtol,
+    int nhtol_nc,
+    int npw,
+    int it,
+    std::complex<FPTYPE> *vkb_out,
+    std::complex<FPTYPE> **vkb_ptrs,
+    FPTYPE *ylm_in,
+    FPTYPE **ylm_ptrs,
+    FPTYPE *vq_in,
+    FPTYPE **vq_ptrs)
 {
     // std::complex<FPTYPE>** vkb_ptrs[nh];
     // const FPTYPE** ylm_ptrs[nh];
@@ -252,14 +263,15 @@ void Nonlocal_maths<FPTYPE, Device>::prepare_vkb_ptr(int nbeta,
 }
 
 template <typename FPTYPE, typename Device>
-void Nonlocal_maths<FPTYPE, Device>::cal_dvkb_index(const int nbeta,
-                                                    const double* nhtol,
-                                                    const int nhtol_nc,
-                                                    const int npw,
-                                                    const int it,
-                                                    const int ipol,
-                                                    const int jpol,
-                                                    int* indexes)
+void Nonlocal_maths<FPTYPE, Device>::cal_dvkb_index(
+    const int nbeta,
+    const double *nhtol,
+    const int nhtol_nc,
+    const int npw,
+    const int it,
+    const int ipol,
+    const int jpol,
+    int *indexes)
 {
     int ih = 0;
     const int x1 = (this->lmax_ + 1) * (this->lmax_ + 1);
@@ -268,9 +280,9 @@ void Nonlocal_maths<FPTYPE, Device>::cal_dvkb_index(const int nbeta,
         int l = nhtol[it * nhtol_nc + ih];
         for (int m = 0; m < 2 * l + 1; m++)
         {
-            //std::cout << "in function cal_dvkb_index, nhtol(" << it << ", " << ih << ") = " << l << std::endl;
+            // std::cout << "in function cal_dvkb_index, nhtol(" << it << ", " << ih << ") = " << l << std::endl;
             int lm = l * l + m;
-            indexes[ih * 4] = lm; // the index of ylm matrix, for given l and m, together with ig to get value
+            indexes[ih * 4] = lm;     // the index of ylm matrix, for given l and m, together with ig to get value
             indexes[ih * 4 + 1] = nb; // the iproj of present atom type
             indexes[ih * 4 + 2] = (ipol * x1 + lm);
             indexes[ih * 4 + 3] = (jpol * x1 + lm);
@@ -281,11 +293,12 @@ void Nonlocal_maths<FPTYPE, Device>::cal_dvkb_index(const int nbeta,
 }
 
 template <typename FPTYPE, typename Device>
-void Nonlocal_maths<FPTYPE, Device>::dylmr2(const int nylm,
-                                            const int ngy,
-                                            const FPTYPE* gk,
-                                            FPTYPE* dylm,
-                                            const int ipol)
+void Nonlocal_maths<FPTYPE, Device>::dylmr2(
+    const int nylm,
+    const int ngy,
+    const FPTYPE *gk,
+    FPTYPE *dylm,
+    const int ipol)
 {
     // A 1e-6 finite difference loses significant digits when evaluated in float.
     // Keep the difference in double, then store the derivative in the requested type.
@@ -373,7 +386,7 @@ void Nonlocal_maths<FPTYPE, Device>::dylmr2(const int nylm,
     }
     //$OMP END PARALLEL DO
 
-    base_device::DEVICE_CPU* cpu = {};
+    base_device::DEVICE_CPU *cpu = {};
     ModuleBase::YlmReal::Ylm_Real(cpu, nylm, ngy, gx.data(), dylm);
     //$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ig)
 #ifdef _OPENMP
@@ -405,11 +418,12 @@ void Nonlocal_maths<FPTYPE, Device>::dylmr2(const int nylm,
 }
 
 template <typename FPTYPE, typename Device>
-FPTYPE Nonlocal_maths<FPTYPE, Device>::Polynomial_Interpolation_nl(const ModuleBase::realArray& table,
-                                                                   const int& dim1,
-                                                                   const int& dim2,
-                                                                   const FPTYPE& table_interval,
-                                                                   const FPTYPE& x // input value
+FPTYPE Nonlocal_maths<FPTYPE, Device>::Polynomial_Interpolation_nl(
+    const ModuleBase::realArray &table,
+    const int &dim1,
+    const int &dim2,
+    const FPTYPE &table_interval,
+    const FPTYPE &x // input value
 )
 {
 
@@ -421,11 +435,11 @@ FPTYPE Nonlocal_maths<FPTYPE, Device>::Polynomial_Interpolation_nl(const ModuleB
     const FPTYPE x1 = 1.0 - x0;
     const FPTYPE x2 = 2.0 - x0;
     const FPTYPE x3 = 3.0 - x0;
-    const FPTYPE y = (table(dim1, dim2, iq) * (-x2 * x3 - x1 * x3 - x1 * x2) / 6.0
-                      + table(dim1, dim2, iq + 1) * (+x2 * x3 - x0 * x3 - x0 * x2) / 2.0
-                      - table(dim1, dim2, iq + 2) * (+x1 * x3 - x0 * x3 - x0 * x1) / 2.0
-                      + table(dim1, dim2, iq + 3) * (+x1 * x2 - x0 * x2 - x0 * x1) / 6.0)
-                     / table_interval;
+    const FPTYPE y = (table(dim1, dim2, iq) * (-x2 * x3 - x1 * x3 - x1 * x2) / 6.0 +
+                         table(dim1, dim2, iq + 1) * (+x2 * x3 - x0 * x3 - x0 * x2) / 2.0 -
+                         table(dim1, dim2, iq + 2) * (+x1 * x3 - x0 * x3 - x0 * x1) / 2.0 +
+                         table(dim1, dim2, iq + 3) * (+x1 * x2 - x0 * x2 - x0 * x1) / 6.0) /
+                     table_interval;
 
     return y;
 }

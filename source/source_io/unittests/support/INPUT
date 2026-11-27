@@ -186,8 +186,7 @@ md_dt                          1 #time step
 md_tchain                      1 #number of Nose-Hoover chains
 md_tfirst                      -1 #temperature first
 md_tlast                       -1 #temperature last
-md_dumpfreq                    1 #The period to dump MD information
-md_thermo_freq                 1 #The period to output MD thermodynamic information
+out_thermo_freq                1 #The period to output MD thermodynamic information
 md_restartfreq                 5 #The period to output MD restart information
 md_seed                        -1 #random seed for MD
 md_prec_level                  2 #precision level for vc-md
@@ -219,9 +218,6 @@ md_pchain                      1 #num of thermostats coupled with barostat
 md_pfirst                      -1 #initial target pressure
 md_plast                       -1 #final target pressure
 md_pfreq                       0 #oscillation frequency, used to determine qmass of thermostats coupled with barostat
-dump_force                     0 #output atomic forces into the file MD_dump or not.
-dump_vel                       0 #output atomic velocities into the file MD_dump or not
-dump_virial                    0 #output lattice virial into the file MD_dump or not
 
 #Parameters (10.Electric field and dipole correction)
 efield_flag                    0 #add electric field

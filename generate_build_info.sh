@@ -23,7 +23,7 @@ OUTPUT_FILE=$1
 get_version_from_command() {
   local cmd="$1"
   local regex="$2"
-  if command -v "$cmd" >/dev/null; then
+  if command -v "$cmd" > /dev/null; then
     local output=$($cmd 2>&1)
     if [[ $output =~ $regex ]]; then
       echo "${BASH_REMATCH[1]}"
@@ -71,7 +71,7 @@ MPI_VERSION="no"
 if [ "${ENABLE_MPI}" == "ON" ]; then
   MPI_IMPLEMENTATION="Unknown"
   MPI_COMPILER="${MPI_CXX_COMPILER:-mpicxx}"
-  if command -v "$MPI_COMPILER" >/dev/null; then
+  if command -v "$MPI_COMPILER" > /dev/null; then
     # Intel MPI (oneAPI)
     version=$(get_version_from_command "$MPI_COMPILER --version" "Intel\(R\) oneAPI DPC\+\+/C\+\+ Compiler ([0-9]+\.[0-9]+\.[0-9]+)")
     if [ -n "$version" ]; then
@@ -103,7 +103,7 @@ if [ "${ENABLE_MPI}" == "ON" ]; then
       fi
     fi
     # Fallback via mpirun
-    if [ -z "$version" ] && command -v mpirun >/dev/null; then
+    if [ -z "$version" ] && command -v mpirun > /dev/null; then
       mr_out=$(mpirun --version 2>&1)
       if [[ $mr_out =~ Open\ MPI\ ([0-9]+\.[0-9]+\.[0-9]+) ]]; then
         MPI_IMPLEMENTATION="OpenMPI"
@@ -125,8 +125,8 @@ OPENMP_VERSION="no"
 if [[ "$CXX_FLAGS" == *"-fopenmp"* ]]; then
   OPENMP_VERSION="yes (version unknown)"
   # Try to get version from compiler
-  if command -v "$CXX_COMPILER_PATH" >/dev/null; then
-    version=$($CXX_COMPILER_PATH -dM -E - </dev/null 2>&1 | grep '#define _OPENMP ' | awk '{print $3}')
+  if command -v "$CXX_COMPILER_PATH" > /dev/null; then
+    version=$($CXX_COMPILER_PATH -dM -E - < /dev/null 2>&1 | grep '#define _OPENMP ' | awk '{print $3}')
     if [ -n "$version" ]; then
       # Convert YYYYMM to a more readable format if possible
       year=$((version / 10000))
@@ -154,8 +154,8 @@ LIBXC_VERSION="no"
 if [ "${ENABLE_LIBXC}" == "ON" ]; then
   LIBXC_VERSION="yes (version unknown)"
   # Try pkg-config first
-  if command -v pkg-config >/dev/null; then
-    version=$(pkg-config --modversion libxc 2>/dev/null)
+  if command -v pkg-config > /dev/null; then
+    version=$(pkg-config --modversion libxc 2> /dev/null)
     if [ -n "$version" ]; then LIBXC_VERSION="yes (v$version)"; fi
   fi
   # Fallback to header
@@ -173,7 +173,7 @@ if [ "${USE_CUDA}" == "ON" ]; then
   if [ -n "$CUDA_HOME" ]; then
     version=$(get_version_from_command "$CUDA_HOME/bin/nvcc --version" "release ([0-9]+\.[0-9]+)")
     if [ -n "$version" ]; then CUDA_VERSION="yes (v$version)"; fi
-  elif command -v nvcc >/dev/null; then
+  elif command -v nvcc > /dev/null; then
     version=$(get_version_from_command "nvcc --version" "release ([0-9]+\.[0-9]+)")
     if [ -n "$version" ]; then CUDA_VERSION="yes (v$version)"; fi
   fi
@@ -186,7 +186,7 @@ if [ "${USE_ROCM}" == "ON" ]; then
   if [ -n "$ROCM_PATH" ]; then
     version=$(get_version_from_command "$ROCM_PATH/bin/hipcc --version" "HIP version: ([0-9]+\.[0-9]+\.[0-9]+)")
     if [ -n "$version" ]; then ROCM_VERSION="yes (v$version)"; fi
-  elif command -v hipcc >/dev/null; then
+  elif command -v hipcc > /dev/null; then
     version=$(get_version_from_command "hipcc --version" "HIP version: ([0-9]+\.[0-9]+\.[0-9]+)")
     if [ -n "$version" ]; then ROCM_VERSION="yes (v$version)"; fi
   fi
@@ -205,7 +205,7 @@ ELPA_VERSION="no"
 if [ "${ENABLE_ELPA}" == "ON" ] && [ -n "$ELPA_DIR" ]; then
   ELPA_VERSION="yes (version unknown)"
   if [ -f "$ELPA_DIR/bin/elpa2_print_version" ]; then
-    version=$("$ELPA_DIR/bin/elpa2_print_version" 2>/dev/null)
+    version=$("$ELPA_DIR/bin/elpa2_print_version" 2> /dev/null)
     if [ -n "$version" ]; then ELPA_VERSION="yes ($version)"; fi
   else
     ELPA_VERSION="yes (path: $ELPA_DIR)"
@@ -258,8 +258,8 @@ fi
 # CUDA-aware MPI
 CUDA_AWARE_MPI="no"
 if [ "${USE_CUDA}" == "ON" ]; then
-  if command -v ompi_info >/dev/null; then
-    out=$(ompi_info --parsable --all 2>/dev/null)
+  if command -v ompi_info > /dev/null; then
+    out=$(ompi_info --parsable --all 2> /dev/null)
     if echo "$out" | grep -q "mpi_built_with_cuda_support:value:true"; then
       CUDA_AWARE_MPI="yes"
     else
@@ -304,6 +304,6 @@ sed \
   -e "s#@ABACUS_ASAN_STATUS@#${ENABLE_ASAN:-no}#g" \
   -e "s#@ABACUS_CMAKE_OPTIONS@#Not available with Makefile#g" \
   -e "s#@ABACUS_CMAKE_FIND_PACKAGES@#Not available with Makefile#g" \
-  "$INPUT_FILE" >"$OUTPUT_FILE"
+  "$INPUT_FILE" > "$OUTPUT_FILE"
 
 echo "Generated $OUTPUT_FILE successfully."

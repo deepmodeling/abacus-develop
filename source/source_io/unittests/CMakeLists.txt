@@ -6,6 +6,7 @@ abacus_disable_feature_definitions(__EXX)
 # Keep the existing serial INPUT target and its compile definitions.
 target_sources(MODULE_IO_read_input_serial PRIVATE test_read_input_serial.cpp)
 target_sources(MODULE_IO_read_item_serial PRIVATE test_read_inp_exx_dftu.cpp)
+target_sources(MODULE_IO_lobpcg_input PRIVATE test_read_inp_estruc.cpp)
 
 if(ENABLE_LIBRI_GPU)
   # Exercise the real device probe while keeping DeviceContext free of MPI.

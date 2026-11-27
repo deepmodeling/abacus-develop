@@ -5,7 +5,7 @@
 
 #include <vector>
 
-void pseudopot_cell_vnl::ensure_grad_table(const UnitCell& cell)
+void pseudopot_cell_vnl::ensure_grad_table(const UnitCell &cell)
 {
     if (this->nkb > 0 && this->gradient_version_ != this->table_version_)
     {
@@ -13,7 +13,7 @@ void pseudopot_cell_vnl::ensure_grad_table(const UnitCell& cell)
     }
 }
 
-void pseudopot_cell_vnl::initgradq_vnl(const UnitCell& cell)
+void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
 {
     this->gradient_version_ = this->table_version_;
     const int ntype = cell.ntype;

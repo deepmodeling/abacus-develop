@@ -23,7 +23,7 @@ namespace RI_Util
         const K_Vectors *p_kv)
     {
         std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param_updated = coulomb_param;
-        for(auto &param_list : coulomb_param_updated)
+        for(std::pair<const Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& param_list : coulomb_param_updated)
         {
             for(std::map<std::string, std::string>& param : param_list.second)
             {
@@ -61,7 +61,7 @@ namespace RI_Util
         // Separate the parameters into Center2 and Ewald methods
         std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param_center2;
         std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param_ewald;
-        for(auto &param_list : coulomb_param_updated)
+        for(const std::pair<const Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& param_list : coulomb_param_updated)
         {
             switch(param_list.first)
             {

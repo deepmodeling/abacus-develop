@@ -35,7 +35,7 @@ try
     }
     ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
     const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
-    const auto unit_scales = RpaLriDetail::librpa_stru_unit_scales(ucell.lat0);
+    const RpaLriDetail::LibRpaStruUnitScales unit_scales = RpaLriDetail::librpa_stru_unit_scales(ucell.lat0);
     const ModuleBase::Matrix3 lat = ucell.latvec * unit_scales.real_space_bohr;
     const ModuleBase::Matrix3 G_RPA = ucell.G * unit_scales.reciprocal_space_bohr_inv;
     std::ofstream ofs;

@@ -691,8 +691,8 @@ void ESolver_BSE<T, TR>::init_pot(const Charge &chg_gs)
     case 1:
     case 2:
     {
-        const auto &grid = this->pgrid();
-        const auto kernel = LR::build_xc_kernel(
+        const Parallel_Grid& grid = this->pgrid();
+        const std::shared_ptr<const LR::KernelXC> kernel = LR::build_xc_kernel(
             this->xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, grid, this->nspin, false, LR::KernelXC::NoGxc,
             this->inp_->lr_init_xc_kernel);
         // BSE multiplies its bare Coulomb matrix by the singlet factor in HamiltBSE.
@@ -739,7 +739,7 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
             sizeof(T));
         this->tda_ene.resize(n_spin_types * this->nstates);
         this->X.resize(n_spin_types, LR_Util::newTensor<T>({this->nstates, this->nloc_per_state}));
-        for (auto &x : this->X)
+        for (ct::Tensor& x : this->X)
         {
             x.zero();
         }
@@ -752,11 +752,11 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
         this->full_ene.resize(n_spin_types * this->nstates);
         this->full_X.resize(n_spin_types, LR_Util::newTensor<T>({this->nstates, this->nloc_per_state}));
         this->full_Y.resize(n_spin_types, LR_Util::newTensor<T>({this->nstates, this->nloc_per_state}));
-        for (auto &x : this->full_X)
+        for (ct::Tensor& x : this->full_X)
         {
             x.zero();
         }
-        for (auto &y : this->full_Y)
+        for (ct::Tensor& y : this->full_Y)
         {
             y.zero();
         }

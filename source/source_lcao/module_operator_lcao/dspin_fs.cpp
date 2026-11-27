@@ -20,9 +20,9 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     ModuleBase::timer::start("DeltaSpin", "cal_force_stress");
 
     spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
-    auto& constrain = sc.get_constrain();
+    const std::vector<ModuleBase::Vector3<int>>& constrain = sc.get_constrain();
     this->cal_constraint_atom_list(constrain);
-    auto& lambda = sc.get_sc_lambda();
+    const std::vector<ModuleBase::Vector3<double>>& lambda = sc.get_sc_lambda();
 
     const Parallel_Orbitals* paraV = dmR->get_paraV();
     const int npol = this->ucell->get_npol();
@@ -46,7 +46,7 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         }
       
         // skip the atoms without plus-U
-        auto tau0 = ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
         
@@ -84,8 +84,8 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            auto all_indexes = paraV->get_indexes_row(iat1);
-            auto col_indexes = paraV->get_indexes_col(iat1);
+            std::vector<int> all_indexes = paraV->get_indexes_row(iat1);
+            std::vector<int> col_indexes = paraV->get_indexes_col(iat1);
             // insert col_indexes into all_indexes to get universal set with no repeat elements
             all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
             std::sort(all_indexes.begin(), all_indexes.end());

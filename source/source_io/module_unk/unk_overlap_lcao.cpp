@@ -183,13 +183,13 @@ void unkOverlap_lcao::init(const UnitCell& ucell,
     {
         for (auto& co2: co1.second) 
         {
-            for (auto& co3: co2.second) 
+            for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>>>& co3: co2.second)
             {
-                for (auto& co4: co3.second) 
+                for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>>& co4: co3.second)
                 {
-                    for (auto& co5: co4.second) 
+                    for (std::pair<const std::size_t, std::map<std::size_t, Center2_Orb::Orb11>>& co5: co4.second)
                     {
-                        for (auto& co6: co5.second) 
+                        for (std::pair<const std::size_t, Center2_Orb::Orb11>& co6: co5.second)
                         {
                             co6.second.init_radial_table();
                         }
@@ -203,13 +203,13 @@ void unkOverlap_lcao::init(const UnitCell& ucell,
     {
         for (auto& co2: co1.second) 
         {
-            for (auto& co3: co2.second) 
+            for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb21>>>>& co3: co2.second)
             {
-                for (auto& co4: co3.second) 
+                for (std::pair<const std::size_t, std::map<std::size_t, std::map<std::size_t, Center2_Orb::Orb21>>>& co4: co3.second)
                 {
-                    for (auto& co5: co4.second) 
+                    for (std::pair<const std::size_t, std::map<std::size_t, Center2_Orb::Orb21>>& co5: co4.second)
                     {
-                        for (auto& co6: co5.second) 
+                        for (std::pair<const std::size_t, Center2_Orb::Orb21>& co6: co5.second)
                         {
                             co6.second.init_radial_table();
                         }

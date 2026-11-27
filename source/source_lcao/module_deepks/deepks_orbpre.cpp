@@ -38,7 +38,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     torch::Tensor orbital_pdm
         = torch::zeros({nks, deepks_param.inlmax, (2 * deepks_param.lmaxd + 1), (2 * deepks_param.lmaxd + 1)},
                        torch::dtype(torch::kFloat64));
-    auto accessor = orbital_pdm.accessor<double, 4>();
+    at::TensorAccessor<double, 4> accessor = orbital_pdm.accessor<double, 4>();
 
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
@@ -97,7 +97,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                     continue;
                 }
 
-                auto row_indexes = pv.get_indexes_row(ibt1);
+                std::vector<int> row_indexes = pv.get_indexes_row(ibt1);
 
                 const int row_size = row_indexes.size();
 
@@ -148,7 +148,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                         continue;
                     }
 
-                    auto col_indexes = pv.get_indexes_col(ibt2);
+                    std::vector<int> col_indexes = pv.get_indexes_col(ibt2);
                     const int col_size = col_indexes.size();
                     if (col_size == 0)
                     {

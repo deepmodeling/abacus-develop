@@ -89,7 +89,7 @@ void cal_mi_pw(ScState& state,
 #if ((defined __CUDA) || (defined __ROCM))
     else
     {
-        auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
+        projectors::OnsiteProjector<double, base_device::DEVICE_GPU>* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
         std::complex<double>* psi_pointer = nullptr;
         psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(psi);
         const int nbands = psi_t->get_nbands();
@@ -359,23 +359,25 @@ void update_psi_charge_pw_cpu(ScState& state,
     {
         // Full PW diagonalization: subspace rotation provides a good initial guess,
         // then HSolverPW iteratively refines psi in the full plane-wave space and calls psiToRho.
+        const Input_para& solver_input = PARAM.inp;
         hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hsolver_pw_obj(
             pw_wfc,
-            PARAM.inp.calculation,
-            PARAM.inp.basis_type,
-            PARAM.inp.ks_solver,
+            solver_input.calculation,
+            solver_input.basis_type,
+            solver_input.ks_solver,
             PARAM.globalv.use_uspp,
-            PARAM.inp.nspin,
+            solver_input.nspin,
             hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
             hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-            PARAM.inp.nbands,
-            PARAM.inp.diago_smooth_ethr,
-            PARAM.inp.pw_diag_ndim,
-            PARAM.inp.diag_subspace,
-            PARAM.inp.nb2d,
-            PARAM.inp.use_k_continuity);
+            solver_input.nbands,
+            solver_input.diago_smooth_ethr,
+            solver_input.pw_diag_ndim,
+            solver_input.lobpcg_locking,
+            solver_input.diag_subspace,
+            solver_input.nb2d,
+            solver_input.use_k_continuity);
 
         hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_CPU> op(hamilt_t, pw_wfc);
         hsolver_pw_obj.solve(op,
@@ -420,7 +422,7 @@ void update_psi_charge_pw_gpu(ScState& state,
 
     psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(psi);
     hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(p_hamilt);
-    auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
+    projectors::OnsiteProjector<double, base_device::DEVICE_GPU>* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
 
     int nbands = psi_t->get_nbands();
     int npol = psi_t->get_npol();
@@ -472,23 +474,25 @@ void update_psi_charge_pw_gpu(ScState& state,
     // STAGE 2: Full-space update (GPU)
     if (pw_solve)
     {
+        const Input_para& solver_input = PARAM.inp;
         hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU> hsolver_pw_obj(
             pw_wfc,
-            PARAM.inp.calculation,
-            PARAM.inp.basis_type,
-            PARAM.inp.ks_solver,
+            solver_input.calculation,
+            solver_input.basis_type,
+            solver_input.ks_solver,
             PARAM.globalv.use_uspp,
-            PARAM.inp.nspin,
+            solver_input.nspin,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::SCF_ITER,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::PW_DIAG_THR,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::need_subspace,
-            PARAM.inp.nbands,
-            PARAM.inp.diago_smooth_ethr,
-            PARAM.inp.pw_diag_ndim,
-            PARAM.inp.diag_subspace,
-            PARAM.inp.nb2d,
-            PARAM.inp.use_k_continuity);
+            solver_input.nbands,
+            solver_input.diago_smooth_ethr,
+            solver_input.pw_diag_ndim,
+            solver_input.lobpcg_locking,
+            solver_input.diag_subspace,
+            solver_input.nb2d,
+            solver_input.use_k_continuity);
 
         hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_GPU> op(hamilt_t, pw_wfc);
         hsolver_pw_obj.solve(op,

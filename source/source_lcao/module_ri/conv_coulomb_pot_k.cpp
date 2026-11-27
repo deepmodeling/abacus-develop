@@ -76,13 +76,13 @@ namespace Conv_Coulomb_Pot_K
     {
         std::vector<double> psik2_ccp(orbs.get_psif().size(), 0.0);
 
-        for(const auto &param_list : coulomb_param)
+        for(const std::pair<const Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& param_list : coulomb_param)
         {
             switch(param_list.first)
             {
                 case Conv_Coulomb_Pot_K::Coulomb_Type::Fock:
                 {
-                    for(const auto &param : param_list.second)
+                    for(const std::map<std::string, std::string>& param : param_list.second)
                     {
                         if(param.at("singularity_correction") == "limits" || param.at("singularity_correction") == "massidda" || param.at("singularity_correction") == "carrier")
                             { psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_fock_limits( orbs.get_psif() ); }
@@ -95,7 +95,7 @@ namespace Conv_Coulomb_Pot_K
                 }
                 case Conv_Coulomb_Pot_K::Coulomb_Type::Erfc:
                 {
-                    for(const auto &param : param_list.second)
+                    for(const std::map<std::string, std::string>& param : param_list.second)
                     {
                         if(param.at("singularity_correction") == "limits" || param.at("singularity_correction") == "massidda" || param.at("singularity_correction") == "carrier")
                             { psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_erfc_limits( orbs.get_psif(), orbs.get_k_radial(), std::stod(param.at("omega")) ); }
@@ -156,14 +156,14 @@ namespace Conv_Coulomb_Pot_K
     {
         std::vector<double> psik2_ccp(orbs.get_psif().size(), 0.0);
 
-        for (const auto& param_list: coulomb_param)
+        for (const std::pair<const Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& param_list: coulomb_param)
         {
             switch (param_list.first)
             {
             case Conv_Coulomb_Pot_K::Coulomb_Type::Fock: {
-                for (const auto& param: param_list.second)
+                for (const std::map<std::string, std::string>& param: param_list.second)
                 {
-                    const auto cut_mode = param.find("rpa_cut_coulomb");
+                    const std::map<std::string, std::string>::const_iterator cut_mode = param.find("rpa_cut_coulomb");
                     if (cut_mode != param.end() && cut_mode->second == "log_erfc")
                     {
                         const double cut_radius = std::stod(param.at("Rcut"));
@@ -187,7 +187,7 @@ namespace Conv_Coulomb_Pot_K
                 break;
             }
             case Conv_Coulomb_Pot_K::Coulomb_Type::Erfc: {
-                for (const auto& param: param_list.second)
+                for (const std::map<std::string, std::string>& param: param_list.second)
                 {
                     if (param.at("singularity_correction") == "limits"
                         || param.at("singularity_correction") == "massidda"

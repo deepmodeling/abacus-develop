@@ -4,6 +4,7 @@
 //==========================================================
 
 #include "rdmft.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_rdmft/rdmft_tools.h"
 #include "source_base/basis_flattened_indexing.h"
 #include "source_base/timer.h"
@@ -357,9 +358,16 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     {
         this->pelec->f_en.deband  = this->pelec->cal_delta_eband(*ucell);
         E_descf = pelec->f_en.descf = 0.0;
+        const bool sc_mag_switch = PARAM.inp.sc_mag_switch;
+        if (sc_mag_switch)
+        {
+            spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+            const double escon = sc.cal_escon();
+            this->pelec->set_spin_constrain_energy(escon);
+        }
         this->pelec->cal_energies(2,
                                   PARAM.inp.imp_sol,
-                                  PARAM.inp.sc_mag_switch,
+                                  sc_mag_switch,
                                   PARAM.inp.dft_plus_u,
                                   PARAM.inp.assume_isolated);
         Etotal = this->pelec->f_en.etot;

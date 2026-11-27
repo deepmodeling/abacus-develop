@@ -19,13 +19,14 @@ namespace hamilt
 {
 
 template <typename T, typename Device>
-HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
-                              ModulePW::PW_Basis_K* wfc_basis,
-                              K_Vectors* pkv,
-                              pseudopot_cell_vnl* nlpp,
-                              Plus_U_Base* p_dftu,
-                              const UnitCell* ucell,
-                              const General_Exx_Info* exx_info)
+HamiltPW<T, Device>::HamiltPW(
+    elecstate::Potential *pot_in,
+    ModulePW::PW_Basis_K *wfc_basis,
+    K_Vectors *pkv,
+    pseudopot_cell_vnl *nlpp,
+    Plus_U_Base *p_dftu,
+    const UnitCell *ucell,
+    const General_Exx_Info *exx_info)
     : ucell(ucell)
 {
     this->classname = "HamiltPW";
@@ -35,15 +36,16 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     this->vkb = this->ppcell->template get_vkb_data<Real>();
     const Real tpiba2 = static_cast<Real>(ucell->tpiba2);
     const Real tpiba = static_cast<Real>(ucell->tpiba);
-    const int* isk = pkv->isk.data();
-    const Real* gk2 = wfc_basis->get_gk2_data<Real>();
+    const int *isk = pkv->isk.data();
+    const Real *gk2 = wfc_basis->get_gk2_data<Real>();
     const bool is_tddft = PARAM.inp.esolver_type == "tddft";
     const bool velocity_gauge = is_tddft && PARAM.inp.td_stype == 1;
 
     if (PARAM.inp.t_in_h)
     {
         // Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>
-        Operator<T, Device>* ekinetic = new Ekinetic<OperatorPW<T, Device>>(tpiba2, gk2, wfc_basis->nks, wfc_basis->npwk_max);
+        Operator<T, Device> *ekinetic =
+            new Ekinetic<OperatorPW<T, Device>>(tpiba2, gk2, wfc_basis->nks, wfc_basis->npwk_max);
         if (this->ops == nullptr)
         {
             this->ops = ekinetic;
@@ -56,7 +58,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         // Add the velocity-gauge kinetic correction 2*A*p + A^2.
         if (velocity_gauge)
         {
-            Operator<T, Device>* td_ekinetic = new TDEkineticPW<T, Device>(wfc_basis);
+            Operator<T, Device> *td_ekinetic = new TDEkineticPW<T, Device>(wfc_basis);
 
             if (this->ops == nullptr)
             {
@@ -68,7 +70,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
             }
         }
     }
-    const Input_para& input = PARAM.inp;
+    const Input_para &input = PARAM.inp;
     if (input.vl_in_h)
     {
         std::vector<std::string> pot_register_in;
@@ -126,11 +128,9 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         {
             // register Potential by gathered operator
             pot_in->pot_register(pot_register_in, input);
-            Operator<T, Device>* veff = new Veff<OperatorPW<T, Device>>(isk,
-                                                                        pot_in->get_veff_smooth_data<Real>(),
-                                                                        pot_in->get_veff_smooth().nr,
-                                                                        pot_in->get_veff_smooth().nc,
-                                                                        wfc_basis);
+            Operator<T, Device> *veff = new Veff<OperatorPW<T, Device>>(
+                isk, pot_in->get_veff_smooth_data<Real>(), pot_in->get_veff_smooth().nr, pot_in->get_veff_smooth().nc,
+                wfc_basis);
             if (this->ops == nullptr)
             {
                 this->ops = veff;
@@ -139,18 +139,15 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
             {
                 this->ops->add(veff);
             }
-            Operator<T, Device>* meta = new Meta<OperatorPW<T, Device>>(tpiba,
-                                                                        isk,
-                                                                        pot_in->get_vofk_smooth_data<Real>(),
-                                                                        pot_in->get_vofk_smooth().nr,
-                                                                        pot_in->get_vofk_smooth().nc,
-                                                                        wfc_basis);
+            Operator<T, Device> *meta = new Meta<OperatorPW<T, Device>>(
+                tpiba, isk, pot_in->get_vofk_smooth_data<Real>(), pot_in->get_vofk_smooth().nr,
+                pot_in->get_vofk_smooth().nc, wfc_basis);
             this->ops->add(meta);
         }
     }
     if (PARAM.inp.vnl_in_h)
     {
-        Operator<T, Device>* nonlocal = nullptr;
+        Operator<T, Device> *nonlocal = nullptr;
 
         // Use vector-potential-shifted projectors in the velocity gauge.
         if (velocity_gauge)
@@ -178,22 +175,15 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     {
         const int nspin = PARAM.inp.nspin;
         const bool cal_dftu = dft_plus_u > 0;
-        Operator<T, Device>* onsite_proj
-            = new OnsiteProj<OperatorPW<T, Device>>(isk, ucell, p_dftu, nspin, cal_delta_spin, cal_dftu);
+        Operator<T, Device> *onsite_proj =
+            new OnsiteProj<OperatorPW<T, Device>>(isk, ucell, p_dftu, nspin, cal_delta_spin, cal_dftu);
         this->ops->add(onsite_proj);
     }
     if (exx_info && exx_info->cal_exx)
     {
-        OperatorEXXPW<T, Device>* exx = new OperatorEXXPW<T, Device>(isk,
-                                                wfc_basis,
-                                                pot_in->get_rho_basis(),
-                                                pkv,
-                                                ucell,
-                                                *exx_info,
-                                                PARAM.inp.nspin,
-                                                GlobalV::KPAR,
-                                                GlobalV::MY_RANK,
-                                                GlobalV::MY_POOL);
+        OperatorEXXPW<T, Device> *exx = new OperatorEXXPW<T, Device>(
+            isk, wfc_basis, pot_in->get_rho_basis(), pkv, ucell, *exx_info, PARAM.inp.nspin, GlobalV::KPAR,
+            GlobalV::MY_RANK, GlobalV::MY_POOL);
         if (this->ops == nullptr)
         {
             this->ops = exx;
@@ -217,24 +207,26 @@ HamiltPW<T, Device>::~HamiltPW()
 }
 
 template <typename T, typename Device>
-void HamiltPW<T, Device>::bind_td_state(const Real* veff, const ModuleBase::Vector3<double>& A_ha)
+void HamiltPW<T, Device>::bind_td_state(const Real *veff, const ModuleBase::Vector3<double> &A_ha)
 {
-    Operator<T, Device>* op = this->ops;
+    Operator<T, Device> *op = this->ops;
     while (op != nullptr)
     {
         if (op->get_cal_type() == calculation_type::pw_veff)
         {
-            static_cast<Veff<OperatorPW<T, Device>>*>(op)->set_veff(veff);
+            static_cast<Veff<OperatorPW<T, Device>> *>(op)->set_veff(veff);
         }
         else if (op->get_cal_type() == calculation_type::pw_ekinetic_td)
         {
-            static_cast<TDEkineticPW<T, Device>*>(op)->set_A_ha(A_ha);
+            static_cast<TDEkineticPW<T, Device> *>(op)->set_A_ha(A_ha);
         }
         else if (op->get_cal_type() == calculation_type::pw_nonlocal)
         {
-            TDNonlocalPW<T, Device>* td_nonlocal = dynamic_cast<TDNonlocalPW<T, Device>*>(op);
+            TDNonlocalPW<T, Device> *td_nonlocal = dynamic_cast<TDNonlocalPW<T, Device> *>(op);
             if (td_nonlocal != nullptr)
+            {
                 td_nonlocal->set_A_ha(A_ha);
+            }
         }
         op = op->next_op;
     }
@@ -253,11 +245,12 @@ void HamiltPW<T, Device>::updateHk(const int ik)
 // Requires the products of psi with all beta functions in array
 // becp(nkb,m) (maybe calculated in hPsi).
 template <typename T, typename Device>
-void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
-                               T* spsi,         // spsi
-                               const int nrow,  // dimension of spsi: nbands * nrow
-                               const int npw,   // number of plane waves
-                               const int nbands // number of bands
+void HamiltPW<T, Device>::sPsi(
+    const T *psi_in, // psi
+    T *spsi,         // spsi
+    const int nrow,  // dimension of spsi: nbands * nrow
+    const int npw,   // number of plane waves
+    const int nbands // number of bands
 ) const
 {
     ModuleBase::TITLE("HamiltPW", "sPsi");
@@ -268,8 +261,8 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
     syncmem_op()(spsi, psi_in, static_cast<size_t>(nbands * nrow));
     if (PARAM.globalv.use_uspp)
     {
-        T* becp = nullptr;
-        T* ps = nullptr;
+        T *becp = nullptr;
+        T *ps = nullptr;
         // psi updated, thus update <beta|psi>
         if (this->ppcell->nkb > 0)
         {
@@ -279,23 +272,15 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
             if (nbands == 1)
             {
                 int inc = 1;
-                gemv_op()(transa, npw, this->ppcell->nkb, &one, this->vkb, this->ppcell->vkbnc, psi_in, inc, &zero, becp, inc);
+                gemv_op()(
+                    transa, npw, this->ppcell->nkb, &one, this->vkb, this->ppcell->vkbnc, psi_in, inc, &zero, becp,
+                    inc);
             }
             else
             {
-                gemm_op()(transa,
-                          transb,
-                          this->ppcell->nkb,
-                          nbands,
-                          npw,
-                          &one,
-                          this->vkb,
-                          this->ppcell->vkbnc,
-                          psi_in,
-                          nrow,
-                          &zero,
-                          becp,
-                          this->ppcell->nkb);
+                gemm_op()(
+                    transa, transb, this->ppcell->nkb, nbands, npw, &one, this->vkb, this->ppcell->vkbnc, psi_in, nrow,
+                    &zero, becp, this->ppcell->nkb);
             }
 
             Parallel_Reduce::reduce_pool(becp, this->ppcell->nkb * nbands);
@@ -310,14 +295,14 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         char transb = 'N';
         for (int it = 0; it < ucell->ntype; it++)
         {
-            Atom* atoms = &ucell->atoms[it];
+            Atom *atoms = &ucell->atoms[it];
             if (atoms->ncpp.tvanp)
             {
                 const int nh = atoms->ncpp.nh;
-                T* qqc = nullptr;
+                T *qqc = nullptr;
                 resmem_complex_op()(qqc, nh * nh, "Hamilt<PW>::qqc");
                 std::vector<T> qqc_host(nh * nh);
-                const double* qq_now_host = &this->ppcell->qq_nt.ptr[it * this->ppcell->nhm * this->ppcell->nhm];
+                const double *qq_now_host = &this->ppcell->qq_nt.ptr[it * this->ppcell->nhm * this->ppcell->nhm];
 
                 for (int i = 0; i < nh; i++)
                 {
@@ -335,19 +320,9 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                 for (int ia = 0; ia < atoms->na; ia++)
                 {
                     const int iat = ucell->itia2iat(it, ia);
-                    gemm_op()(transa,
-                              transb,
-                              nh,
-                              nbands,
-                              nh,
-                              &one,
-                              qqc,
-                              nh,
-                              &becp[this->ppcell->indv_ijkb0[iat]],
-                              this->ppcell->nkb,
-                              &zero,
-                              &ps[this->ppcell->indv_ijkb0[iat]],
-                              this->ppcell->nkb);
+                    gemm_op()(
+                        transa, transb, nh, nbands, nh, &one, qqc, nh, &becp[this->ppcell->indv_ijkb0[iat]],
+                        this->ppcell->nkb, &zero, &ps[this->ppcell->indv_ijkb0[iat]], this->ppcell->nkb);
                 }
                 delmem_complex_op()(qqc);
             }
@@ -360,19 +335,9 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         }
         else
         {
-            gemm_op()(transa,
-                      transb,
-                      npw,
-                      nbands,
-                      this->ppcell->nkb,
-                      &one,
-                      this->vkb,
-                      this->ppcell->vkbnc,
-                      ps,
-                      this->ppcell->nkb,
-                      &one,
-                      spsi,
-                      nrow);
+            gemm_op()(
+                transa, transb, npw, nbands, this->ppcell->nkb, &one, this->vkb, this->ppcell->vkbnc, ps,
+                this->ppcell->nkb, &one, spsi, nrow);
         }
         delmem_complex_op()(ps);
         delmem_complex_op()(becp);
@@ -380,14 +345,14 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
 }
 
 template <typename T, typename Device>
-void HamiltPW<T, Device>::set_exx_helper(Exx_Helper<T, Device>& exx_helper)
+void HamiltPW<T, Device>::set_exx_helper(Exx_Helper<T, Device> &exx_helper)
 {
-    auto op = this->ops;
+    Operator<T, Device> *op = this->ops;
     while (op != nullptr)
     {
         if (op->get_cal_type() == calculation_type::pw_exx)
         {
-            exx_helper.op_exx = reinterpret_cast<OperatorEXXPW<T, Device>*>(op);
+            exx_helper.op_exx = reinterpret_cast<OperatorEXXPW<T, Device> *>(op);
             exx_helper.set_op();
         }
         op = op->next_op;

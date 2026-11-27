@@ -12,16 +12,45 @@
 
 #include <cerrno>
 #include <string>
+#include <vector>
 
 #ifdef _WIN32
 #include <direct.h> // _mkdir
 #else
 #include <sys/stat.h>  // mkdir
 #include <sys/types.h>
+#include <unistd.h> // getcwd
 #endif
 
 namespace ModuleBase
 {
+
+/// Return an absolute path for logging, or the original path if getcwd fails.
+inline std::string absolute_path_for_log(const std::string& path)
+{
+    if (path.empty() || path[0] == '/')
+    {
+        return path;
+    }
+    std::vector<char> cwd(256);
+    while (true)
+    {
+#ifdef _WIN32
+        char* result = _getcwd(cwd.data(), static_cast<int>(cwd.size()));
+#else
+        char* result = getcwd(cwd.data(), cwd.size());
+#endif
+        if (result != nullptr)
+        {
+            return std::string(result) + "/" + path;
+        }
+        if (errno != ERANGE)
+        {
+            return path;
+        }
+        cwd.resize(cwd.size() * 2);
+    }
+}
 
 /**
  * @brief Create a single directory, portably.

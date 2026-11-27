@@ -5,8 +5,8 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_pw/module_pwdft/nonlocal_maths.h"
 
 #include <numeric>
@@ -14,14 +14,15 @@
 namespace hamilt
 {
 template <typename FPTYPE, typename Device>
-Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(const pseudopot_cell_vnl* nlpp_in,
-                                                     const UnitCell* ucell_in,
-                                                     const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-                                                     const K_Vectors* kv_in,
-                                                     const ModulePW::PW_Basis_K* wfc_basis_in,
-                                                     const Structure_Factor* sf_in,
-                                                     const ModuleBase::matrix& wg,
-                                                     const ModuleBase::matrix& ekb)
+Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(
+    const pseudopot_cell_vnl *nlpp_in,
+    const UnitCell *ucell_in,
+    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in,
+    const K_Vectors *kv_in,
+    const ModulePW::PW_Basis_K *wfc_basis_in,
+    const Structure_Factor *sf_in,
+    const ModuleBase::matrix &wg,
+    const ModuleBase::matrix &ekb)
     : nlpp_(nlpp_in), ucell_(ucell_in), psi_(psi_in), kv_(kv_in), wfc_basis_(wfc_basis_in), sf_(sf_in)
 {
     // get the device context
@@ -70,24 +71,24 @@ Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(const pseudopot_cell_vnl* n
     }
     // allocate memory
     this->allocate_memory(wg, ekb, this->nproj, nch);
-    this->ppcell_vkb
-        = (this->device == base_device::GpuDevice) ? this->nlpp_->template get_vkb_data<FPTYPE>() : this->nlpp_->vkb.c;
+    this->ppcell_vkb =
+        (this->device == base_device::GpuDevice) ? this->nlpp_->template get_vkb_data<FPTYPE>() : this->nlpp_->vkb.c;
 }
 
 template <typename FPTYPE, typename Device>
 Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(
-    const std::vector<int>& nproj, // number of projectors for each atom type
-    const std::vector<int>& lproj,
-    const ModuleBase::realArray& tab, // radials' spherical bessel transform
-    const ModuleBase::matrix& nhtol,  // (it, ich) -> l, the ich is (l, m)-distinctive index
-    std::complex<FPTYPE>* vkb_buf,    // the vkb buffer
-    const UnitCell* ucell_in,
-    const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-    const K_Vectors* kv_in,
-    const ModulePW::PW_Basis_K* wfc_basis_in,
-    const Structure_Factor* sf_in,
-    const ModuleBase::matrix& wg,
-    const ModuleBase::matrix& ekb)
+    const std::vector<int> &nproj, // number of projectors for each atom type
+    const std::vector<int> &lproj,
+    const ModuleBase::realArray &tab, // radials' spherical bessel transform
+    const ModuleBase::matrix &nhtol,  // (it, ich) -> l, the ich is (l, m)-distinctive index
+    std::complex<FPTYPE> *vkb_buf,    // the vkb buffer
+    const UnitCell *ucell_in,
+    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in,
+    const K_Vectors *kv_in,
+    const ModulePW::PW_Basis_K *wfc_basis_in,
+    const Structure_Factor *sf_in,
+    const ModuleBase::matrix &wg,
+    const ModuleBase::matrix &ekb)
 {
     // this is a constructor for general case, including vnl, dftu, deltaspin, deepks, etc.
     // what is needed for this kind of constructor?
@@ -167,10 +168,11 @@ Onsite_Proj_tools<FPTYPE, Device>::~Onsite_Proj_tools()
 }
 
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::allocate_memory(const ModuleBase::matrix& wg,
-                                                        const ModuleBase::matrix& ekb,
-                                                        const std::vector<int>& nproj,
-                                                        const std::vector<int>& nch)
+void Onsite_Proj_tools<FPTYPE, Device>::allocate_memory(
+    const ModuleBase::matrix &wg,
+    const ModuleBase::matrix &ekb,
+    const std::vector<int> &nproj,
+    const std::vector<int> &nch)
 {
     // allocate memory
 

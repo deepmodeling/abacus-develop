@@ -15,51 +15,52 @@
 namespace DFTU_BASE
 {
 
-const char* const read_occup_context = "DFTU_BASE::read_occup_m";
+const char *const read_occup_context = "DFTU_BASE::read_occup_m";
 
 struct OccMatReadState
 {
-    OccMatReadState(std::ifstream& input,
-                    const std::string& filename,
-                    const UnitCell& ucell,
-                    OccupationMatrix& occ,
-                    int nspin,
-                    const OccmatSocLayout& soc_layout)
-        : input(input),
-          filename(filename),
-          ucell(ucell),
-          occ(occ),
-          nspin(nspin),
-          soc_layout(soc_layout),
-          line_number(0)
+    OccMatReadState(
+        std::ifstream &input,
+        const std::string &filename,
+        const UnitCell &ucell,
+        OccupationMatrix &occ,
+        int nspin,
+        const OccmatSocLayout &soc_layout)
+        : input(input), filename(filename), ucell(ucell), occ(occ), nspin(nspin), soc_layout(soc_layout), line_number(0)
     {
     }
 
-    std::ifstream& input;
-    const std::string& filename;
-    const UnitCell& ucell;
-    OccupationMatrix& occ;
+    std::ifstream &input;
+    const std::string &filename;
+    const UnitCell &ucell;
+    OccupationMatrix &occ;
     int nspin;
     OccmatSocLayout soc_layout;
     int line_number;
 };
 
-[[noreturn]] static void read_occup_format_error(const OccMatReadState& state);
-static bool read_occup_data_line(OccMatReadState& state, std::string& line);
-static void read_occup_validate_configuration(const UnitCell& ucell,
-                                               const std::vector<int>& l_channel,
-                                               int nspin,
-                                               int npol,
-                                               const OccmatSocLayout& soc_layout);
-static void read_occup_atom_block(OccMatReadState& state, int type, int iat, int l);
+[[noreturn]] static void read_occup_format_error(const OccMatReadState &state);
+static bool read_occup_data_line(OccMatReadState &state, std::string &line);
+static void read_occup_validate_configuration(
+    const UnitCell &ucell,
+    const std::vector<int> &l_channel,
+    int nspin,
+    int npol,
+    const OccmatSocLayout &soc_layout);
+static void read_occup_atom_block(
+    OccMatReadState &state,
+    int type,
+    int iat,
+    int l);
 
-void read_occup_m(const UnitCell& ucell,
-                  OccupationMatrix& occ,
-                  const std::vector<int>& l_channel,
-                  const std::string& fn,
-                  int nspin,
-                  int npol,
-                  const OccmatSocLayout& soc_layout)
+void read_occup_m(
+    const UnitCell &ucell,
+    OccupationMatrix &occ,
+    const std::vector<int> &l_channel,
+    const std::string &fn,
+    int nspin,
+    int npol,
+    const OccmatSocLayout &soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "read_occup_m");
     if (GlobalV::MY_RANK != 0)
@@ -72,8 +73,7 @@ void read_occup_m(const UnitCell& ucell,
     std::ifstream input(fn.c_str());
     if (!input)
     {
-        ModuleBase::WARNING_QUIT(read_occup_context,
-                                 "Can not open compact occupation-matrix file " + fn);
+        ModuleBase::WARNING_QUIT(read_occup_context, "Can not open compact occupation-matrix file " + fn);
     }
 
     GlobalV::ofs_running << " DFT+U: read occupation matrix from " << fn << std::endl;
@@ -102,7 +102,7 @@ void read_occup_m(const UnitCell& ucell,
     }
 }
 
-[[noreturn]] static void read_occup_format_error(const OccMatReadState& state)
+[[noreturn]] static void read_occup_format_error(const OccMatReadState &state)
 {
     std::ostringstream message;
     message << "Invalid compact occupation-matrix format in " << state.filename;
@@ -114,7 +114,7 @@ void read_occup_m(const UnitCell& ucell,
     ModuleBase::WARNING_QUIT(read_occup_context, message.str());
 }
 
-static bool read_occup_data_line(OccMatReadState& state, std::string& line)
+static bool read_occup_data_line(OccMatReadState &state, std::string &line)
 {
     while (std::getline(state.input, line))
     {
@@ -135,32 +135,31 @@ static bool read_occup_data_line(OccMatReadState& state, std::string& line)
 }
 
 static void read_occup_validate_configuration(
-    const UnitCell& ucell,
-    const std::vector<int>& l_channel,
+    const UnitCell &ucell,
+    const std::vector<int> &l_channel,
     const int nspin,
     const int npol,
-    const OccmatSocLayout& soc_layout)
+    const OccmatSocLayout &soc_layout)
 {
     bool valid = static_cast<int>(l_channel.size()) == ucell.ntype;
     valid = valid && (nspin == 1 || nspin == 2 || nspin == 4);
     valid = valid && npol == ((nspin == 4) ? 2 : 1);
-    valid = valid && (soc_layout == DFTU_BASE::SOC_LAYOUT_PAULI
-                      || soc_layout == DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    valid = valid && (soc_layout == DFTU_BASE::SOC_LAYOUT_PAULI || soc_layout == DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
     for (int type = 0; valid && type < ucell.ntype; ++type)
     {
         valid = l_channel[type] >= -1 && l_channel[type] <= ucell.atoms[type].nwl;
     }
     if (!valid)
     {
-        ModuleBase::WARNING_QUIT(read_occup_context,
-                                 "Invalid DFT+U occupation reader configuration.");
+        ModuleBase::WARNING_QUIT(read_occup_context, "Invalid DFT+U occupation reader configuration.");
     }
 }
 
-static void read_occup_atom_header(OccMatReadState& state,
-                                   const int type,
-                                   const int iat,
-                                   const int l)
+static void read_occup_atom_header(
+    OccMatReadState &state,
+    const int type,
+    const int iat,
+    const int l)
 {
     std::string line;
     if (!read_occup_data_line(state, line))
@@ -175,11 +174,9 @@ static void read_occup_atom_header(OccMatReadState& state,
     std::string mag_keyword;
     int atom_index = 0;
     int file_l = -1;
-    if (!(header >> element >> atom_keyword >> atom_index >> l_keyword >> file_l
-          >> mag_keyword)
-        || element != state.ucell.atoms[type].label || atom_keyword != "Atom"
-        || atom_index != iat + 1 || l_keyword != "L" || file_l != l
-        || mag_keyword != "mag")
+    if (!(header >> element >> atom_keyword >> atom_index >> l_keyword >> file_l >> mag_keyword) ||
+        element != state.ucell.atoms[type].label || atom_keyword != "Atom" || atom_index != iat + 1 ||
+        l_keyword != "L" || file_l != l || mag_keyword != "mag")
     {
         read_occup_format_error(state);
     }
@@ -200,7 +197,7 @@ static void read_occup_atom_header(OccMatReadState& state,
     }
 }
 
-static void read_occup_block_label(OccMatReadState& state, const int block)
+static void read_occup_block_label(OccMatReadState &state, const int block)
 {
     std::string line;
     if (!read_occup_data_line(state, line))
@@ -215,10 +212,9 @@ static void read_occup_block_label(OccMatReadState& state, const int block)
     {
         std::string spin_pair;
         std::string component;
-        const char* expected_component = (block == 1) ? "re" : "im";
-        if (!(label >> spin_keyword >> spin_pair >> component)
-            || spin_keyword != "spin" || spin_pair != "12"
-            || component != expected_component)
+        const char *expected_component = (block == 1) ? "re" : "im";
+        if (!(label >> spin_keyword >> spin_pair >> component) || spin_keyword != "spin" || spin_pair != "12" ||
+            component != expected_component)
         {
             read_occup_format_error(state);
         }
@@ -229,9 +225,8 @@ static void read_occup_block_label(OccMatReadState& state, const int block)
         std::string nelec_keyword;
         double nelec = 0.0;
         const int expected_spin = (block == 0) ? 1 : 2;
-        if (!(label >> spin_keyword >> spin >> nelec_keyword >> nelec)
-            || spin_keyword != "spin" || spin != expected_spin
-            || nelec_keyword != "nelec" || !std::isfinite(nelec))
+        if (!(label >> spin_keyword >> spin >> nelec_keyword >> nelec) || spin_keyword != "spin" ||
+            spin != expected_spin || nelec_keyword != "nelec" || !std::isfinite(nelec))
         {
             read_occup_format_error(state);
         }
@@ -244,8 +239,7 @@ static void read_occup_block_label(OccMatReadState& state, const int block)
     }
 }
 
-static std::vector<double> read_occup_matrix(OccMatReadState& state,
-                                             const int size)
+static std::vector<double> read_occup_matrix(OccMatReadState &state, const int size)
 {
     std::vector<double> matrix(size * size, 0.0);
     for (int row = 0; row < size; ++row)
@@ -276,10 +270,11 @@ static std::vector<double> read_occup_matrix(OccMatReadState& state,
     return matrix;
 }
 
-static void read_occup_store_blocks(OccMatReadState& state,
-                                    const int iat,
-                                    const int l,
-                                    const std::vector<std::vector<double>>& blocks)
+static void read_occup_store_blocks(
+    OccMatReadState &state,
+    const int iat,
+    const int l,
+    const std::vector<std::vector<double>> &blocks)
 {
     const int size = 2 * l + 1;
     if (state.nspin != 4)
@@ -309,28 +304,23 @@ static void read_occup_store_blocks(OccMatReadState& state,
         for (int row = 0; row < size; ++row)
         {
             const int block_offset = row * size;
-            std::copy_n(blocks[0].begin() + block_offset,
-                        size,
-                        matrix.begin() + row * matrix_size);
-            std::copy_n(blocks[1].begin() + block_offset,
-                        size,
-                        matrix.begin() + row * matrix_size + size);
+            std::copy_n(blocks[0].begin() + block_offset, size, matrix.begin() + row * matrix_size);
+            std::copy_n(blocks[1].begin() + block_offset, size, matrix.begin() + row * matrix_size + size);
             for (int column = 0; column < size; ++column)
             {
                 matrix[(size + row) * matrix_size + column] = blocks[1][column * size + row];
             }
-            std::copy_n(blocks[3].begin() + block_offset,
-                        size,
-                        matrix.begin() + (size + row) * matrix_size + size);
+            std::copy_n(blocks[3].begin() + block_offset, size, matrix.begin() + (size + row) * matrix_size + size);
         }
     }
     state.occ.set_flat(iat, l, 0, matrix);
 }
 
-static void read_occup_atom_block(OccMatReadState& state,
-                                  const int type,
-                                  const int iat,
-                                  const int l)
+static void read_occup_atom_block(
+    OccMatReadState &state,
+    const int type,
+    const int iat,
+    const int l)
 {
     read_occup_atom_header(state, type, iat, l);
 

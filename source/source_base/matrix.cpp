@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#include <new>
 
 #include "matrix.h"
 
@@ -40,7 +41,7 @@ matrix::matrix( const int nrows, const int ncols, const bool flag_zero )
 {
     if( nr && nc )
     {
-        auto handler_old = std::set_new_handler(matrixAlloc);
+        std::new_handler handler_old = std::set_new_handler(matrixAlloc);
         c = new double[nr*nc];
         std::set_new_handler(handler_old);
         if(flag_zero)	this->zero_out();
@@ -54,7 +55,7 @@ matrix::matrix( const matrix &m_in )
 {
     if( nr && nc )
     {
-        auto handler_old = std::set_new_handler(matrixAlloc);
+        std::new_handler handler_old = std::set_new_handler(matrixAlloc);
         c = new double[nr*nc];
         std::set_new_handler(handler_old);
         memcpy( c, m_in.c, nr*nc*sizeof(double) );
@@ -137,14 +138,14 @@ void matrix::create( const int nrow, const int ncol, const bool flag_zero )
             if( size!=nr*nc )
             {
                 delete[] c;
-                auto handler_old = std::set_new_handler(matrixAlloc);			
+                std::new_handler handler_old = std::set_new_handler(matrixAlloc);
                 c = new double[size];
                 std::set_new_handler(handler_old);
             }
         }
         else
         {
-            auto handler_old = std::set_new_handler(matrixAlloc);
+            std::new_handler handler_old = std::set_new_handler(matrixAlloc);
             c = new double[nrow * ncol];
             std::set_new_handler(handler_old);
         }			

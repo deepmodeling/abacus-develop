@@ -13,7 +13,7 @@ namespace hamilt
 {
 
 template <typename FPTYPE, typename Device>
-void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb_deri_f(const int& ik, const int& nbdall, const int& ipol)
+void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb_deri_f(const int &ik, const int &nbdall, const int &ipol)
 {
     ModuleBase::TITLE("FS_Nonlocal_tools", "cal_vkb_deri");
     const int npol = this->ucell_->get_npol();
@@ -23,8 +23,8 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb_deri_f(const int& ik, const int&
         resmem_complex_op()(dbecp, 3 * size_becp);
     }
 
-    const std::complex<FPTYPE>* vkb_ptr = this->ppcell_vkb;
-    std::complex<FPTYPE>* vkb_deri_ptr = this->ppcell_vkb;
+    const std::complex<FPTYPE> *vkb_ptr = this->ppcell_vkb;
+    std::complex<FPTYPE> *vkb_deri_ptr = this->ppcell_vkb;
 
     const int npw = this->wfc_basis_->npwk[ik];
     if (this->pre_ik_f == -1)
@@ -36,7 +36,8 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb_deri_f(const int& ik, const int&
 
     if (this->pre_ik_f != ik)
     {
-        this->transfer_gcar(npw, this->wfc_basis_->npwk_max, &(this->wfc_basis_->gcar[ik * this->wfc_basis_->npwk_max].x));
+        this->transfer_gcar(
+            npw, this->wfc_basis_->npwk_max, &(this->wfc_basis_->gcar[ik * this->wfc_basis_->npwk_max].x));
     }
 
     this->save_vkb(ik, ipol);
@@ -48,43 +49,34 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb_deri_f(const int& ik, const int&
 }
 
 template <typename FPTYPE, typename Device>
-void FS_Nonlocal_tools<FPTYPE, Device>::cal_dbecp_f(const int& ik,
-                                                    const int& nbdall,
-                                                    const int& npm,
-                                                    const int& ipol,
-                                                    const std::complex<FPTYPE>* ppsi,
-                                                    const int& nbd0)
+void FS_Nonlocal_tools<FPTYPE, Device>::cal_dbecp_f(
+    const int &ik,
+    const int &nbdall,
+    const int &npm,
+    const int &ipol,
+    const std::complex<FPTYPE> *ppsi,
+    const int &nbd0)
 {
     ModuleBase::TITLE("FS_Nonlocal_tools", "cal_dbecp_f");
     const int npol = this->ucell_->get_npol();
     const int size_becp = nbdall * npol * this->nkb;
     const int index0 = nbd0 * npol * this->nkb;
-    std::complex<FPTYPE>* dbecp_ptr = this->dbecp + ipol * size_becp + index0;
-    std::complex<FPTYPE>* vkb_deri_ptr = this->ppcell_vkb;
+    std::complex<FPTYPE> *dbecp_ptr = this->dbecp + ipol * size_becp + index0;
+    std::complex<FPTYPE> *vkb_deri_ptr = this->ppcell_vkb;
     const int npm_npol = npm * npol;
     const int npw = this->wfc_basis_->npwk[ik];
 
     // do gemm to get dbecp and revert the ppcell_vkb for next ipol
     const char transa = 'C';
     const char transb = 'N';
-    gemm_op()(transa,
-              transb,
-              this->nkb,
-              npm_npol,
-              npw,
-              &ModuleBase::ONE,
-              vkb_deri_ptr,
-              npw,
-              ppsi,
-              this->max_npw,
-              &ModuleBase::ZERO,
-              dbecp_ptr,
-              this->nkb);
+    gemm_op()(
+        transa, transb, this->nkb, npm_npol, npw, &ModuleBase::ONE, vkb_deri_ptr, npw, ppsi, this->max_npw,
+        &ModuleBase::ZERO, dbecp_ptr, this->nkb);
 }
 
 // save_vkb
 template <typename FPTYPE, typename Device>
-void FS_Nonlocal_tools<FPTYPE, Device>::save_vkb(const int& ik, const int& ipol)
+void FS_Nonlocal_tools<FPTYPE, Device>::save_vkb(const int &ik, const int &ipol)
 {
     if (this->gcar_zero_counts[ipol] == 0)
     {
@@ -95,9 +87,9 @@ void FS_Nonlocal_tools<FPTYPE, Device>::save_vkb(const int& ik, const int& ipol)
     if (this->device == base_device::CpuDevice)
     {
         const int gcar_zero_count = this->gcar_zero_indexes[ipol * index_stride];
-        const int* gcar_zero_ptrs = &this->gcar_zero_indexes[ipol * index_stride + 1];
-        const std::complex<FPTYPE>* vkb_ptr = this->ppcell_vkb;
-        std::complex<FPTYPE>* vkb_save_ptr = this->vkb_save;
+        const int *gcar_zero_ptrs = &this->gcar_zero_indexes[ipol * index_stride + 1];
+        const std::complex<FPTYPE> *vkb_ptr = this->ppcell_vkb;
+        std::complex<FPTYPE> *vkb_save_ptr = this->vkb_save;
         // find the zero indexes to save the vkb values to vkb_save
         for (int ikb = 0; ikb < this->nkb; ++ikb)
         {
@@ -112,21 +104,16 @@ void FS_Nonlocal_tools<FPTYPE, Device>::save_vkb(const int& ik, const int& ipol)
     else
     {
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-        saveVkbValues<FPTYPE>(this->gcar_zero_indexes,
-                              this->ppcell_vkb,
-                              this->vkb_save,
-                              nkb,
-                              this->gcar_zero_counts[ipol],
-                              npw,
-                              ipol,
-                              index_stride);
+        saveVkbValues<FPTYPE>(
+            this->gcar_zero_indexes, this->ppcell_vkb, this->vkb_save, nkb, this->gcar_zero_counts[ipol], npw, ipol,
+            index_stride);
 #endif
     }
 }
 
 // revert_vkb
 template <typename FPTYPE, typename Device>
-void FS_Nonlocal_tools<FPTYPE, Device>::revert_vkb(const int& ik, const int& ipol)
+void FS_Nonlocal_tools<FPTYPE, Device>::revert_vkb(const int &ik, const int &ipol)
 {
     if (this->gcar_zero_counts[ipol] == 0)
     {
@@ -139,9 +126,9 @@ void FS_Nonlocal_tools<FPTYPE, Device>::revert_vkb(const int& ik, const int& ipo
     if (this->device == base_device::CpuDevice)
     {
         const int gcar_zero_count = this->gcar_zero_indexes[ipol * index_stride];
-        const int* gcar_zero_ptrs = &this->gcar_zero_indexes[ipol * index_stride + 1];
-        std::complex<FPTYPE>* vkb_ptr = this->ppcell_vkb;
-        const std::complex<FPTYPE>* vkb_save_ptr = this->vkb_save;
+        const int *gcar_zero_ptrs = &this->gcar_zero_indexes[ipol * index_stride + 1];
+        std::complex<FPTYPE> *vkb_ptr = this->ppcell_vkb;
+        const std::complex<FPTYPE> *vkb_save_ptr = this->vkb_save;
         // find the zero indexes to save the vkb values to vkb_save
         for (int ikb = 0; ikb < this->nkb; ++ikb)
         {
@@ -156,29 +143,23 @@ void FS_Nonlocal_tools<FPTYPE, Device>::revert_vkb(const int& ik, const int& ipo
     else
     {
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-        revertVkbValues<FPTYPE>(this->gcar_zero_indexes,
-                                this->ppcell_vkb,
-                                this->vkb_save,
-                                nkb,
-                                this->gcar_zero_counts[ipol],
-                                npw,
-                                ipol,
-                                index_stride,
-                                coeff);
+        revertVkbValues<FPTYPE>(
+            this->gcar_zero_indexes, this->ppcell_vkb, this->vkb_save, nkb, this->gcar_zero_counts[ipol], npw, ipol,
+            index_stride, coeff);
 #endif
     }
     this->pre_ik_f = ik;
 }
 
 template <typename FPTYPE, typename Device>
-void FS_Nonlocal_tools<FPTYPE, Device>::transfer_gcar(const int& npw, const int& npw_max, const FPTYPE* gcar_in)
+void FS_Nonlocal_tools<FPTYPE, Device>::transfer_gcar(const int &npw, const int &npw_max, const FPTYPE *gcar_in)
 {
     std::vector<FPTYPE> gcar_tmp(3 * npw_max);
     gcar_tmp.assign(gcar_in, gcar_in + 3 * npw_max);
     const int index_stride = npw_max + 1;
     std::vector<int> gcar_zero_indexes_tmp(3 * index_stride);
 
-    int* gcar_zero_ptrs[3];
+    int *gcar_zero_ptrs[3];
     for (int i = 0; i < 3; i++)
     {
         gcar_zero_ptrs[i] = &gcar_zero_indexes_tmp[i * index_stride];
@@ -229,12 +210,13 @@ void FS_Nonlocal_tools<FPTYPE, Device>::transfer_gcar(const int& npw, const int&
 
 // cal_force
 template <typename FPTYPE, typename Device>
-void FS_Nonlocal_tools<FPTYPE, Device>::cal_force(const int& ik,
-                                                  const int& nbdall,
-                                                  const int& npm,
-                                                  const bool& occ,
-                                                  FPTYPE* force,
-                                                  const int& nbd0)
+void FS_Nonlocal_tools<FPTYPE, Device>::cal_force(
+    const int &ik,
+    const int &nbdall,
+    const int &npm,
+    const bool &occ,
+    FPTYPE *force,
+    const int &nbd0)
 {
     const int current_spin = this->kv_->isk[ik];
     const int force_nc = 3;
@@ -243,109 +225,82 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_force(const int& ik,
     // calculate the force
     if (npol == 1)
     {
-        FPTYPE* d_ekb_ik = nullptr;
+        FPTYPE *d_ekb_ik = nullptr;
         if (d_ekb != nullptr)
         {
             d_ekb_ik = d_ekb + this->nbands * ik;
         }
-        FPTYPE* d_wg_ik = d_wk + ik;
+        FPTYPE *d_wg_ik = d_wk + ik;
         if (occ)
         {
             d_wg_ik = d_wg + this->nbands * ik;
         }
 
-        cal_force_nl_op<FPTYPE, Device>()(this->ctx,
-                                          nondiagonal,
-                                          npm,
-                                          this->ntype,
-                                          current_spin,
-                                          this->nlpp_->deeq.getBound2(),
-                                          this->nlpp_->deeq.getBound3(),
-                                          this->nlpp_->deeq.getBound4(),
-                                          force_nc,
-                                          nbdall,
-                                          nkb,
-                                          atom_nh,
-                                          atom_na,
-                                          this->ucell_->tpiba,
-                                          d_wg_ik,
-                                          occ,
-                                          d_ekb_ik,
-                                          qq_nt,
-                                          deeq,
-                                          becp + index0,
-                                          dbecp + index0,
-                                          force);
+        cal_force_nl_op<FPTYPE, Device>()(
+            this->ctx, nondiagonal, npm, this->ntype, current_spin, this->nlpp_->deeq.getBound2(),
+            this->nlpp_->deeq.getBound3(), this->nlpp_->deeq.getBound4(), force_nc, nbdall, nkb, atom_nh, atom_na,
+            this->ucell_->tpiba, d_wg_ik, occ, d_ekb_ik, qq_nt, deeq, becp + index0, dbecp + index0, force);
     }
     else
     {
-        FPTYPE* d_ekb_ik = nullptr;
+        FPTYPE *d_ekb_ik = nullptr;
         if (d_ekb != nullptr)
         {
             d_ekb_ik = d_ekb + this->nbands * ik;
         }
-        FPTYPE* d_wg_ik = d_wk + ik;
+        FPTYPE *d_wg_ik = d_wk + ik;
         if (occ)
         {
             d_wg_ik = d_wg + this->nbands * ik;
         }
-        cal_force_nl_op<FPTYPE, Device>()(this->ctx,
-                                          npm,
-                                          this->ntype,
-                                          this->nlpp_->deeq_nc.getBound2(),
-                                          this->nlpp_->deeq_nc.getBound3(),
-                                          this->nlpp_->deeq_nc.getBound4(),
-                                          force_nc,
-                                          nbdall,
-                                          nkb,
-                                          atom_nh,
-                                          atom_na,
-                                          this->ucell_->tpiba,
-                                          d_wg_ik,
-                                          occ,
-                                          d_ekb_ik,
-                                          qq_nt,
-                                          this->nlpp_->template get_deeq_nc_data<FPTYPE>(),
-                                          becp + index0,
-                                          dbecp + index0,
-                                          force);
+        cal_force_nl_op<FPTYPE, Device>()(
+            this->ctx, npm, this->ntype, this->nlpp_->deeq_nc.getBound2(), this->nlpp_->deeq_nc.getBound3(),
+            this->nlpp_->deeq_nc.getBound4(), force_nc, nbdall, nkb, atom_nh, atom_na, this->ucell_->tpiba, d_wg_ik,
+            occ, d_ekb_ik, qq_nt, this->nlpp_->template get_deeq_nc_data<FPTYPE>(), becp + index0, dbecp + index0,
+            force);
     }
 }
 
 // template instantiation
-template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::cal_vkb_deri_f(const int&, const int&, const int&);
-template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::cal_dbecp_f(const int&,
-                                                                              const int&,
-                                                                              const int&,
-                                                                              const int&,
-                                                                              const std::complex<double>*,
-                                                                              const int&);
-template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::save_vkb(const int&, const int&);
-template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::revert_vkb(const int&, const int&);
-template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::transfer_gcar(const int&, const int&, const double*);
-template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::cal_force(const int&,
-                                                                            const int&,
-                                                                            const int&,
-                                                                            const bool&,
-                                                                            double*,
-                                                                            const int&);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::cal_vkb_deri_f(const int &, const int &, const int &);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::cal_dbecp_f(
+    const int &,
+    const int &,
+    const int &,
+    const int &,
+    const std::complex<double> *,
+    const int &);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::save_vkb(const int &, const int &);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::revert_vkb(const int &, const int &);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::transfer_gcar(
+    const int &, const int &, const double *);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_CPU>::cal_force(
+    const int &,
+    const int &,
+    const int &,
+    const bool &,
+    double *,
+    const int &);
 #if ((defined __CUDA) || (defined __ROCM))
-template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::cal_vkb_deri_f(const int&, const int&, const int&);
-template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::cal_dbecp_f(const int&,
-                                                                              const int&,
-                                                                              const int&,
-                                                                              const int&,
-                                                                              const std::complex<double>*,
-                                                                              const int&);
-template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::save_vkb(const int&, const int&);
-template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::revert_vkb(const int&, const int&);
-template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::transfer_gcar(const int&, const int&, const double*);
-template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::cal_force(const int&,
-                                                                            const int&,
-                                                                            const int&,
-                                                                            const bool&,
-                                                                            double*,
-                                                                            const int&);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::cal_vkb_deri_f(const int &, const int &, const int &);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::cal_dbecp_f(
+    const int &,
+    const int &,
+    const int &,
+    const int &,
+    const std::complex<double> *,
+    const int &);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::save_vkb(const int &, const int &);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::revert_vkb(const int &, const int &);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::transfer_gcar(
+    const int &, const int &, const double *);
+template void FS_Nonlocal_tools<double, base_device::DEVICE_GPU>::cal_force(
+    const int &,
+    const int &,
+    const int &,
+    const bool &,
+    double *,
+    const int &);
 #endif
 
 } // namespace hamilt
