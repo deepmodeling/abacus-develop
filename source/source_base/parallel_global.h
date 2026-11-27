@@ -84,6 +84,18 @@ void divide_mpi_groups(const int& procs,
  */
 #ifdef __MPI
 void finalize_mpi();
+
+/**
+ * @brief Abort all MPI processes immediately for unrecoverable errors
+ *
+ * Use this instead of finalize_mpi when one rank hits a rank-local fatal
+ * error (e.g. std::bad_alloc) while peers may be blocked inside a collective:
+ * finalize_mpi runs collective cleanup (MPI_Comm_free) and would hang,
+ * whereas abort_mpi terminates the whole job without further communication.
+ *
+ * @param error_code exit status reported to the MPI runtime environment
+ */
+void abort_mpi(const int error_code);
 #endif
 
 } // namespace Parallel_Global

@@ -191,6 +191,11 @@ void Parallel_Global::finalize_mpi()
     }
     MPI_Finalize();
 }
+
+void Parallel_Global::abort_mpi(const int error_code)
+{
+    MPI_Abort(MPI_COMM_WORLD, error_code);
+}
 #endif
 
 #ifdef __MPI

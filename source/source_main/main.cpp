@@ -114,7 +114,10 @@ int main(int argc, char** argv)
     {
         std::cerr << " ABACUS: out of memory: " << e.what() << std::endl;
 #ifdef __MPI
-        Parallel_Global::finalize_mpi();
+        // The allocation failure may be rank-local (e.g. a root-only gathered
+        // buffer), so peers can be blocked inside a collective.  finalize_mpi
+        // runs collective cleanup and would hang; abort the whole job instead.
+        Parallel_Global::abort_mpi(1);
 #endif
         return 1;
     }
@@ -123,7 +126,7 @@ int main(int argc, char** argv)
         std::cerr << " ABACUS: allocation length error (likely a too-large dense"
                      " matrix): " << e.what() << std::endl;
 #ifdef __MPI
-        Parallel_Global::finalize_mpi();
+        Parallel_Global::abort_mpi(1);
 #endif
         return 1;
     }
@@ -131,7 +134,7 @@ int main(int argc, char** argv)
     {
         std::cerr << " ABACUS: fatal error: " << e.what() << std::endl;
 #ifdef __MPI
-        Parallel_Global::finalize_mpi();
+        Parallel_Global::abort_mpi(1);
 #endif
         return 1;
     }

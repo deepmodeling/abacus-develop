@@ -31,7 +31,13 @@ void LCAO_domain::set_psi_occ_dm_chg(
     // process-global state.
     const bool gamma_only = PARAM.globalv.gamma_only_local;
     const int my_rank = GlobalV::MY_RANK;
+#ifdef __MPI
     const int ranks_per_node = Parallel_Global::mpi_number;
+#else
+    // Serial build: parallel_global.cpp defines mpi_number only under __MPI,
+    // and a single process always shares its node with itself.
+    const int ranks_per_node = 1;
+#endif
     // ofstream& (not ostream&): ModuleBase::GlobalFunc::DONE takes std::ofstream&,
     // and ofstream& still binds to check_lcao_dense_memory's std::ostream& parameter.
     std::ofstream& log = GlobalV::ofs_running;
