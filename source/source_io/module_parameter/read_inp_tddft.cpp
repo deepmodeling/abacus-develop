@@ -1430,18 +1430,18 @@ At `nspin = 2` this selects only the relaxation target; single-point runs still 
         item.description = R"(Optical gauge for LR-TDDFT and BSE.
 
 * `velocity`: integrate the momentum and nonlocal pseudopotential commutator directly. Recommended for local and semilocal functionals without exact exchange, since direct integration avoids inserting a finite AO resolution of the identity between the operators. For HSE and other functionals with exact exchange, this omits the commutator of the nonlocal Fock operator with position.
-* `velocity_commutator`: build the velocity from the full ground-state Hamiltonian in the nonorthogonal AO basis, including the Fock commutator when exact exchange is present. Available for MPI LCAO LR-TDDFT with [gamma_only](#gamma_only) set to `0`.
+* `velocity_comm`: build the velocity from the full ground-state Hamiltonian in the nonorthogonal AO basis, including the Fock commutator when exact exchange is present. Available for MPI LCAO LR-TDDFT with [gamma_only](#gamma_only) set to `0`.
 * `length`: use position matrix elements.
 * `none`: skip transition dipoles, oscillator strengths, transition analysis and absorption spectra. Excitation energies, requested charge output, and LR forces or relaxation are still available.
 
-If this keyword is omitted, supported LR-TDDFT calculations whose ground-state [dft_functional](#dft_functional) includes exact exchange automatically select `velocity_commutator`. BSE, gamma-only and non-MPI builds use the `velocity` default. Explicit selections take precedence over the automatic selection.
+If this keyword is omitted, supported LR-TDDFT calculations whose ground-state [dft_functional](#dft_functional) includes exact exchange automatically select `velocity_comm`. BSE, gamma-only and non-MPI builds use the `velocity` default. Explicit selections take precedence over the automatic selection.
 
 With `esolver_type ks-lr`, the commutator uses the ground-state matrices already in memory. For standalone `esolver_type lr`, enable text CSR with [out_hsr](#out_hsr) set to `1` in the SCF or NSCF calculation supplying the orbitals. For example, `out_hsr 1 12` uses 12-digit precision. Use [out_app_flag](#out_app_flag) set to `0` to write one frame with the standard filenames. Use `gamma_only 0` there as well. Place the text CSR files `hrs1_nao.csr` and `sr_nao.csr` in [read_file_dir](#read_file_dir) alongside the wavefunctions. Add `hrs2_nao.csr` for `nspin 2`. Use matrices from the same geometry, basis, spin setting and Hamiltonian as the wavefunctions. ABACUS computes the position integrals internally.
 
 For `nspin 1`, ABACUS uses the single Hamiltonian block as written. Spin degeneracy enters the singlet transition amplitude through a factor of $\sqrt{2}$.)";
-        item.default_value = "velocity (velocity_commutator for supported LR-TDDFT with exact exchange)";
+        item.default_value = "velocity (velocity_comm for supported LR-TDDFT with exact exchange)";
         item.unit = "";
-        item.domain.set_choices({"length", "velocity", "velocity_commutator", "none"});
+        item.domain.set_choices({"length", "velocity", "velocity_comm", "none"});
         read_sync_string(input.abs_gauge);
         const auto supports_commutator = [](const Input_para& input) {
 #ifdef __MPI
@@ -1460,19 +1460,19 @@ For `nspin 1`, ABACUS uses the single Hamiltonian block as written. Spin degener
                                [](unsigned char c) { return std::tolower(c); });
                 if (xc_uses_exact_exchange(functional))
                 {
-                    para.input.abs_gauge = "velocity_commutator";
+                    para.input.abs_gauge = "velocity_comm";
                 }
             }
         };
         item.check_value = [supports_commutator](const Input_Item&, const Parameter& para) {
-            if (para.inp.abs_gauge != "velocity_commutator")
+            if (para.inp.abs_gauge != "velocity_comm")
             {
                 return;
             }
             if (!supports_commutator(para.inp))
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                    "abs_gauge velocity_commutator requires MPI LCAO LR-TDDFT with gamma_only 0.");
+                    "abs_gauge velocity_comm requires MPI LCAO LR-TDDFT with gamma_only 0.");
             }
             if (para.inp.esolver_type == "lr")
             {
@@ -1485,7 +1485,7 @@ For `nspin 1`, ABACUS uses the single Hamiltonian block as written. Spin degener
                     if (!std::ifstream(path))
                     {
                         ModuleBase::WARNING_QUIT("ReadInput",
-                            "abs_gauge velocity_commutator requires " + path
+                            "abs_gauge velocity_comm requires " + path
                             + ". Export matching text CSR matrices with out_hsr 1 "
                               "in the SCF or NSCF calculation, or select abs_gauge velocity explicitly.");
                     }

@@ -95,7 +95,7 @@ In gamma-only mode, every generated file reports one Bravais lattice vector and 
 
 ### Using the matrices for LR-TDDFT absorption
 
-The full-Hamiltonian [velocity commutator](../input_files/input-main.md#abs_gauge) is available for MPI LCAO LR-TDDFT with `gamma_only 0`. If the ground-state functional uses exact exchange, LR-TDDFT selects it when `abs_gauge` is omitted. With `ks-lr`, the ground-state solver supplies the matrices in memory.
+The full-Hamiltonian [velocity commutator](../input_files/input-main.md#abs_gauge) is available for MPI LCAO LR-TDDFT with `gamma_only 0`. If the ground-state functional uses exact exchange, LR-TDDFT selects it when `abs_gauge` is omitted. To select it explicitly, use `abs_gauge velocity_comm`. With `ks-lr`, the ground-state solver supplies the matrices in memory.
 
 For standalone `lr`, add the following to the SCF or NSCF input that supplies the orbitals:
 
@@ -111,7 +111,8 @@ For local and semilocal functionals without exact exchange, use `abs_gauge veloc
 
 LR-TDDFT reports excitation energies with 17 significant digits. Use
 `abs_gauge none` to report energies without evaluating optical matrix
-elements. The absorption spectrum is a text table in `absorption.dat`.
+elements. The absorption spectrum is a text table. It keeps the legacy
+filename `absorption.dat` for compatibility with existing readers.
 
 ### Native Binary CSR Format
 

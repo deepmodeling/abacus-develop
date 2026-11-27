@@ -43,7 +43,7 @@ void check_lr_parameters(const Input_para& input, const std::string& xc_kernel, 
     // functional or a hybrid, both of which `LR_Util` enumerates. Listing the names a third
     // time here is what used to make a newly supported hybrid fail at input parsing.
     const std::set<std::string> kernel_less = { "rpa", "bse" };
-    const std::set<std::string> abs_gauge = { "velocity", "velocity_commutator", "length", "none" };
+    const std::set<std::string> abs_gauge = { "velocity", "velocity_comm", "length", "none" };
     if (lr_solvers.find(input.lr_solver) == lr_solvers.end()) {
         throw std::invalid_argument("ESolver_LR: unknown type of lr_solver");
     }

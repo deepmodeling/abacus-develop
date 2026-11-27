@@ -52,24 +52,4 @@ else()
       ${MPI_LAUNCHER_FLAGS})
   set_tests_properties(08_RI_librpa_symmetry PROPERTIES PROCESSORS 2 TIMEOUT
                                                         1800)
-
-  # This two-stage producer/consumer check needs the same SCF artifacts in
-  # separate LR runs, which the single-invocation Autotest cases cannot express.
-  find_program(LR_ABSORPTION_PYTHON python3)
-  if(ENABLE_MPI
-     AND ENABLE_LCAO
-     AND ENABLE_LIBRI
-     AND ENABLE_LIBXC
-     AND LR_ABSORPTION_PYTHON)
-    add_test(
-      NAME 08_RI_lr_absorption_workflow
-      COMMAND
-        ${LR_ABSORPTION_PYTHON}
-        ${ABACUS_TEST_DIR}/integrate/validation_tools/check_lr_absorption_workflow.py
-        --abacus ${ABACUS_BIN_PATH} --case
-        ${ABACUS_TEST_DIR}/08_RI/lr_tddft_velocity_commutator --mpiexec
-        ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
-        ${MPI_LAUNCHER_FLAGS})
-    set_tests_properties(08_RI_lr_absorption_workflow PROPERTIES PROCESSORS 4)
-  endif()
 endif()

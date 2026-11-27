@@ -40,7 +40,7 @@ namespace LR
         void set_full(bool tag) { this->is_full = tag; };
         void cal_spectrum(){
             std::cout << "Calculating transition dipole moments in " << this->gauge << " gauge." << std::endl;
-            if (this->gauge == "velocity" || this->gauge == "velocity_commutator")
+            if (this->gauge == "velocity" || this->gauge == "velocity_comm")
             {
                 this->cal_transition_dipoles_velocity(this->eig_ks);
             }

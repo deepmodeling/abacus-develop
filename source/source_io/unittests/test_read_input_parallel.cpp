@@ -852,7 +852,7 @@ TEST_F(InputParaTest, OpticalGaugeDefaultsToCommutatorForGroundStateExactExchang
         set(parameter, "dft_functional", functional);
         set(parameter, "xc_kernel", "rpa");
         item.reset_value(item, parameter);
-        EXPECT_EQ(parameter.inp.abs_gauge, "velocity_commutator") << functional;
+        EXPECT_EQ(parameter.inp.abs_gauge, "velocity_comm") << functional;
         item.check_value(item, parameter);
     }
 
@@ -879,12 +879,13 @@ TEST_F(InputParaTest, OpticalGaugeDefaultsToCommutatorForGroundStateExactExchang
     set(parameter, "esolver_type", "ks-lr");
     set(parameter, "dft_functional", "hse");
     set(parameter, "xc_kernel", "hse");
-    for (const std::string gauge : {"velocity", "length", "none"})
+    for (const std::string gauge : {"velocity", "velocity_comm", "length", "none"})
     {
         item.str_values = {gauge};
         item.read_value(item, parameter);
         item.reset_value(item, parameter);
         EXPECT_EQ(parameter.inp.abs_gauge, gauge);
+        item.check_value(item, parameter);
     }
 }
 

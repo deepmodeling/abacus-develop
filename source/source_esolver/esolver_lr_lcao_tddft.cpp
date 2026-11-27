@@ -306,7 +306,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
     const std::string gauge = LR_Util::tolower(this->inp_->abs_gauge);
     const bool calculate_spectrum = gauge != "none";
     const std::vector<double> spatial_weights = LR_Util::spatial_k_weights(this->kv.wk, nspin);
-    const bool use_velocity = gauge == "velocity" || gauge == "velocity_commutator";
+    const bool use_velocity = gauge == "velocity" || gauge == "velocity_comm";
     const int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
     if (gauge == "velocity")
     {
@@ -314,7 +314,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
             *this->ucell_, this->gd(), this->tcb(), this->paraMat_, this->paraC_, this->kv, *this->psi_ks, this->nk,
             nspin_tmp, this->nbasis, this->nocc, this->nvirt);
     }
-    if (gauge == "velocity_commutator")
+    if (gauge == "velocity_comm")
     {
         std::vector<const hamilt::HContainer<double>*> hr;
         hamilt::HContainer<double> overlap(&this->paraMat_);
