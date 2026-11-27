@@ -50,6 +50,7 @@ void write_dipole(const UnitCell& ucell,
                   const int& istep,
                   const std::string& fn,
                   std::ofstream& ofs_running,
+                  const bool append,
                   const int& precision)
 {
     ModuleBase::TITLE("ModuleIO", "write_dipole");
@@ -61,7 +62,14 @@ void write_dipole(const UnitCell& ucell,
     if (GlobalV::MY_RANK == 0)
     {
         start = time(NULL);
-        ofs.open(fn.c_str(), std::ofstream::app);
+        if (append)
+        {
+            ofs.open(fn.c_str(), std::ios::app);
+        }
+        else
+        {
+            ofs.open(fn.c_str());
+        }
         if (!ofs)
         {
             ModuleBase::WARNING_QUIT("ModuleIO", "Cannot create dipole file: " + fn);
