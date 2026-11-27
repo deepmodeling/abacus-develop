@@ -3,7 +3,6 @@
 #include "source_base/timer.h"
 #include "source_estate/module_dm/dm_from_psi.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_hamilt/module_gint/gint_interface.h"
@@ -14,21 +13,6 @@
 namespace elecstate
 {
 
-
-template <>
-double ElecStateLCAO<double>::get_spin_constrain_energy()
-{
-    spinconstrain::SpinConstrain<double>& sc = spinconstrain::SpinConstrain<double>::getScInstance();
-    return sc.cal_escon();
-}
-
-template <>
-double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
-{
-    spinconstrain::SpinConstrain<std::complex<double>>& sc
-        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
-    return sc.cal_escon();
-}
 
 template <>
 void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM, 

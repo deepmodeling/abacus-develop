@@ -14,39 +14,108 @@ INTEGRATE = TOOLS.parent
 
 
 class ForceCollectionTest(unittest.TestCase):
-    def run_collector(self, calculation, atom_count, dump=None, log_force=""):
+    def run_collector(self, calculation, atom_count, stru=None, log_force="", mode2=False,
+                      stale_stru=None, log_stress="", has_force=1, has_stress=0,
+                      input_text="INPUT_PARAMETERS\n"):
         with tempfile.TemporaryDirectory(prefix="abacus-force-collector-") as scratch:
             case = Path(scratch)
             (case / "OUT.autotest").mkdir()
-            if dump is not None:
-                (case / "OUT.autotest/MD_dump").write_text(dump, encoding="utf-8")
-            (case / "running.log").write_text("ETOT_ 1.0\n" + log_force, encoding="utf-8")
+            if stru is not None:
+                structure_dir = case / "OUT.autotest/STRUC" if mode2 else case / "OUT.autotest"
+                structure_dir.mkdir(exist_ok=True)
+                (structure_dir / "STRU_FINAL").write_text(stru, encoding="utf-8")
+            if stale_stru is not None:
+                (case / "OUT.autotest/STRU_FINAL").write_text(stale_stru, encoding="utf-8")
+            (case / "running.log").write_text("ETOT_ 1.0\n" + log_force + log_stress, encoding="utf-8")
+            (case / "INPUT").write_text(input_text, encoding="utf-8")
             command = (
                 'source "$1"; source "$2"; calculation="$3"; natom="$4"; '
-                'is_lr=0; has_force=1; nspin=1; running_path=running.log; '
+                'is_lr=0; has_force="$5"; has_stress="$6"; esolver_type="$7"; '
+                'nspin=1; running_path=running.log; '
                 'props_result_file=result.out; run_basic_props'
             )
             result = subprocess.run(
                 ["bash", "-c", command, "force-test", str(TOOLS / "props_common.sh"),
-                 str(TOOLS / "props_basic.sh"), calculation, str(atom_count)],
+                 str(TOOLS / "props_basic.sh"), calculation, str(atom_count),
+                 str(has_force), str(has_stress),
+                 "ofdft" if "esolver_type ofdft" in input_text else ""],
                 cwd=case, capture_output=True, text=True, check=False,
             )
             output = (case / "result.out").read_text(encoding="utf-8") if (case / "result.out").exists() else ""
             return result, output
 
-    def test_last_dump_frame_requires_all_force_rows(self):
+    def test_md_stress_uses_virial_and_restores_external_pressure(self):
+        virial = " MD STEP: 5\n VIRIAL (kbar):\n 1 2 3\n 4 5 6\n 7 8 9\n"
+        result, output = self.run_collector(
+            "md", 2, stru="# MD step 5\n", log_stress=virial, has_force=0, has_stress=1,
+            input_text="INPUT_PARAMETERS\npress1 10\npress2 20\npress3 30\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("totalstressref 105.000000", output)
+
+        result, output = self.run_collector(
+            "md", 2, stru="# MD step 5\n", log_stress=virial, has_force=0, has_stress=1,
+            input_text="INPUT_PARAMETERS\nesolver_type ofdft\npress1 10\npress2 20\npress3 30\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("totalstressref 45.000000", output)
+
+        result, output = self.run_collector("md", 2, has_force=0, has_stress=1)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("totalstressref", output)
+
+        earlier = virial.replace("MD STEP: 5", "MD STEP: 4")
+        result, output = self.run_collector(
+            "md", 2, stru="# MD step 5\n", log_stress=earlier, has_force=0, has_stress=1)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("totalstressref", output)
+
+    def test_non_md_stress_still_uses_total_stress(self):
+        table = "#TOTAL-STRESS (kbar)#\nStress_x Stress_y Stress_z\n1 2 3\n4 5 6\n7 8 9\n"
+        result, output = self.run_collector("scf", 2, log_stress=table, has_force=0, has_stress=1)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("totalstressref 45.000000", output)
+
+    def test_md_virial_matches_legacy_stress_matrix(self):
+        rows = (
+            "120.2864521128 3.4986227089 -4.0502591177\n"
+            "3.4986227089 120.3390863152 2.3951443025\n"
+            "-4.0502591177 2.3951443025 120.3180820327\n"
+        )
+        md_log = " MD STEP: 6\n VIRIAL (kbar):\n" + rows
+        md_result, md_output = self.run_collector(
+            "md", 2, stru="# MD step 6\n", log_stress=md_log,
+            has_force=0, has_stress=1)
+        legacy_log = "#TOTAL-STRESS (kbar)#\n---\nStress_x Stress_y Stress_z\n---\n" + rows
+        legacy_result, legacy_output = self.run_collector(
+            "scf", 2, log_stress=legacy_log, has_force=0, has_stress=1)
+        self.assertEqual(md_result.returncode, 0, md_result.stderr)
+        self.assertEqual(legacy_result.returncode, 0, legacy_result.stderr)
+        md_stress = next(line for line in md_output.splitlines() if line.startswith("totalstressref "))
+        legacy_stress = next(line for line in legacy_output.splitlines() if line.startswith("totalstressref "))
+        self.assertEqual(md_stress, legacy_stress)
+
+    def test_final_stru_requires_all_force_rows(self):
         good = (
-            "MDSTEP: 0\nINDEX LABEL POSITION (Angstrom) FORCE (eV/Angstrom)\n"
-            "0 H 0 0 0 1 2 3\n1 H 0 0 0 4 5 6\n"
+            "ATOMIC_POSITIONS\nCartesian_angstrom\n\nH\n0.0\n2\n"
+            "0 0 0 m 1 1 1 v 0 0 0 f 1 2 3\n"
+            "0 0 0 m 1 1 1 v 0 0 0 f 4 5 6\n"
         )
         result, output = self.run_collector("md", 2, good)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("totalforceref 21.000000", output)
+        result, output = self.run_collector("md", 2, good, mode2=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("totalforceref 21.000000", output)
+        announcement = "Write file: OUT.autotest/STRUC/STRU_FINAL\n"
+        stale = good.replace("f 1 2 3", "f 9 9 9")
+        result, output = self.run_collector("md", 2, good, log_force=announcement,
+                                            mode2=True, stale_stru=stale)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("totalforceref 21.000000", output)
 
-        for dump in (good + "MDSTEP: 1\n", good.split("1 H")[0],
-                     "MDSTEP: 0\nINDEX LABEL POSITION (Angstrom)\n0 H 0 0 0\n"):
-            with self.subTest(dump=dump):
-                result, output = self.run_collector("md", 2, dump)
+        for stru in (good.split("0 0 0 m")[0], good.rsplit("0 0 0 m", 1)[0],
+                     good.replace("f 4 5 6", "")):
+            with self.subTest(stru=stru):
+                result, output = self.run_collector("md", 2, stru)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertNotIn("totalforceref", output)
 

@@ -20,7 +20,8 @@ addtest(
           ${LINALG_DIR}/linear_workspace.cpp
           ${LINALG_DIR}/orb_buffer.cpp
           ${LINALG_DIR}/orthonormal.cpp
-          ${LINALG_DIR}/orthonormal_small.cpp)
+          ${LINALG_DIR}/orthonormal_small.cpp
+          ${LINALG_DIR}/overlap_spectrum.cpp)
 
 if(ENABLE_MPI)
   addtest(

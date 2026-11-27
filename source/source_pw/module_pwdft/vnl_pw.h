@@ -5,10 +5,10 @@
 #include "source_base/complexmatrix.h"
 #include "source_base/intarray.h"
 #include "source_base/realarray.h"
-#include "source_cell/unitcell.h"
-#include "source_psi/psi.h"
 #include "source_cell/soc.h"
 #include "source_cell/stru_fac.h"
+#include "source_cell/unitcell.h"
+#include "source_psi/psi.h"
 
 #include <vector>
 #ifdef __LCAO
@@ -25,10 +25,11 @@ class pseudopot_cell_vnl
   public:
     pseudopot_cell_vnl();
     ~pseudopot_cell_vnl();
-    void init(const UnitCell& cell,
-              Structure_Factor* psf_in,
-              const ModulePW::PW_Basis_K* wfc_basis = nullptr,
-              const bool allocate_vkb = true);
+    void init(
+        const UnitCell &cell,
+        Structure_Factor *psf_in,
+        const ModulePW::PW_Basis_K *wfc_basis = nullptr,
+        const bool allocate_vkb = true);
 
     double cell_factor = 0.0; // LiuXh add 20180619
 
@@ -36,21 +37,18 @@ class pseudopot_cell_vnl
 
     int lmaxkb = 0; // max angular momentum for non-local projectors
 
-    void init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis);
+    void init_vnl(UnitCell &cell, const ModulePW::PW_Basis *rho_basis);
 
-    void rescale_vnl(const double& omega_in);
+    void rescale_vnl(const double &omega_in);
 
     /** @brief Ensure four-point interpolation covers qmax (inverse Bohr), without changing dq. */
-    void ensure_vnl_range(const UnitCell& cell, const double& qmax);
+    void ensure_vnl_range(const UnitCell &cell, const double &qmax);
 
     /** @brief Reject non-finite or out-of-range dimensionless interpolation indices before reading. */
-    void check_vnl_index(const double& index, const bool& derivative) const;
+    void check_vnl_index(const double &index, const bool &derivative) const;
 
     /** @brief Return the momentum spacing shared by the radial projector and derivative tables. */
-    double table_dq() const
-    {
-        return table_dq_;
-    }
+    double table_dq() const { return table_dq_; }
 
     /**
      * @brief Build nonlocal projectors at G+k+A; pass zero A for ground-state calculations.
@@ -62,24 +60,22 @@ class pseudopot_cell_vnl
      * @param vkb_in Output projector buffer.
      */
     template <typename FPTYPE, typename Device>
-    void getvnl(Device* ctx,
-                const UnitCell& ucell,
-                const int& ik,
-                const ModuleBase::Vector3<double>& vector_potential,
-                std::complex<FPTYPE>* vkb_in) const;
+    void getvnl(
+        Device *ctx,
+        const UnitCell &ucell,
+        const int &ik,
+        const ModuleBase::Vector3<double> &vector_potential,
+        std::complex<FPTYPE> *vkb_in) const;
 
     // void getvnl_alpha(const int &ik);
 
-    void init_vnl_alpha(const UnitCell& cell);
+    void init_vnl_alpha(const UnitCell &cell);
 
-    void initgradq_vnl(const UnitCell& cell);
+    void initgradq_vnl(const UnitCell &cell);
     /** @brief Generation of radial tables, including volume rescaling. */
-    size_t table_version() const
-    {
-        return table_version_;
-    }
+    size_t table_version() const { return table_version_; }
     /** @brief Prepare the derivative table only when the radial table changed. */
-    void ensure_grad_table(const UnitCell& cell);
+    void ensure_grad_table(const UnitCell &cell);
 
     //===============================================================
     // MEMBER VARIABLES :
@@ -117,11 +113,11 @@ class pseudopot_cell_vnl
 
     ModuleBase::realArray deeq; //(:,:,:,:), the integral of V_eff and Q_{nm}
     bool multi_proj = false;
-    float* s_deeq = nullptr;
-    double* d_deeq = nullptr;
+    float *s_deeq = nullptr;
+    double *d_deeq = nullptr;
     ModuleBase::ComplexArray deeq_nc;          //(:,:,:,:), the spin-orbit case
-    std::complex<float>* c_deeq_nc = nullptr;  // GPU array of deeq_nc
-    std::complex<double>* z_deeq_nc = nullptr; // GPU array of deeq_nc
+    std::complex<float> *c_deeq_nc = nullptr;  // GPU array of deeq_nc
+    std::complex<double> *z_deeq_nc = nullptr; // GPU array of deeq_nc
 
     // liuyu add 2023-10-03
     // uspp
@@ -135,26 +131,37 @@ class pseudopot_cell_vnl
     ModuleBase::IntArray lpl;       // for each input limi,ljmj points to the allowed LM
     ModuleBase::realArray qrad;     // radial FT of Q functions
 
-    float* s_qq_nt = nullptr;
-    double* d_qq_nt = nullptr;
-    std::complex<float>* c_qq_so = nullptr;  // GPU array of qq_so
-    std::complex<double>* z_qq_so = nullptr; // GPU array of qq_so
+    float *s_qq_nt = nullptr;
+    double *d_qq_nt = nullptr;
+    std::complex<float> *c_qq_so = nullptr;  // GPU array of qq_so
+    std::complex<double> *z_qq_so = nullptr; // GPU array of qq_so
 
     mutable ModuleBase::ComplexMatrix vkb; // all beta functions in reciprocal space
-    std::complex<double>*** vkb1_alpha;
-    std::complex<double>*** vkb_alpha;
-    Structure_Factor* psf = nullptr;
+    std::complex<double> ***vkb1_alpha;
+    std::complex<double> ***vkb_alpha;
+    Structure_Factor *psf = nullptr;
 
     // Column dimension of vkb matrix (= npwx), used as leading dimension in gemm/gemv.
     // On GPU path vkb ComplexMatrix is not allocated to save CPU memory; this stores the dimension.
     int vkbnc = 0;
 
     // other variables
-    std::complex<double> Cal_C(int alpha, int lu, int mu, int L, int M);
+    std::complex<double> Cal_C(
+        int alpha,
+        int lu,
+        int mu,
+        int L,
+        int M);
 
-    double CG(int l1, int m1, int l2, int m2, int L, int M);
+    double CG(
+        int l1,
+        int m1,
+        int l2,
+        int m2,
+        int L,
+        int M);
 
-    void print_vnl(std::ofstream& ofs);
+    void print_vnl(std::ofstream &ofs);
 
     /**
      * @brief Compute the radial Fourier transform of the Q functions
@@ -173,13 +180,14 @@ class pseudopot_cell_vnl
      * @param ylm [in] the real spherical harmonics
      * @param qg [out] the Fourier transform of interest
      */
-    void radial_fft_q(const int ng,
-                      const int ih,
-                      const int jh,
-                      const int itype,
-                      const double* qnorm,
-                      const ModuleBase::matrix ylm,
-                      std::complex<double>* qg) const;
+    void radial_fft_q(
+        const int ng,
+        const int ih,
+        const int jh,
+        const int itype,
+        const double *qnorm,
+        const ModuleBase::matrix ylm,
+        std::complex<double> *qg) const;
 
     /**
      * @brief Compute the radial Fourier transform using raw CPU pointers
@@ -187,14 +195,15 @@ class pseudopot_cell_vnl
      * This template is instantiated for CPU float and double precision only.
      */
     template <typename FPTYPE, typename Device>
-    void radial_fft_q(Device* ctx,
-                      const int ng,
-                      const int ih,
-                      const int jh,
-                      const int itype,
-                      const FPTYPE* qnorm,
-                      const FPTYPE* ylm,
-                      std::complex<FPTYPE>* qg) const;
+    void radial_fft_q(
+        Device *ctx,
+        const int ng,
+        const int ih,
+        const int jh,
+        const int itype,
+        const FPTYPE *qnorm,
+        const FPTYPE *ylm,
+        std::complex<FPTYPE> *qg) const;
 
     /**
      * @brief calculate the effective coefficient matrix for non-local pseudopotential projectors
@@ -203,47 +212,47 @@ class pseudopot_cell_vnl
      * @param rho_basis potential FFT grids
      * @param cell UnitCell
      */
-    void cal_effective_D(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
+    void cal_effective_D(const ModuleBase::matrix &veff, const ModulePW::PW_Basis *rho_basis, UnitCell &cell);
 #ifdef __LCAO
     ORB_gaunt_table MGT;
 #endif
 
     template <typename FPTYPE>
-    FPTYPE* get_nhtol_data() const;
+    FPTYPE *get_nhtol_data() const;
     template <typename FPTYPE>
-    FPTYPE* get_nhtolm_data() const;
+    FPTYPE *get_nhtolm_data() const;
     template <typename FPTYPE>
-    FPTYPE* get_indv_data() const;
+    FPTYPE *get_indv_data() const;
     template <typename FPTYPE>
-    FPTYPE* get_tab_data() const;
+    FPTYPE *get_tab_data() const;
     template <typename FPTYPE>
-    FPTYPE* get_deeq_data() const;
+    FPTYPE *get_deeq_data() const;
     template <typename FPTYPE>
-    FPTYPE* get_qq_nt_data() const;
+    FPTYPE *get_qq_nt_data() const;
     template <typename FPTYPE>
-    std::complex<FPTYPE>* get_qq_so_data() const;
+    std::complex<FPTYPE> *get_qq_so_data() const;
     template <typename FPTYPE>
-    std::complex<FPTYPE>* get_vkb_data() const;
+    std::complex<FPTYPE> *get_vkb_data() const;
     template <typename FPTYPE>
-    std::complex<FPTYPE>* get_deeq_nc_data() const;
+    std::complex<FPTYPE> *get_deeq_nc_data() const;
 
     void release_memory();
 
   private:
     bool memory_released = false;
-    float* s_nhtol = nullptr;
-    float* s_nhtolm = nullptr;
-    float* s_indv = nullptr;
-    float* s_tab = nullptr;
-    std::complex<float>* c_vkb = nullptr;
+    float *s_nhtol = nullptr;
+    float *s_nhtolm = nullptr;
+    float *s_indv = nullptr;
+    float *s_tab = nullptr;
+    std::complex<float> *c_vkb = nullptr;
 
-    double* d_nhtol = nullptr;
-    double* d_nhtolm = nullptr;
-    double* d_indv = nullptr;
-    double* d_tab = nullptr;
-    std::complex<double>* z_vkb = nullptr;
+    double *d_nhtol = nullptr;
+    double *d_nhtolm = nullptr;
+    double *d_indv = nullptr;
+    double *d_tab = nullptr;
+    std::complex<double> *z_vkb = nullptr;
 
-    const ModulePW::PW_Basis_K* wfcpw = nullptr;
+    const ModulePW::PW_Basis_K *wfcpw = nullptr;
 
     Soc soc;
 
@@ -251,7 +260,7 @@ class pseudopot_cell_vnl
     bool use_gpu_ = false;
 
     /** @brief Fill the allocated radial projector table using the original Bessel quadrature. */
-    void fill_vnl_table(const UnitCell& cell);
+    void fill_vnl_table(const UnitCell &cell);
 
     /** @brief Refresh aliases and allocated precision/device copies after radial-table changes. */
     void sync_vnl_table();
@@ -265,7 +274,7 @@ class pseudopot_cell_vnl
      *
      * @param cell UnitCell
      */
-    void compute_qrad(UnitCell& cell);
+    void compute_qrad(UnitCell &cell);
 
     /**
      * @brief computes the integral of the effective potential with the Q function
@@ -274,7 +283,7 @@ class pseudopot_cell_vnl
      * @param rho_basis potential FFT grids
      * @param cell UnitCell
      */
-    void newq(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
+    void newq(const ModuleBase::matrix &veff, const ModulePW::PW_Basis *rho_basis, UnitCell &cell);
 
     /**
      * @brief calculate D functions in the soc case when tvanp is true
@@ -282,7 +291,7 @@ class pseudopot_cell_vnl
      * @param iat the index of atom
      * @param cell UnitCell
      */
-    void newd_so(const int& iat, UnitCell& cell);
+    void newd_so(const int &iat, UnitCell &cell);
 
     /**
      * @brief calculate D functions in the noncolin case when tvanp is true
@@ -290,7 +299,7 @@ class pseudopot_cell_vnl
      * @param iat the index of atom
      * @param cell UnitCell
      */
-    void newd_nc(const int& iat, UnitCell& cell);
+    void newd_nc(const int &iat, UnitCell &cell);
 };
 
 #endif // VNL_IN_PW

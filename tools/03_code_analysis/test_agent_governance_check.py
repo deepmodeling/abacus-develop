@@ -18,6 +18,8 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         self.git("init")
         self.git("config", "user.email", "agent-governance@example.com")
         self.git("config", "user.name", "Agent Governance Test")
+        # Preserve intentional CRLF fixtures independently of host Git settings.
+        self.git("config", "core.autocrlf", "false")
         self.write("README.md", "baseline\n")
         self.write(
             "source/source_io/module_parameter/read_input_item_model.cpp",
@@ -43,7 +45,8 @@ class AgentGovernanceCheckTest(unittest.TestCase):
     def write(self, path, content, mode="w"):
         target = self.repo / path
         target.parent.mkdir(parents=True, exist_ok=True)
-        with open(target, mode) as handle:
+        options = {} if "b" in mode else {"encoding": "utf-8", "newline": "\n"}
+        with open(target, mode, **options) as handle:
             handle.write(content)
 
     def commit_change(self):
@@ -869,6 +872,332 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         result = self.run_checker("--staged")
 
         self.assert_blocked_by(result, "Unit test directory layout")
+
+    def test_blocks_deprecated_cmake_patterns(self):
+        cases = (
+            ("source/source_base/unittests/CMakeLists.txt", "AddTest(TARGET t LIBS base ${math_libs} SOURCES test_a.cpp)\n"),
+            ("source/source_base/unittests/CMakeLists.txt", "remove_definitions(-D__LIBXC)\n"),
+            ("source/source_base/CMakeLists.txt", "target_compile_definitions(base PRIVATE USE_LIBXC)\n"),
+            ("CMakeLists.txt", "if(ENABLE_RAPIDJSON)\nendif()\n"),
+            ("CMakeLists.txt", "if(ENABLE_LIBCOMM)\nendif()\n"),
+        )
+        for path, content in cases:
+            with self.subTest(path=path, content=content.strip()):
+                self.write(path, content)
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "CMake deprecated patterns")
+                self.git("reset", "--hard", self.base)
+
+    def test_allows_cmake_comments_messages_and_pyabacus_for_deprecated_patterns(self):
+        self.write(
+            "source/source_base/unittests/CMakeLists.txt",
+            "# Replaced ${math_libs}, USE_LIBXC, and remove_definitions(-DUSE_LIBXC).\n"
+            "abacus_disable_feature_definitions(__LIBXC)\n"
+            "AddTest(TARGET t LIBS base SOURCES test_a.cpp)\n",
+        )
+        self.write(
+            "CMakeLists.txt",
+            'message(FATAL_ERROR "ENABLE_RAPIDJSON and ENABLE_LIBCOMM were removed.")\n'
+            "message(\n"
+            '  WARNING\n'
+            '  "USE_LIBXC was renamed to __LIBXC."\n'
+            ")\n",
+        )
+        self.write(
+            "python/pyabacus/CMakeLists.txt",
+            "target_link_libraries(pyabacus PRIVATE ${math_libs})\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("CMake deprecated patterns", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_blocks_directory_scoped_and_discovery_cmake_commands_under_source(self):
+        for line in (
+            "add_definitions(-DFOO)\n",
+            "add_compile_definitions(FOO)\n",
+            "add_compile_options(-O2)\n",
+            "include_directories(${CMAKE_CURRENT_SOURCE_DIR})\n",
+            "link_directories(/opt/lib)\n",
+            "link_libraries(foo)\n",
+            "find_package(Foo REQUIRED)\n",
+            "find_library(FOO_LIB foo)\n",
+        ):
+            with self.subTest(line=line.strip()):
+                self.write("source/source_base/CMakeLists.txt", line)
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "CMake directory-scoped commands under source/")
+                self.git("reset", "--hard", self.base)
+
+    def test_allows_target_scoped_commands_under_source_and_find_in_root_and_modules(self):
+        self.write(
+            "source/source_base/CMakeLists.txt",
+            "# Do not call include_directories() or find_library() here.\n"
+            "add_library(demo OBJECT demo.cpp)\n"
+            "target_include_directories(demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})\n"
+            "target_compile_definitions(demo PRIVATE DEMO_FLAG)\n"
+            "target_compile_options(demo PRIVATE -Wall)\n",
+        )
+        self.write("CMakeLists.txt", "find_package(Foo REQUIRED)\n")
+        self.write("cmake/modules/FindFoo.cmake", "find_library(FOO_LIB NAMES foo)\n")
+        self.write("cmake/CollectBuildInfoVars.cmake", "set(ABACUS_FOO_SUPPORT yes)\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("CMake directory-scoped commands under source/", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_blocks_legacy_test_file_staging_in_unittest_cmake(self):
+        for content in (
+            "install(FILES run.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})\n",
+            "file(COPY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})\n",
+        ):
+            with self.subTest(content=content.strip()):
+                self.write("source/source_md/unittests/CMakeLists.txt", content)
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "CMake test file preparation")
+                self.git("reset", "--hard", self.base)
+
+    def test_allows_abacus_copy_test_files_and_top_level_source_install(self):
+        self.write(
+            "source/source_md/unittests/CMakeLists.txt",
+            "# Migrated from install() and file(COPY ...)\n"
+            "abacus_copy_test_files(support run.sh)\n",
+        )
+        self.write(
+            "source/CMakeLists.txt",
+            "install(PROGRAMS ${ABACUS_BIN_PATH} TYPE BIN)\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("CMake test file preparation", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_warns_when_new_cmake_option_or_module_omits_build_info_update(self):
+        self.write("CMakeLists.txt", 'option(ENABLE_FOO "Enable Foo" OFF)\n')
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_warns_with_success(result, "CMake option and dependency sync")
+
+        self.git("reset", "--hard", self.base)
+        self.write(
+            "CMakeLists.txt",
+            'cmake_dependent_option(\n  ENABLE_BAR "Enable Bar" OFF "ENABLE_MPI" OFF)\n',
+        )
+        self.write("cmake/modules/FindBar.cmake", "find_library(BAR_LIB NAMES bar)\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_warns_with_success(result, "CMake option and dependency sync")
+        self.assertIn("FindBar.cmake", result.stdout)
+
+    def test_no_option_sync_warning_when_collect_build_info_updated(self):
+        self.write("CMakeLists.txt", 'option(ENABLE_FOO "Enable Foo" OFF)\n')
+        self.write("cmake/modules/FindFoo.cmake", "find_library(FOO_LIB NAMES foo)\n")
+        self.write("cmake/CollectBuildInfoVars.cmake", "set(ABACUS_FOO_SUPPORT yes)\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("CMake option and dependency sync", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_no_option_sync_warning_when_reordering_existing_options(self):
+        base = self.commit_baseline(
+            {
+                "CMakeLists.txt": (
+                    'option(ENABLE_A "A" OFF)\n'
+                    'option(ENABLE_B "B" OFF)\n'
+                )
+            }
+        )
+        self.write(
+            "CMakeLists.txt",
+            'option(ENABLE_B "B" OFF)\n'
+            'option(ENABLE_A "A" OFF)\n',
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertNotIn("CMake option and dependency sync", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_staged_mode_blocks_cmake_governance_violations(self):
+        self.write("source/source_md/unittests/CMakeLists.txt", "include_directories(/tmp)\n")
+        self.git("add", ".")
+
+        result = self.run_checker("--staged")
+
+        self.assert_blocked_by(result, "CMake directory-scoped commands under source/")
+
+    def test_cmake_bracket_comments_preserve_unchanged_openers(self):
+        path = "source/source_md/unittests/CMakeLists.txt"
+        for equals in ("", "=", "=="):
+            with self.subTest(equals=equals):
+                opener = "#[" + equals + "[\n"
+                closer = "]" + equals + "]\n"
+                base = self.commit_baseline({path: opener + "old explanation\n" + closer})
+                self.write(
+                    path,
+                    opener + "include_directories(foo)\n"
+                    "file(COPY support DESTINATION build)\n"
+                    "target_compile_definitions(foo PRIVATE USE_LIBXC)\n" + closer,
+                )
+                head = self.commit_change()
+
+                result = self.run_checker("--base", base, "--head", head)
+
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertNotIn("CMake", result.stdout)
+
+    def test_cmake_block_comment_close_restores_command_detection(self):
+        self.write(
+            "source/source_base/CMakeLists.txt",
+            "#[=[ ignored\n]=] include_directories(foo)\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_blocked_by(result, "CMake directory-scoped commands under source/")
+
+    def test_cmake_quoted_and_bracket_arguments_are_not_diagnostic_exemptions(self):
+        for argument in ('"USE_LIBXC"', '"$<$<BOOL:1>:USE_LIBXC>"', "[=[USE_LIBXC]=]"):
+            with self.subTest(argument=argument):
+                self.write(
+                    "source/source_base/CMakeLists.txt",
+                    "target_compile_definitions(base PRIVATE\n  " + argument + "\n)\n",
+                )
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "CMake deprecated patterns")
+                self.git("reset", "--hard", self.base)
+
+    def test_cmake_message_context_handles_multiline_and_bracket_arguments(self):
+        path = "source/source_md/unittests/CMakeLists.txt"
+        base = self.commit_baseline({path: 'message(STATUS "old text\nmore text")\n'})
+        self.write(
+            path,
+            'message(STATUS "old text\nUSE_LIBXC ${math_libs}\n'
+            'include_directories(foo) # quoted hash\nfile(COPY data)\nmore text")\n'
+            'message([==[\nUSE_LIBXC\ninclude_directories(foo)\n]==])\n'
+            'set(text "literal \\" # still quoted\ninclude_directories(foo)")\n'
+            'set(text [=[\nfile(COPY support)\n]=])\n',
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("CMake", result.stdout)
+
+    def test_cmake_multiline_copy_and_noncopy_control(self):
+        path = "source/source_md/unittests/CMakeLists.txt"
+        base = self.commit_baseline({path: "file(\n  GLOB files *.txt\n)\n"})
+        self.write(path, "file(\n  # stage support files\n  COPY support DESTINATION build\n)\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assert_blocked_by(result, "CMake test file preparation")
+        self.write(path, "file(\n  GLOB files *.cmake\n)\n")
+        head = self.commit_change()
+        result = self.run_checker("--base", base, "--head", head)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("CMake test file preparation", result.stdout)
+
+    def test_cmake_option_formatting_compares_complete_declaration_names(self):
+        multiline = 'cmake_dependent_option(\n  ENABLE_FOO "Foo" OFF "ENABLE_MPI" OFF)\n'
+        singleline = 'cmake_dependent_option(ENABLE_FOO "Foo" OFF "ENABLE_MPI" OFF)\n'
+        base = self.commit_baseline({"CMakeLists.txt": multiline})
+        self.write("CMakeLists.txt", singleline)
+        head = self.commit_change()
+
+        for before, after in ((base, head), (head, base)):
+            with self.subTest(before=before):
+                result = self.run_checker("--base", before, "--head", after)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertNotIn("CMake option and dependency sync", result.stdout)
+
+    def test_cmake_option_rename_on_continuation_line_is_new(self):
+        baseline = 'option(\n  ENABLE_OLD "Old" OFF)\n'
+        base = self.commit_baseline({"CMakeLists.txt": baseline})
+        self.write("CMakeLists.txt", baseline.replace("ENABLE_OLD", "ENABLE_NEW"))
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assert_warns_with_success(result, "CMake option and dependency sync")
+
+    def test_cmake_comment_only_edits_leave_historical_commands_unreported(self):
+        path = "source/source_md/unittests/CMakeLists.txt"
+        baseline = "include_directories(\n # old note\n foo\n)\nfile(\n # old note\n COPY data DESTINATION build\n)\n"
+        base = self.commit_baseline({path: baseline})
+        self.write(path, baseline.replace("# old note", "# new note"))
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("CMake", result.stdout)
+
+    def test_cmake_multiline_arguments_only_report_added_symbol_lines(self):
+        path = "source/source_base/CMakeLists.txt"
+        for opening, closing in (('[=[', ']=]'), ('"', '"')):
+            with self.subTest(opening=opening):
+                baseline = "set(NOTES " + opening + "\nUSE_LIBXC is retired\nold wording\n" + closing + ")\n"
+                base = self.commit_baseline({path: baseline})
+                self.write(path, baseline.replace("old wording", "new wording"))
+                head = self.commit_change()
+                result = self.run_checker("--base", base, "--head", head)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertNotIn("CMake deprecated patterns", result.stdout)
+
+                self.write(path, baseline.replace("old wording", "ENABLE_LIBCOMM is retired"))
+                head = self.commit_change()
+                result = self.run_checker("--base", base, "--head", head, "--format", "json")
+                findings = json.loads(result.stdout)
+                matches = [item for item in findings if item["rule"] == "CMake deprecated patterns"]
+                self.assertEqual(len(matches), 1, result.stdout + result.stderr)
+                self.assertEqual(matches[0]["line"], 3)
+                self.assertIn("ENABLE_LIBCOMM", matches[0]["reason"])
+
+    def test_cmake_staged_context_ignores_unstaged_worktree(self):
+        path = "source/source_md/unittests/CMakeLists.txt"
+        self.commit_baseline({path: "#[=[\nold note\n]=]\n"})
+        self.write(path, "#[=[\ninclude_directories(foo)\n]=]\n")
+        self.git("add", ".")
+        self.write(path, "include_directories(foo)\n")
+
+        result = self.run_checker("--staged")
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("CMake", result.stdout)
+        self.write(path, "file(\n COPY data DESTINATION build\n)\n")
+        self.git("add", ".")
+        self.write(path, "# harmless unstaged replacement\n")
+        result = self.run_checker("--staged")
+        self.assert_blocked_by(result, "CMake test file preparation")
 
 
 if __name__ == "__main__":

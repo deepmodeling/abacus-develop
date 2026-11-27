@@ -29,12 +29,13 @@ Psi_Second::~Psi_Second()
     delete[] below_max_os;
 }
 
-void Psi_Second::init(ifstream& ifs,
-                      const int& ne_in,
-                      const int& lmax_in,
-                      const double& rcut_in,
-                      const int& total_nchi_in,
-                      const double& tolerence)
+void Psi_Second::init(
+    ifstream &ifs,
+    const int &ne_in,
+    const int &lmax_in,
+    const double &rcut_in,
+    const int &total_nchi_in,
+    const double &tolerence)
 {
     TITLE("Psi_Second", "init");
 
@@ -56,7 +57,9 @@ void Psi_Second::init(ifstream& ifs,
 
     this->mesh = static_cast<int>(this->rcut / this->dr);
     if (this->mesh % 2 == 0)
+    {
         this->mesh++;
+    }
 
     if (test == 2)
     {
@@ -102,8 +105,8 @@ void Psi_Second::init(ifstream& ifs,
     Calculate_C4::Find_Eigenvalues(this->ne, this->eigenvalue, this->lmax, this->rcut, tolerence);
 
     // (2) to calculate jl(qr)
-    this->jle = new double**[this->lmax + 1];
-    double* g;
+    this->jle = new double **[this->lmax + 1];
+    double *g;
     if (SMOOTH)
     {
         g = new double[mesh];
@@ -123,7 +126,7 @@ void Psi_Second::init(ifstream& ifs,
         }
 
         // allocate space
-        this->jle[l] = new double*[ne];
+        this->jle[l] = new double *[ne];
 
         for (int ie = 0; ie < this->ne; ie++)
         {
@@ -131,7 +134,7 @@ void Psi_Second::init(ifstream& ifs,
             Mathzone::Spherical_Bessel(this->mesh, this->r, this->eigen1[ie], l, jle[l][ie]);
 
             // (3) to calculate the jjnorm
-            double* f = new double[mesh];
+            double *f = new double[mesh];
             for (int ir = 0; ir < mesh; ir++)
             {
                 f[ir] = std::pow(jle[l][ie][ir], 2);
@@ -142,15 +145,19 @@ void Psi_Second::init(ifstream& ifs,
             delete[] f;
 
             if (SMOOTH)
+            {
                 for (int ir = 0; ir < mesh; ir++)
                 {
                     jle[l][ie][ir] *= g[ir];
                 }
+            }
         }
     }
 
     if (SMOOTH)
+    {
         delete[] g;
+    }
 
     //	this->ofso.open("ORBITAL_OSCILATION.txt");
     this->ofsk.open("ORBITAL_KINETIC.txt");
@@ -158,7 +165,7 @@ void Psi_Second::init(ifstream& ifs,
     return;
 }
 
-double Psi_Second::get_ecut(double* c4, const int& L)
+double Psi_Second::get_ecut(double *c4, const int &L)
 {
     timer::tick("Psi_Second", "get_ecut");
 
@@ -167,10 +174,10 @@ double Psi_Second::get_ecut(double* c4, const int& L)
     static double prefac_k = fpi / pow(2 * PI, 1.5);
     static double dk = 0.01;
     static int meshK = 800; // 8*8*2=128Ry
-    static double* g;
-    static double* rab;
-    static double* rabk;
-    static double* functionk;
+    static double *g;
+    static double *rab;
+    static double *rabk;
+    static double *functionk;
     static bool init = false;
     static double norm;
     static double normk;
@@ -179,7 +186,9 @@ double Psi_Second::get_ecut(double* c4, const int& L)
     if (!init)
     {
         if (meshK % 2 == 0)
+        {
             ++meshK;
+        }
 
         g = new double[mesh]; // smooth function
         rab = new double[mesh];
@@ -219,7 +228,7 @@ double Psi_Second::get_ecut(double* c4, const int& L)
         }
     }
 
-    double* function = new double[mesh];
+    double *function = new double[mesh];
     for (int ir = 0; ir < mesh; ir++)
     {
         function[ir] = pow(psi[ir] * r[ir], 2);
@@ -248,8 +257,8 @@ double Psi_Second::get_ecut(double* c4, const int& L)
     }
 
     // calculate psik.
-    double* psik = new double[meshK];
-    double* jj = new double[mesh];
+    double *psik = new double[meshK];
+    double *jj = new double[mesh];
     for (int ik = 0; ik < meshK; ik++)
     {
         double q = ik * dk;
@@ -297,7 +306,7 @@ double Psi_Second::get_ecut(double* c4, const int& L)
     return ecut;
 }
 
-void Psi_Second::norm_c4(double* c4, const int& L)
+void Psi_Second::norm_c4(double *c4, const int &L)
 {
     ZEROS(this->psi, mesh);
     for (int ie = 0; ie < ne; ie++)
@@ -311,7 +320,7 @@ void Psi_Second::norm_c4(double* c4, const int& L)
         }
     }
 
-    double* function = new double[mesh];
+    double *function = new double[mesh];
     for (int ir = 0; ir < mesh; ir++)
     {
         function[ir] = pow(psi[ir] * r[ir], 2);

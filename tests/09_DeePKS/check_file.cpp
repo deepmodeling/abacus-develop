@@ -7,7 +7,7 @@
 
 using namespace std;
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     string ref_file = argv[1];
     string cal_file = argv[2];

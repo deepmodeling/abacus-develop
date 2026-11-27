@@ -35,7 +35,8 @@
  * @param rho_basis plane-wave basis for charge density FFT
  * @param cell     unit cell (read-only, but passed by reference for compatibility)
  */
-void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell)
+void pseudopot_cell_vnl::cal_effective_D(
+    const ModuleBase::matrix &veff, const ModulePW::PW_Basis *rho_basis, UnitCell &cell)
 {
     ModuleBase::TITLE("pseudopot_cell_vnl", "cal_effective_D");
 
@@ -143,7 +144,8 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff, const M
         if (PARAM.globalv.has_float_data)
         {
             castmem_d2s_h2d_op()(this->s_deeq, this->deeq.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
-            castmem_z2c_h2d_op()(this->c_deeq_nc, this->deeq_nc.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
+            castmem_z2c_h2d_op()(
+                this->c_deeq_nc, this->deeq_nc.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         }
         // Keep the double-precision force view current in single-precision runs.
         syncmem_z2z_h2d_op()(this->z_deeq_nc, this->deeq_nc.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
@@ -154,7 +156,8 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff, const M
         if (PARAM.globalv.has_float_data)
         {
             castmem_d2s_h2h_op()(this->s_deeq, this->deeq.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
-            castmem_z2c_h2h_op()(this->c_deeq_nc, this->deeq_nc.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
+            castmem_z2c_h2h_op()(
+                this->c_deeq_nc, this->deeq_nc.ptr, PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         }
         // There's no need to synchronize double precision pointers while in a CPU environment.
     }
@@ -171,7 +174,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff, const M
  * @param rho_basis plane-wave basis for charge density FFT
  * @param cell     unit cell
  */
-void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell)
+void pseudopot_cell_vnl::newq(const ModuleBase::matrix &veff, const ModulePW::PW_Basis *rho_basis, UnitCell &cell)
 {
     ModuleBase::TITLE("pseudopot_cell_vnl", "newq");
 
@@ -203,7 +206,7 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
 
     for (int it = 0; it < cell.ntype; it++)
     {
-        Atom_pseudo* upf = &cell.atoms[it].ncpp;
+        Atom_pseudo *upf = &cell.atoms[it].ncpp;
         if (upf->tvanp)
         {
             // nij = max number of (ih,jh) pairs per atom type
@@ -243,27 +246,18 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
                 const char transb = 'N';
                 const double zero = 0.0;
                 const int complex_npw = 2 * npw;
-                double* qg_ptr = reinterpret_cast<double*>(qg.c);
-                double* aux_ptr = reinterpret_cast<double*>(aux.c);
+                double *qg_ptr = reinterpret_cast<double *>(qg.c);
+                double *aux_ptr = reinterpret_cast<double *>(aux.c);
 
-                BlasConnector::gemm(transb,
-                                    transa,
-                                    natom,
-                                    nij,
-                                    complex_npw,
-                                    fact,
-                                    aux_ptr,
-                                    complex_npw,
-                                    qg_ptr,
-                                    complex_npw,
-                                    zero,
-                                    deeaux.c,
-                                    nij);
+                BlasConnector::gemm(
+                    transb, transa, natom, nij, complex_npw, fact, aux_ptr, complex_npw, qg_ptr, complex_npw, zero,
+                    deeaux.c, nij);
                 // I'm not sure if this is correct for gamma_only
                 if (rho_basis->gamma_only && rho_basis->ig_gge0 >= 0)
                 {
                     const double neg = -1.0;
-                    container::BlasConnector::ger(nij, natom, neg, qg_ptr, complex_npw, aux_ptr, complex_npw, deeaux.c, nij);
+                    container::BlasConnector::ger(
+                        nij, natom, neg, qg_ptr, complex_npw, aux_ptr, complex_npw, deeaux.c, nij);
                 }
 
                 for (int ia = 0; ia < natom; ia++)
@@ -301,12 +295,12 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
  * @param iat  atom index
  * @param cell unit cell
  */
-void pseudopot_cell_vnl::newd_so(const int& iat, UnitCell& cell)
+void pseudopot_cell_vnl::newd_so(const int &iat, UnitCell &cell)
 {
     ModuleBase::TITLE("pseudopot_cell_vnl", "newd_so");
 
     const int it = cell.iat2it[iat];
-    Atom_pseudo* upf = &cell.atoms[it].ncpp;
+    Atom_pseudo *upf = &cell.atoms[it].ncpp;
     int ijs = 0;
     for (int is1 = 0; is1 < 2; is1++)
     {
@@ -322,17 +316,21 @@ void pseudopot_cell_vnl::newd_so(const int& iat, UnitCell& cell)
                     {
                         for (int lh = 0; lh < upf->nh; lh++)
                         {
-                            const std::complex<double> spin_uu = soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 0, is2, lh, jh);
-                            const std::complex<double> spin_dd = soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 1, is2, lh, jh);
+                            const std::complex<double> spin_uu =
+                                soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 0, is2, lh, jh);
+                            const std::complex<double> spin_dd =
+                                soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 1, is2, lh, jh);
                             const std::complex<double> scalar_term = deeq(0, iat, kh, lh) * (spin_uu + spin_dd);
 
                             if (PARAM.globalv.domag)
                             {
-                                const std::complex<double> spin_ud = soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 1, is2, lh, jh);
-                                const std::complex<double> spin_du = soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 0, is2, lh, jh);
+                                const std::complex<double> spin_ud =
+                                    soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 1, is2, lh, jh);
+                                const std::complex<double> spin_du =
+                                    soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 0, is2, lh, jh);
                                 const std::complex<double> mag_x_term = deeq(1, iat, kh, lh) * (spin_ud + spin_du);
-                                const std::complex<double> mag_y_term
-                                    = ModuleBase::NEG_IMAG_UNIT * deeq(2, iat, kh, lh) * (spin_ud - spin_du);
+                                const std::complex<double> mag_y_term =
+                                    ModuleBase::NEG_IMAG_UNIT * deeq(2, iat, kh, lh) * (spin_ud - spin_du);
                                 const std::complex<double> mag_z_term = deeq(3, iat, kh, lh) * (spin_uu - spin_dd);
 
                                 deeq_nc(ijs, iat, ih, jh) += scalar_term + mag_x_term + mag_y_term + mag_z_term;
@@ -359,12 +357,12 @@ void pseudopot_cell_vnl::newd_so(const int& iat, UnitCell& cell)
  * @param iat  atom index
  * @param cell unit cell
  */
-void pseudopot_cell_vnl::newd_nc(const int& iat, UnitCell& cell)
+void pseudopot_cell_vnl::newd_nc(const int &iat, UnitCell &cell)
 {
     ModuleBase::TITLE("pseudopot_cell_vnl", "newd_nc");
 
     const int it = cell.iat2it[iat];
-    Atom_pseudo* upf = &cell.atoms[it].ncpp;
+    Atom_pseudo *upf = &cell.atoms[it].ncpp;
 
     for (int ih = 0; ih < upf->nh; ih++)
     {

@@ -28,7 +28,6 @@ symmetry -1
 suffix autotest
 fixed_atoms 1
 cal_force 0
-dump_force 0
 scf_thr                 1e-6
 scf_nmax                150
 md_restartfreq 1

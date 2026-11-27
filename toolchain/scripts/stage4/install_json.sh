@@ -38,8 +38,8 @@ case "${with_json}" in
       cmake .. \
         -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
         -DJSON_BuildTests=OFF \
-        >cmake.log 2>&1 || tail -n "${LOG_LINES}" cmake.log
-      make install -j "$(get_nprocs)" >install.log 2>&1 || tail -n "${LOG_LINES}" install.log
+        > cmake.log 2>&1 || tail -n "${LOG_LINES}" cmake.log
+      make install -j "$(get_nprocs)" > install.log 2>&1 || tail -n "${LOG_LINES}" install.log
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/install_json.sh"
     fi
     ;;
@@ -55,7 +55,7 @@ case "${with_json}" in
 esac
 
 if [ -n "${pkg_install_dir}" ]; then
-  cat >"${BUILDDIR}/setup_json" <<EOF
+  cat > "${BUILDDIR}/setup_json" << EOF
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
   filter_setup "${BUILDDIR}/setup_json" "${SETUPFILE}"

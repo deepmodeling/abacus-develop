@@ -37,11 +37,11 @@ void ReadInput::item_elec_stru()
     // Electronic Structure
     {
         Input_Item item("ks_solver");
-        item.domain.set_choices({"cg", "dav", "bpcg", "dav_subspace", "genelpa", "elpa", "lapack", "scalapack_gvx", "cusolver", "cusolvermp", "pexsi"});
-        item.domain.add_requirement("basis_type==pw", "ks_solver in [cg, dav, bpcg, dav_subspace]");
+        item.domain.set_choices({"cg", "dav", "bpcg", "dav_subspace", "lobpcg", "genelpa", "elpa", "lapack", "scalapack_gvx", "cusolver", "cusolvermp", "pexsi"});
+        item.domain.add_requirement("basis_type==pw", "ks_solver in [cg, dav, bpcg, dav_subspace, lobpcg]");
         item.domain.add_requirement("basis_type==lcao", "ks_solver in [genelpa, elpa, lapack, scalapack_gvx, cusolver, cusolvermp, pexsi]");
         item.domain.add_requirement("ks_solver==genelpa", "device==cpu");
-        item.annotation = "cg; dav; lapack; genelpa; elpa; scalapack_gvx; cusolver";
+        item.annotation = "cg; dav; dav_subspace; bpcg; lobpcg; lapack; genelpa; elpa; scalapack_gvx; cusolver; cusolvermp; pexsi";
         item.category = "Electronic structure";
         item.type = "String";
         item.description = R"(Choose the diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
@@ -52,6 +52,7 @@ For plane-wave basis,
 * dav: The Davidson algorithm.
 * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
 * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
+* lobpcg: The locally optimal block preconditioned conjugate gradient method for CPU and GPU.
 
 For numerical atomic orbitals basis,
 
@@ -193,6 +194,29 @@ Then the user has to correct the input file and restart the calculation.)";
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "LCAO in plane wave can only done with lapack.");
                 }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lcao_sk_cut");
+        item.domain.set_rule("value>=0 and value<1");
+        item.set_availability("basis_type==lcao and ks_solver!=pexsi");
+        item.annotation = "relative threshold for canonical orthogonalization of the AO overlap";
+        item.category = "Electronic structure";
+        item.type = "Real";
+        item.description = R"(At zero, use the original generalized eigensolver. For a positive threshold, at each k point discard overlap eigenvalues at or below the threshold times the largest eigenvalue at that k point. Solve in the retained subspace and express the wavefunctions in the original AO basis. The retained rank at each k point must be at least nbands. This setting applies to Hamiltonian diagonalization. Force, stress, and response equations do not include derivatives of the retained subspace.)";
+        item.default_value = "0.0";
+        read_sync_double(input.lcao_sk_cut);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const double cutoff = para.input.lcao_sk_cut;
+            if (!(cutoff >= 0.0 && cutoff < 1.0))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lcao_sk_cut must be in [0, 1).");
+            }
+            if (cutoff > 0.0 && (para.input.basis_type != "lcao" || para.input.ks_solver == "pexsi"))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lcao_sk_cut requires an LCAO diagonalization solver.");
             }
         };
         this->add_item(item);
@@ -1015,10 +1039,10 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_thr");
-        item.annotation = "threshold for eigenvalues is cg electron iterations";
+        item.annotation = "initial convergence threshold for iterative diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
+        item.description = "Initial diagonalization threshold for cg/dav/dav_subspace/bpcg/lobpcg, updated automatically during SCF. For plane-wave NSCF calculations, choose a value <= 1e-3.";
         item.default_value = "0.01";
         item.unit = "";
         read_sync_double(input.pw_diag_thr);
@@ -1038,7 +1062,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "smooth ethr for iter methods";
         item.category = "Plane wave related variables";
         item.type = "Boolean";
-        item.description = "If TRUE, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If FALSE, the smooth threshold strategy will not be applied.";
+        item.description = "If TRUE, relax diagonalization thresholds for nearly empty bands to reduce work in ground-state SCF. If FALSE, use the same threshold for all bands.";
         item.default_value = "false";
         item.unit = "";
         read_sync_bool(input.diago_smooth_ethr);
@@ -1059,13 +1083,14 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_nmax");
-        item.annotation = "max iteration number for cg";
+        item.annotation = "maximum iterations per iterative diagonalization attempt";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
+        item.description = "Maximum number of iterations per diagonalization attempt.";
         item.default_value = "50";
+        item.domain.set_rule("value>0");
         item.unit = "";
-        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg]");
+        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, lobpcg]");
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }
@@ -1078,6 +1103,19 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.default_value = "4";
         item.unit = "";
         read_sync_int(input.pw_diag_ndim);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lobpcg_locking");
+        item.domain.set_choices({"hard", "soft"});
+        item.annotation = "locking policy for LOBPCG";
+        item.category = "Plane wave related variables";
+        item.type = "String";
+        item.description = R"(The default hard keeps converged bands fixed to reduce computation. With soft, these bands continue to be refined, which can help when closely spaced bands converge slowly, with more work per iteration.)";
+        item.default_value = "hard";
+        item.unit = "";
+        item.set_availability("basis_type==pw and ks_solver==lobpcg");
+        read_sync_string(input.lobpcg_locking);
         this->add_item(item);
     }
     {

@@ -1,28 +1,26 @@
 #include "dftu_base_test_fixture.h"
+#include "source_cell/atom_spec.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "source_pw/module_pwdft/dftu_base_io.h"
-#include "source_cell/atom_spec.h"
 
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 
-
 namespace
 {
 
-void write_constant_matrix(std::ostream& os,
-                           const int size,
-                           const double value,
-                           const int first_row_columns,
-                           const bool inline_comment = false)
+void write_constant_matrix(
+    std::ostream &os,
+    const int size,
+    const double value,
+    const int first_row_columns,
+    const bool inline_comment = false)
 {
     for (int row = 0; row < size; ++row)
     {
-        const int columns = (row == 0 && first_row_columns >= 0)
-                                ? first_row_columns
-                                : size;
+        const int columns = (row == 0 && first_row_columns >= 0) ? first_row_columns : size;
         for (int column = 0; column < columns; ++column)
         {
             os << " " << value;
@@ -35,7 +33,7 @@ void write_constant_matrix(std::ostream& os,
     }
 }
 
-void write_compact_collinear_body(std::ostream& os)
+void write_compact_collinear_body(std::ostream &os)
 {
     os << "Fe Atom 1 L 2 mag 0.0\n";
     os << "spin 1 nelec 0.5\n";
@@ -44,10 +42,11 @@ void write_compact_collinear_body(std::ostream& os)
     write_constant_matrix(os, 5, 0.2, 5);
 }
 
-void write_compact_collinear_atom(std::ostream& os,
-                                  const int atom_index,
-                                  const double spin_up,
-                                  const double spin_down)
+void write_compact_collinear_atom(
+    std::ostream &os,
+    const int atom_index,
+    const double spin_up,
+    const double spin_down)
 {
     os << "Fe Atom " << atom_index << " L 2 mag 0.0\n";
     os << "spin 1 nelec 0.5\n";
@@ -57,7 +56,6 @@ void write_compact_collinear_atom(std::ostream& os,
 }
 
 } // namespace
-
 
 /// init_occ_mat=2 loads the fixed occupation matrix during run initialization.
 TEST_F(DFTUBaseTest, InitBaseReadsFixedOccMat)
@@ -98,21 +96,22 @@ TEST_F(DFTUBaseTest, InitBaseReadsFixedOccMat)
     Plus_U_Base dftu;
     const std::vector<int> l_channel = {2};
     const std::vector<double> hubbard_u = {0.0};
-    dftu.init_base(ucell,
-                   1,                // npol
-                   2,                // nspin
-                   l_channel,
-                   false,            // yukawa_potential
-                   0.5,              // yukawa_lambda
-                   dir,              // global_readin_dir
-                   "",               // global_out_dir
-                   "none",           // init_chg
-                   "cpu",            // device
-                   hubbard_u,
-                   0.0,              // uramping
-                   2,                // init_occ_mat
-                   0,                // mixing_dftu
-                   DFTU_BASE::SOC_LAYOUT_PAULI);
+    dftu.init_base(
+        ucell,
+        1, // npol
+        2, // nspin
+        l_channel,
+        false,  // yukawa_potential
+        0.5,    // yukawa_lambda
+        dir,    // global_readin_dir
+        "",     // global_out_dir
+        "none", // init_chg
+        "cpu",  // device
+        hubbard_u,
+        0.0, // uramping
+        2,   // init_occ_mat
+        0,   // mixing_dftu
+        DFTU_BASE::SOC_LAYOUT_PAULI);
 
     ASSERT_TRUE(dftu.is_occmat_ready());
     EXPECT_NEAR(dftu.occmat().get(0, 2, 0, 0, 0), 0.1, 1e-12);
@@ -146,7 +145,7 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatSocPauliRoundtrip)
     {
         uu[k] = 1.0 + 0.01 * k;
         re[k] = 0.1 + 0.01 * k;
-        im[k] = 0.01 + 0.001 * k;  // non-zero -- the bug discarded this block
+        im[k] = 0.01 + 0.001 * k; // non-zero -- the bug discarded this block
         dd[k] = 0.5 + 0.01 * k;
     }
 
@@ -158,28 +157,36 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatSocPauliRoundtrip)
         for (int m0 = 0; m0 < nm; ++m0)
         {
             for (int m1 = 0; m1 < nm; ++m1)
+            {
                 ofs << " " << uu[m0 * nm + m1];
+            }
             ofs << "\n";
         }
         ofs << " spin 12 re\n";
         for (int m0 = 0; m0 < nm; ++m0)
         {
             for (int m1 = 0; m1 < nm; ++m1)
+            {
                 ofs << " " << re[m0 * nm + m1];
+            }
             ofs << "\n";
         }
         ofs << " spin 12 im\n";
         for (int m0 = 0; m0 < nm; ++m0)
         {
             for (int m1 = 0; m1 < nm; ++m1)
+            {
                 ofs << " " << im[m0 * nm + m1];
+            }
             ofs << "\n";
         }
         ofs << " spin 2 nelec 0.5\n";
         for (int m0 = 0; m0 < nm; ++m0)
         {
             for (int m1 = 0; m1 < nm; ++m1)
+            {
                 ofs << " " << dd[m0 * nm + m1];
+            }
             ofs << "\n";
         }
     }
@@ -187,37 +194,38 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatSocPauliRoundtrip)
     Plus_U_Base dftu;
     const std::vector<int> l_channel = {2};
     const std::vector<double> hubbard_u = {0.0};
-    dftu.init_base(ucell,
-                   2,                // npol (nspin=4 requires npol=2)
-                   4,                // nspin
-                   l_channel,
-                   false,            // yukawa_potential
-                   0.5,              // yukawa_lambda
-                   dir,              // global_readin_dir
-                   "",               // global_out_dir
-                   "none",           // init_chg
-                   "cpu",            // device
-                   hubbard_u,
-                   0.0,              // uramping
-                   2,                // init_occ_mat
-                   0,                // mixing_dftu
-                   DFTU_BASE::SOC_LAYOUT_PAULI);
+    dftu.init_base(
+        ucell,
+        2, // npol (nspin=4 requires npol=2)
+        4, // nspin
+        l_channel,
+        false,  // yukawa_potential
+        0.5,    // yukawa_lambda
+        dir,    // global_readin_dir
+        "",     // global_out_dir
+        "none", // init_chg
+        "cpu",  // device
+        hubbard_u,
+        0.0, // uramping
+        2,   // init_occ_mat
+        0,   // mixing_dftu
+        DFTU_BASE::SOC_LAYOUT_PAULI);
 
     ASSERT_TRUE(dftu.is_occmat_ready());
 
     // The 2m x 2m flat buffer holds 4 contiguous m^2 blocks: [b0, b1, b2, b3].
-    const ModuleBase::matrix& occ0 = dftu.occmat().mat(0, 2, 0);
+    const ModuleBase::matrix &occ0 = dftu.occmat().mat(0, 2, 0);
     ASSERT_EQ(occ0.nr * occ0.nc, 4 * m2);
 
     for (int k = 0; k < m2; ++k)
     {
-        EXPECT_NEAR(occ0.c[0 * m2 + k], uu[k] + dd[k], 1e-12)    // b0
+        EXPECT_NEAR(occ0.c[0 * m2 + k], uu[k] + dd[k], 1e-12) // b0
             << "Pauli block b0 mismatch at k=" << k;
-        EXPECT_NEAR(occ0.c[1 * m2 + k], 2.0 * re[k], 1e-12)      // b1
+        EXPECT_NEAR(occ0.c[1 * m2 + k], 2.0 * re[k], 1e-12) // b1
             << "Pauli block b1 mismatch at k=" << k;
-        EXPECT_NEAR(occ0.c[2 * m2 + k], 2.0 * im[k], 1e-12)      // b2 -- the bug
+        EXPECT_NEAR(occ0.c[2 * m2 + k], 2.0 * im[k], 1e-12) // b2 -- the bug
             << "Pauli block b2 mismatch at k=" << k;
-        EXPECT_NEAR(occ0.c[3 * m2 + k], uu[k] - dd[k], 1e-12)    // b3
+        EXPECT_NEAR(occ0.c[3 * m2 + k], uu[k] - dd[k], 1e-12) // b3
             << "Pauli block b3 mismatch at k=" << k;
     }
 }
@@ -240,13 +248,7 @@ TEST_F(DFTUBaseTest, ReadOccMatCompactHandlesLongComment)
     const std::vector<int> l_channel = {2};
     OccupationMatrix occ;
     occ.init(ucell, l_channel, 2, 1);
-    DFTU_BASE::read_occup_m(ucell,
-                            occ,
-                            l_channel,
-                            fn,
-                            2,
-                            1,
-                            DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::read_occup_m(ucell, occ, l_channel, fn, 2, 1, DFTU_BASE::SOC_LAYOUT_PAULI);
     EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, 0, 0), 0.1);
     EXPECT_DOUBLE_EQ(occ.get(0, 2, 1, 4, 4), 0.2);
 }
@@ -264,7 +266,7 @@ TEST_F(DFTUBaseTest, ReadOccMatCompactMultipleAtomsSkipsUncorrelatedSpecies)
     multi_cell.atoms[0].nwl = 1;
     multi_cell.atoms[0].nw = 4;
 
-    Atom& fe = multi_cell.atoms[1];
+    Atom &fe = multi_cell.atoms[1];
     fe.label = "Fe";
     fe.na = 2;
     fe.nwl = 2;
@@ -304,13 +306,7 @@ TEST_F(DFTUBaseTest, ReadOccMatCompactMultipleAtomsSkipsUncorrelatedSpecies)
     const std::vector<int> l_channel = {-1, 2};
     OccupationMatrix occ;
     occ.init(multi_cell, l_channel, 2, 1);
-    DFTU_BASE::read_occup_m(multi_cell,
-                            occ,
-                            l_channel,
-                            fn,
-                            2,
-                            1,
-                            DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::read_occup_m(multi_cell, occ, l_channel, fn, 2, 1, DFTU_BASE::SOC_LAYOUT_PAULI);
 
     EXPECT_DOUBLE_EQ(occ.get(2, 2, 0, 0, 0), 0.1);
     EXPECT_DOUBLE_EQ(occ.get(2, 2, 1, 4, 4), 0.2);
@@ -339,13 +335,7 @@ TEST_F(DFTUBaseTest, ReadOccMatCompactSocRealSpinBasis)
     const std::vector<int> l_channel = {2};
     OccupationMatrix occ;
     occ.init(ucell, l_channel, 4, 2);
-    DFTU_BASE::read_occup_m(ucell,
-                            occ,
-                            l_channel,
-                            fn,
-                            4,
-                            2,
-                            DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    DFTU_BASE::read_occup_m(ucell, occ, l_channel, fn, 4, 2, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
     EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, 0, 0), 1.0);
     EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, 0, 5), 2.0);
     EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, 5, 0), 2.0);
@@ -364,15 +354,9 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsLegacyHeader)
     const std::vector<int> l_channel = {2};
     OccupationMatrix occ;
     occ.init(ucell, l_channel, 2, 1);
-    EXPECT_EXIT(DFTU_BASE::read_occup_m(ucell,
-                                       occ,
-                                       l_channel,
-                                       fn,
-                                       2,
-                                       1,
-                                       DFTU_BASE::SOC_LAYOUT_PAULI),
-                testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(
+        DFTU_BASE::read_occup_m(ucell, occ, l_channel, fn, 2, 1, DFTU_BASE::SOC_LAYOUT_PAULI),
+        testing::ExitedWithCode(1), "");
 }
 
 TEST_F(DFTUBaseTest, ReadOccMatRejectsShortMatrixRow)
@@ -391,15 +375,9 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsShortMatrixRow)
     const std::vector<int> l_channel = {2};
     OccupationMatrix occ;
     occ.init(ucell, l_channel, 2, 1);
-    EXPECT_EXIT(DFTU_BASE::read_occup_m(ucell,
-                                       occ,
-                                       l_channel,
-                                       fn,
-                                       2,
-                                       1,
-                                       DFTU_BASE::SOC_LAYOUT_PAULI),
-                testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(
+        DFTU_BASE::read_occup_m(ucell, occ, l_channel, fn, 2, 1, DFTU_BASE::SOC_LAYOUT_PAULI),
+        testing::ExitedWithCode(1), "");
 }
 
 TEST_F(DFTUBaseTest, ReadOccMatRejectsLongMatrixRow)
@@ -418,15 +396,9 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsLongMatrixRow)
     const std::vector<int> l_channel = {2};
     OccupationMatrix occ;
     occ.init(ucell, l_channel, 2, 1);
-    EXPECT_EXIT(DFTU_BASE::read_occup_m(ucell,
-                                       occ,
-                                       l_channel,
-                                       fn,
-                                       2,
-                                       1,
-                                       DFTU_BASE::SOC_LAYOUT_PAULI),
-                testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(
+        DFTU_BASE::read_occup_m(ucell, occ, l_channel, fn, 2, 1, DFTU_BASE::SOC_LAYOUT_PAULI),
+        testing::ExitedWithCode(1), "");
 }
 
 TEST_F(DFTUBaseTest, ReadOccMatRejectsMissingSocBlock)
@@ -446,15 +418,9 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsMissingSocBlock)
     const std::vector<int> l_channel = {2};
     OccupationMatrix occ;
     occ.init(ucell, l_channel, 4, 2);
-    EXPECT_EXIT(DFTU_BASE::read_occup_m(ucell,
-                                       occ,
-                                       l_channel,
-                                       fn,
-                                       4,
-                                       2,
-                                       DFTU_BASE::SOC_LAYOUT_PAULI),
-                testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(
+        DFTU_BASE::read_occup_m(ucell, occ, l_channel, fn, 4, 2, DFTU_BASE::SOC_LAYOUT_PAULI),
+        testing::ExitedWithCode(1), "");
 }
 
 TEST_F(DFTUBaseTest, ReadOccMatRejectsExtraContent)
@@ -470,13 +436,7 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsExtraContent)
     const std::vector<int> l_channel = {2};
     OccupationMatrix occ;
     occ.init(ucell, l_channel, 2, 1);
-    EXPECT_EXIT(DFTU_BASE::read_occup_m(ucell,
-                                       occ,
-                                       l_channel,
-                                       fn,
-                                       2,
-                                       1,
-                                       DFTU_BASE::SOC_LAYOUT_PAULI),
-                testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(
+        DFTU_BASE::read_occup_m(ucell, occ, l_channel, fn, 2, 1, DFTU_BASE::SOC_LAYOUT_PAULI),
+        testing::ExitedWithCode(1), "");
 }

@@ -32,7 +32,8 @@ estep_per_md      2
 md_dt             0.05
 td_dt             0.025
 md_tfirst         -1
-md_dumpfreq       1
+out_freq_ion     1
+out_app_flag     2
 md_restartfreq    1
 init_vel          1
 
