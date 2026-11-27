@@ -421,7 +421,10 @@ void ESolver_KS::iter_finish(
     if (!this->defer_iter_output(istep) && output_charge)
     {
         const System_para &system = PARAM.globalv;
-        const bool write_restart = this->inp_->out_chg[0] != -1;
+        // A non-self-consistent run must not overwrite the density converged by
+        // the preceding SCF calculation, otherwise repeated nscf runs would
+        // silently consume a different input density each time.
+        const bool write_restart = this->inp_->out_chg[0] != -1 && this->inp_->calculation != "nscf";
         const std::string prefix = system.global_out_dir + this->inp_->suffix;
         const bool write_tau = XC_Functional::get_ked_flag();
         const bool writer_pool = GlobalV::MY_POOL == 0;

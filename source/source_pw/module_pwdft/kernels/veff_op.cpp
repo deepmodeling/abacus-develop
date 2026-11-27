@@ -33,9 +33,9 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU>
 #endif
         for (int ir = 0; ir < size; ir++)
         {
-            auto sup =
+            std::complex<FPTYPE> sup =
                 out[ir] * (in[0][ir] + in[3][ir]) + out1[ir] * (in[1][ir] - std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
-            auto sdown =
+            std::complex<FPTYPE> sdown =
                 out1[ir] * (in[0][ir] - in[3][ir]) + out[ir] * (in[1][ir] + std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
             out[ir] = sup;
             out1[ir] = sdown;

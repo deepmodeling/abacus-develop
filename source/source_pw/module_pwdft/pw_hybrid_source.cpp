@@ -112,7 +112,7 @@ void pw::read_exx_source_occupations(
     const double expected_weight = nspin == 1 ? 2.0 / nq : 1.0 / nq;
     for (int iq = 0; iq < nks; ++iq)
     {
-        const auto &header = headers[iq];
+        const pw::ExxSourceHeader &header = headers[iq];
         do
         {
             if (!std::getline(in, line))

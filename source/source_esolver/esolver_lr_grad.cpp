@@ -150,7 +150,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(
     const int nst = static_cast<int>(omega.size());
     const int channel = ispin;
     const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz);
-    const auto dm_gs = this->cal_dm_gs();
+    const module_dm::DensityMatrix<T, double> dm_gs = this->cal_dm_gs();
     const LR::GradientInputs<T> inputs = this->gradient_inputs_();
     const LR::ForceSettings force_settings{
         this->nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
@@ -162,7 +162,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(
         inputs.exx_lri, inputs.hybrid_alpha
 #endif
     );
-    const auto forces = LR::evaluate_closed_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, ispin);
+    const std::vector<ModuleBase::matrix> forces = LR::evaluate_closed_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, ispin);
     ModuleBase::timer::end("ESolver_LR", "cal_force_Xz");
     return forces;
 }
@@ -347,7 +347,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     const int nst = static_cast<int>(omega.size());
     const int channel = 0;
     const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz);
-    const auto dm_gs = this->cal_dm_gs();
+    const module_dm::DensityMatrix<T, double> dm_gs = this->cal_dm_gs();
     const LR::GradientInputs<T> inputs = this->gradient_inputs_();
     const LR::ForceSettings force_settings{
         this->nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
@@ -359,7 +359,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
         inputs.exx_lri, inputs.hybrid_alpha
 #endif
     );
-    const auto forces = LR::evaluate_open_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin);
+    const std::vector<ModuleBase::matrix> forces = LR::evaluate_open_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin);
     ModuleBase::timer::end("ESolver_LR", "cal_force_openshell_Xz");
     return forces;
 }

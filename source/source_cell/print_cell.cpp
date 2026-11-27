@@ -358,7 +358,7 @@ void write_mdcell_rows(std::ostream& output, const std::string& text,
     {
         throw std::runtime_error("Missing MDCell STRU atoms.");
     }
-    for (const auto& row : rows)
+    for (const std::pair<const std::int64_t, std::string>& row : rows)
     {
         output << row.second << '\n';
     }

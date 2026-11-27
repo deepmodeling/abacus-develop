@@ -31,7 +31,7 @@ namespace LR
             const std::array<int, 3>& cell,
             const ModuleBase::Matrix3& lattice)
         {
-            const auto translation = RI_Util::array3_to_Vector3(cell) * lattice;
+            const ModuleBase::Vector3<double> translation = RI_Util::array3_to_Vector3(cell) * lattice;
             const double angle = ModuleBase::TWO_PI * (k * translation);
             // The legacy probe contraction conjugated the negative Bloch phase.
             return std::exp(ModuleBase::IMAG_UNIT * angle);

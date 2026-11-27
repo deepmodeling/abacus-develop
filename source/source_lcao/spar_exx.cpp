@@ -111,7 +111,7 @@ void cal_HR_exx(
                         {
                             if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                             {
-                                auto& HR_sparse_ptr = HS_Arrays.HR_sparse[current_spin][R][iwt0];
+                                std::map<std::size_t, double>& HR_sparse_ptr = HS_Arrays.HR_sparse[current_spin][R][iwt0];
                                 double& HR_sparse = HR_sparse_ptr[iwt1];
                                 HR_sparse += RI::Global_Func::convert<double>(frac * Hexx(iw0, iw1));
                                 if (std::abs(HR_sparse) <= sparse_threshold)
@@ -121,7 +121,7 @@ void cal_HR_exx(
                             }
                             else if (PARAM.inp.nspin == 4)
                             {
-                                auto& HR_sparse_ptr = HS_Arrays.HR_soc_sparse[R][iwt0];
+                                std::map<std::size_t, std::complex<double>>& HR_sparse_ptr = HS_Arrays.HR_soc_sparse[R][iwt0];
 
                                 std::complex<double>& HR_sparse = HR_sparse_ptr[iwt1];
 

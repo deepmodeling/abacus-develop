@@ -168,13 +168,13 @@ ModuleIO::SparseMatrix<TR> make_sparse_R_block(hamilt::HContainer<TR>* mat_seria
 
     for (int iap = 0; iap < mat_serial->size_atom_pairs(); ++iap)
     {
-        const auto atom_pair = mat_serial->get_atom_pair(iap);
+        const hamilt::AtomPair<TR> atom_pair = mat_serial->get_atom_pair(iap);
         const int r_index = atom_pair.find_R(rx, ry, rz);
         if (r_index < 0)
         {
             continue;
         }
-        const auto matrix_info = atom_pair.get_matrix_values(r_index);
+        const std::tuple<std::vector<int>, TR*> matrix_info = atom_pair.get_matrix_values(r_index);
         const int* index = std::get<0>(matrix_info).data();
         TR* data = std::get<1>(matrix_info);
         for (int irow = index[0]; irow < index[0] + index[1]; ++irow)
@@ -240,14 +240,14 @@ void ModuleIO::write_hcontainer_csr_binary(const std::string& fname,
     write_native_value(ofs, nR);
 
     const double sparse_threshold = 1e-10;
-    for (const auto& R_coordinate: R_coordinates)
+    for (const std::tuple<int, int, int>& R_coordinate: R_coordinates)
     {
         const int rx = std::get<0>(R_coordinate);
         const int ry = std::get<1>(R_coordinate);
         const int rz = std::get<2>(R_coordinate);
         const SparseMatrix<TR> sparse_matrix
             = make_sparse_R_block(mat_serial, rx, ry, rz, sparse_threshold);
-        const auto& elements = sparse_matrix.getElements();
+        const std::map<std::pair<int, int>, TR>& elements = sparse_matrix.getElements();
         if (elements.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
         {
             ModuleBase::WARNING_QUIT("ModuleIO::write_hcontainer_csr_binary",
@@ -260,13 +260,13 @@ void ModuleIO::write_hcontainer_csr_binary(const std::string& fname,
         write_native_value(ofs, rz);
         write_native_value(ofs, nnz);
 
-        for (const auto& element: elements)
+        for (const std::pair<const std::pair<int, int>, TR>& element: elements)
         {
             write_native_value(ofs, element.second);
         }
 
         std::vector<long long> row_ptr(nbasis + 1, 0);
-        for (const auto& element: elements)
+        for (const std::pair<const std::pair<int, int>, TR>& element: elements)
         {
             write_native_value(ofs, element.first.second);
             ++row_ptr[element.first.first + 1];

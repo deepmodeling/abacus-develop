@@ -66,7 +66,7 @@ template<typename Tdata>
 std::shared_ptr<Exx_LRI<Tdata>> Exx_LRI<Tdata>::make_lr_workspace(const UnitCell& ucell,
                                                               const K_Vectors& kv) const
 {
-    auto workspace = std::make_shared<Exx_LRI<Tdata>>(this->info);
+    std::shared_ptr<Exx_LRI<Tdata>> workspace = std::make_shared<Exx_LRI<Tdata>>(this->info);
     workspace->mpi_comm = this->mpi_comm;
     workspace->p_kv = &kv;
     workspace->abfs_Lmax_ = this->abfs_Lmax_;

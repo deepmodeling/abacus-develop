@@ -48,7 +48,7 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
             for (int inl = 0; inl < deepks_param.inlmax; inl++)
             {
                 int nm = 2 * deepks_param.inl2l[inl] + 1;
-                auto accessor = pdm[inl].accessor<double, 2>();
+                at::TensorAccessor<double, 2> accessor = pdm[inl].accessor<double, 2>();
                 for (int m1 = 0; m1 < nm; m1++)
                 {
                     for (int m2 = 0; m2 < nm; m2++)
@@ -71,7 +71,7 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
             pdm_size = nproj * nproj;
             for (int iat = 0; iat < nat; iat++)
             {
-                auto accessor = pdm[iat].accessor<double, 1>();
+                at::TensorAccessor<double, 1> accessor = pdm[iat].accessor<double, 1>();
                 for (int ind = 0; ind < pdm_size; ind++)
                 {
                     double c = 0.0;
@@ -118,8 +118,8 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
             const int nw2_tot,
             ModuleBase::Vector3<int> dR2) 
         {
-            auto row_indexes = pv.get_indexes_row(ibt1);
-            auto col_indexes = pv.get_indexes_col(ibt2);
+            std::vector<int> row_indexes = pv.get_indexes_row(ibt1);
+            std::vector<int> col_indexes = pv.get_indexes_col(ibt2);
             if (row_indexes.size() * col_indexes.size() == 0)
             {
                 return; // to next loop
@@ -302,7 +302,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 continue;
             }
 
-            auto row_indexes = pv.get_indexes_row(ibt1);
+            std::vector<int> row_indexes = pv.get_indexes_row(ibt1);
             const int row_size = row_indexes.size();
             if (row_size == 0)
             {
@@ -345,7 +345,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                     continue;
                 }
 
-                auto col_indexes = pv.get_indexes_col(ibt2);
+                std::vector<int> col_indexes = pv.get_indexes_col(ibt2);
                 const int col_size = col_indexes.size();
                 if (col_size == 0)
                 {
@@ -404,7 +404,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                         const int inl = deepks_param.inl_index[T0](I0, L0, N0);
                         const int nm = 2 * L0 + 1;
 
-                        auto accessor = pdm[inl].accessor<double, 2>();
+                        at::TensorAccessor<double, 2> accessor = pdm[inl].accessor<double, 2>();
                         for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                         {
                             for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
@@ -422,7 +422,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
             }
             else
             {
-                auto accessor = pdm[iat].accessor<double, 1>();
+                at::TensorAccessor<double, 1> accessor = pdm[iat].accessor<double, 1>();
                 int index = 0, inc = 1;
                 int nproj = 0;
                 for (int il = 0; il < deepks_param.lmaxd + 1; il++)
@@ -467,7 +467,7 @@ void DeePKS_domain::check_pdm(const DeePKS_Param& deepks_param, const std::vecto
     for (int inl = 0; inl < deepks_param.inlmax; inl++)
     {
         const int nm = 2 * deepks_param.inl2l[inl] + 1;
-        auto accessor = pdm[inl].accessor<double, 2>();
+        at::TensorAccessor<double, 2> accessor = pdm[inl].accessor<double, 2>();
         for (int m1 = 0; m1 < nm; m1++)
         {
             for (int m2 = 0; m2 < nm; m2++)

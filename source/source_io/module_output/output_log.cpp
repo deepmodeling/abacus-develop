@@ -4,6 +4,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/constants.h"
 #include "source_base/formatter.h"
+#include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/parallel_comm.h"
@@ -288,6 +289,24 @@ void print_force(std::ofstream& ofs_running,
     { 
         std::cout << table;
     }
+}
+
+void print_net_force(std::ofstream& ofs, const ModuleBase::Vector3<double>& net_force)
+{
+    const double fac = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    const double net_x = net_force.x * fac;
+    const double net_y = net_force.y * fac;
+    const double net_z = net_force.z * fac;
+    const double drift = std::sqrt(net_x * net_x + net_y * net_y + net_z * net_z);
+
+    // keep the scientific format local to this diagnostic
+    const std::ios::fmtflags old_flags = ofs.flags();
+    const std::streamsize old_precision = ofs.precision();
+    ofs << std::scientific << std::setprecision(4);
+    ModuleBase::GlobalFunc::OUT(ofs, "Net force vector (eV/Ang)", net_x, net_y, net_z);
+    ModuleBase::GlobalFunc::OUT(ofs, "Total drift (ev/Ang)", drift);
+    ofs.flags(old_flags);
+    ofs.precision(old_precision);
 }
 
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, 

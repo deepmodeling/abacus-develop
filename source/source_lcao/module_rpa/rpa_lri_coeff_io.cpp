@@ -45,8 +45,8 @@ void RPA_LRI<T, Tdata>::out_Cs(const UnitCell& ucell,
         for (auto& JPp: Ip.second)
         {
             size_t J = JPp.first.first;
-            auto R = JPp.first.second;
-            auto& tmp_Cs = JPp.second;
+            TC R = JPp.first.second;
+            RI::Tensor<Tdata>& tmp_Cs = JPp.second;
             size_t j_num = ucell.atoms[ucell.iat2it[J]].nw;
 
             ofs << I + 1 << "   " << J + 1 << "   " << R[0] << "   " << R[1] << "   " << R[2] << "   " << i_num
@@ -87,7 +87,7 @@ try
         for (auto& JPp: Ip.second)
         {
             const int J = static_cast<int>(JPp.first.first);
-            auto& tmp_Cs = JPp.second;
+            RI::Tensor<Tdata>& tmp_Cs = JPp.second;
             if (tmp_Cs.shape.size() != 3 || tmp_Cs.shape[0] <= 0 || tmp_Cs.shape[1] <= 0 || tmp_Cs.shape[2] <= 0)
             {
                 continue;

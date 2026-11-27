@@ -36,10 +36,10 @@ void XC_Functional::grad_wfc(
         kvec_host[3 * i + 1] = static_cast<Real>(wfc_basis->kvec_c[i].y);
         kvec_host[3 * i + 2] = static_cast<Real>(wfc_basis->kvec_c[i].z);
     }
-    auto gcar =
+    container::Tensor gcar =
         ct::TensorMap(gcar_host.data(), ct::DataTypeToEnum<Real>::value, ct::DeviceType::CpuDevice, {gcar_size, 3})
             .to_device<ct_Device>();
-    auto kvec_c =
+    container::Tensor kvec_c =
         ct::TensorMap(kvec_host.data(), ct::DataTypeToEnum<Real>::value, ct::DeviceType::CpuDevice, {wfc_basis->nks, 3})
             .to_device<ct_Device>();
 
@@ -60,10 +60,10 @@ void XC_Functional::grad_wfc(
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     const int npw_k = wfc_basis->npwk[ik];
 
-    auto porter = std::move(
+    container::Tensor porter = std::move(
         ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {wfc_basis->nmaxgr}));
 
-    auto xc_functional_grad_wfc_solver = hamilt::xc_functional_grad_wfc_op<T, Device>();
+    hamilt::xc_functional_grad_wfc_op<T, Device> xc_functional_grad_wfc_solver = hamilt::xc_functional_grad_wfc_op<T, Device>();
 
     for (int ipol = 0; ipol < 3; ipol++)
     {

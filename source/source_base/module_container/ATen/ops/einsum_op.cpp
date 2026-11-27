@@ -231,7 +231,7 @@ static inline bool all_of(
     const std::vector<T>& vec, 
     const std::function<bool(T)>& predicate) 
 {
-    for (const auto& element : vec) {
+    for (const T& element : vec) {
         if (!predicate(element)) {
             return false;
         }
@@ -674,7 +674,7 @@ bool ProcessDimensions(
         return true;
     }
     // Insert broadcasting labels into the output labels.
-    auto it = std::find(output_labels.begin(), output_labels.end(), kEllipsisLabel);
+    std::vector<int>::iterator it = std::find(output_labels.begin(), output_labels.end(), kEllipsisLabel);
     if (it != output_labels.end()) {
         const int ellipsis_idx = it - output_labels.begin();
         InsertBroadcastLabels(max_bcast_dims, num_labels, ellipsis_idx,
@@ -813,9 +813,9 @@ static void DoContract(
     std::vector<T*> y_device_memory_ptrs = {}; y_device_memory_ptrs.reserve(batch_size);
     std::vector<T*> z_device_memory_ptrs = {}; z_device_memory_ptrs.reserve(batch_size);
 
-    auto* x_base_ptr = in_x.data<T>();
-    auto* y_base_ptr = in_y.data<T>();
-    auto* z_base_ptr = out_z.data<T>();
+    T* x_base_ptr = in_x.data<T>();
+    T* y_base_ptr = in_y.data<T>();
+    T* z_base_ptr = out_z.data<T>();
 
     int64_t x_stride = 0;
     int64_t y_stride = 0;

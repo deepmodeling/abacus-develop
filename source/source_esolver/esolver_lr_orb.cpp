@@ -261,7 +261,7 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int *desc_src)
 #else
         for (int ib = 0; ib < this->nbands_z_; ++ib)
         {
-            const auto *start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
+            const T* start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
             std::copy(start, start + this->nbasis, &(*this->psi_ks_z_)(ik, ib, 0));
         }
 #endif

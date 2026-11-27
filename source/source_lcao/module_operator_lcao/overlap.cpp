@@ -181,9 +181,9 @@ void Overlap<OperatorLCAO<TK, TR>>::calculate_SR()
         for (int iR = 0; iR < tmp.get_R_size(); ++iR)
         {
             const ModuleBase::Vector3<int> R_index = tmp.get_R_index(iR);
-            auto dtau = ucell->cal_dtau(iat1, iat2, R_index);
+            ModuleBase::Vector3<double> dtau = ucell->cal_dtau(iat1, iat2, R_index);
             TR* data_pointer = tmp.get_pointer(iR);
-            const auto displacement = dtau * this->ucell->lat0;
+            const ModuleBase::Vector3<double> displacement = dtau * this->ucell->lat0;
             cal_overlap_block(*this->ucell,
                               *this->intor_,
                               iat1,
@@ -358,7 +358,7 @@ HContainer<TR>* Overlap<OperatorLCAO<TK, TR>>::calculate_SR_async(const UnitCell
             }
 
             TR* data_pointer = atom_pair.get_pointer(iR);
-            const auto displacement = dtau * this->ucell->lat0;
+            const ModuleBase::Vector3<double> displacement = dtau * this->ucell->lat0;
             cal_overlap_block(*this->ucell,
                               *this->intor_,
                               iat1,
