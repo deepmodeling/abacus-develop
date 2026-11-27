@@ -27,7 +27,11 @@ namespace
 {
 
 /// Y_{1,m} channel of the orthonormal real spherical harmonics (m in [-1, 1])
-double ylm_l1(int m, double nx, double ny, double nz)
+double ylm_l1(
+    int m,
+    double nx,
+    double ny,
+    double nz)
 {
     switch (m)
     {
@@ -42,7 +46,11 @@ double ylm_l1(int m, double nx, double ny, double nz)
 }
 
 /// Y_{2,m} channel of the orthonormal real spherical harmonics (m in [-2, 2])
-double ylm_l2(int m, double nx, double ny, double nz)
+double ylm_l2(
+    int m,
+    double nx,
+    double ny,
+    double nz)
 {
     switch (m)
     {
@@ -61,7 +69,7 @@ double ylm_l2(int m, double nx, double ny, double nz)
 }
 
 /// gradient of the Y_{1,m} channel (m in [-1, 1])
-void grad_l1(int m, double c1, double* grad)
+void grad_l1(int m, double c1, double *grad)
 {
     switch (m)
     {
@@ -78,7 +86,14 @@ void grad_l1(int m, double c1, double* grad)
 }
 
 /// gradient of the Y_{2,m} channel (m in [-2, 2])
-void grad_l2(int m, double c2, double c20, double x, double y, double z, double* grad)
+void grad_l2(
+    int m,
+    double c2,
+    double c20,
+    double x,
+    double y,
+    double z,
+    double *grad)
 {
     switch (m)
     {
@@ -110,7 +125,7 @@ double DFPT_Pert::radial_vq(int it, int ib, double g) const
 {
     ModuleBase::TITLE("DFPT_Pert", "radial_vq");
     ModuleBase::timer::start("DFPT_Pert", "radial_vq");
-    const pseudo& ncpp = ucell_->atoms[it].ncpp;
+    const pseudo &ncpp = ucell_->atoms[it].ncpp;
     const int l = ncpp.lll[ib];
     int kkbeta = ncpp.kkbeta;
     if (kkbeta > 0 && (kkbeta % 2 == 0))
@@ -131,7 +146,7 @@ double DFPT_Pert::radial_vq(int it, int ib, double g) const
     return v * ModuleBase::FOUR_PI / std::sqrt(ucell_->omega);
 }
 
-double DFPT_Pert::real_ylm(int l, int m, const ModuleBase::Vector3<double>& ghat) const
+double DFPT_Pert::real_ylm(int l, int m, const ModuleBase::Vector3<double> &ghat) const
 {
     ModuleBase::TITLE("DFPT_Pert", "real_ylm");
     ModuleBase::timer::start("DFPT_Pert", "real_ylm");
@@ -176,10 +191,11 @@ double DFPT_Pert::real_ylm(int l, int m, const ModuleBase::Vector3<double>& ghat
     return ylm;
 }
 
-void DFPT_Pert::build_vkb(int it,
-                          int ia,
-                          const std::vector<ModuleBase::Vector3<double>>& gk,
-                          std::vector<std::vector<std::complex<double>>>& vkb) const
+void DFPT_Pert::build_vkb(
+    int it,
+    int ia,
+    const std::vector<ModuleBase::Vector3<double>> &gk,
+    std::vector<std::vector<std::complex<double>>> &vkb) const
 {
     ModuleBase::TITLE("DFPT_Pert", "build_vkb");
     ModuleBase::timer::start("DFPT_Pert", "build_vkb");
@@ -188,10 +204,10 @@ void DFPT_Pert::build_vkb(int it,
     // projectors with combined index lm = l^2 + m, m in 0..2l (i.e. the real
     // harmonic m channels -l..l walked as m' = (-1)^(m+1) ceil... ABACUS ylm
     // block: m=0, +1, -1, +2, -2, ...). We use the signed m' directly.
-    const pseudo& ncpp = ucell_->atoms[it].ncpp;
+    const pseudo &ncpp = ucell_->atoms[it].ncpp;
     const int nh = ncpp.nh;
     const int ngk = static_cast<int>(gk.size());
-    const ModuleBase::Vector3<double>& tau = ucell_->atoms[it].tau[ia];
+    const ModuleBase::Vector3<double> &tau = ucell_->atoms[it].tau[ia];
     vkb.assign(nh, std::vector<std::complex<double>>(ngk, std::complex<double>(0.0, 0.0)));
     if (nh == 0)
     {
@@ -214,7 +230,7 @@ void DFPT_Pert::build_vkb(int it,
             const int mr = (m == 0) ? 0 : ((m % 2 == 1) ? (m + 1) / 2 : -(m / 2));
             for (int ig = 0; ig < ngk; ++ig)
             {
-                const ModuleBase::Vector3<double>& G = gk[ig];         // k(+q)+G, 2*pi/lat0
+                const ModuleBase::Vector3<double> &G = gk[ig];         // k(+q)+G, 2*pi/lat0
                 const double gnorm = std::sqrt(G * G) * ucell_->tpiba; // bohr^-1
                 // real_ylm handles the |G|=0 point itself (Y_00 is
                 // direction-independent; l>0 channels vanish there together
@@ -233,7 +249,11 @@ void DFPT_Pert::build_vkb(int it,
     ModuleBase::timer::end("DFPT_Pert", "build_vkb");
 }
 
-void DFPT_Pert::grad_real_ylm(int l, int m, const ModuleBase::Vector3<double>& ghat, double grad[3]) const
+void DFPT_Pert::grad_real_ylm(
+    int l,
+    int m,
+    const ModuleBase::Vector3<double> &ghat,
+    double grad[3]) const
 {
     ModuleBase::TITLE("DFPT_Pert", "grad_real_ylm");
     ModuleBase::timer::start("DFPT_Pert", "grad_real_ylm");
@@ -262,19 +282,20 @@ void DFPT_Pert::grad_real_ylm(int l, int m, const ModuleBase::Vector3<double>& g
     ModuleBase::timer::end("DFPT_Pert", "grad_real_ylm");
 }
 
-void DFPT_Pert::build_vkb_dk(int it,
-                             int ia,
-                             int dir,
-                             const std::vector<ModuleBase::Vector3<double>>& gk,
-                             std::vector<std::vector<std::complex<double>>>& vkb,
-                             std::vector<std::vector<std::complex<double>>>& dvkb) const
+void DFPT_Pert::build_vkb_dk(
+    int it,
+    int ia,
+    int dir,
+    const std::vector<ModuleBase::Vector3<double>> &gk,
+    std::vector<std::vector<std::complex<double>>> &vkb,
+    std::vector<std::vector<std::complex<double>>> &dvkb) const
 {
     ModuleBase::TITLE("DFPT_Pert", "build_vkb_dk");
     ModuleBase::timer::start("DFPT_Pert", "build_vkb_dk");
-    const pseudo& ncpp = ucell_->atoms[it].ncpp;
+    const pseudo &ncpp = ucell_->atoms[it].ncpp;
     const int nh = ncpp.nh;
     const int ngk = static_cast<int>(gk.size());
-    const ModuleBase::Vector3<double>& tau = ucell_->atoms[it].tau[ia];
+    const ModuleBase::Vector3<double> &tau = ucell_->atoms[it].tau[ia];
     if (static_cast<int>(vkb.size()) != nh || static_cast<int>(vkb[0].size()) != ngk)
     {
         ModuleBase::WARNING_QUIT("DFPT_Pert::build_vkb_dk", "vkb must be built on the same gk list first.");
@@ -285,7 +306,7 @@ void DFPT_Pert::build_vkb_dk(int it,
         ModuleBase::timer::end("DFPT_Pert", "build_vkb_dk");
         return;
     }
-    const double dg = 1.0e-4; // bohr^-1, radial central-difference step
+    const double dg = 1.0e-4;             // bohr^-1, radial central-difference step
     const double gmag_zero_tol = 1.0e-10; ///< empirical parameter: |G| floor (2*pi/lat0) for the angular terms
     int mu = 0;
     for (int ib = 0; ib < ncpp.nbeta; ++ib)
@@ -297,12 +318,12 @@ void DFPT_Pert::build_vkb_dk(int it,
             const int mr = (m == 0) ? 0 : ((m % 2 == 1) ? (m + 1) / 2 : -(m / 2));
             for (int ig = 0; ig < ngk; ++ig)
             {
-                const ModuleBase::Vector3<double>& G = gk[ig];
+                const ModuleBase::Vector3<double> &G = gk[ig];
                 const double gmag = std::sqrt(G * G);      // 2*pi/lat0 units
                 const double gnorm = gmag * ucell_->tpiba; // bohr^-1
                 const double vq0 = radial_vq(it, ib, gnorm);
-                const double dvq = (radial_vq(it, ib, gnorm + dg) - radial_vq(it, ib, std::max(0.0, gnorm - dg)))
-                                   / (dg * (gnorm > dg ? 2.0 : 1.0));
+                const double dvq = (radial_vq(it, ib, gnorm + dg) - radial_vq(it, ib, std::max(0.0, gnorm - dg))) /
+                                   (dg * (gnorm > dg ? 2.0 : 1.0));
                 const double arg = -ModuleBase::TWO_PI * (G * tau);
                 const std::complex<double> phase(std::cos(arg), std::sin(arg));
                 const std::complex<double> dphase = std::complex<double>(0.0, -ModuleBase::TWO_PI * tau[dir]) * phase;

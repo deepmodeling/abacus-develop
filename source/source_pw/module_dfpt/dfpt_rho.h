@@ -17,7 +17,7 @@ namespace Base_Mixing
 class Plain_Mixing;
 class Broyden_Mixing;
 class Mixing_Data;
-}
+} // namespace Base_Mixing
 
 namespace ModuleDFPT
 {
@@ -47,17 +47,14 @@ class XC_First_Order
     /// carrier-free amplitude is only exact at q = 0). Const like apply:
     /// the kernel is held as pointer-to-const by the solver, and context
     /// injection between solves is the sanctioned state change.
-    virtual void set_context(const ModuleBase::Vector3<double>& q_cart) const
-    {
-        (void)q_cart;
-    }
+    virtual void set_context(const ModuleBase::Vector3<double> &q_cart) const { (void)q_cart; }
 
     /// dvxc_r(r) = delta V_xc[drho_r](r), complex q-shifted amplitude on
     /// the shared real-space grid. Implementations must not resize or
     /// alias drho_r; dvxc_r is resized to drho_r.size() and fully
     /// overwritten.
-    virtual void apply(const std::vector<std::complex<double>>& drho_r, std::vector<std::complex<double>>& dvxc_r) const
-        = 0;
+    virtual void apply(
+        const std::vector<std::complex<double>> &drho_r, std::vector<std::complex<double>> &dvxc_r) const = 0;
 };
 
 /**
@@ -99,8 +96,8 @@ class DFPT_Rho
     {
         int nspin;
         int nrxx;
-        ModulePW::PW_Basis* pw_rho;
-        ModulePW::PW_Basis_K* pw_wfc;
+        ModulePW::PW_Basis *pw_rho;
+        ModulePW::PW_Basis_K *pw_wfc;
         ModuleBase::Matrix3 recip_matrix;
         std::string mix_type; // "rho_plain", "rho_kerker" or "rho_broyden" (v_sc_* is handled at the solver)
         double mix_beta;
@@ -111,12 +108,13 @@ class DFPT_Rho
     DFPT_Rho();
     ~DFPT_Rho();
 
-    void init(const Config& cfg);
+    void init(const Config &cfg);
 
-    void compute_drho(const psi::Psi<std::complex<double>>& psi,
-                      const ModuleBase::matrix& wg,
-                      int q_idx,
-                      DFPT_PW_Data& data);
+    void compute_drho(
+        const psi::Psi<std::complex<double>> &psi,
+        const ModuleBase::matrix &wg,
+        int q_idx,
+        DFPT_PW_Data &data);
 
     /// q-shifted first-order core-density amplitude for an nlcc
     /// pseudopotential atom displaced along (iat, dir), in G space:
@@ -128,30 +126,33 @@ class DFPT_Rho
     /// XC channel of assemble_v_sc only (the core Coulomb is already in
     /// the ionic pseudopotential, so no Hartree contribution).
     /// ucell is passed explicitly (DFPT_Rho does not own it).
-    void compute_drhoc(const UnitCell& ucell,
-                       int iat,
-                       int dir,
-                       int q_idx,
-                       DFPT_PW_Data& data);
+    void compute_drhoc(
+        const UnitCell &ucell,
+        int iat,
+        int dir,
+        int q_idx,
+        DFPT_PW_Data &data);
 
     /// same first-order core-density amplitude as compute_drhoc, but pure:
     /// takes the cartesian q explicitly and writes into a caller-owned
     /// vector instead of the DFPT_PW_Data slot. Used by the 2n+1 nlcc
     /// direct terms, which need the core response of EVERY displacement
     /// while the data slot holds only the current one.
-    void compute_drhoc_g(const UnitCell& ucell,
-                         int iat,
-                         int dir,
-                         const ModuleBase::Vector3<double>& q_cart,
-                         std::vector<std::complex<double>>& drhoc_g) const;
+    void compute_drhoc_g(
+        const UnitCell &ucell,
+        int iat,
+        int dir,
+        const ModuleBase::Vector3<double> &q_cart,
+        std::vector<std::complex<double>> &drhoc_g) const;
 
     /// first-order occupation matrix (docc) for DFT+U (U0 reservation).
-    void cal_docc(const psi::Psi<std::complex<double>>& psi,
-                  const ModuleBase::matrix& wg,
-                  int q_idx,
-                  DFPT_PW_Data& data);
+    void cal_docc(
+        const psi::Psi<std::complex<double>> &psi,
+        const ModuleBase::matrix &wg,
+        int q_idx,
+        DFPT_PW_Data &data);
 
-    void mix_drho(int q_idx, DFPT_PW_Data& data);
+    void mix_drho(int q_idx, DFPT_PW_Data &data);
 
     /// C7: drop the mixing state of q_idx so the next perturbation at the
     /// same q restarts from a zero input density (the drho_in slot is
@@ -165,38 +166,38 @@ class DFPT_Rho
     /// (fac = e2 * FOUR_PI / (tpiba2 * |G+q|^2)); the |G+q| = 0 component
     /// (ig = -q) is skipped. Serves both the C6 q->0 response and the C7
     /// screened potential at every q point.
-    void v_hartree_q(const ModuleBase::Vector3<double>& q_cart,
-                     const std::vector<std::complex<double>>& drho_g,
-                     std::vector<std::complex<double>>& dv_ha_g) const;
+    void v_hartree_q(
+        const ModuleBase::Vector3<double> &q_cart, const std::vector<std::complex<double>> &drho_g,
+        std::vector<std::complex<double>> &dv_ha_g) const;
 
-    double get_residual(int q_idx, DFPT_PW_Data& data) const;
+    double get_residual(int q_idx, DFPT_PW_Data &data) const;
 
   private:
     /// accumulate one (ik, ib) band contribution to the real-space amplitude
-    void add_band_(int ik,
-                   int ib,
-                   double w,
-                   const std::complex<double>* c_ptr,
-                   const std::vector<std::complex<double>>& dpsi,
-                   const DFPT_KQ_Basis& kq,
-                   std::vector<std::complex<double>>& a_r);
+    void add_band_(
+        int ik,
+        int ib,
+        double w,
+        const std::complex<double> *c_ptr,
+        const std::vector<std::complex<double>> &dpsi,
+        const DFPT_KQ_Basis &kq,
+        std::vector<std::complex<double>> &a_r);
 
     /// rebuild the real-space manifest drho_r from G-space coefficients
-    void make_drho_r_(const std::vector<std::complex<double>>& drho_g,
-                      const ModuleBase::Vector3<double>& q_frac,
-                      std::vector<double>& drho_r) const;
+    void make_drho_r_(
+        const std::vector<std::complex<double>> &drho_g, const ModuleBase::Vector3<double> &q_frac,
+        std::vector<double> &drho_r) const;
 
     /// charge conservation: zero the Delta = -q harmonic when -q is a G vector
-    void zero_neg_q_(const ModuleBase::Vector3<double>& q_cart,
-                     std::vector<std::complex<double>>& drho_g) const;
+    void zero_neg_q_(const ModuleBase::Vector3<double> &q_cart, std::vector<std::complex<double>> &drho_g) const;
 
     /// true if q is Gamma within 1e-10
-    static bool is_gamma_q_(const ModuleBase::Vector3<double>& q);
+    static bool is_gamma_q_(const ModuleBase::Vector3<double> &q);
 
     int nspin_ = 1;
     int nrxx_ = 0;
-    ModulePW::PW_Basis* pw_rho_ = nullptr;
-    ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
+    ModulePW::PW_Basis *pw_rho_ = nullptr;
+    ModulePW::PW_Basis_K *pw_wfc_ = nullptr;
     ///< reciprocal lattice matrix in 1/lat0 (UnitCell::G convention)
     ModuleBase::Matrix3 recip_matrix_;
     double mix_beta_ = 0.7;

@@ -26,13 +26,14 @@ struct ExxSourceHeader
     double tpiba;
 };
 
-ExxSourceHeader read_exx_source_header(std::istream& in);
+ExxSourceHeader read_exx_source_header(std::istream &in);
 
 // Read the existing, k-weighted occupation column without changing its format.
-void read_exx_source_occupations(std::istream& in,
-                                  const std::vector<ExxSourceHeader>& headers,
-                                  int nspin,
-                                  ModuleBase::matrix& weights);
+void read_exx_source_occupations(
+    std::istream &in,
+    const std::vector<ExxSourceHeader> &headers,
+    int nspin,
+    ModuleBase::matrix &weights);
 
 /**
  * @brief Locate the EXX source file written by the latest output step.
@@ -53,12 +54,13 @@ void read_exx_source_occupations(std::istream& in,
  * @return Full path of the selected file.
  * @throws std::runtime_error When no candidate exists.
  */
-std::string resolve_source_file(const std::vector<std::string>& directories,
-                                const std::string& fixed_name,
-                                const std::string& tail,
-                                const bool allow_electronic_suffix,
-                                int* ionic_step = nullptr,
-                                int* electronic_step = nullptr);
+std::string resolve_source_file(
+    const std::vector<std::string> &directories,
+    const std::string &fixed_name,
+    const std::string &tail,
+    const bool allow_electronic_suffix,
+    int *ionic_step = nullptr,
+    int *electronic_step = nullptr);
 
-}
+} // namespace pw
 #endif

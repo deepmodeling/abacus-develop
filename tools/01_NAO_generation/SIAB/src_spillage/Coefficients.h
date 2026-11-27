@@ -19,21 +19,42 @@ class Coefficients
     Coefficients();
     ~Coefficients();
 
-    void init(const int& ntype,
-              const int& lmax,
-              const int& namx,
-              const double& ecut,
-              const double& ecut_jlq,
-              const double& rcut,
-              const double& tolerence);
-    void trial_c4(const int& t, const int& l, const int& n, const int& ie);
+    void init(
+        const int &ntype,
+        const int &lmax,
+        const int &namx,
+        const double &ecut,
+        const double &ecut_jlq,
+        const double &rcut,
+        const double &tolerence);
+    void trial_c4(
+        const int &t,
+        const int &l,
+        const int &n,
+        const int &ie);
 
-    void update_c4(const int& t, const int& l, const int& n, const int& ie);
-    void go_back_c4(const int& t, const int& l, const int& n, const int& ie);
-    void copy_c4_to_old(void);                                                    // for normalize
-    void kinetic_energy(const int& t, const int& l, const int& n, const int& ie); // mohan add 2009-07-23
+    void update_c4(
+        const int &t,
+        const int &l,
+        const int &n,
+        const int &ie);
+    void go_back_c4(
+        const int &t,
+        const int &l,
+        const int &n,
+        const int &ie);
+    void copy_c4_to_old(void); // for normalize
+    void kinetic_energy(
+        const int &t,
+        const int &l,
+        const int &n,
+        const int &ie); // mohan add 2009-07-23
     void accumulate_num_zero(void);
-    void accumulating_C4(const int& t, const int& l, const int& n, const int& ie);
+    void accumulating_C4(
+        const int &t,
+        const int &l,
+        const int &n,
+        const int &ie);
 
     int ntype;
     int lmax;
@@ -43,7 +64,7 @@ class Coefficients
     double tolerence;
     int fix;
 
-    string* output_c4_name;
+    string *output_c4_name;
     static bool write_c4_flag;
 
   private:

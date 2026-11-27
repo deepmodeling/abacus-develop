@@ -1,6 +1,6 @@
 #include "Inverse_Matrix_S.h"
 
-void Inverse_Matrix_S::copy_matrix_U2L(ComplexMatrix& matrix)
+void Inverse_Matrix_S::copy_matrix_U2L(ComplexMatrix &matrix)
 {
     for (size_t iw1(0); iw1 < this->dim; ++iw1)
     {
@@ -11,7 +11,7 @@ void Inverse_Matrix_S::copy_matrix_U2L(ComplexMatrix& matrix)
     }
 }
 
-void Inverse_Matrix_S::zero_matrix_L(ComplexMatrix& matrix)
+void Inverse_Matrix_S::zero_matrix_L(ComplexMatrix &matrix)
 {
     for (size_t iw1(0); iw1 < this->dim; ++iw1)
     {

@@ -73,6 +73,7 @@ addtest(
           ../../source_base/intarray.cpp
           ../../source_base/tool_title.cpp
           ../../source_base/global_function.cpp
+          ../../source_base/parallel_cell.cpp
           ../../source_base/matrix.cpp
           ../../source_base/complexarray.cpp
           ../../source_base/realarray.cpp
@@ -91,7 +92,8 @@ addtest(
   TARGET MODULE_RELAX_lat_change_method_test
   LIBS parameter base device
   SOURCES test_lat_change_method.cpp ../lat_change_method.cpp
-          ../lattice_change_basic.cpp ../relax_data.cpp test_mock_remake_cell.cpp)
+          ../lattice_change_basic.cpp ../relax_data.cpp
+          test_mock_remake_cell.cpp)
 
 addtest(
   TARGET MODULE_RELAX_lattice_change_basic_test

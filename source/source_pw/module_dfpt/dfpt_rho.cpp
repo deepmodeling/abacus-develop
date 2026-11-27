@@ -3,10 +3,10 @@
 #include "dfpt_kq_basis.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
+#include "source_base/module_mixing/broyden_mixing.h"
+#include "source_base/module_mixing/plain_mixing.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_base/module_mixing/plain_mixing.h"
-#include "source_base/module_mixing/broyden_mixing.h"
 #include "source_estate/module_charge/chg_tools.h"
 
 #include <algorithm>
@@ -17,15 +17,13 @@
 namespace ModuleDFPT
 {
 
-DFPT_Rho::DFPT_Rho()
-{
-}
+DFPT_Rho::DFPT_Rho() {}
 
 // Defined here (after the mixing headers are included) so the unique_ptr
 // deleters see the complete types. The body is implicitly generated.
 DFPT_Rho::~DFPT_Rho() = default;
 
-void DFPT_Rho::init(const Config& cfg)
+void DFPT_Rho::init(const Config &cfg)
 {
     ModuleBase::TITLE("DFPT_Rho", "init");
     ModuleBase::timer::start("DFPT_Rho", "init");
@@ -59,19 +57,20 @@ void DFPT_Rho::init(const Config& cfg)
     ModuleBase::timer::end("DFPT_Rho", "init");
 }
 
-bool DFPT_Rho::is_gamma_q_(const ModuleBase::Vector3<double>& q)
+bool DFPT_Rho::is_gamma_q_(const ModuleBase::Vector3<double> &q)
 {
     const double gamma_tol = 1.0e-10; ///< empirical parameter: fractional-q tolerance for the Gamma test
     return std::abs(q.x) < gamma_tol && std::abs(q.y) < gamma_tol && std::abs(q.z) < gamma_tol;
 }
 
-void DFPT_Rho::add_band_(int ik,
-                         int ib,
-                         double w,
-                         const std::complex<double>* c_ptr,
-                         const std::vector<std::complex<double>>& dpsi,
-                         const DFPT_KQ_Basis& kq,
-                         std::vector<std::complex<double>>& a_r)
+void DFPT_Rho::add_band_(
+    int ik,
+    int ib,
+    double w,
+    const std::complex<double> *c_ptr,
+    const std::vector<std::complex<double>> &dpsi,
+    const DFPT_KQ_Basis &kq,
+    std::vector<std::complex<double>> &a_r)
 {
     const int npw_kq = kq.get_npwk();
     // k+q G index -> rho-grid ig (both bases share the FFT cell)
@@ -109,9 +108,9 @@ void DFPT_Rho::add_band_(int ik,
     }
 }
 
-void DFPT_Rho::make_drho_r_(const std::vector<std::complex<double>>& drho_g,
-                            const ModuleBase::Vector3<double>& q_frac,
-                            std::vector<double>& drho_r) const
+void DFPT_Rho::make_drho_r_(
+    const std::vector<std::complex<double>> &drho_g, const ModuleBase::Vector3<double> &q_frac,
+    std::vector<double> &drho_r) const
 {
     // real-space manifest density: at q = 0 the completed coefficients are
     // already the full (real) response; away from q = 0 the manifest is the
@@ -135,9 +134,9 @@ void DFPT_Rho::make_drho_r_(const std::vector<std::complex<double>>& drho_g,
                 for (int iz = 0; iz < pw_rho_->nz; ++iz)
                 {
                     const int ir = (ix * pw_rho_->ny + iy) * pw_rho_->nz + iz;
-                    const double theta
-                        = ModuleBase::TWO_PI
-                          * (q_frac.x * ix / pw_rho_->nx + q_frac.y * iy / pw_rho_->ny + q_frac.z * iz / pw_rho_->nz);
+                    const double theta =
+                        ModuleBase::TWO_PI *
+                        (q_frac.x * ix / pw_rho_->nx + q_frac.y * iy / pw_rho_->ny + q_frac.z * iz / pw_rho_->nz);
                     drho_r[ir] = 2.0 * (a_clean[ir].real() * std::cos(theta) - a_clean[ir].imag() * std::sin(theta));
                 }
             }
@@ -145,8 +144,7 @@ void DFPT_Rho::make_drho_r_(const std::vector<std::complex<double>>& drho_g,
     }
 }
 
-void DFPT_Rho::zero_neg_q_(const ModuleBase::Vector3<double>& q_cart,
-                           std::vector<std::complex<double>>& drho_g) const
+void DFPT_Rho::zero_neg_q_(const ModuleBase::Vector3<double> &q_cart, std::vector<std::complex<double>> &drho_g) const
 {
     // charge conservation: the Delta = -q harmonic (G+q = 0 component of the
     // response density) must vanish whenever -q falls on a reciprocal
@@ -155,8 +153,8 @@ void DFPT_Rho::zero_neg_q_(const ModuleBase::Vector3<double>& q_cart,
     const ModuleBase::Vector3<double> mfrac = mq_cart * recip_matrix_.Inverse();
     const double mr[3] = {std::round(mfrac.x), std::round(mfrac.y), std::round(mfrac.z)};
     const double gvec_match_tol = 1.0e-6; ///< empirical parameter: folded -q reciprocal-vector match tolerance
-    if (std::abs(mfrac.x - mr[0]) < gvec_match_tol && std::abs(mfrac.y - mr[1]) < gvec_match_tol
-        && std::abs(mfrac.z - mr[2]) < gvec_match_tol)
+    if (std::abs(mfrac.x - mr[0]) < gvec_match_tol && std::abs(mfrac.y - mr[1]) < gvec_match_tol &&
+        std::abs(mfrac.z - mr[2]) < gvec_match_tol)
     {
         // locate the rho-grid G equal to -q through its FFT cell
         const int cix = (static_cast<int>(mr[0]) % pw_rho_->nx + pw_rho_->nx) % pw_rho_->nx;
@@ -179,10 +177,11 @@ void DFPT_Rho::zero_neg_q_(const ModuleBase::Vector3<double>& q_cart,
     }
 }
 
-void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
-                            const ModuleBase::matrix& wg,
-                            int q_idx,
-                            DFPT_PW_Data& data)
+void DFPT_Rho::compute_drho(
+    const psi::Psi<std::complex<double>> &psi,
+    const ModuleBase::matrix &wg,
+    int q_idx,
+    DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Rho", "compute_drho");
     ModuleBase::timer::start("DFPT_Rho", "compute_drho");
@@ -256,11 +255,12 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
     ModuleBase::timer::end("DFPT_Rho", "compute_drho");
 }
 
-void DFPT_Rho::compute_drhoc(const UnitCell& ucell,
-                              int iat,
-                              int dir,
-                              int q_idx,
-                              DFPT_PW_Data& data)
+void DFPT_Rho::compute_drhoc(
+    const UnitCell &ucell,
+    int iat,
+    int dir,
+    int q_idx,
+    DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Rho", "compute_drhoc");
     ModuleBase::timer::start("DFPT_Rho", "compute_drhoc");
@@ -281,23 +281,23 @@ void DFPT_Rho::compute_drhoc(const UnitCell& ucell,
     const int it = ucell.iat2it[iat];
     // report magnitude for diagnostics
     double norm2 = 0.0;
-    for (const std::complex<double>& c : drhoc_g)
+    for (const std::complex<double> &c : drhoc_g)
     {
         norm2 += std::norm(c);
     }
-    std::cout << "  DFPT nlcc core derivative: atom " << iat + 1 << "("
-              << ucell.atoms[it].label << ") dir " << static_cast<char>('x' + dir)
-              << " |drhoc_g| = " << std::setprecision(3) << std::scientific << std::sqrt(norm2)
-              << std::defaultfloat << std::setprecision(6) << std::endl;
+    std::cout << "  DFPT nlcc core derivative: atom " << iat + 1 << "(" << ucell.atoms[it].label << ") dir "
+              << static_cast<char>('x' + dir) << " |drhoc_g| = " << std::setprecision(3) << std::scientific
+              << std::sqrt(norm2) << std::defaultfloat << std::setprecision(6) << std::endl;
 
     ModuleBase::timer::end("DFPT_Rho", "compute_drhoc");
 }
 
-void DFPT_Rho::compute_drhoc_g(const UnitCell& ucell,
-                               int iat,
-                               int dir,
-                               const ModuleBase::Vector3<double>& q_cart,
-                               std::vector<std::complex<double>>& drhoc_g) const
+void DFPT_Rho::compute_drhoc_g(
+    const UnitCell &ucell,
+    int iat,
+    int dir,
+    const ModuleBase::Vector3<double> &q_cart,
+    std::vector<std::complex<double>> &drhoc_g) const
 {
     ModuleBase::TITLE("DFPT_Rho", "compute_drhoc_g");
     ModuleBase::timer::start("DFPT_Rho", "compute_drhoc_g");
@@ -314,10 +314,11 @@ void DFPT_Rho::compute_drhoc_g(const UnitCell& ucell,
     ModuleBase::timer::end("DFPT_Rho", "compute_drhoc_g");
 }
 
-void DFPT_Rho::cal_docc(const psi::Psi<std::complex<double>>& psi,
-                        const ModuleBase::matrix& wg,
-                        int q_idx,
-                        DFPT_PW_Data& data)
+void DFPT_Rho::cal_docc(
+    const psi::Psi<std::complex<double>> &psi,
+    const ModuleBase::matrix &wg,
+    int q_idx,
+    DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Rho", "cal_docc");
     ModuleBase::timer::start("DFPT_Rho", "cal_docc");
@@ -341,9 +342,9 @@ void DFPT_Rho::cal_docc(const psi::Psi<std::complex<double>>& psi,
     ModuleBase::timer::end("DFPT_Rho", "cal_docc");
 }
 
-void DFPT_Rho::v_hartree_q(const ModuleBase::Vector3<double>& q_cart,
-                           const std::vector<std::complex<double>>& drho_g,
-                           std::vector<std::complex<double>>& dv_ha_g) const
+void DFPT_Rho::v_hartree_q(
+    const ModuleBase::Vector3<double> &q_cart, const std::vector<std::complex<double>> &drho_g,
+    std::vector<std::complex<double>> &dv_ha_g) const
 {
     ModuleBase::TITLE("DFPT_Rho", "v_hartree_q");
     ModuleBase::timer::start("DFPT_Rho", "v_hartree_q");

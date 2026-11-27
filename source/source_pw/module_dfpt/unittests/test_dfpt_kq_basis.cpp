@@ -36,7 +36,7 @@
 namespace
 {
 
-bool VecLess(const ModuleBase::Vector3<double>& a, const ModuleBase::Vector3<double>& b)
+bool VecLess(const ModuleBase::Vector3<double> &a, const ModuleBase::Vector3<double> &b)
 {
     if (a.x != b.x)
     {
@@ -97,7 +97,7 @@ class DFPTKQBasisTest : public testing::Test
 
     // fill the (stick, z) layout the real distribution code produces for a
     // given ball; fftny = ny (complex basis). nxyz must be preset.
-    void FillSticks(ModulePW::PW_Basis& pw, double ggecut)
+    void FillSticks(ModulePW::PW_Basis &pw, double ggecut)
     {
         std::vector<int> is2fftixy;
         std::vector<int> ig2isz;
@@ -147,7 +147,7 @@ class DFPTKQBasisTest : public testing::Test
     // uses the production radius (sqrt(gk_ecut) + max|k_mesh|)^2; the
     // charge grid uses the production 4*ecutwfc (= 4*gk_ecut ball, no
     // k list) that covers every q-shifted ball for q in the first BZ.
-    void BuildBase(const std::vector<ModuleBase::Vector3<double>>& kvec_c)
+    void BuildBase(const std::vector<ModuleBase::Vector3<double>> &kvec_c)
     {
         tpiba2_ = ModuleBase::TWO_PI * ModuleBase::TWO_PI / (lat0_ * lat0_);
         gk_ecut_ = ecutwfc_ / tpiba2_;
@@ -199,7 +199,7 @@ class DFPTKQBasisTest : public testing::Test
 
     // independent reference: brute-force count/collect over the whole FFT
     // grid for a given shifted center, sorted for set comparison.
-    std::vector<ModuleBase::Vector3<double>> ReferenceSelection(const ModuleBase::Vector3<double>& center)
+    std::vector<ModuleBase::Vector3<double>> ReferenceSelection(const ModuleBase::Vector3<double> &center)
     {
         std::vector<ModuleBase::Vector3<double>> out;
         for (int ix0 = 0; ix0 < nx_; ++ix0)
@@ -225,7 +225,7 @@ class DFPTKQBasisTest : public testing::Test
         return out;
     }
 
-    std::vector<ModuleBase::Vector3<double>> KqSet(const ModuleDFPT::DFPT_KQ_Basis& kq)
+    std::vector<ModuleBase::Vector3<double>> KqSet(const ModuleDFPT::DFPT_KQ_Basis &kq)
     {
         std::vector<ModuleBase::Vector3<double>> out = kq.get_gcar_all();
         for (size_t i = 0; i < out.size(); ++i)
@@ -396,9 +396,8 @@ TEST_F(DFPTKQBasisTest, InvalidOrMismatchedBaseIsRejected)
     pw_.gamma_only = true;
     pw_.fftny = ny_ / 2 + 1;
     ModuleDFPT::DFPT_KQ_Basis kq2;
-    EXPECT_EXIT(kq2.init(&pw_, &prho_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 0),
-                ::testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(
+        kq2.init(&pw_, &prho_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 0), ::testing::ExitedWithCode(1), "");
 
     // mismatched FFT grid dimensions between the two bases are rejected
     pw_.gamma_only = false;
@@ -406,9 +405,8 @@ TEST_F(DFPTKQBasisTest, InvalidOrMismatchedBaseIsRejected)
     prho_.nx = 9;
     prho_.nxyz = 9 * prho_.ny * prho_.nz;
     ModuleDFPT::DFPT_KQ_Basis kq3;
-    EXPECT_EXIT(kq3.init(&pw_, &prho_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 0),
-                ::testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(
+        kq3.init(&pw_, &prho_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 0), ::testing::ExitedWithCode(1), "");
 }
 
 } // namespace

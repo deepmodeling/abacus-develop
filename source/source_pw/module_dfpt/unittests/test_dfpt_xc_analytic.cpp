@@ -19,10 +19,13 @@ namespace
 // reference helpers (basis builder, synthetic fields, FFT gradient /
 // divergence, summed libxc vrho/vsigma); file-local in gtest style
 
-
 // simple serial PW_Basis on a cubic cell (rho-grid only); PW_Basis owns raw
 // FFT state, so it is initialized in place instead of returned by value
-void make_basis(ModulePW::PW_Basis& pw, const double lat0, const double a, const double ecut)
+void make_basis(
+    ModulePW::PW_Basis &pw,
+    const double lat0,
+    const double a,
+    const double ecut)
 {
     const ModuleBase::Matrix3 latvec(a, 0.0, 0.0, 0.0, a, 0.0, 0.0, 0.0, a);
     pw.initgrids(lat0, latvec, ecut);
@@ -33,7 +36,7 @@ void make_basis(ModulePW::PW_Basis& pw, const double lat0, const double a, const
 }
 
 // smooth positive density: gaussian bump at the cell center
-std::vector<double> gaussian_rho(const ModulePW::PW_Basis& pw, const double amp)
+std::vector<double> gaussian_rho(const ModulePW::PW_Basis &pw, const double amp)
 {
     std::vector<double> rho(pw.nrxx, 0.0);
     for (int ix = 0; ix < pw.nx; ++ix)
@@ -54,7 +57,7 @@ std::vector<double> gaussian_rho(const ModulePW::PW_Basis& pw, const double amp)
 }
 
 // smooth real amplitude with gradient content
-std::vector<double> cosine_amplitude(const ModulePW::PW_Basis& pw, const double amp)
+std::vector<double> cosine_amplitude(const ModulePW::PW_Basis &pw, const double amp)
 {
     std::vector<double> a(pw.nrxx, 0.0);
     for (int ix = 0; ix < pw.nx; ++ix)
@@ -75,9 +78,7 @@ std::vector<double> cosine_amplitude(const ModulePW::PW_Basis& pw, const double 
 
 // FFT gradient of a real field on the rho grid (physical units: pw gcar is
 // dimensionless, the physical wavevector is tpiba * gcar)
-void fft_gradient(const ModulePW::PW_Basis& pw,
-                         const std::vector<double>& f,
-                         std::vector<std::vector<double>>& grad)
+void fft_gradient(const ModulePW::PW_Basis &pw, const std::vector<double> &f, std::vector<std::vector<double>> &grad)
 {
     const int npw = pw.npw;
     std::vector<std::complex<double>> f_g(npw);
@@ -100,9 +101,7 @@ void fft_gradient(const ModulePW::PW_Basis& pw,
 }
 
 // divergence of a real vector field on the rho grid (physical units)
-void fft_divergence(const ModulePW::PW_Basis& pw,
-                           const std::vector<std::vector<double>>& h,
-                           std::vector<double>& div)
+void fft_divergence(const ModulePW::PW_Basis &pw, const std::vector<std::vector<double>> &h, std::vector<double> &div)
 {
     const int npw = pw.npw;
     std::vector<std::complex<double>> dh_g(npw, std::complex<double>(0.0, 0.0));
@@ -125,11 +124,12 @@ void fft_divergence(const ModulePW::PW_Basis& pw,
 }
 
 // sum of libxc vrho / vsigma over functional components (Hartree)
-void libxc_vxc(const std::vector<int>& func_id,
-                      const std::vector<double>& rho,
-                      const std::vector<double>& sigma,
-                      std::vector<double>& vrho,
-                      std::vector<double>& vsigma)
+void libxc_vxc(
+    const std::vector<int> &func_id,
+    const std::vector<double> &rho,
+    const std::vector<double> &sigma,
+    std::vector<double> &vrho,
+    std::vector<double> &vsigma)
 {
     const int n = rho.size();
     vrho.assign(n, 0.0);
@@ -152,7 +152,6 @@ void libxc_vxc(const std::vector<int>& func_id,
 }
 
 } // namespace
-
 
 TEST(DFPTXcAnalytic, LdaKernelMatchesVrhofiniteDifference)
 {
@@ -227,7 +226,7 @@ TEST(DFPTXcAnalytic, LdaKernelMatchesVrhofiniteDifference)
         ++n_checked;
     }
     EXPECT_GT(n_checked, pw.nrxx / 10); // the checked region is representative
-    EXPECT_GT(max_abs, 1.0); // nontrivial kernel scale (Ry bohr^3)
+    EXPECT_GT(max_abs, 1.0);            // nontrivial kernel scale (Ry bohr^3)
     EXPECT_LT(max_err / max_abs, 1.0e-6);
 }
 
@@ -331,7 +330,7 @@ TEST(DFPTXcAnalytic, GgaQ0MatchesFieldPerturbationFiniteDifference)
         ++n_checked;
     }
     EXPECT_GT(n_checked, pw.nrxx / 10); // the checked region is representative
-    EXPECT_GT(max_abs, 1.0e-3); // nontrivial response scale
+    EXPECT_GT(max_abs, 1.0e-3);         // nontrivial response scale
     // the eta^2 FD truncation of the reference bounds the agreement around
     // 1e-6..1e-5; structural kernel/assembly errors show up at percent level
     EXPECT_LT(std::sqrt(l2_num / l2_den), 1.0e-5);

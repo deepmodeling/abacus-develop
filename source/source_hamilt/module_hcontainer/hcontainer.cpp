@@ -368,7 +368,7 @@ void HContainer<T>::allocate(T *data_array, bool is_zero)
 template <typename T>
 void HContainer<T>::set_zero()
 {
-    for (auto &it : this->atom_pairs)
+    for (hamilt::AtomPair<T>& it : this->atom_pairs)
     {
         it.set_zero();
     }
@@ -382,7 +382,7 @@ AtomPair<T> *HContainer<T>::find_pair(int atom_i, int atom_j) const
         ModuleBase::WARNING_QUIT("HContainer::insert_pair", "atom_i out of range");
     }
     // search atom_i and atom_j in sparse_ap
-    auto it = std::lower_bound(this->sparse_ap[atom_i].begin(), this->sparse_ap[atom_i].end(), atom_j);
+    std::vector<int>::const_iterator it = std::lower_bound(this->sparse_ap[atom_i].begin(), this->sparse_ap[atom_i].end(), atom_j);
     if (it != this->sparse_ap[atom_i].end() && *it == atom_j)
     {
         AtomPair<T> *tmp_pointer = const_cast<AtomPair<T> *>(
@@ -532,7 +532,7 @@ AtomPair<T> &HContainer<T>::get_atom_pair(int atom_i, int atom_j) const
         ModuleBase::WARNING_QUIT("HContainer::insert_pair", "atom_i out of range");
     }
     // search atom_i and atom_j in sparse_ap
-    auto it = std::lower_bound(this->sparse_ap[atom_i].begin(), this->sparse_ap[atom_i].end(), atom_j);
+    std::vector<int>::const_iterator it = std::lower_bound(this->sparse_ap[atom_i].begin(), this->sparse_ap[atom_i].end(), atom_j);
     if (it != this->sparse_ap[atom_i].end() && *it == atom_j)
     {
         AtomPair<T> *tmp = const_cast<AtomPair<T> *>(
@@ -584,7 +584,7 @@ void HContainer<T>::add(const HContainer<T> &other)
 {
     for (int iap = 0; iap < other.size_atom_pairs(); iap++)
     {
-        auto tmp = other.get_atom_pair(iap);
+        hamilt::AtomPair<T> tmp = other.get_atom_pair(iap);
         this->insert_pair(tmp);
     }
 }
@@ -676,7 +676,7 @@ bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
     this->tmp_atom_pairs.resize(this->atom_pairs.size());
     int iter = 0;
     // find (rx, ry, rz) in this->atom_pairs[i].R_values
-    for (auto it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
+    for (typename std::vector<hamilt::AtomPair<T>>::const_iterator it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
     {
         if (it->find_R(rx_in, ry_in, rz_in) != -1)
         {
@@ -785,7 +785,7 @@ size_t HContainer<T>::size_R_loop() const
      * search them one by one and store them in this->tmp_R_index
      */
     this->tmp_R_index.clear();
-    for (auto it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
+    for (typename std::vector<hamilt::AtomPair<T>>::const_iterator it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
     {
         /**
          * search (rx, ry, rz) with (it->R_values[i].x, it->R_values[i].y, it->R_values[i].z)
@@ -887,7 +887,7 @@ void HContainer<T>::insert_pair(const AtomPair<T> &atom_ij)
     int atom_j = atom_ij.get_atom_j();
     // find atom_ij in this->atom_pairs
     // 1. find the index of atom_j in sparse_ap[atom_i]
-    auto it = std::lower_bound(this->sparse_ap[atom_i].begin(), this->sparse_ap[atom_i].end(), atom_j);
+    std::vector<int>::iterator it = std::lower_bound(this->sparse_ap[atom_i].begin(), this->sparse_ap[atom_i].end(), atom_j);
     if (it != this->sparse_ap[atom_i].end() && *it == atom_j)
     {
         // 2. merge atom_ij

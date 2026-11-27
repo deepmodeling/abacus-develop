@@ -66,21 +66,26 @@ class DFPT_Q0
     DFPT_Q0() = default;
     ~DFPT_Q0() = default;
 
-    void init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, ModulePW::PW_Basis_K* pw_wfc, DFPT_Pert* pert);
+    void init(
+        UnitCell &ucell,
+        ModulePW::PW_Basis *pw_rho,
+        ModulePW::PW_Basis_K *pw_wfc,
+        DFPT_Pert *pert);
 
     /// SCF dielectric tensor (QE dielec.f90 form):
     ///   eps = 1 - (16 pi / Omega) sum_k wg sum_v Re <Y^a_v|dpsi^E,b_v>
     /// consuming the converged E-field responses dpsi_efield and the bare
     /// position legs pos_resp stashed by DFPT_PW (solve_pos_resp /
     /// solve_efield_resp). Must run after both stashes are complete.
-    void compute_eps(const ModuleBase::matrix& wg, DFPT_PW_Data& data);
+    void compute_eps(const ModuleBase::matrix &wg, DFPT_PW_Data &data);
 
-    void compute_born(const psi::Psi<std::complex<double>>& psi,
-                      const ModuleBase::matrix& wg,
-                      const ModuleBase::matrix& eig,
-                      DFPT_PW_Data& data);
+    void compute_born(
+        const psi::Psi<std::complex<double>> &psi,
+        const ModuleBase::matrix &wg,
+        const ModuleBase::matrix &eig,
+        DFPT_PW_Data &data);
 
-    void compute_q0_response(DFPT_PW_Data& data);
+    void compute_q0_response(DFPT_PW_Data &data);
 
     /// position-operator matrix elements r_mat[ik][m][n].d =
     /// <u_{m,k}|r_d|u_{n,k}> (m != n), periodic gauge (velocity form);
@@ -88,9 +93,9 @@ class DFPT_Q0
     /// Design-phase PT reference: no production caller since compute_eps
     /// moved to the SCF contraction (kept for the analytic serial tests
     /// and as the independent-particle cross-check; cleanup review P0-3).
-    void pos_matrix(const psi::Psi<std::complex<double>>& psi,
-                    const ModuleBase::matrix& eig,
-                    std::vector<std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>>>& r_mat);
+    void pos_matrix(
+        const psi::Psi<std::complex<double>> &psi, const ModuleBase::matrix &eig,
+        std::vector<std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>>> &r_mat);
 
     // ---- k-star rotation of the symmetry-reduced q=0 tensor sums ----
     // One entry per DISTINCT folded star member Rk of an irreducible k:
@@ -112,13 +117,13 @@ class DFPT_Q0
 
     /// chi_rot(a,b) = sum_{a'b'} R(a,a') R(b,b') chi(a',b') of a 3x3
     /// partial tensor under a cartesian rotation
-    static void rotate_tensor(const ModuleBase::Matrix3& r, const ModuleBase::matrix& chi, double (&chi_rot)[9]);
+    static void rotate_tensor(const ModuleBase::Matrix3 &r, const ModuleBase::matrix &chi, double (&chi_rot)[9]);
 
   private:
-    UnitCell* ucell_ = nullptr;
-    ModulePW::PW_Basis* pw_rho_ = nullptr;
-    ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
-    DFPT_Pert* pert_ = nullptr;
+    UnitCell *ucell_ = nullptr;
+    ModulePW::PW_Basis *pw_rho_ = nullptr;
+    ModulePW::PW_Basis_K *pw_wfc_ = nullptr;
+    DFPT_Pert *pert_ = nullptr;
 };
 
 } // namespace ModuleDFPT

@@ -36,7 +36,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
     std::cout<<"Calculating velocity matrix in KS presentation..."<<std::endl;
     // get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_);
     LCAO_Orbitals orb;
-    const auto& inp = PARAM.inp;
+    const Input_para& inp = PARAM.inp;
     two_center_bundle.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
                                         inp.out_element_info, inp.cal_force);
 
@@ -87,7 +87,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
     std::vector<ct::Tensor> vk(nks, LR_Util::newTensor<std::complex<double>>({ pmat.para_2d().ncloc(), pmat.para_2d().nrloc() }));
     for (int id = 0; id < 3; ++id)
     {
-        for (auto& v : vk) v.zero();
+        for (container::Tensor& v : vk) v.zero();
 
         std::vector<std::complex<double>> v_mo(nks * pmo.size(), 0.0);
 

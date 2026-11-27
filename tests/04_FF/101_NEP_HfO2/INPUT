@@ -15,7 +15,8 @@ md_type           npt
 md_dt             1
 md_tfirst         300
 md_thermostat     nhc
-md_dumpfreq       1
+out_freq_ion     1
+out_app_flag     2
 md_seed           1
 
 init_vel          1

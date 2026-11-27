@@ -12,8 +12,6 @@
 #include "source_cell/unitcell.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
@@ -24,6 +22,8 @@
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_q0.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 // per-file self-contained fixture (gtest style): owns its objects and
 // calls the dfpt_test free-function utilities; Gamma-only
@@ -48,8 +48,8 @@ class DFPTQ0SerialTest : public ::testing::Test
     void SetUp() override
     {
         dfpt_test::setup_cell(ucell_, latvec_);
-        dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_,
-                               k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 4, q_cart_);
+        dfpt_test::setup_bases(
+            pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 4, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
         q0_.init(ucell_, &pw_rho_, &pw_wfc_, &pert_);
     }
@@ -67,9 +67,8 @@ class DFPTQ0SerialTest : public ::testing::Test
         for (int ig = 0; ig < npwk; ++ig)
         {
             const ModuleBase::Vector3<double> g = pw_wfc_.getgpluskcar(0, ig);
-            if (std::llround(g.x * dfpt_test::cubic_edge) == ix
-                && std::llround(g.y * dfpt_test::cubic_edge) == iy
-                && std::llround(g.z * dfpt_test::cubic_edge) == iz)
+            if (std::llround(g.x * dfpt_test::cubic_edge) == ix && std::llround(g.y * dfpt_test::cubic_edge) == iy &&
+                std::llround(g.z * dfpt_test::cubic_edge) == iz)
             {
                 return ig;
             }
@@ -123,8 +122,8 @@ TEST_F(DFPTQ0SerialTest, PosMatrixKineticAndDegenerateSkip)
     for (int d = 0; d < 3; ++d)
     {
         const std::complex<double> p01(2.0 * ucell_.tpiba2 * (-std::sqrt(0.16)) * gx_[d], 0.0);
-        const std::complex<double> expect
-            = std::complex<double>(0.0, -1.0) * p01 / (ucell_.tpiba * (0.2 * e1 - 0.8 * e1));
+        const std::complex<double> expect =
+            std::complex<double>(0.0, -1.0) * p01 / (ucell_.tpiba * (0.2 * e1 - 0.8 * e1));
         EXPECT_NEAR(r_mat[0][0][1][d].real(), expect.real(), 1.0e-10);
         EXPECT_NEAR(r_mat[0][0][1][d].imag(), expect.imag(), 1.0e-10);
         // Hermiticity: r_10 = conj(r_01)
@@ -153,7 +152,8 @@ TEST_F(DFPTQ0SerialTest, PosMatrixNonlocalMatchesOperatorFiniteDifference)
     psi::Psi<std::complex<double>> psi(1, nb, npwk, npwk, true);
     psi.zero_out();
     unsigned seed = 20260817u;
-    auto rnd = [&]() {
+    auto rnd = [&]()
+    {
         seed = seed * 1664525u + 1013904223u;
         return ((seed >> 8) & 0xffffff) / 16777216.0 * 2.0 - 1.0;
     };
@@ -204,7 +204,7 @@ TEST_F(DFPTQ0SerialTest, PosMatrixNonlocalMatchesOperatorFiniteDifference)
     q0_.pos_matrix(psi, eig, r_mat);
 
     // finite-difference reference of the full velocity operator
-    const pseudo& p = ucell_.atoms[0].ncpp;
+    const pseudo &p = ucell_.atoms[0].ncpp;
     const int nh = p.nh;
     std::vector<int> row_ib, row_m;
     for (int ib = 0; ib < p.nbeta; ++ib)
@@ -225,8 +225,9 @@ TEST_F(DFPTQ0SerialTest, PosMatrixNonlocalMatchesOperatorFiniteDifference)
     const double eps = 1.0e-5;
 
     // becp with the |G| = 0 column dropped on a shifted list
-    auto vnl_matrix = [&](const std::vector<ModuleBase::Vector3<double>>& glist,
-                          std::vector<std::vector<std::complex<double>>>& mmat) {
+    auto vnl_matrix =
+        [&](const std::vector<ModuleBase::Vector3<double>> &glist, std::vector<std::vector<std::complex<double>>> &mmat)
+    {
         std::vector<std::vector<std::complex<double>>> vkb;
         pert_.build_vkb(0, 0, glist, vkb);
         std::vector<std::vector<std::complex<double>>> becp(nb);

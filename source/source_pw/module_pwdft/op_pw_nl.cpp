@@ -7,10 +7,11 @@ namespace hamilt
 {
 
 template <typename T, typename Device>
-Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
-                                          const pseudopot_cell_vnl* ppcell_in,
-                                          const UnitCell* ucell_in,
-                                          const ModulePW::PW_Basis_K* wfc_basis)
+Nonlocal<OperatorPW<T, Device>>::Nonlocal(
+    const int *isk_in,
+    const pseudopot_cell_vnl *ppcell_in,
+    const UnitCell *ucell_in,
+    const ModulePW::PW_Basis_K *wfc_basis)
 {
     if (isk_in == nullptr || ppcell_in == nullptr || ucell_in == nullptr || wfc_basis == nullptr)
     {
@@ -50,31 +51,23 @@ void Nonlocal<OperatorPW<T, Device>>::init(const int ik_in)
 }
 
 template <typename T, typename Device>
-void Nonlocal<OperatorPW<T, Device>>::act(const int nbands,
-                                          const int nbasis,
-                                          const int npol,
-                                          const T* tmpsi_in,
-                                          T* tmhpsi,
-                                          const int ngk_ik,
-                                          const bool is_first_node) const
+void Nonlocal<OperatorPW<T, Device>>::act(
+    const int nbands,
+    const int nbasis,
+    const int npol,
+    const T *tmpsi_in,
+    T *tmhpsi,
+    const int ngk_ik,
+    const bool is_first_node) const
 {
-    this->workspace_.apply(*this->ucell,
-                           *this->ppcell,
-                           *this->wfcpw,
-                           this->isk[this->ik],
-                           nbands,
-                           nbasis,
-                           npol,
-                           ngk_ik,
-                           is_first_node,
-                           this->vkb,
-                           tmpsi_in,
-                           tmhpsi);
+    this->workspace_.apply(
+        *this->ucell, *this->ppcell, *this->wfcpw, this->isk[this->ik], nbands, nbasis, npol, ngk_ik, is_first_node,
+        this->vkb, tmpsi_in, tmhpsi);
 }
 
 template <typename T, typename Device>
 template <typename T_in, typename Device_in>
-hamilt::Nonlocal<OperatorPW<T, Device>>::Nonlocal(const Nonlocal<OperatorPW<T_in, Device_in>>* nonlocal)
+hamilt::Nonlocal<OperatorPW<T, Device>>::Nonlocal(const Nonlocal<OperatorPW<T_in, Device_in>> *nonlocal)
 {
     this->classname = "Nonlocal";
     this->cal_type = calculation_type::pw_nonlocal;

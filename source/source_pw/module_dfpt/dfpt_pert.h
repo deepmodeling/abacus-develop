@@ -19,22 +19,28 @@ class DFPT_Pert
     DFPT_Pert();
     ~DFPT_Pert();
 
-    void init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, ModulePW::PW_Basis_K* pw_wfc, Structure_Factor& sf);
+    void init(
+        UnitCell &ucell,
+        ModulePW::PW_Basis *pw_rho,
+        ModulePW::PW_Basis_K *pw_wfc,
+        Structure_Factor &sf);
 
     /// C5: read access to the ground-state wfc basis for the dynamical-matrix
     /// contractions in DFPT_Phon::accumulate_electron.
-    ModulePW::PW_Basis_K* get_pw_wfc() const
-    {
-        return pw_wfc_;
-    }
-    ModulePW::PW_Basis* get_pw_rho() const
-    {
-        return pw_rho_;
-    }
+    ModulePW::PW_Basis_K *get_pw_wfc() const { return pw_wfc_; }
+    ModulePW::PW_Basis *get_pw_rho() const { return pw_rho_; }
 
-    void build_dv(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data);
+    void build_dv(
+        int q_idx,
+        int atom_idx,
+        int dir,
+        DFPT_PW_Data &data);
 
-    void apply_dv(int q_idx, int k_idx, const psi::Psi<std::complex<double>>& psi, DFPT_PW_Data& data);
+    void apply_dv(
+        int q_idx,
+        int k_idx,
+        const psi::Psi<std::complex<double>> &psi,
+        DFPT_PW_Data &data);
 
     /// C5: real-space kernel of the same-atom second-order LOCAL potential
     /// d2V_loc(r) = d^2 V_loc / d tau_{da} d tau_{db} (both displacement
@@ -46,7 +52,11 @@ class DFPT_Pert
     /// and skips otherwise. Returned on the shared real-space grid; its
     /// expectation value with |u(r)|^2 enters the electronic dynamical
     /// matrix (anharmonic term).
-    void d2vloc_r(int atom_idx, int da, int db, std::vector<std::complex<double>>& dv2_r) const;
+    void d2vloc_r(
+        int atom_idx,
+        int da,
+        int db,
+        std::vector<std::complex<double>> &dv2_r) const;
 
     /// C5: same-atom second-order NONLOCAL potential acting on psi,
     /// chi_n(G'') = (d^2 Vnl / d tau_{da} d tau_{db}) |psi_n> on the
@@ -56,13 +66,14 @@ class DFPT_Pert
     /// derivatives of the out (q_eff-shifted) and in (k+G') projectors of
     /// the SAME displaced atom; they reduce to zero for a uniform
     /// translation at q=0 (acoustic consistency).
-    void apply_d2vnl(int atom_idx,
-                     int da,
-                     int db,
-                     const ModuleBase::Vector3<double>& q_eff,
-                     const psi::Psi<std::complex<double>>& psi,
-                     int k_idx,
-                     std::vector<std::vector<std::complex<double>>>& d2v_psi) const;
+    void apply_d2vnl(
+        int atom_idx,
+        int da,
+        int db,
+        const ModuleBase::Vector3<double> &q_eff,
+        const psi::Psi<std::complex<double>> &psi,
+        int k_idx,
+        std::vector<std::vector<std::complex<double>>> &d2v_psi) const;
 
     /// Build the beta-projector array (in the ABACUS vkb convention) for a
     /// single atom on an arbitrary k-shifted reciprocal vector list:
@@ -72,10 +83,11 @@ class DFPT_Pert
     /// Usable for both the incoming k basis (G = k+G') and the outgoing DFPT
     /// k+q basis (G = k+q+G''), so the atomic phase is correct on either side.
     /// Public since C6: DFPT_Q0 reuses it for the velocity operator.
-    void build_vkb(int it,
-                   int ia,
-                   const std::vector<ModuleBase::Vector3<double>>& gk,
-                   std::vector<std::vector<std::complex<double>>>& vkb) const;
+    void build_vkb(
+        int it,
+        int ia,
+        const std::vector<ModuleBase::Vector3<double>> &gk,
+        std::vector<std::vector<std::complex<double>>> &vkb) const;
 
     /// C6: analytic derivative of the beta projector with respect to the
     /// list shift k_dir (the same shift build_vkb is evaluated at), three
@@ -84,12 +96,13 @@ class DFPT_Pert
     /// and the real-harmonic direction derivative (grad_real_ylm chain
     /// (e_dir - ghat ghat_dir)/|G|). Feeds the dV_nl/dk part of the
     /// velocity operator in DFPT_Q0::pos_matrix.
-    void build_vkb_dk(int it,
-                      int ia,
-                      int dir,
-                      const std::vector<ModuleBase::Vector3<double>>& gk,
-                      std::vector<std::vector<std::complex<double>>>& vkb,
-                      std::vector<std::vector<std::complex<double>>>& dvkb) const;
+    void build_vkb_dk(
+        int it,
+        int ia,
+        int dir,
+        const std::vector<ModuleBase::Vector3<double>> &gk,
+        std::vector<std::vector<std::complex<double>>> &vkb,
+        std::vector<std::vector<std::complex<double>>> &dvkb) const;
 
     /// radial part (4pi/sqrt(Omega)) Integral beta(r) j_l(g r) r dr at g (bohr^-1)
     double radial_vq(int it, int ib, double g) const;
@@ -99,18 +112,19 @@ class DFPT_Pert
     /// The potential is the q-shifted complex periodic amplitude (the same
     /// convention as dv_rc); the DFPT self-consistent loop uses it for the
     /// screened response potential (Hartree + XC) of the mixed density.
-    void apply_vr(int q_idx,
-                  int k_idx,
-                  const std::vector<std::complex<double>>& v_rc,
-                  const psi::Psi<std::complex<double>>& psi,
-                  const ModuleBase::Vector3<double>& q_cart,
-                  std::vector<std::vector<std::complex<double>>>& dv_psi) const;
+    void apply_vr(
+        int q_idx,
+        int k_idx,
+        const std::vector<std::complex<double>> &v_rc,
+        const psi::Psi<std::complex<double>> &psi,
+        const ModuleBase::Vector3<double> &q_cart,
+        std::vector<std::vector<std::complex<double>>> &dv_psi) const;
 
     /// Grid helper: reconstruct the cartesian reciprocal vector (in 2*pi/lat0
     /// units) of rho-grid index ig from the shared FFT-grid (ix,iy,iz) mapping.
     /// A stateless building block exposed publicly so the serial analytic
     /// tests can validate the rho-grid G layout directly.
-    void rho_gvec(int ig, ModuleBase::Vector3<double>& gcar) const;
+    void rho_gvec(int ig, ModuleBase::Vector3<double> &gcar) const;
 
     /// First-order asymmetric-part local potential on the rho grid:
     ///   dVloc_dtau(Delta) = -i (Delta+q).direction * Vloc(|Delta+q|)
@@ -119,7 +133,11 @@ class DFPT_Pert
     /// is the exact derivative of the local potential with respect to the
     /// atomic displacement). Stateless building block validated by the serial
     /// analytic tests against a finite difference of the displaced potential.
-    void dVloc_dtau(int atom_idx, int dir, const ModuleBase::Vector3<double>& q, std::vector<std::complex<double>>& dv);
+    void dVloc_dtau(
+        int atom_idx,
+        int dir,
+        const ModuleBase::Vector3<double> &q,
+        std::vector<std::complex<double>> &dv);
 
     /// C1: first-order NONLOCAL potential acting on psi (normal-conserving
     /// separable case), for one displaced atom in direction dir.
@@ -132,18 +150,19 @@ class DFPT_Pert
     /// USPP/ultrasoft and spin-orbit projectors are rejected for now.
     /// Stateless building block validated by the serial analytic tests
     /// against an operator finite difference.
-    void dVnl_dtau(int atom_idx,
-                   int dir,
-                   const ModuleBase::Vector3<double>& q,
-                   const psi::Psi<std::complex<double>>& psi,
-                   int k_idx,
-                   std::vector<std::vector<std::complex<double>>>& dv_psi);
+    void dVnl_dtau(
+        int atom_idx,
+        int dir,
+        const ModuleBase::Vector3<double> &q,
+        const psi::Psi<std::complex<double>> &psi,
+        int k_idx,
+        std::vector<std::vector<std::complex<double>>> &dv_psi);
 
   private:
-    UnitCell* ucell_ = nullptr;
-    ModulePW::PW_Basis* pw_rho_ = nullptr;
-    ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
-    Structure_Factor* sf_ = nullptr;
+    UnitCell *ucell_ = nullptr;
+    ModulePW::PW_Basis *pw_rho_ = nullptr;
+    ModulePW::PW_Basis_K *pw_wfc_ = nullptr;
+    Structure_Factor *sf_ = nullptr;
 
     /// C1: first-order LOCAL potential dVloc_dtau (per displaced atom).
     /// The local pseudopotential Vloc(g^2) at an arbitrary magnitude:
@@ -151,35 +170,45 @@ class DFPT_Pert
     ///  radial-mesh Fourier transform of vl_pw.cpp::vloc_of_g at |g| themselves.
     double vloc_at_g(int it, double g2) const;
     /// linear atom index -> (type, picture) of ucell_.
-    void atom_index(int atom_idx, int& it, int& ia) const;
+    void atom_index(int atom_idx, int &it, int &ia) const;
 
     /// real spherical harmonic Y_{l,m}(g_hat), orthonormal convention, l<=2.
-    double real_ylm(int l, int m, const ModuleBase::Vector3<double>& ghat) const;
+    double real_ylm(int l, int m, const ModuleBase::Vector3<double> &ghat) const;
     /// gradient of real_ylm with respect to the unit vector ghat, l<=2
     /// (dY/dghat returned per cartesian component).
-    void grad_real_ylm(int l, int m, const ModuleBase::Vector3<double>& ghat, double grad[3]) const;
+    void grad_real_ylm(
+        int l,
+        int m,
+        const ModuleBase::Vector3<double> &ghat,
+        double grad[3]) const;
 
     /// General (nonlocal and local) part of apply_dv for the compartments that
     /// live in real space (local potential); the |psi> product requires the
     /// shared real-space grid of pw_rho_/pw_wfc_.
-    void real_space_dv(int q_idx,
-                       int k_idx,
-                       const psi::Psi<std::complex<double>>& psi,
-                       DFPT_PW_Data& data,
-                       const DFPT_KQ_Basis& kq,
-                       std::vector<std::vector<std::complex<double>>>& dv_psi) const;
+    void real_space_dv(
+        int q_idx,
+        int k_idx,
+        const psi::Psi<std::complex<double>> &psi,
+        DFPT_PW_Data &data,
+        const DFPT_KQ_Basis &kq,
+        std::vector<std::vector<std::complex<double>>> &dv_psi) const;
 
     /// shared core of real_space_dv / apply_vr: phase-free cyclic convolution
     /// of v_rc with every band of psi, scattered/gathered between the k+q
     /// list and the rho grid through the FFT-cell triple.
-    void apply_vr_core(int k_idx,
-                       const std::vector<std::complex<double>>& v_rc,
-                       const psi::Psi<std::complex<double>>& psi,
-                       const DFPT_KQ_Basis& kq,
-                       std::vector<std::vector<std::complex<double>>>& dv_psi) const;
+    void apply_vr_core(
+        int k_idx,
+        const std::vector<std::complex<double>> &v_rc,
+        const psi::Psi<std::complex<double>> &psi,
+        const DFPT_KQ_Basis &kq,
+        std::vector<std::vector<std::complex<double>>> &dv_psi) const;
 
     /// first-order Hubbard potential dV_U (U0 reservation, C1 frozen term).
-    void build_dv_u(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data);
+    void build_dv_u(
+        int q_idx,
+        int atom_idx,
+        int dir,
+        DFPT_PW_Data &data);
 };
 
 } // namespace ModuleDFPT

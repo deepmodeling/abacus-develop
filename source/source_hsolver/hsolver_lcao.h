@@ -23,9 +23,10 @@ class HSolverLCAO
                 const double nelec_in,
                 const bool use_gpu_in,
                 const int world_nproc_in,
-                const int world_rank_in)
+                const int world_rank_in,
+                const double overlap_cutoff_in)
         : ParaV(ParaV_in), method(method_in), kpar_lcao(kpar_lcao_in), nlocal(nlocal_in), nbands(nbands_in),
-          nelec(nelec_in), use_gpu(use_gpu_in), world_nproc(world_nproc_in), world_rank(world_rank_in){};
+          nelec(nelec_in), use_gpu(use_gpu_in), world_nproc(world_nproc_in), world_rank(world_rank_in), overlap_cutoff(overlap_cutoff_in){};
 
     /// @param hs supplies H(k) and S(k) of the Hamiltonian for each k point
     void solve(HSMatrix<TK>& hs,
@@ -41,7 +42,9 @@ class HSolverLCAO
     void hamiltSolvePsiK(ModuleBase::MatrixBlock<TK>& hk,
                          ModuleBase::MatrixBlock<TK>& sk,
                          psi::Psi<TK>& psi,
-                         double* eigenvalue); // for kpar_lcao == 1
+                         double* eigenvalue,
+                         int kpoint,
+                         const Parallel_Blkcyclic* pool);
 
     void parakSolve(HSMatrix<TK>& hs,
                     psi::Psi<TK>& psi,
@@ -65,6 +68,7 @@ class HSolverLCAO
     const bool use_gpu;  // true if running on GPU, only used by the native-ELPA branch
     const int world_nproc;
     const int world_rank;
+    const double overlap_cutoff;
 };
 
 } // namespace hsolver

@@ -1,20 +1,20 @@
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include <iostream>
-#include <streambuf>
+#include "dfpt_stru_tool.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_global.h"
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
 #include "source_cell/magnetism.h"
 #include "source_cell/pseudo.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
-#include "dfpt_stru_tool.h"
-#include "source_base/global_variable.h"
-#include "source_base/parallel_global.h"
 #include "source_estate/module_charge/chg_mix.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_pwdft/dftu_base.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <iostream>
+#include <streambuf>
 
 // ctor/dtor stubs for the cell/spepot/charge link closures live in the
 // shared dfpt_test_mocks.cpp compiled into every DFPT test binary.
@@ -49,9 +49,9 @@ class DFPT_PWRunTest : public ::testing::Test
         ofs_running.open("tmp_dfpt_run");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
-        symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
-                       ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
-                       ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+        symm.analy_sys(
+            ucell.lat, ucell.atoms, ucell.nat, ucell.ntype, ucell.iat2it, ucell.iat2ia, ucell.itia2iat, ofs_running,
+            1e-6, 1, "scf", cal_symm_repr);
         ucell.symm = symm;
     }
 
@@ -70,18 +70,9 @@ TEST_F(DFPT_PWRunTest, RunsPerIrrepLoopForAllQ)
     dfpt.set_max_iter(10);
     psi::Psi<std::complex<double>> psi;
     // skeleton mode: no bases wired (design-phase fallback of the irrep loop)
-    dfpt.init(ucell,
-              psi,
-              nullptr,
-              nullptr,
-              nullptr,
-              std::vector<double>(),
-              ModuleBase::matrix(),
-              ModuleBase::matrix(),
-              nullptr,
-              1.0,
-              15.0,
-              nullptr, 0);
+    dfpt.init(
+        ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(), ModuleBase::matrix(), ModuleBase::matrix(),
+        nullptr, 1.0, 15.0, nullptr, 0);
     dfpt.run();
 
     // each of the 4 irreducible q points must expose 3*nat phonon modes
@@ -96,18 +87,9 @@ TEST_F(DFPT_PWRunTest, DielectricAndBornAreExposed)
 {
     dfpt.set_qmesh(1, 1, 1); // Gamma-only q mesh
     psi::Psi<std::complex<double>> psi;
-    dfpt.init(ucell,
-              psi,
-              nullptr,
-              nullptr,
-              nullptr,
-              std::vector<double>(),
-              ModuleBase::matrix(),
-              ModuleBase::matrix(),
-              nullptr,
-              1.0,
-              15.0,
-              nullptr, 0);
+    dfpt.init(
+        ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(), ModuleBase::matrix(), ModuleBase::matrix(),
+        nullptr, 1.0, 15.0, nullptr, 0);
     dfpt.run();
 
     // design-phase stubs return default-constructed matrices
@@ -143,21 +125,11 @@ TEST_F(DFPT_PWRunTest, DftuReservationWithProviderRejectsInit)
     EXPECT_EXIT(
         {
             std::cout.rdbuf(std::cerr.rdbuf());
-            dfpt.init(ucell,
-                      psi,
-                      nullptr,
-                      nullptr,
-                      nullptr,
-                      std::vector<double>(),
-                      ModuleBase::matrix(),
-                      ModuleBase::matrix(),
-                      nullptr,
-                      1.0,
-                      15.0,
-                      &dftu, 0);
+            dfpt.init(
+                ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(), ModuleBase::matrix(),
+                ModuleBase::matrix(), nullptr, 1.0, 15.0, &dftu, 0);
         },
-        ::testing::ExitedWithCode(1),
-        "DFT\\+U with DFPT is not supported");
+        ::testing::ExitedWithCode(1), "DFT\\+U with DFPT is not supported");
 }
 
 TEST(DFPT_PWForwarding, LinKnobsReachDataLayer)

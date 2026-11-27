@@ -1,20 +1,21 @@
-#include "stress_func.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/fs_kin_tools.h"
+#include "stress_func.h"
 
-//calculate the kinetic stress in PW base
+// calculate the kinetic stress in PW base
 template <typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
-                                             const ModuleBase::matrix& wg,
-                                             ModuleSymmetry::Symmetry* p_symm,
-                                             K_Vectors* p_kv,
-                                             ModulePW::PW_Basis_K* wfc_basis,
-                                             const UnitCell& ucell_in,
-                                             const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
+void Stress_Func<FPTYPE, Device>::stress_kin(
+    ModuleBase::matrix &sigma,
+    const ModuleBase::matrix &wg,
+    ModuleSymmetry::Symmetry *p_symm,
+    K_Vectors *p_kv,
+    ModulePW::PW_Basis_K *wfc_basis,
+    const UnitCell &ucell_in,
+    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in)
 {
-    ModuleBase::TITLE("Stress","stress_kin");
-    ModuleBase::timer::start("Stress","stress_kin");
+    ModuleBase::TITLE("Stress", "stress_kin");
+    ModuleBase::timer::start("Stress", "stress_kin");
 
     this->ucell = &ucell_in;
 
@@ -35,8 +36,8 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
         kin_tool.cal_stress_kin(ik, npm, true, &psi_in[0](ik, 0, 0));
     }
     kin_tool.symmetrize_stress(p_symm, sigma);
-        
-    ModuleBase::timer::end("Stress","stress_kin");
+
+    ModuleBase::timer::end("Stress", "stress_kin");
     return;
 }
 

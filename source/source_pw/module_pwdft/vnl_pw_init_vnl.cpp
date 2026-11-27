@@ -24,7 +24,7 @@
  * - stage double/float data to device memory when GPU is enabled
  */
 
-void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis)
+void pseudopot_cell_vnl::init_vnl(UnitCell &cell, const ModulePW::PW_Basis *rho_basis)
 {
     ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl");
     ModuleBase::timer::start("ppcell_vnl", "init_vnl");
@@ -171,7 +171,8 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                     {
                         for (int is2 = 0; is2 < 2; ++is2)
                         {
-                            this->dvan_so(ijs, it, ip, ip2) = cell.atoms[it].ncpp.dion(ir, is) * soc.fcoef(it, is1, is2, ip, ip2);
+                            this->dvan_so(ijs, it, ip, ip2) =
+                                cell.atoms[it].ncpp.dion(ir, is) * soc.fcoef(it, is1, is2, ip, ip2);
                             ++ijs;
                             if (ir != is)
                             {
@@ -234,7 +235,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
         ModuleBase::YlmReal::Ylm_Real(lmaxq * lmaxq, 1, &(rho_basis->gcar[rho_basis->ig_gge0]), ylmk0);
         for (int it = 0; it < cell.ntype; it++)
         {
-            Atom_pseudo* upf = &cell.atoms[it].ncpp;
+            Atom_pseudo *upf = &cell.atoms[it].ncpp;
             if (upf->tvanp)
             {
                 if (upf->has_so)
@@ -256,8 +257,9 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                                         {
                                             for (int is = 0; is < 2; is++)
                                             {
-                                                this->qq_so(it, ijs, kh, lh) += cell.omega * qgm.real() * soc.fcoef(it, is1, is, kh, ih)
-                                                                                * soc.fcoef(it, is, is2, jh, lh);
+                                                this->qq_so(it, ijs, kh, lh) += cell.omega * qgm.real() *
+                                                                                soc.fcoef(it, is1, is, kh, ih) *
+                                                                                soc.fcoef(it, is, is2, jh, lh);
                                             }
                                         }
                                     }

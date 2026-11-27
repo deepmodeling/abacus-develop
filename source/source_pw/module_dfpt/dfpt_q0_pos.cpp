@@ -21,20 +21,21 @@ typedef std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>> Velo
 /// diagonal kinetic velocity, p^d_{mn} = <u_m| 2 tpiba^2 (k+G)_d |u_n>,
 /// with the k derivative in the same dimensionless 2*pi/lat0 units
 /// build_vkb_dk uses (T = tpiba^2 |k+G|^2 in Ry a.u.)
-void kinetic_velocity(int nbands,
-                      int npwk,
-                      double tpiba2,
-                      const std::vector<ModuleBase::Vector3<double>>& gk,
-                      const psi::Psi<std::complex<double>>& psi,
-                      int ik,
-                      VelocityMat& p_mat)
+void kinetic_velocity(
+    int nbands,
+    int npwk,
+    double tpiba2,
+    const std::vector<ModuleBase::Vector3<double>> &gk,
+    const psi::Psi<std::complex<double>> &psi,
+    int ik,
+    VelocityMat &p_mat)
 {
     for (int m = 0; m < nbands; ++m)
     {
         for (int n = 0; n < nbands; ++n)
         {
-            std::complex<double> dot[3]
-                = {std::complex<double>(0.0, 0.0), std::complex<double>(0.0, 0.0), std::complex<double>(0.0, 0.0)};
+            std::complex<double> dot[3] = {
+                std::complex<double>(0.0, 0.0), std::complex<double>(0.0, 0.0), std::complex<double>(0.0, 0.0)};
             for (int ig = 0; ig < npwk; ++ig)
             {
                 const std::complex<double> cc = std::conj(psi(ik, m, ig)) * psi(ik, n, ig);
@@ -52,7 +53,7 @@ void kinetic_velocity(int nbands,
 }
 
 /// projector -> (radial beta index, m channel) table, matching build_vkb
-void build_projector_table(const pseudo& ncpp, std::vector<int>& mu_ib, std::vector<int>& mu_m)
+void build_projector_table(const pseudo &ncpp, std::vector<int> &mu_ib, std::vector<int> &mu_m)
 {
     const int nh = ncpp.nh;
     mu_ib.assign(nh, 0);
@@ -74,13 +75,14 @@ void build_projector_table(const pseudo& ncpp, std::vector<int>& mu_ib, std::vec
 }
 
 /// becp_b[mu] = <wfc_mu|u_b> for all bands (wfc = vkb or dvkb)
-void project_bands(int nbands,
-                   int nh,
-                   int npwk,
-                   const std::vector<std::vector<std::complex<double>>>& wfc,
-                   const psi::Psi<std::complex<double>>& psi,
-                   int ik,
-                   std::vector<std::vector<std::complex<double>>>& becp)
+void project_bands(
+    int nbands,
+    int nh,
+    int npwk,
+    const std::vector<std::vector<std::complex<double>>> &wfc,
+    const psi::Psi<std::complex<double>> &psi,
+    int ik,
+    std::vector<std::vector<std::complex<double>>> &becp)
 {
     const std::complex<double> zero(0.0, 0.0);
     becp.assign(nbands, std::vector<std::complex<double>>(nh, zero));
@@ -100,13 +102,14 @@ void project_bands(int nbands,
 /// derivative direction into p_dir[m][n]:
 ///   <u_m|dvkb_mu> D <vkb|u_n> + <u_m|vkb_mu> D <dvkb|u_n>
 /// with D_{mu,nu} = dion(ib_mu, ib_nu) delta_{m_mu, m_nu} (dVnl_dtau layout)
-void add_nonlocal_dk(int nh,
-                     const pseudo& ncpp,
-                     const std::vector<int>& mu_ib,
-                     const std::vector<int>& mu_m,
-                     const std::vector<std::vector<std::complex<double>>>& becp,
-                     const std::vector<std::vector<std::complex<double>>>& dbecp,
-                     std::vector<std::vector<std::complex<double>>>& p_dir)
+void add_nonlocal_dk(
+    int nh,
+    const pseudo &ncpp,
+    const std::vector<int> &mu_ib,
+    const std::vector<int> &mu_m,
+    const std::vector<std::vector<std::complex<double>>> &becp,
+    const std::vector<std::vector<std::complex<double>>> &dbecp,
+    std::vector<std::vector<std::complex<double>>> &p_dir)
 {
     const int nbands = static_cast<int>(p_dir.size());
     for (int m = 0; m < nbands; ++m)
@@ -139,18 +142,19 @@ void add_nonlocal_dk(int nh,
 ///   dV_nl/dk_d = sum_{mu,nu} (|dvkb_mu> D_{mu,nu} <vkb_nu|
 ///                             + |vkb_mu> D_{mu,nu} <dvkb_nu|)
 /// V_loc is k-independent; the DFT+U commutator is the U0 reservation.
-void nonlocal_velocity(const UnitCell& ucell,
-                       const DFPT_Pert& pert,
-                       const std::vector<ModuleBase::Vector3<double>>& gk,
-                       const psi::Psi<std::complex<double>>& psi,
-                       int ik,
-                       int npwk,
-                       VelocityMat& p_mat)
+void nonlocal_velocity(
+    const UnitCell &ucell,
+    const DFPT_Pert &pert,
+    const std::vector<ModuleBase::Vector3<double>> &gk,
+    const psi::Psi<std::complex<double>> &psi,
+    int ik,
+    int npwk,
+    VelocityMat &p_mat)
 {
     const int nbands = psi.get_nbands();
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        const pseudo& ncpp = ucell.atoms[it].ncpp;
+        const pseudo &ncpp = ucell.atoms[it].ncpp;
         const int nh = ncpp.nh;
         if (nh == 0)
         {
@@ -158,9 +162,9 @@ void nonlocal_velocity(const UnitCell& ucell,
         }
         if (ncpp.tvanp || ncpp.has_so)
         {
-            ModuleBase::WARNING_QUIT("DFPT_Q0::pos_matrix",
-                                     "DFPT velocity operator is implemented for "
-                                     "normal-conserving separable pseudopotentials only.");
+            ModuleBase::WARNING_QUIT(
+                "DFPT_Q0::pos_matrix", "DFPT velocity operator is implemented for "
+                                       "normal-conserving separable pseudopotentials only.");
         }
         std::vector<int> mu_ib;
         std::vector<int> mu_m;
@@ -198,12 +202,13 @@ void nonlocal_velocity(const UnitCell& ucell,
 /// velocity -> position: r = -i v / (tpiba (eps_m - eps_n)), r in bohr
 /// (from [H, r] = -i dH/dk in Ry a.u.); degenerate pairs are skipped,
 /// their gauge-dependent matrix elements carry no unique value.
-void velocity_to_position(int nbands,
-                          double tpiba,
-                          const ModuleBase::matrix& eig,
-                          int ik,
-                          const VelocityMat& p_mat,
-                          VelocityMat& r_mat_ik)
+void velocity_to_position(
+    int nbands,
+    double tpiba,
+    const ModuleBase::matrix &eig,
+    int ik,
+    const VelocityMat &p_mat,
+    VelocityMat &r_mat_ik)
 {
     const double degen_tol = 1.0e-8; ///< empirical parameter: eigenvalue gap (Ry) for the degenerate-pair skip
     for (int m = 0; m < nbands; ++m)
@@ -229,20 +234,18 @@ void velocity_to_position(int nbands,
 
 } // namespace
 
-void DFPT_Q0::pos_matrix(const psi::Psi<std::complex<double>>& psi,
-                         const ModuleBase::matrix& eig,
-                         std::vector<std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>>>& r_mat)
+void DFPT_Q0::pos_matrix(
+    const psi::Psi<std::complex<double>> &psi, const ModuleBase::matrix &eig,
+    std::vector<std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>>> &r_mat)
 {
     ModuleBase::TITLE("DFPT_Q0", "pos_matrix");
     ModuleBase::timer::start("DFPT_Q0", "pos_matrix");
     const int nk = psi.get_nk();
     const int nbands = psi.get_nbands();
-    r_mat.assign(nk,
-                 std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>>(
-                     nbands,
-                     std::vector<ModuleBase::Vector3<std::complex<double>>>(
-                         nbands,
-                         ModuleBase::Vector3<std::complex<double>>(0.0, 0.0, 0.0))));
+    r_mat.assign(
+        nk, std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>>(
+                nbands, std::vector<ModuleBase::Vector3<std::complex<double>>>(
+                            nbands, ModuleBase::Vector3<std::complex<double>>(0.0, 0.0, 0.0))));
     if (pw_wfc_ == nullptr || ucell_ == nullptr || pert_ == nullptr)
     {
         ModuleBase::timer::end("DFPT_Q0", "pos_matrix");
@@ -259,10 +262,9 @@ void DFPT_Q0::pos_matrix(const psi::Psi<std::complex<double>>& psi,
             gk[ig] = pw_wfc_->getgpluskcar(ik, ig);
         }
         // velocity operator dH/dk matrix elements (kinetic + nonlocal parts)
-        VelocityMat p_mat(nbands,
-                          std::vector<ModuleBase::Vector3<std::complex<double>>>(
-                              nbands,
-                              ModuleBase::Vector3<std::complex<double>>(0.0, 0.0, 0.0)));
+        VelocityMat p_mat(
+            nbands, std::vector<ModuleBase::Vector3<std::complex<double>>>(
+                        nbands, ModuleBase::Vector3<std::complex<double>>(0.0, 0.0, 0.0)));
         kinetic_velocity(nbands, npwk, tpiba2, gk, psi, ik, p_mat);
         nonlocal_velocity(*ucell_, *pert_, gk, psi, ik, npwk, p_mat);
         velocity_to_position(nbands, tpiba, eig, ik, p_mat, r_mat[ik]);

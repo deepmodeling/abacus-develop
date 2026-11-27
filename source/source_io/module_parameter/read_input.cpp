@@ -14,9 +14,11 @@
 #include <vector>
 #include <cassert>
 #include <cctype>
+#include <limits.h>
 #include <limits>
 #include <stdexcept>
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h"
 #include "source_base/global_file.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
@@ -272,7 +274,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
 
     // 3. broadcast input parameters
     // It must be after the check_ntype, because some parameters need to be filled due to ntype
-    for (auto& bcastfunc: this->bcastfuncs)
+    for (std::function<void (Parameter&)>& bcastfunc: this->bcastfuncs)
     {
         bcastfunc(param);
     }
@@ -353,6 +355,13 @@ void ReadInput::create_directory(const Parameter& param)
                                           param.input.of_ml_gene_data,
                                           param.input.deepks_out_freq_elec > 0); // xiaohui add 2013-09-01
 
+    if (this->rank == 0 && param.input.calculation == "md" && param.mdp.md_restart
+        && !param.globalv.global_in_stru.empty())
+    {
+        const std::string full_path = ModuleBase::absolute_path_for_log(param.globalv.global_in_stru);
+        GlobalV::ofs_running << "Read file: " << full_path << std::endl;
+    }
+
     // The unified subdirectories used when out_app_flag == 2 (STRUC/, PSI/,
     // CHG/, POT/, ELF/, DOS/, DIP/, MAT/) are NOT created here. Each output
     // writer creates its target directory lazily at write time via
@@ -424,7 +433,7 @@ std::string ReadInput::read_txt_input(Parameter& param, const std::string& filen
         std::string word; // temporary variable to store the keyword read-in
         if (!(ascii_stream >> word)) { break; }
         word = FmtCore::lower(word); // the lowercase of the keyword
-        auto it = std::find_if(input_lists.begin(), input_lists.end(),
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = std::find_if(input_lists.begin(), input_lists.end(),
             [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
         if (it != this->input_lists.end()) // find the keyword
         {
@@ -488,7 +497,7 @@ std::string ReadInput::prepare_input(Parameter& param)
     // out_dos and out_mat_xc take one or two tokens. Their vector domains skip the
     // whole-token validation of the scalar readers, so check that every supplied
     // token is a complete value before any read hook runs.
-    for (const auto* item : this->readvalue_items)
+    for (const ModuleIO::Input_Item* item : this->readvalue_items)
     {
         const bool starts_with_boolean = item->label == "out_mat_xc";
         if (!starts_with_boolean && item->label != "out_dos")
@@ -555,13 +564,6 @@ std::string ReadInput::prepare_input(Parameter& param)
     this->normalize_out_eband_alias(param);
     this->normalize_td_output_frequency(param);
 
-    // The MD driver writes ABACUS STRU frames only, and the restart logic reads
-    // them back, so CIF output (out_stru = 2) is not available for MD. Reject it
-    // instead of silently writing STRU content under a CIF setting.
-    if (param.input.calculation == "md" && param.input.out_stru == 2)
-    {
-        errors += "Invalid INPUT parameter 'out_stru': value 2 (CIF) is not supported for calculation = md; use 0 or 1.\n";
-    }
     // The CSR angular-momentum writer indexes the scalar real-harmonic basis.
     // In nspin = 4 the spinor basis doubles nlocal and uses a different
     // magnetic-quantum-number ordering, so only the spin-up block could be
@@ -628,7 +630,7 @@ void ReadInput::normalize_occ_mat_options(Parameter& param)
     // init_occ_mat is the current name of the former omc parameter; keep
     // accepting omc so that INPUT files written by older versions still work.
     const auto item_is_read = [this](const std::string& label) {
-        const auto item = std::find_if(
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
             this->input_lists.begin(),
             this->input_lists.end(),
             [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
@@ -653,7 +655,7 @@ void ReadInput::normalize_occ_mat_options(Parameter& param)
 void ReadInput::normalize_hs_output_options(Parameter& param)
 {
     const auto item_is_read = [this](const std::string& label) {
-        const auto item = std::find_if(
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
             this->input_lists.begin(),
             this->input_lists.end(),
             [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
@@ -739,7 +741,7 @@ void ReadInput::normalize_hs_output_options(Parameter& param)
 void ReadInput::normalize_out_eband_alias(Parameter& param)
 {
     const auto item_is_read = [this](const std::string& label) {
-        const auto item = std::find_if(
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
             this->input_lists.begin(),
             this->input_lists.end(),
             [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
@@ -767,7 +769,7 @@ void ReadInput::normalize_out_eband_alias(Parameter& param)
 void ReadInput::normalize_td_output_frequency(Parameter& param)
 {
     const auto item_is_read = [this](const std::string& label) {
-        const auto item = std::find_if(
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
             this->input_lists.begin(),
             this->input_lists.end(),
             [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });

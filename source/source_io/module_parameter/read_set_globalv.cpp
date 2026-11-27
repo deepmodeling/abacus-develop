@@ -1,19 +1,56 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 #include "source_base/global_variable.h"
+#include "source_base/fs_compat.h"
 #include "source_base/tool_quit.h"
 #include "source_cell/stru_frame_io.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <iostream>
+#include <sstream>
 #include <string>
 
 namespace
 {
-/// @brief Find the structure file for restarting a molecular dynamics run.
+void log_read_file(const std::string& filename)
+{
+    const std::string full_path = ModuleBase::absolute_path_for_log(filename);
+    const std::string confirmation = "Read file: " + full_path;
+    std::cout << confirmation << std::endl;
+}
+
+bool has_md_velocities(const std::string& filename)
+{
+    std::ifstream file(filename.c_str());
+    std::string line;
+    while (std::getline(file, line))
+    {
+        std::istringstream record(line);
+        double x = 0.0;
+        double y = 0.0;
+        double z = 0.0;
+        if (!(record >> x >> y >> z))
+        {
+            continue;
+        }
+        std::string field;
+        while (record >> field)
+        {
+            if (field == "v" || field == "vel" || field == "velocity")
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/// @brief Find a legacy structure file for restarting a molecular dynamics run.
 /// @param stru_dir directory where the previous run wrote its structure files
 /// @param istep number of completed ionic steps recorded in Restart_md.txt
 /// @return path of the first existing structure file, empty if none exists
-/// @details Three naming schemes are accepted, in order:
+/// @details New runs use STRU_restart. Three older naming schemes are
+/// accepted as fallbacks, in order:
 /// - "STRU": fixed-name cumulative file written in out_app_flag == 1 mode.
 ///   Unlike an earlier implementation that blindly took the last frame (and thus
 ///   risked mixing geometry from a later step with Restart_md.txt metadata from
@@ -30,31 +67,29 @@ namespace
 std::string find_md_restart_stru(const std::string& stru_dir, const int istep)
 {
     // Prefer the fixed-name cumulative STRU when its marker exactly matches
-    // the step this restart resumes from. Walking the cumulative file picks
-    // the frame that belongs to Restart_md.txt even when the user configured
-    // out_freq_ion and md_restartfreq to different values: run_md guarantees
-    // a checkpoint frame on every md_restartfreq step, so the marker must be
-    // present whenever the restart file was written.
+    // the step this legacy restart resumes from. New runs use STRU_restart;
+    // old output may contain a matching cumulative frame.
     const std::string stru_cumulative = stru_dir + "STRU";
     std::ifstream file_cumulative(stru_cumulative.c_str());
     if (file_cumulative.good())
     {
         file_cumulative.close();
         const std::string frame_path = stru_dir + "STRU_restart_frame";
-        if (stru_frame_io::extract_frame_by_step(stru_cumulative, istep + 1, frame_path))
+        if (stru_frame_io::extract_frame_by_step(stru_cumulative, istep + 1, frame_path)
+            && has_md_velocities(frame_path))
         {
             return frame_path;
         }
     }
     const std::string stru_new = stru_dir + "STRU" + std::to_string(istep + 1);
     std::ifstream file_new(stru_new.c_str());
-    if (file_new.good())
+    if (file_new.good() && has_md_velocities(stru_new))
     {
         return stru_new;
     }
     const std::string stru_old = stru_dir + "STRU_MD_" + std::to_string(istep);
     std::ifstream file_old(stru_old.c_str());
-    if (file_old.good())
+    if (file_old.good() && has_md_velocities(stru_old))
     {
         return stru_old;
     }
@@ -195,8 +230,25 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     if (inp.calculation == "md" && inp.mdp.md_restart)
     {
         const int istep = current_md_step(sys.global_readin_dir);
-
-        if (inp.read_file_dir == to_dir("OUT." + inp.suffix))
+        const std::string checkpoint = sys.global_readin_dir + "STRU_restart";
+        std::ifstream checkpoint_file(checkpoint.c_str());
+        if (checkpoint_file.good())
+        {
+            checkpoint_file.close();
+            const int checkpoint_step = stru_frame_io::last_frame_step(checkpoint);
+            if (checkpoint_step != istep + 1)
+            {
+                const std::string message = "STRU_restart step " + std::to_string(checkpoint_step)
+                                            + " does not match Restart_md.txt step " + std::to_string(istep + 1);
+                ModuleBase::WARNING_QUIT("ReadInput::set_global_dir", message);
+            }
+            if (!has_md_velocities(checkpoint))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput::set_global_dir", "STRU_restart lacks atomic velocities");
+            }
+            sys.global_in_stru = checkpoint;
+        }
+        else if (inp.read_file_dir == to_dir("OUT." + inp.suffix))
         {
             // Restart from the default output directory: search the current
             // STRU output directory, which follows out_app_flag.
@@ -226,14 +278,12 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
                                         + "; Restart_md.txt reports step "
                                         + std::to_string(istep)
                                         + " but no matching structure frame is present. "
-                                          "run_md writes a checkpoint STRU frame on every md_restartfreq "
-                                          "step (independent of out_stru) since the decoupling fix, so "
-                                          "this usually means the restart directory was produced by an "
-                                          "older ABACUS release or is missing both the numbered STRU{step+1} "
-                                          "/ STRU_MD_{step} file and a cumulative STRU with a matching "
-                                          "\"# MD step N\" marker.";
+                                          "the directory is missing STRU_restart and any matching legacy "
+                                          "STRU{step+1}, STRU_MD_{step}, or cumulative STRU frame "
+                                          "containing atomic velocities.";
             ModuleBase::WARNING_QUIT("ReadInput::set_global_dir", message);
         }
+        log_read_file(sys.global_in_stru);
     }
     else
     {

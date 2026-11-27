@@ -32,7 +32,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
     ModuleBase::TITLE("ESolver_LR", "cal_force");
     // Spin channel 0, NOT `ispin`. `ispin` indexes `spin_types` = {singlet, triplet}.
     // Closed shell always use spin-up channel of psi_ks, i.e. psi_ks(0).
-    const auto& c = LR_Util::get_psi_spin(inputs.psi_ks, 0, inputs.nk);   // wavefunction coefficients of ground state
+    const psi::Psi<T>& c = LR_Util::get_psi_spin(inputs.psi_ks, 0, inputs.nk);   // wavefunction coefficients of ground state
 
     // calculate the force (the partial gradient of Lagrangian)
     inputs.ofs << "Start to calculate excited-state force of " << inputs.spin_types[ispin] << std::endl;
@@ -47,7 +47,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         // The imag part will be cancelled in the force calculation, so we use double DM(R) to calculate force.
         // But complex transition DM(R) is still used in energy density matrix calculation.
 #ifdef __MPI
-        const auto& dm_trans_k = cal_dm_trans_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, inputs.pc, inputs.nbasis, inputs.nocc[ispin], nvirt_g[ispin], inputs.pmat.para_2d());
+        const std::vector<container::Tensor>& dm_trans_k = cal_dm_trans_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, inputs.pc, inputs.nbasis, inputs.nocc[ispin], nvirt_g[ispin], inputs.pmat.para_2d());
 #else
         const auto& dm_trans_k = cal_dm_trans_blas(Xz.data<T>() + offset, c, inputs.nocc[ispin], nvirt_g[ispin]);
 #endif
@@ -56,7 +56,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         // different electron coordinates, so Tr[D^X D^X K_exx] = (aa|ii) requires the full
         // non-symmetric D^X. Symmetrizing would give 1/2[(aa|ii)+(ai|ia)], which is wrong.
         // (`cal_force_exx_dm_trans` feeds the same tensor to both slots, so it is consistent.)
-        auto dm_trans =   // D(X) complex
+        module_dm::DensityMatrix<T, T> dm_trans =   // D(X) complex
             LR_Util::build_dm_from_dmk<T, T>(dm_trans_k,
                 inputs.pmat, inputs.nk, inputs.kv.kvec_d, inputs.ucell, inputs.gd, inputs.orb_cutoff);
         LR_Util::transpose_DMR(dm_trans, inputs.pmat);
@@ -66,7 +66,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
         // implicitly, while `cal_gint_fvl`'s internal factor 2 assumes D_{mu nu} = D_{nu mu}.
         // Passing an un-symmetrized D^X makes the two slots of the bilinear form disagree.
         // NOTE: `build_dm_from_dmk` symmetrizes `dm_trans_k` IN PLACE, hence the ordering.
-        auto dm_trans_real =   // D(X), double (FIXME: not enough for periodic system!)
+        module_dm::DensityMatrix<T, double> dm_trans_real =   // D(X), double (FIXME: not enough for periodic system!)
             LR_Util::build_dm_from_dmk<T, double>(dm_trans_k,
                 inputs.pmat, inputs.nk, inputs.kv.kvec_d, inputs.ucell, inputs.gd, inputs.orb_cutoff,
                 /*symmetrize=*/true);

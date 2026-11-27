@@ -4,10 +4,11 @@
 namespace hamilt
 {
 template <typename FPTYPE, typename Device>
-FS_Kin_tools<FPTYPE, Device>::FS_Kin_tools(const UnitCell& ucell_in,
-                                           const K_Vectors* p_kv,
-                                           const ModulePW::PW_Basis_K* wfc_basis_in,
-                                           const ModuleBase::matrix& wg)
+FS_Kin_tools<FPTYPE, Device>::FS_Kin_tools(
+    const UnitCell &ucell_in,
+    const K_Vectors *p_kv,
+    const ModulePW::PW_Basis_K *wfc_basis_in,
+    const ModuleBase::matrix &wg)
     : ucell_(ucell_in), nksbands_(wg.nc), wg(wg.c), wk(p_kv->wk.data())
 {
     this->device = base_device::get_device_type(this->ctx);
@@ -48,7 +49,7 @@ FS_Kin_tools<FPTYPE, Device>::~FS_Kin_tools()
 }
 
 template <typename FPTYPE, typename Device>
-void FS_Kin_tools<FPTYPE, Device>::cal_gk(const int& ik)
+void FS_Kin_tools<FPTYPE, Device>::cal_gk(const int &ik)
 {
     const double tpiba = ModuleBase::TWO_PI / this->ucell_.lat0;
     const double twobysqrtpi = 2.0 / std::sqrt(ModuleBase::PI);
@@ -78,10 +79,11 @@ void FS_Kin_tools<FPTYPE, Device>::cal_gk(const int& ik)
 }
 
 template <typename FPTYPE, typename Device>
-void FS_Kin_tools<FPTYPE, Device>::cal_stress_kin(const int& ik,
-                                                  const int& npm,
-                                                  const bool& occ,
-                                                  const std::complex<FPTYPE>* psi)
+void FS_Kin_tools<FPTYPE, Device>::cal_stress_kin(
+    const int &ik,
+    const int &npm,
+    const bool &occ,
+    const std::complex<FPTYPE> *psi)
 {
     if (npm == 0)
     {
@@ -92,8 +94,8 @@ void FS_Kin_tools<FPTYPE, Device>::cal_stress_kin(const int& ik,
     const int npol = this->ucell_.get_npol();
     for (int ib = 0; ib < npm; ib++)
     {
-        const std::complex<FPTYPE>* ppsi = psi + ib * npwk_max * npol;
-        const std::complex<FPTYPE>* ppsi2 = ppsi + npwk_max;
+        const std::complex<FPTYPE> *ppsi = psi + ib * npwk_max * npol;
+        const std::complex<FPTYPE> *ppsi2 = ppsi + npwk_max;
         FPTYPE fac = 0.0;
         if (occ)
         {
@@ -109,10 +111,10 @@ void FS_Kin_tools<FPTYPE, Device>::cal_stress_kin(const int& ik,
         }
         for (int l = 0; l < 3; l++)
         {
-            const FPTYPE* d_gkl = d_gk + l * npwk_max;
+            const FPTYPE *d_gkl = d_gk + l * npwk_max;
             for (int m = 0; m < l + 1; m++)
             {
-                const FPTYPE* d_gkm = d_gk + m * npwk_max;
+                const FPTYPE *d_gkm = d_gk + m * npwk_max;
                 FPTYPE sum = 0;
                 sum += cal_multi_dot_op()(npw, fac, d_gkl, d_gkm, d_kfac, ppsi);
                 if (npol == 2)
@@ -126,7 +128,7 @@ void FS_Kin_tools<FPTYPE, Device>::cal_stress_kin(const int& ik,
 }
 
 template <typename FPTYPE, typename Device>
-void FS_Kin_tools<FPTYPE, Device>::symmetrize_stress(ModuleSymmetry::Symmetry* p_symm, ModuleBase::matrix& sigma)
+void FS_Kin_tools<FPTYPE, Device>::symmetrize_stress(ModuleSymmetry::Symmetry *p_symm, ModuleBase::matrix &sigma)
 {
     for (int l = 0; l < 3; ++l)
     {
