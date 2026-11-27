@@ -11,8 +11,6 @@
 #include "source_cell/unitcell.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
@@ -23,6 +21,8 @@
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_q0.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 // per-file self-contained fixture (gtest style): owns its objects and
 // calls the dfpt_test free-function utilities; Gamma-only
@@ -46,8 +46,8 @@ class DFPTQ0SerialTest : public ::testing::Test
     void SetUp() override
     {
         dfpt_test::setup_cell(ucell_, latvec_);
-        dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_,
-                               k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 4, q_cart_);
+        dfpt_test::setup_bases(
+            pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 4, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
         q0_.init(ucell_, &pw_rho_, &pw_wfc_, &pert_);
     }
@@ -65,9 +65,8 @@ class DFPTQ0SerialTest : public ::testing::Test
         for (int ig = 0; ig < npwk; ++ig)
         {
             const ModuleBase::Vector3<double> g = pw_wfc_.getgpluskcar(0, ig);
-            if (std::llround(g.x * dfpt_test::cubic_edge) == ix
-                && std::llround(g.y * dfpt_test::cubic_edge) == iy
-                && std::llround(g.z * dfpt_test::cubic_edge) == iz)
+            if (std::llround(g.x * dfpt_test::cubic_edge) == ix && std::llround(g.y * dfpt_test::cubic_edge) == iy &&
+                std::llround(g.z * dfpt_test::cubic_edge) == iz)
             {
                 return ig;
             }
@@ -145,15 +144,14 @@ TEST_F(DFPTQ0SerialTest, ComputeEpsScfSyntheticStash)
     wg(0, 1) = 0.0;
 
     // synthetic bare position legs Y^a_{0,0} = P_c x_a|psi_0>
-    const std::complex<double> gam[3]
-        = {std::complex<double>(0.15, -0.3), std::complex<double>(0.4, 0.05), std::complex<double>(-0.35, 0.2)};
-    const std::complex<double> del[3]
-        = {std::complex<double>(-0.25, 0.45), std::complex<double>(0.1, -0.1), std::complex<double>(0.3, 0.25)};
+    const std::complex<double> gam[3] = {
+        std::complex<double>(0.15, -0.3), std::complex<double>(0.4, 0.05), std::complex<double>(-0.35, 0.2)};
+    const std::complex<double> del[3] = {
+        std::complex<double>(-0.25, 0.45), std::complex<double>(0.1, -0.1), std::complex<double>(0.3, 0.25)};
     for (int a = 0; a < 3; ++a)
     {
         std::vector<std::vector<std::vector<std::complex<double>>>> y(
-            1,
-            std::vector<std::vector<std::complex<double>>>(2));
+            1, std::vector<std::vector<std::complex<double>>>(2));
         y[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
         y[0][0][ig0] = gam[a];
         y[0][0][igx] = del[a];
@@ -161,15 +159,14 @@ TEST_F(DFPTQ0SerialTest, ComputeEpsScfSyntheticStash)
     }
 
     // synthetic converged E-field responses dpsi^E,b_{0,0}
-    const std::complex<double> mue[3]
-        = {std::complex<double>(0.3, 0.2), std::complex<double>(-0.1, 0.4), std::complex<double>(0.25, -0.15)};
-    const std::complex<double> nue[3]
-        = {std::complex<double>(0.2, -0.35), std::complex<double>(0.45, 0.1), std::complex<double>(-0.2, -0.05)};
+    const std::complex<double> mue[3] = {
+        std::complex<double>(0.3, 0.2), std::complex<double>(-0.1, 0.4), std::complex<double>(0.25, -0.15)};
+    const std::complex<double> nue[3] = {
+        std::complex<double>(0.2, -0.35), std::complex<double>(0.45, 0.1), std::complex<double>(-0.2, -0.05)};
     for (int b = 0; b < 3; ++b)
     {
         std::vector<std::vector<std::vector<std::complex<double>>>> e(
-            1,
-            std::vector<std::vector<std::complex<double>>>(2));
+            1, std::vector<std::vector<std::complex<double>>>(2));
         e[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
         e[0][0][ig0] = mue[b];
         e[0][0][igx] = nue[b];
@@ -222,15 +219,14 @@ TEST_F(DFPTQ0SerialTest, ComputeBornTwoLevelAnalytic)
     // synthetic converged displacement responses dpsi(scf)/du_{0,idir} for
     // the occupied band (G0/Gx components, distinct complexes per idir
     // catch transposed indices); the empty-band row stays unsolved
-    const std::complex<double> alpha[3]
-        = {std::complex<double>(0.3, 0.2), std::complex<double>(-0.1, 0.4), std::complex<double>(0.25, -0.15)};
-    const std::complex<double> beta[3]
-        = {std::complex<double>(0.2, -0.35), std::complex<double>(0.45, 0.1), std::complex<double>(-0.2, -0.05)};
+    const std::complex<double> alpha[3] = {
+        std::complex<double>(0.3, 0.2), std::complex<double>(-0.1, 0.4), std::complex<double>(0.25, -0.15)};
+    const std::complex<double> beta[3] = {
+        std::complex<double>(0.2, -0.35), std::complex<double>(0.45, 0.1), std::complex<double>(-0.2, -0.05)};
     for (int idir = 0; idir < 3; ++idir)
     {
         std::vector<std::vector<std::vector<std::complex<double>>>> disp(
-            1,
-            std::vector<std::vector<std::complex<double>>>(2));
+            1, std::vector<std::vector<std::complex<double>>>(2));
         disp[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
         disp[0][0][ig0] = alpha[idir];
         disp[0][0][igx] = beta[idir];
@@ -238,15 +234,14 @@ TEST_F(DFPTQ0SerialTest, ComputeBornTwoLevelAnalytic)
     }
 
     // synthetic solved position legs Y^a_{0,0} = P_c x_a|psi_0>
-    const std::complex<double> gam[3]
-        = {std::complex<double>(0.15, -0.3), std::complex<double>(0.4, 0.05), std::complex<double>(-0.35, 0.2)};
-    const std::complex<double> del[3]
-        = {std::complex<double>(-0.25, 0.45), std::complex<double>(0.1, -0.1), std::complex<double>(0.3, 0.25)};
+    const std::complex<double> gam[3] = {
+        std::complex<double>(0.15, -0.3), std::complex<double>(0.4, 0.05), std::complex<double>(-0.35, 0.2)};
+    const std::complex<double> del[3] = {
+        std::complex<double>(-0.25, 0.45), std::complex<double>(0.1, -0.1), std::complex<double>(0.3, 0.25)};
     for (int a = 0; a < 3; ++a)
     {
         std::vector<std::vector<std::vector<std::complex<double>>>> y(
-            1,
-            std::vector<std::vector<std::complex<double>>>(2));
+            1, std::vector<std::vector<std::complex<double>>>(2));
         y[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
         y[0][0][ig0] = gam[a];
         y[0][0][igx] = del[a];
@@ -357,7 +352,7 @@ TEST_F(DFPTQ0SerialTest, StarRotationCyclicGroup)
     int seen_shift[3] = {1, 0, 0}; // identity shift 0 already seen
     for (size_t im = 0; im < q0_.stars_[0].size(); ++im)
     {
-        const std::vector<int>& amap = q0_.stars_[0][im].atom_map;
+        const std::vector<int> &amap = q0_.stars_[0][im].atom_map;
         if (amap.empty())
         {
             // identity member: rotation must be the identity

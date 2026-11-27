@@ -36,18 +36,18 @@ class XC_First_Order;
 /// each field.
 struct DFPT_PW_InitContext
 {
-    UnitCell* ucell;
-    const psi::Psi<std::complex<double>>* psi;
-    ModulePW::PW_Basis* pw_rho;
-    ModulePW::PW_Basis_K* pw_wfc;
-    Structure_Factor* sf;
-    const std::vector<double>* veff_r;
-    const ModuleBase::matrix* wg;
-    const ModuleBase::matrix* eig;
-    const XC_First_Order* xc;
+    UnitCell *ucell;
+    const psi::Psi<std::complex<double>> *psi;
+    ModulePW::PW_Basis *pw_rho;
+    ModulePW::PW_Basis_K *pw_wfc;
+    Structure_Factor *sf;
+    const std::vector<double> *veff_r;
+    const ModuleBase::matrix *wg;
+    const ModuleBase::matrix *eig;
+    const XC_First_Order *xc;
     double nelec;
     double ecutwfc;
-    const Plus_U_Base* dftu;
+    const Plus_U_Base *dftu;
     /// MPI rank of the running process (from the runtime context, not
     /// read from any global inside module_dfpt); consumed by the dyn
     /// file writer for the rank-0 output gate. No default member
@@ -57,7 +57,7 @@ struct DFPT_PW_InitContext
     /// input, the same density the kernel linearizes around); consumed by
     /// the nlcc diagonal 2n+1 term (QE dynmatcc). Null disables that term.
     /// No default member initializer: C++11 aggregate rules require it.
-    const std::vector<double>* vxc_r;
+    const std::vector<double> *vxc_r;
 };
 
 /**
@@ -93,28 +93,30 @@ class DFPT_PW
     /// InitContext overload below. Keeping the thin wrapper inline avoids
     /// a separate TU and gives the call-site aggregate initialization the
     /// same performance as a direct call.
-    void init(UnitCell& ucell,
-              const psi::Psi<std::complex<double>>& psi,
-              ModulePW::PW_Basis* pw_rho,
-              ModulePW::PW_Basis_K* pw_wfc,
-              Structure_Factor* sf,
-              const std::vector<double>& veff_r,
-              const ModuleBase::matrix& wg,
-              const ModuleBase::matrix& eig,
-              const XC_First_Order* xc,
-              double nelec,
-              double ecutwfc,
-              const Plus_U_Base* dftu,
-              int myrank)
+    void init(
+        UnitCell &ucell,
+        const psi::Psi<std::complex<double>> &psi,
+        ModulePW::PW_Basis *pw_rho,
+        ModulePW::PW_Basis_K *pw_wfc,
+        Structure_Factor *sf,
+        const std::vector<double> &veff_r,
+        const ModuleBase::matrix &wg,
+        const ModuleBase::matrix &eig,
+        const XC_First_Order *xc,
+        double nelec,
+        double ecutwfc,
+        const Plus_U_Base *dftu,
+        int myrank)
     {
-        const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu, myrank, nullptr};
+        const DFPT_PW_InitContext ctx{
+            &ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu, myrank, nullptr};
         init(ctx);
     }
 
     /// Single-context init carrying the twelve parameters as named fields
     /// so the function body stays under the coding-rule parameter-count
     /// budget. Semantics are identical to the overload above.
-    void init(const DFPT_PW_InitContext& ctx);
+    void init(const DFPT_PW_InitContext &ctx);
 
     void run();
 
@@ -134,7 +136,7 @@ class DFPT_PW
     ModuleBase::matrix get_born_charges(int atom_idx) const;
 
     /// q-point source: a q list file overrides the Monkhorst-Pack q mesh
-    void set_qfile(const std::string& filename);
+    void set_qfile(const std::string &filename);
 
     void set_qmesh(int nqx, int nqy, int nqz);
 
@@ -152,12 +154,12 @@ class DFPT_PW
 
     /// acoustic sum rule on the Gamma dynamical matrix ("no" | "simple" |
     /// "crystal"); applied to the raw matrix before the LO-TO term
-    void set_asr(const std::string& asr_type);
+    void set_asr(const std::string &asr_type);
     /// response SCF mixing scheme: "rho_plain" (beta only), "rho_kerker"
     /// (screen f_g = |G+q|^2/(|G+q|^2+a^2), a^2 via set_kerker_a2),
     /// "rho_broyden" (Modified Broyden on the density), or the potential
     /// mixes "v_sc_plain" / "v_sc_broyden" (handled in solve_displacement)
-    void set_mix_type(const std::string& mix_type);
+    void set_mix_type(const std::string &mix_type);
 
     /// Kerker screening a^2 in 1/lat0^2 units (rho_kerker scheme only)
     void set_kerker_a2(double a2);
@@ -174,7 +176,7 @@ class DFPT_PW
     /// is normalized to a unit direction by the data layer; the default is
     /// the isotropic (1,1,1)/sqrt(3). Consumed by run() so no direction is
     /// hardcoded in the driver anymore.
-    void set_loto_dir(const ModuleBase::Vector3<double>& dir);
+    void set_loto_dir(const ModuleBase::Vector3<double> &dir);
 
     /// number of q points of the current list (q file or q mesh)
     int get_nq() const;
@@ -197,7 +199,7 @@ class DFPT_PW
 
     /// read-only access to the data layer (consumed by the dyn file
     /// writer in the esolver post-processing)
-    const DFPT_PW_Data& get_data() const;
+    const DFPT_PW_Data &get_data() const;
 
     /// the MPI rank passed at init (0 for serial); consumed by the dyn
     /// file writer for the rank-0 output gate

@@ -26,7 +26,11 @@ namespace
 {
 
 /// projector -> (radial beta index, m channel) table matching build_vkb
-void nl_projector_table(const pseudo& ncpp, int nh, std::vector<int>& mu_ib, std::vector<int>& mu_m)
+void nl_projector_table(
+    const pseudo &ncpp,
+    int nh,
+    std::vector<int> &mu_ib,
+    std::vector<int> &mu_m)
 {
     mu_ib.assign(nh, 0);
     mu_m.assign(nh, 0);
@@ -47,7 +51,7 @@ void nl_projector_table(const pseudo& ncpp, int nh, std::vector<int>& mu_ib, std
 }
 
 /// cartesian list of the k (+q) plane waves of one k point (2*pi/lat0 units)
-std::vector<ModuleBase::Vector3<double>> nl_gk_list(const ModulePW::PW_Basis_K& pw_wfc, int k_idx, int npwk)
+std::vector<ModuleBase::Vector3<double>> nl_gk_list(const ModulePW::PW_Basis_K &pw_wfc, int k_idx, int npwk)
 {
     std::vector<ModuleBase::Vector3<double>> gk(npwk);
     for (int ig = 0; ig < npwk; ++ig)
@@ -58,10 +62,11 @@ std::vector<ModuleBase::Vector3<double>> nl_gk_list(const ModulePW::PW_Basis_K& 
 }
 
 /// becp_nu(k) = sum_G' conj(vkb_in[nu][G']) psi(G') for one band
-void nl_becp(int npwk,
-             const std::vector<std::vector<std::complex<double>>>& vkb_in,
-             const std::complex<double>* psi_in,
-             std::vector<std::complex<double>>& becp)
+void nl_becp(
+    int npwk,
+    const std::vector<std::vector<std::complex<double>>> &vkb_in,
+    const std::complex<double> *psi_in,
+    std::vector<std::complex<double>> &becp)
 {
     const int nh = static_cast<int>(vkb_in.size());
     becp.assign(nh, std::complex<double>(0.0, 0.0));
@@ -75,13 +80,14 @@ void nl_becp(int npwk,
 }
 
 /// becp of the momentum-weighted band i (k+G')_dir |psi> (term B carrier)
-void nl_becp_dpsi(int npwk,
-                  int dir,
-                  double tpiba,
-                  const std::vector<ModuleBase::Vector3<double>>& gk_in,
-                  const std::vector<std::vector<std::complex<double>>>& vkb_in,
-                  const std::complex<double>* psi_in,
-                  std::vector<std::complex<double>>& becp_dpsi)
+void nl_becp_dpsi(
+    int npwk,
+    int dir,
+    double tpiba,
+    const std::vector<ModuleBase::Vector3<double>> &gk_in,
+    const std::vector<std::vector<std::complex<double>>> &vkb_in,
+    const std::complex<double> *psi_in,
+    std::vector<std::complex<double>> &becp_dpsi)
 {
     const int nh = static_cast<int>(vkb_in.size());
     becp_dpsi.assign(nh, std::complex<double>(0.0, 0.0));
@@ -89,19 +95,19 @@ void nl_becp_dpsi(int npwk,
     {
         for (int ig = 0; ig < npwk; ++ig)
         {
-            const std::complex<double> dpsi_ig
-                = std::complex<double>(0.0, 1.0) * (tpiba * gk_in[ig][dir]) * psi_in[ig];
+            const std::complex<double> dpsi_ig = std::complex<double>(0.0, 1.0) * (tpiba * gk_in[ig][dir]) * psi_in[ig];
             becp_dpsi[nu] += std::conj(vkb_in[nu][ig]) * dpsi_ig;
         }
     }
 }
 
 /// dcbecp = D * becp with D_{mu,nu} = dion(ib_mu, ib_nu) delta_{m_mu, m_nu}
-void nl_d_contract(const pseudo& ncpp,
-                   const std::vector<int>& mu_ib,
-                   const std::vector<int>& mu_m,
-                   const std::vector<std::complex<double>>& becp,
-                   std::vector<std::complex<double>>& dcbecp)
+void nl_d_contract(
+    const pseudo &ncpp,
+    const std::vector<int> &mu_ib,
+    const std::vector<int> &mu_m,
+    const std::vector<std::complex<double>> &becp,
+    std::vector<std::complex<double>> &dcbecp)
 {
     const int nh = static_cast<int>(becp.size());
     dcbecp.assign(nh, std::complex<double>(0.0, 0.0));
@@ -121,11 +127,12 @@ void nl_d_contract(const pseudo& ncpp,
 /// D contraction of the four becp variants with the same-m selection rule
 /// shared with dVnl_dtau; dx rows are 0 = d0 (plain), 1 = da_ (k+G')_da,
 /// 2 = db_ (k+G')_db, 3 = dab (k+G')_da (k+G')_db
-void nl_d_contract_x(const pseudo& ncpp,
-                     const std::vector<int>& mu_ib,
-                     const std::vector<int>& mu_m,
-                     const std::vector<std::vector<std::complex<double>>>& becp_x,
-                     std::vector<std::vector<std::complex<double>>>& dx)
+void nl_d_contract_x(
+    const pseudo &ncpp,
+    const std::vector<int> &mu_ib,
+    const std::vector<int> &mu_m,
+    const std::vector<std::vector<std::complex<double>>> &becp_x,
+    std::vector<std::vector<std::complex<double>>> &dx)
 {
     const int nh = static_cast<int>(becp_x[0].size());
     dx.assign(4, std::vector<std::complex<double>>(nh, std::complex<double>(0.0, 0.0)));
@@ -147,10 +154,11 @@ void nl_d_contract_x(const pseudo& ncpp,
 }
 
 /// (Vnl |carrier>)_igl = sum_mu vkb_out[mu][igl] coeff[mu] on the k+q basis
-std::complex<double> nl_sum_projectors(const std::vector<std::vector<std::complex<double>>>& vkb_out,
-                                       const std::vector<std::complex<double>>& coeff,
-                                       int nh,
-                                       int igl)
+std::complex<double> nl_sum_projectors(
+    const std::vector<std::vector<std::complex<double>>> &vkb_out,
+    const std::vector<std::complex<double>> &coeff,
+    int nh,
+    int igl)
 {
     std::complex<double> vnlpsi(0.0, 0.0);
     for (int mu = 0; mu < nh; ++mu)
@@ -162,12 +170,13 @@ std::complex<double> nl_sum_projectors(const std::vector<std::vector<std::comple
 
 } // namespace
 
-void DFPT_Pert::dVnl_dtau(int atom_idx,
-                          int dir,
-                          const ModuleBase::Vector3<double>& q_cart,
-                          const psi::Psi<std::complex<double>>& psi,
-                          int k_idx,
-                          std::vector<std::vector<std::complex<double>>>& dv_psi)
+void DFPT_Pert::dVnl_dtau(
+    int atom_idx,
+    int dir,
+    const ModuleBase::Vector3<double> &q_cart,
+    const psi::Psi<std::complex<double>> &psi,
+    int k_idx,
+    std::vector<std::vector<std::complex<double>>> &dv_psi)
 {
     ModuleBase::TITLE("DFPT_Pert", "dVnl_dtau");
     ModuleBase::timer::start("DFPT_Pert", "dVnl_dtau");
@@ -179,15 +188,15 @@ void DFPT_Pert::dVnl_dtau(int atom_idx,
         ModuleBase::timer::end("DFPT_Pert", "dVnl_dtau");
         return;
     }
-    const pseudo& ncpp = ucell_->atoms[it].ncpp;
+    const pseudo &ncpp = ucell_->atoms[it].ncpp;
     if (ncpp.tvanp || ncpp.has_so)
     {
         // the separable NC path documented in C1; ultrasoft and spin-orbit
         // projectors are deferred (their D and augmentation have |k+q| shifts
         // that need the USPP machinery).
-        ModuleBase::WARNING_QUIT("DFPT_Pert::dVnl_dtau",
-                                 "DFPT nonlocal first-order potential is implemented "
-                                 "for normal-conserving separable pseudopotentials only.");
+        ModuleBase::WARNING_QUIT(
+            "DFPT_Pert::dVnl_dtau", "DFPT nonlocal first-order potential is implemented "
+                                    "for normal-conserving separable pseudopotentials only.");
     }
     const int nh = ncpp.nh;
 
@@ -229,8 +238,8 @@ void DFPT_Pert::dVnl_dtau(int atom_idx,
         std::vector<std::complex<double>> term_a(npwk_kq, std::complex<double>(0.0, 0.0));
         for (int igl = 0; igl < npwk_kq; ++igl)
         {
-            term_a[igl] = std::complex<double>(0.0, 1.0) * (ucell_->tpiba * gk_out[igl][dir])
-                          * nl_sum_projectors(vkb_out, dcbecp, nh, igl);
+            term_a[igl] = std::complex<double>(0.0, 1.0) * (ucell_->tpiba * gk_out[igl][dir]) *
+                          nl_sum_projectors(vkb_out, dcbecp, nh, igl);
         }
         // term B: Vnl [i (k+G')_dir |psi>]
         std::vector<std::complex<double>> becp_dpsi;
@@ -247,13 +256,14 @@ void DFPT_Pert::dVnl_dtau(int atom_idx,
     ModuleBase::timer::end("DFPT_Pert", "dVnl_dtau");
 }
 
-void DFPT_Pert::apply_d2vnl(int atom_idx,
-                            int da,
-                            int db,
-                            const ModuleBase::Vector3<double>& q_eff,
-                            const psi::Psi<std::complex<double>>& psi,
-                            int k_idx,
-                            std::vector<std::vector<std::complex<double>>>& d2v_psi) const
+void DFPT_Pert::apply_d2vnl(
+    int atom_idx,
+    int da,
+    int db,
+    const ModuleBase::Vector3<double> &q_eff,
+    const psi::Psi<std::complex<double>> &psi,
+    int k_idx,
+    std::vector<std::vector<std::complex<double>>> &d2v_psi) const
 {
     ModuleBase::TITLE("DFPT_Pert", "apply_d2vnl");
     ModuleBase::timer::start("DFPT_Pert", "apply_d2vnl");
@@ -265,12 +275,12 @@ void DFPT_Pert::apply_d2vnl(int atom_idx,
         ModuleBase::timer::end("DFPT_Pert", "apply_d2vnl");
         return;
     }
-    const pseudo& ncpp = ucell_->atoms[it].ncpp;
+    const pseudo &ncpp = ucell_->atoms[it].ncpp;
     if (ncpp.tvanp || ncpp.has_so)
     {
-        ModuleBase::WARNING_QUIT("DFPT_Pert::apply_d2vnl",
-                                 "DFPT second-order nonlocal potential is implemented "
-                                 "for normal-conserving separable pseudopotentials only.");
+        ModuleBase::WARNING_QUIT(
+            "DFPT_Pert::apply_d2vnl", "DFPT second-order nonlocal potential is implemented "
+                                      "for normal-conserving separable pseudopotentials only.");
     }
     const int nh = ncpp.nh;
     const int nbands = psi.get_nbands();

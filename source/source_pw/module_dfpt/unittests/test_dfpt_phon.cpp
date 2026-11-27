@@ -4,18 +4,18 @@
 // corrected-frequency diagonalization, and the output format regression.
 
 #include "dfpt_test_tool.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/constants.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
-#include "source_base/complexmatrix.h"
-#include "source_base/constants.h"
 #include "source_cell/stru_fac.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_phon.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -54,7 +54,7 @@ class DFPTPhonSerialTest : public ::testing::Test
 
     // (re)initialize the bases and the pert/phon wiring for a given (k, q)
     // pair; SetUp uses the default fixture values
-    void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    void SetupPhon(const ModuleBase::Vector3<double> &k_d, const ModuleBase::Vector3<double> &q_d)
     {
         dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, 2, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
@@ -116,7 +116,8 @@ TEST_F(DFPTPhonSerialTest, DiagonalizeKnownMatrix)
     const std::vector<double> freq = data_.get_phon_freq(0);
     ASSERT_EQ(freq.size(), 6u);
     std::vector<double> expect;
-    auto block = [&expect](double a, double b, std::complex<double> c) {
+    auto block = [&expect](double a, double b, std::complex<double> c)
+    {
         const double mid = 0.5 * (a + b);
         const double rad = std::sqrt(std::pow(0.5 * (a - b), 2) + std::norm(c));
         expect.push_back(mid + rad);
@@ -126,7 +127,7 @@ TEST_F(DFPTPhonSerialTest, DiagonalizeKnownMatrix)
     block(lam[2], lam[3], dyn(2, 3)); // coupled pair
     expect.push_back(lam[4]);         // untouched diagonal
     expect.push_back(lam[5]);
-    for (double& e : expect)
+    for (double &e : expect)
     {
         const double s = (e >= 0.0) ? 1.0 : -1.0;
         e = s * std::sqrt(std::abs(e)) * RyBohr2AmuToCm1();

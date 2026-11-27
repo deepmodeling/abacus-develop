@@ -28,7 +28,7 @@ namespace dfpt_test
 constexpr double nlcc_sigma = 1.5;        // bohr, grid-resolvable (spacing ~0.63 bohr)
 constexpr double nlcc_core_charge = 0.24; // e, integrated
 
-void setup_cell(UnitCell& ucell, ModuleBase::Matrix3& latvec)
+void setup_cell(UnitCell &ucell, ModuleBase::Matrix3 &latvec)
 {
     latvec = ModuleBase::Matrix3(cubic_edge, 0.0, 0.0, 0.0, cubic_edge, 0.0, 0.0, 0.0, cubic_edge);
     ucell.ntype = 1;
@@ -51,9 +51,9 @@ void setup_cell(UnitCell& ucell, ModuleBase::Matrix3& latvec)
     make_coulomb_atom(ucell);
 }
 
-void make_coulomb_atom(UnitCell& ucell)
+void make_coulomb_atom(UnitCell &ucell)
 {
-    Atom& at = ucell.atoms[0];
+    Atom &at = ucell.atoms[0];
     at.label = "C";
     at.coulomb_potential = true;
     at.ncpp.zv = 4.0;
@@ -66,12 +66,12 @@ void make_coulomb_atom(UnitCell& ucell)
     at.mass = 12.0;
 }
 
-void make_nc_atom(UnitCell& ucell)
+void make_nc_atom(UnitCell &ucell)
 {
-    Atom& at = ucell.atoms[0];
+    Atom &at = ucell.atoms[0];
     at.label = "Si";
     at.coulomb_potential = false;
-    pseudo& p = at.ncpp;
+    pseudo &p = at.ncpp;
     p.zv = 4.0;
     p.tvanp = false;
     p.has_so = false;
@@ -103,7 +103,7 @@ void make_nc_atom(UnitCell& ucell)
     p.dion(1, 1) = 1.1;
 }
 
-void make_two_atom_cell(UnitCell& ucell)
+void make_two_atom_cell(UnitCell &ucell)
 {
     ucell.ntype = 2;
     ucell.nat = 2;
@@ -117,7 +117,7 @@ void make_two_atom_cell(UnitCell& ucell)
     ucell.atoms[1].tau[0] = ModuleBase::Vector3<double>(0.25, 0.31, 0.17);
     for (int it = 0; it < 2; ++it)
     {
-        Atom& at = ucell.atoms[it];
+        Atom &at = ucell.atoms[it];
         at.label = (it == 0) ? "A" : "B";
         at.coulomb_potential = true;
         at.ncpp.zv = (it == 0) ? 4.0 : 2.0;
@@ -135,16 +135,16 @@ void make_two_atom_cell(UnitCell& ucell)
     ucell.iat2ia[1] = 0;
 }
 
-void make_nlcc_two_atom_cell(UnitCell& ucell)
+void make_nlcc_two_atom_cell(UnitCell &ucell)
 {
     // start from the symmetry-broken two-atom cell, then upgrade the
     // second species (the one at the non-origin tau) to an NC pseudo
     // with a nonlinear core correction
     make_two_atom_cell(ucell);
-    Atom& at = ucell.atoms[1];
+    Atom &at = ucell.atoms[1];
     at.label = "Bc";
     at.coulomb_potential = false;
-    pseudo& p = at.ncpp;
+    pseudo &p = at.ncpp;
     p.zv = 2.0;
     p.tvanp = false;
     p.has_so = false;
@@ -181,15 +181,16 @@ void make_nlcc_two_atom_cell(UnitCell& ucell)
     p.nlcc = true;
 }
 
-void setup_bases(ModulePW::PW_Basis& pw_rho,
-                 ModulePW::PW_Basis_K& pw_wfc,
-                 ModuleCell::QList& qlist,
-                 ModuleDFPT::DFPT_PW_Data& data,
-                 const UnitCell& ucell,
-                 const ModuleBase::Vector3<double>& k_d,
-                 const ModuleBase::Vector3<double>& q_d,
-                 int nbands,
-                 ModuleBase::Vector3<double>& q_cart)
+void setup_bases(
+    ModulePW::PW_Basis &pw_rho,
+    ModulePW::PW_Basis_K &pw_wfc,
+    ModuleCell::QList &qlist,
+    ModuleDFPT::DFPT_PW_Data &data,
+    const UnitCell &ucell,
+    const ModuleBase::Vector3<double> &k_d,
+    const ModuleBase::Vector3<double> &q_d,
+    int nbands,
+    ModuleBase::Vector3<double> &q_cart)
 {
     // The tool keeps its own five-call assembly chains instead of
     // calling the production pw::setup_pwrho / setup_pwwfc wrappers
@@ -200,7 +201,7 @@ void setup_bases(ModulePW::PW_Basis& pw_rho,
     // K_Vectors-driven wrapper is not shaped for; and the wrappers
     // write to the running-log global stream and require a fabricated
     // Input_para.
-    const ModuleBase::Matrix3& latvec = ucell.latvec;
+    const ModuleBase::Matrix3 &latvec = ucell.latvec;
     pw_rho.initgrids(lat0, latvec, rho_mult * ecutwfc);
     pw_rho.initparameters(false, rho_mult * ecutwfc);
     pw_rho.fft_bundle.initfftmode(0);
@@ -227,10 +228,11 @@ double vloc_coulomb(double zv, double omega, double g2_bohr)
     return -zv * ModuleBase::e2 * ModuleBase::FOUR_PI / omega / g2_bohr;
 }
 
-std::complex<double> analytic_dvloc(const UnitCell& ucell,
-                                    const ModuleBase::Vector3<double>& tau,
-                                    int dir,
-                                    const ModuleBase::Vector3<double>& w)
+std::complex<double> analytic_dvloc(
+    const UnitCell &ucell,
+    const ModuleBase::Vector3<double> &tau,
+    int dir,
+    const ModuleBase::Vector3<double> &w)
 {
     const double w2 = w * w;
     if (w2 < 1.0e-12)
@@ -239,21 +241,17 @@ std::complex<double> analytic_dvloc(const UnitCell& ucell,
     }
     const double zv = ucell.atoms[0].ncpp.zv;
     const double arg = -ModuleBase::TWO_PI * (w * tau);
-    return std::complex<double>(0.0, -1.0) * (ucell.tpiba * w[dir])
-           * vloc_coulomb(zv, ucell.omega, w2 * ucell.tpiba2)
-           * std::complex<double>(std::cos(arg), std::sin(arg));
+    return std::complex<double>(0.0, -1.0) * (ucell.tpiba * w[dir]) * vloc_coulomb(zv, ucell.omega, w2 * ucell.tpiba2) *
+           std::complex<double>(std::cos(arg), std::sin(arg));
 }
 
-long long fkey(int ix, int iy, int iz)
-{
-    return (static_cast<long long>(ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64);
-}
+long long fkey(int ix, int iy, int iz) { return (static_cast<long long>(ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64); }
 
-long long gkey(const ModuleBase::Vector3<double>& g, double a)
+long long gkey(const ModuleBase::Vector3<double> &g, double a)
 {
-    return fkey(static_cast<int>(std::llround(g.x * a)),
-                static_cast<int>(std::llround(g.y * a)),
-                static_cast<int>(std::llround(g.z * a)));
+    return fkey(
+        static_cast<int>(std::llround(g.x * a)), static_cast<int>(std::llround(g.y * a)),
+        static_cast<int>(std::llround(g.z * a)));
 }
 
 } // namespace dfpt_test

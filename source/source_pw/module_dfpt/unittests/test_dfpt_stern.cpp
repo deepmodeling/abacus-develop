@@ -35,13 +35,10 @@ double test_rand()
     return ((g_seed >> 8) & 0xffffff) / 16777216.0 * 2.0 - 1.0;
 }
 
-std::complex<double> crand()
-{
-    return std::complex<double>(test_rand(), test_rand());
-}
+std::complex<double> crand() { return std::complex<double>(test_rand(), test_rand()); }
 
 // Re <a|b>
-double vdot(const std::vector<std::complex<double>>& a, const std::vector<std::complex<double>>& b)
+double vdot(const std::vector<std::complex<double>> &a, const std::vector<std::complex<double>> &b)
 {
     double s = 0.0;
     for (size_t i = 0; i < a.size(); ++i)
@@ -55,14 +52,9 @@ double vdot(const std::vector<std::complex<double>>& a, const std::vector<std::c
 class DiagonalOperator : public ModuleDFPT::DFPT_Stern::LinearOperator
 {
   public:
-    DiagonalOperator(std::vector<double> d, double eps) : d_(std::move(d)), eps_(eps)
-    {
-    }
-    int dimension() const override
-    {
-        return static_cast<int>(d_.size());
-    }
-    void apply(const std::complex<double>* x, std::complex<double>* y) const override
+    DiagonalOperator(std::vector<double> d, double eps) : d_(std::move(d)), eps_(eps) {}
+    int dimension() const override { return static_cast<int>(d_.size()); }
+    void apply(const std::complex<double> *x, std::complex<double> *y) const override
     {
         for (size_t i = 0; i < d_.size(); ++i)
         {
@@ -80,9 +72,8 @@ class DiagonalOperator : public ModuleDFPT::DFPT_Stern::LinearOperator
 class EigenbasisOperator : public ModuleDFPT::DFPT_Stern::LinearOperator
 {
   public:
-    EigenbasisOperator(const std::vector<std::vector<std::complex<double>>>& u,
-                       const std::vector<double>& lambda,
-                       double eps)
+    EigenbasisOperator(
+        const std::vector<std::vector<std::complex<double>>> &u, const std::vector<double> &lambda, double eps)
         : lambda_(lambda), eps_(eps)
     {
         const int n = static_cast<int>(lambda.size());
@@ -99,11 +90,8 @@ class EigenbasisOperator : public ModuleDFPT::DFPT_Stern::LinearOperator
             }
         }
     }
-    int dimension() const override
-    {
-        return static_cast<int>(lambda_.size());
-    }
-    void apply(const std::complex<double>* x, std::complex<double>* y) const override
+    int dimension() const override { return static_cast<int>(lambda_.size()); }
+    void apply(const std::complex<double> *x, std::complex<double> *y) const override
     {
         const int n = static_cast<int>(lambda_.size());
         for (int i = 0; i < n; ++i)
@@ -334,11 +322,8 @@ TEST(DFPTSternTest, SolutionStaysOrthogonalToOccupiedStates)
                 }
             }
         }
-        int dimension() const override
-        {
-            return static_cast<int>(a_.size());
-        }
-        void apply(const std::complex<double>* x, std::complex<double>* y) const override
+        int dimension() const override { return static_cast<int>(a_.size()); }
+        void apply(const std::complex<double> *x, std::complex<double> *y) const override
         {
             const int n = static_cast<int>(a_.size());
             for (int i = 0; i < n; ++i)

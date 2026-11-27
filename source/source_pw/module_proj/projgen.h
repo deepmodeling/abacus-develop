@@ -27,10 +27,10 @@
 void projgen(
     const int l,
     const int nr,
-    const double* r,
-    const double* chi,
+    const double *r,
+    const double *chi,
     const double rcut,
     const int nbes,
-    std::vector<double>& alpha);
+    std::vector<double> &alpha);
 
 #endif
