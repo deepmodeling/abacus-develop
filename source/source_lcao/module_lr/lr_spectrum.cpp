@@ -375,7 +375,7 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
 
             for (auto it = state_contributions.cbegin(); it != state_contributions.cend(); ++it)
             {
-                auto pair_info = get_pair_info(it->first);
+                std::map<std::string, int> pair_info = get_pair_info(it->first);
                 const int& is = pair_info["ispin"];
                 const std::string s = nspin_x == 2 ? (is == 0 ? "a" : "b") : "";
                 ofs << std::setw(8) << (it == state_contributions.cbegin() ? std::to_string(istate) : " ")

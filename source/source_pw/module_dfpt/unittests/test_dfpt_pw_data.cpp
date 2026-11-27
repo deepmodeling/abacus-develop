@@ -1,18 +1,18 @@
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include <iostream>
-#include <streambuf>
+#include "dfpt_stru_tool.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_global.h"
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
 #include "source_cell/magnetism.h"
 #include "source_cell/pseudo.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
-#include "dfpt_stru_tool.h"
-#include "source_base/global_variable.h"
-#include "source_base/parallel_global.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_pwdft/dftu_base.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <iostream>
+#include <streambuf>
 
 // ctor/dtor stubs for the cell/spepot link closures live in the shared
 // dfpt_test_mocks.cpp compiled into every DFPT test binary.
@@ -52,9 +52,9 @@ class DFPT_PW_DataTest : public ::testing::Test
         ofs_running.open("tmp_dfpt_qlist");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
-        symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
-                       ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
-                       ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+        symm.analy_sys(
+            ucell.lat, ucell.atoms, ucell.nat, ucell.ntype, ucell.iat2it, ucell.iat2ia, ucell.itia2iat, ofs_running,
+            1e-6, 1, "scf", cal_symm_repr);
         qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
         data.init(&qlist, 1, 2, 3, 0, 1, 1, nullptr);
     }

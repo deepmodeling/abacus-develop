@@ -13,7 +13,9 @@ add_library(
   linear_low_rank.cpp
   cn_subspace.cpp
   orthonormal.cpp
-  orthonormal_small.cpp)
+  orthonormal_small.cpp
+  overlap_spectrum.cpp
+  matrix_block_ops.cpp)
 
 if(ENABLE_COVERAGE)
   add_coverage(hsolver_linalg)

@@ -72,18 +72,18 @@ RI::Tensor<Tdata> Matrix_Orbs22::cal_overlap_matrix(
                         const size_t NA2 = co6.first;
                         for( size_t MA2=0; MA2!=2*LA2+1; ++MA2 )
                         {
-                            for( const auto &co7 : co6.second )
+                            for( const std::pair<const int, std::map<std::size_t, std::map<int, std::map<std::size_t, Center2_Orb::Orb22>>>>& co7 : co6.second )
                             {
                                 const int LB1 = co7.first;
-                                for( const auto &co8 : co7.second )
+                                for( const std::pair<const std::size_t, std::map<int, std::map<std::size_t, Center2_Orb::Orb22>>>& co8 : co7.second )
                                 {
                                     const size_t NB1 = co8.first;
                                     for( size_t MB1=0; MB1!=2*LB1+1; ++MB1 )
                                     {
-                                        for( const auto &co9 : co8.second )
+                                        for( const std::pair<const int, std::map<std::size_t, Center2_Orb::Orb22>>& co9 : co8.second )
                                         {
                                             const int LB2 = co9.first;
-                                            for( const auto &co10 : co9.second )
+                                            for( const std::pair<const std::size_t, Center2_Orb::Orb22>& co10 : co9.second )
                                             {
                                                 const size_t NB2 = co10.first;
                                                 for( size_t MB2=0; MB2!=2*LB2+1; ++MB2 )

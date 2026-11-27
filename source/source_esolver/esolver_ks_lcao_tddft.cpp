@@ -425,7 +425,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(
             const bool skip_charge = false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(
                 &this->pv, this->inp_->ks_solver, PARAM.globalv.kpar_lcao, PARAM.globalv.nlocal, this->inp_->nbands,
-                this->inp_->nelec, this->inp_->device == "gpu", GlobalV::NPROC, GlobalV::MY_RANK);
+                this->inp_->nelec, this->inp_->device == "gpu", GlobalV::NPROC, GlobalV::MY_RANK,
+                this->inp_->lcao_sk_cut);
             hamilt::HamiltHSMatrix<std::complex<double>> hs(
                 static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt));
             hsolver_lcao_obj.solve(

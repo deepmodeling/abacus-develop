@@ -6,7 +6,7 @@
 #include "read_INPUT.h"
 #include "tools.h"
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     cout << " ***************** " << endl;
     cout << "  WELCOME TO SIA! " << endl;

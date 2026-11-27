@@ -139,7 +139,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
         const size_t ia = ucell.iat2ia[iat];
         if(ucell.atoms[it].boundary_shift[ia]!=zero)
         {
-            const auto& rshift = ucell.atoms[it].boundary_shift[ia];
+            const ModuleBase::Vector3<int>& rshift = ucell.atoms[it].boundary_shift[ia];
             const LocalBasisRange matrix_rows =
                 local_basis_range(basis, *matrix_layout, static_cast<int>(iat), BasisAxis::Row);
             const LocalBasisRange matrix_columns =

@@ -1,14 +1,14 @@
 #ifndef MODULEHAMILTPW_ONSITEPROJTOOLS_H
 #define MODULEHAMILTPW_ONSITEPROJTOOLS_H
 
+#include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/device.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/vnl_pw.h"
-#include "source_pw/module_pwdft/kernels/stress_op.h"
-#include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
+#include "source_pw/module_pwdft/kernels/stress_op.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 
 #include <complex>
 
@@ -31,45 +31,52 @@ class Onsite_Proj_tools
 {
   public:
     Onsite_Proj_tools(
-        const pseudopot_cell_vnl* nlpp_in,
-        const UnitCell* ucell_in,
-        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-        const K_Vectors* kv_in,
-        const ModulePW::PW_Basis_K* wfc_basis_in,
-        const Structure_Factor* sf_in,
-        const ModuleBase::matrix& wg,
-        const ModuleBase::matrix& ekb
-    );
+        const pseudopot_cell_vnl *nlpp_in,
+        const UnitCell *ucell_in,
+        const psi::Psi<std::complex<FPTYPE>, Device> *psi_in,
+        const K_Vectors *kv_in,
+        const ModulePW::PW_Basis_K *wfc_basis_in,
+        const Structure_Factor *sf_in,
+        const ModuleBase::matrix &wg,
+        const ModuleBase::matrix &ekb);
 
     // a more general constructor is in the following
     Onsite_Proj_tools(
-        const std::vector<int>& nproj,     // number of projectors for each atom type
-        const std::vector<int>& lproj,
-        const ModuleBase::realArray& tab,  // radials' spherical bessel transform
-        const ModuleBase::matrix& nhtol,
-        std::complex<FPTYPE>* vkb_buf,
-        const UnitCell* ucell_in,
-        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-        const K_Vectors* kv_in,
-        const ModulePW::PW_Basis_K* wfc_basis_in,
-        const Structure_Factor* sf_in,
-        const ModuleBase::matrix& wg,
-        const ModuleBase::matrix& ekb
-    );
+        const std::vector<int> &nproj, // number of projectors for each atom type
+        const std::vector<int> &lproj,
+        const ModuleBase::realArray &tab, // radials' spherical bessel transform
+        const ModuleBase::matrix &nhtol,
+        std::complex<FPTYPE> *vkb_buf,
+        const UnitCell *ucell_in,
+        const psi::Psi<std::complex<FPTYPE>, Device> *psi_in,
+        const K_Vectors *kv_in,
+        const ModulePW::PW_Basis_K *wfc_basis_in,
+        const Structure_Factor *sf_in,
+        const ModuleBase::matrix &wg,
+        const ModuleBase::matrix &ekb);
 
     ~Onsite_Proj_tools();
 
     /**
      * @brief calculate the becp = <psi|beta> for all beta functions
      */
-    void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in = nullptr, const std::complex<FPTYPE>* ppsi_in = nullptr, int npwx = 0);
+    void cal_becp(
+        int ik,
+        int npm,
+        std::complex<FPTYPE> *becp_in = nullptr,
+        const std::complex<FPTYPE> *ppsi_in = nullptr,
+        int npwx = 0);
     /** @brief Gauge-covariant projection at the explicit endpoint vector potential (inverse Bohr).
      *  @param host_becp Optional caller-owned host buffer for the pool-reduced overlaps; may be nullptr.
      */
-    void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in,
-                  const std::complex<FPTYPE>* ppsi_in, int npwx,
-                  const ModuleBase::Vector3<double>& vector_potential,
-                  std::complex<FPTYPE>* host_becp);
+    void cal_becp(
+        int ik,
+        int npm,
+        std::complex<FPTYPE> *becp_in,
+        const std::complex<FPTYPE> *ppsi_in,
+        int npwx,
+        const ModuleBase::Vector3<double> &vector_potential,
+        std::complex<FPTYPE> *host_becp);
     /** @brief Invalidate projectors after resizing the borrowed radial interpolation table. */
     void refresh_table();
     /** @brief Rebuild overlap projectors on the next call after atomic coordinates change. */
@@ -78,7 +85,11 @@ class Onsite_Proj_tools
      * @brief calculate the dbecp_{ij} = <psi|\partial beta/\partial varepsilon_{ij}> for all beta functions
      *       stress_{ij} = -1/omega \sum_{n,k}f_{nk} \sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_{ij} also calculated
      */
-    void cal_dbecp_s(int ik, int npm, int ipol, int jpol);
+    void cal_dbecp_s(
+        int ik,
+        int npm,
+        int ipol,
+        int jpol);
     /**
      * @brief calculate the dbecp_i = <psi|\partial beta/\partial \tau^I_i> for all beta functions
      */
@@ -87,53 +98,47 @@ class Onsite_Proj_tools
     void cal_force_dftu(
         int ik,
         int npm,
-        FPTYPE* force,
-        const int* l_channel,
-        const std::complex<FPTYPE>* pot_onsite,
+        FPTYPE *force,
+        const int *l_channel,
+        const std::complex<FPTYPE> *pot_onsite,
         const int size_pot_onsite,
-        const FPTYPE* h_wg
-    );
+        const FPTYPE *h_wg);
 
     void cal_force_dspin(
         int ik,
         int npm,
-        FPTYPE* force,
-        const ModuleBase::Vector3<double>* lambda,
-        const FPTYPE* h_wg
-    );
+        FPTYPE *force,
+        const ModuleBase::Vector3<double> *lambda,
+        const FPTYPE *h_wg);
 
     // return stress(i,j) value
     double cal_stress_dftu(
         int ik,
         int npm,
-        const int* l_channel,
-        const std::complex<FPTYPE>* pot_onsite,
+        const int *l_channel,
+        const std::complex<FPTYPE> *pot_onsite,
         const int size_pot_onsite,
-        const FPTYPE* h_wg
-    );
+        const FPTYPE *h_wg);
 
     // return stress(i,j) value
     double cal_stress_dspin(
         int ik,
         int npm,
-        const ModuleBase::Vector3<double>* lambda,
-        const FPTYPE* h_wg
-    );
+        const ModuleBase::Vector3<double> *lambda,
+        const FPTYPE *h_wg);
 
-
-    std::complex<FPTYPE>* get_becp() const { return becp; }
-    std::complex<FPTYPE>* get_dbecp() const { return dbecp; }
+    std::complex<FPTYPE> *get_becp() const { return becp; }
+    std::complex<FPTYPE> *get_dbecp() const { return dbecp; }
 
   private:
     /**
      * @brief allocate the memory for the variables
      */
     void allocate_memory(
-        const ModuleBase::matrix& wg,
-        const ModuleBase::matrix& ekb,
-        const std::vector<int>& nproj,
-        const std::vector<int>& nch
-    );
+        const ModuleBase::matrix &wg,
+        const ModuleBase::matrix &ekb,
+        const std::vector<int> &nproj,
+        const std::vector<int> &nch);
     /**
      * @brief delete the memory for the variables
      */
@@ -141,20 +146,20 @@ class Onsite_Proj_tools
 
   private:
     /// pointers to access the data without memory arrangement
-    const Structure_Factor* sf_ = nullptr;
-    const pseudopot_cell_vnl* nlpp_ = nullptr;
-    const UnitCell* ucell_ = nullptr;
-    const psi::Psi<std::complex<FPTYPE>, Device>* psi_;
-    const K_Vectors* kv_ = nullptr;
-    const ModulePW::PW_Basis_K* wfc_basis_ = nullptr;
+    const Structure_Factor *sf_ = nullptr;
+    const pseudopot_cell_vnl *nlpp_ = nullptr;
+    const UnitCell *ucell_ = nullptr;
+    const psi::Psi<std::complex<FPTYPE>, Device> *psi_;
+    const K_Vectors *kv_ = nullptr;
+    const ModulePW::PW_Basis_K *wfc_basis_ = nullptr;
 
     /// the following variables are used for the calculation
-    Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
+    Device *ctx = {};
+    base_device::DEVICE_CPU *cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
     int nkb = 0;
     int nbands = 0;
-    int deeq_dims[4] = {0, 0, 0, 0};    // deeq can be something other than that in pseudopotentials
+    int deeq_dims[4] = {0, 0, 0, 0}; // deeq can be something other than that in pseudopotentials
     int deeq_nc_dims[4] = {0, 0, 0, 0};
 
     int current_ik = -1;
@@ -167,19 +172,19 @@ class Onsite_Proj_tools
     int pre_ik_s = -1;
     int pre_ik_f = -1;
 
-    int* atom_nh = nullptr;
-    int* atom_na = nullptr;
+    int *atom_nh = nullptr;
+    int *atom_na = nullptr;
     std::vector<int> h_atom_nh;
     std::vector<int> h_atom_na;
     std::vector<int> nproj;
 
     /// ------------------------- Key optimization -------------------------
     /// @brief the following variables are used for transfer gcar and reuse the values of vkb for force calculation
-    int* gcar_zero_indexes = nullptr;
+    int *gcar_zero_indexes = nullptr;
     int gcar_zero_counts[3] = {0, 0, 0};
-    std::complex<FPTYPE>* vkb_save = nullptr;
+    std::complex<FPTYPE> *vkb_save = nullptr;
     /// @brief count zero gcar indexes and prepare zero_indexes, do gcar_y /= gcar_x, gcar_z /= gcar_y
-    void transfer_gcar(int npw, int npw_max, const ModuleBase::Vector3<FPTYPE>* gcar_in);
+    void transfer_gcar(int npw, int npw_max, const ModuleBase::Vector3<FPTYPE> *gcar_in);
     /// @brief save the 0-value dvkbs for calculating the dbecp_i in the force calculation
     void save_vkb(int npw, int ipol);
     /// @brief revert the 0-value dvkbs for calculating the dbecp_i in the force calculation
@@ -187,44 +192,44 @@ class Onsite_Proj_tools
     /// ---------------------------------------------------------------------
 
     /// pointers to access the data without memory arrangement
-    const ModuleBase::realArray* tabtpr = nullptr;
-    const ModuleBase::matrix* nhtol = nullptr;
+    const ModuleBase::realArray *tabtpr = nullptr;
+    const ModuleBase::matrix *nhtol = nullptr;
     int lprojmax = -1;
 
-    FPTYPE* d_wg = nullptr;
-    FPTYPE* d_ekb = nullptr;
-    FPTYPE* gcar = nullptr;
+    FPTYPE *d_wg = nullptr;
+    FPTYPE *d_ekb = nullptr;
+    FPTYPE *gcar = nullptr;
 
-    FPTYPE* deeq = nullptr;
-    std::complex<FPTYPE>* deeq_nc = nullptr;
+    FPTYPE *deeq = nullptr;
+    std::complex<FPTYPE> *deeq_nc = nullptr;
 
-    FPTYPE* kvec_c = nullptr;
-    FPTYPE* qq_nt = nullptr;
+    FPTYPE *kvec_c = nullptr;
+    FPTYPE *qq_nt = nullptr;
     /// --------------------- Key variable ---------------------
     /// borrow the memory from the vkb in VNL_in_pw to calculate vkb and dvkb
-    std::complex<FPTYPE>* ppcell_vkb = nullptr;
+    std::complex<FPTYPE> *ppcell_vkb = nullptr;
     /// ---------------------------------------------------------
     /// the following variables are used for the calculation
     /// allocate memory on CPU device only
     std::vector<FPTYPE> g_plus_k;
     /// allocate memory on CPU/GPU device
-    FPTYPE* hd_ylm = nullptr;              // (lmax + 1) * (lmax + 1) * npw
-    FPTYPE* hd_ylm_deri = nullptr;         // 3 * (lmax + 1) * (lmax + 1) * npw
-    FPTYPE* hd_vq = nullptr;               // this->ucell->atoms[it].ncpp.nbeta * npw
-    FPTYPE* hd_vq_deri = nullptr;          // this->ucell->atoms[it].ncpp.nbeta * npw
-    std::complex<FPTYPE>* hd_sk = nullptr; // this->ucell->nat * npw
+    FPTYPE *hd_ylm = nullptr;              // (lmax + 1) * (lmax + 1) * npw
+    FPTYPE *hd_ylm_deri = nullptr;         // 3 * (lmax + 1) * (lmax + 1) * npw
+    FPTYPE *hd_vq = nullptr;               // this->ucell->atoms[it].ncpp.nbeta * npw
+    FPTYPE *hd_vq_deri = nullptr;          // this->ucell->atoms[it].ncpp.nbeta * npw
+    std::complex<FPTYPE> *hd_sk = nullptr; // this->ucell->nat * npw
     /// allocate global memory on GPU device only
-    FPTYPE* d_g_plus_k = nullptr;              // npw * 5
-    FPTYPE* d_pref = nullptr;                  // this->ucell->atoms[it].ncpp.nh
-    FPTYPE* d_gk = nullptr;                    // this->ucell->atoms[it].ncpp.nh * npw
-    FPTYPE* d_vq_tab = nullptr;                // this->ucell->atoms[it].ncpp.nbeta * npw
+    FPTYPE *d_g_plus_k = nullptr;              // npw * 5
+    FPTYPE *d_pref = nullptr;                  // this->ucell->atoms[it].ncpp.nh
+    FPTYPE *d_gk = nullptr;                    // this->ucell->atoms[it].ncpp.nh * npw
+    FPTYPE *d_vq_tab = nullptr;                // this->ucell->atoms[it].ncpp.nbeta * npw
     std::vector<int> dvkb_indexes;             // this->ucell->atoms[it].ncpp.nh * 4
-    int* d_dvkb_indexes = nullptr;             // this->ucell->atoms[it].ncpp.nh * 4
-    std::complex<FPTYPE>* d_pref_in = nullptr; // this->ucell->atoms[it].ncpp.nh
+    int *d_dvkb_indexes = nullptr;             // this->ucell->atoms[it].ncpp.nh * 4
+    std::complex<FPTYPE> *d_pref_in = nullptr; // this->ucell->atoms[it].ncpp.nh
 
     /// becp and dbecp:
-    std::complex<FPTYPE>* dbecp = nullptr; // nbands * nkb (for stress) or nbands * nkb * 3 (for force)
-    std::complex<FPTYPE>* becp = nullptr;  // nbands * nkb
+    std::complex<FPTYPE> *dbecp = nullptr; // nbands * nkb (for stress) or nbands * nkb * 3 (for force)
+    std::complex<FPTYPE> *becp = nullptr;  // nbands * nkb
     std::vector<std::complex<FPTYPE>> host_becp_;
 
     /// @brief rename the operators for CPU/GPU device
@@ -237,10 +242,10 @@ class Onsite_Proj_tools
     using setmem_complex_op = base_device::memory::set_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_h_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
-    using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
 
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
     using resmem_var_h_op = base_device::memory::resize_memory_op<FPTYPE, base_device::DEVICE_CPU>;

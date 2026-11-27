@@ -252,7 +252,7 @@ For general usage requirements, the APNSv1.0 pseudopotential and orbital set is 
   Several other parameters could be defined after the atom position using key words :
 
   - `m` or NO key word: three numbers, which take value in 0 or 1, control how the atom move in geometry relaxation calculations. In example below, the numbers `0 0 0` following the coordinates of the first atom means this atom are *not allowed* to move in all three directions, and the numbers `1 1 1` following the coordinates of the second atom means this atom *can* move in all three directions.
-  - `v` or `vel` or `velocity`: set the three components of initial velocity of atoms, used only for restarting MD calculations (e.g., `v 1.0 1.0 1.0`).
+  - `v` or `vel` or `velocity`: set the three components of atomic velocity in atomic units (1 a.u. is about 21.877 Angstrom/fs). MD structure and restart output include this field so the velocities can be read back (e.g., `v 1.0 1.0 1.0`).
   - `mag` or `magmom` : set the start magnetization for each atom. In colinear case only one number should be given. In non-colinear case one have two choice:either set one number for the norm of magnetization here and specify two polar angle later(e. g. see below), or set three number for the xyz commponent of magnetization here (e. g. `mag 0.0 0.0 1.0`). Note that if this parameter is set, the initial magnetic moment setting in the second line will be overrided.
     - `angle1`: in non-colinear case, specify the angle between z-axis and real spin, in angle measure instead of radian measure
     - `angle2`: in non-colinear case, specify angle between x-axis and real spin in projection in xy-plane , in angle measure instead of radian measure
@@ -326,7 +326,7 @@ For general usage requirements, the APNSv1.0 pseudopotential and orbital set is 
 
   - `sc`: set the spin constraint target magnetization for each atom. Can specify one value (z-component) or three values for x, y, z components (e.g., `sc 1.0` or `sc 0.5 0.5 1.0`). Used with spin-constrained DFT (enable with `sc_mag_switch` in INPUT file).
 
-  - `f` or `force` or `forces`: three numbers giving the per-atom force (fx, fy, fz) in **eV/Angstrom**. This field is *output-only*: it is written into structure files (STRU{istep}, STRU_NOW, STRU_FINAL) when [`out_stru`](input-main.md#out_stru) is enabled, [`cal_force`](input-main.md#cal_force) is true, and the geometry has been evaluated. When such a file is read back as an input STRU, the `f` values are consumed but ignored -- they are informational only and do not affect the calculation.
+  - `f` or `force` or `forces`: three numbers giving the per-atom force (fx, fy, fz) in **eV/Angstrom**. This field is *output-only*: it is written into evaluated structure files when [`out_stru`](input-main.md#out_stru) is enabled; MD ordinary frames include it, but `STRU_restart` omits it. When such a file is read back as an input STRU, the `f` values are consumed but ignored -- they are informational only and do not affect the calculation.
 
 ### Important Notes for ATOMIC_POSITIONS
 

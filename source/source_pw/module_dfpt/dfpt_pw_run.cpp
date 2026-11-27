@@ -152,8 +152,7 @@ double DFPT_PW::Impl::run_displacement_irrep_pass(int q_idx, int irrep)
             if (nlcc_any && xc_ != nullptr)
             {
                 const int slot = 3 * iat + idir;
-                if (slot < static_cast<int>(dvxc_core.size())
-                    && static_cast<int>(dvxc_core[slot].size()) == nrxx)
+                if (slot < static_cast<int>(dvxc_core.size()) && static_cast<int>(dvxc_core[slot].size()) == nrxx)
                 {
                     dvxc_r = dvxc_core[slot];
                 }
@@ -228,8 +227,8 @@ void DFPT_PW::run()
         {
             pimpl_->data_.set_converged(q_idx, irrep, false);
             pimpl_->data_.set_current_iter(q_idx, irrep, 0);
-            while (!pimpl_->data_.get_converged(q_idx, irrep)
-                   && pimpl_->data_.get_current_iter(q_idx, irrep) < pimpl_->max_iter_)
+            while (!pimpl_->data_.get_converged(q_idx, irrep) &&
+                   pimpl_->data_.get_current_iter(q_idx, irrep) < pimpl_->max_iter_)
             {
                 pimpl_->run_displacement_irrep_pass(q_idx, irrep);
                 pimpl_->data_.set_current_iter(q_idx, irrep, pimpl_->data_.get_current_iter(q_idx, irrep) + 1);

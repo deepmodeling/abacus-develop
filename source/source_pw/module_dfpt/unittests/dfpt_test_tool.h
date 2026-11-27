@@ -14,12 +14,12 @@ namespace ModuleBase
 class Matrix3;
 template <class T>
 class Vector3;
-}
+} // namespace ModuleBase
 namespace ModulePW
 {
 class PW_Basis;
 class PW_Basis_K;
-}
+} // namespace ModulePW
 namespace ModuleCell
 {
 class QList;
@@ -43,39 +43,40 @@ constexpr double cubic_edge = 10.0; // cubic cell edge in lat0 units
 // Build the cubic single-atom cell (latvec / G / GT / tpiba / omega and
 // the iat2it / iat2ia wiring; the atom itself is Coulomb flavor until a
 // make_*_atom call replaces it).
-void setup_cell(UnitCell& ucell, ModuleBase::Matrix3& latvec);
+void setup_cell(UnitCell &ucell, ModuleBase::Matrix3 &latvec);
 
 // Reconfigure the cell's single atom as a bare Coulomb Z=4 atom at tau.
-void make_coulomb_atom(UnitCell& ucell);
+void make_coulomb_atom(UnitCell &ucell);
 
 // Reconfigure the cell's single atom as a norm-conserving pseudo atom
 // (analytic Bessel projectors, no nlcc).
-void make_nc_atom(UnitCell& ucell);
+void make_nc_atom(UnitCell &ucell);
 
 // Reconfigure the cell as a two-atom Z=4/Z=2 crystal breaking all
 // symmetry (masses 12/4), the second atom at the anti-blind-spot tau
 // (0.25, 0.31, 0.17).
-void make_two_atom_cell(UnitCell& ucell);
+void make_two_atom_cell(UnitCell &ucell);
 
 // Extend the two-atom cell with a nonlinear core correction on the
 // second species: a Gaussian rho_atc of total charge 0.24 e at the
 // non-origin tau (0.25, 0.31, 0.17).
-void make_nlcc_two_atom_cell(UnitCell& ucell);
+void make_nlcc_two_atom_cell(UnitCell &ucell);
 
 // Assemble the shared rho/wfc bases for a (k, q) pair and bind the q
 // list and the data object: the rho basis at rho_mult * ecutwfc, the
 // wfc basis on the rho FFT box with the k list, the q list holding the
 // single q, and q_cart = q_frac * ucell.G. Convention: k defaults to -q
 // so the k+q ball stays inside the ground-state G list.
-void setup_bases(ModulePW::PW_Basis& pw_rho,
-                 ModulePW::PW_Basis_K& pw_wfc,
-                 ModuleCell::QList& qlist,
-                 ModuleDFPT::DFPT_PW_Data& data,
-                 const UnitCell& ucell,
-                 const ModuleBase::Vector3<double>& k_d,
-                 const ModuleBase::Vector3<double>& q_d,
-                 int nbands,
-                 ModuleBase::Vector3<double>& q_cart);
+void setup_bases(
+    ModulePW::PW_Basis &pw_rho,
+    ModulePW::PW_Basis_K &pw_wfc,
+    ModuleCell::QList &qlist,
+    ModuleDFPT::DFPT_PW_Data &data,
+    const UnitCell &ucell,
+    const ModuleBase::Vector3<double> &k_d,
+    const ModuleBase::Vector3<double> &q_d,
+    int nbands,
+    ModuleBase::Vector3<double> &q_cart);
 
 // Analytic Coulomb local potential (Ry) at g2_bohr (bohr^-2) for valence
 // zv in cell volume omega, mirroring
@@ -85,15 +86,16 @@ double vloc_coulomb(double zv, double omega, double g2_bohr);
 // Analytic dVloc/dtau_alpha coefficient at displacement vector w
 // (1/lat0): dV/dtau = -i (w)_alpha tpiba Vloc exp(-i 2pi w.tau) with the
 // GS structure-factor phase convention.
-std::complex<double> analytic_dvloc(const UnitCell& ucell,
-                                    const ModuleBase::Vector3<double>& tau,
-                                    int dir,
-                                    const ModuleBase::Vector3<double>& w);
+std::complex<double> analytic_dvloc(
+    const UnitCell &ucell,
+    const ModuleBase::Vector3<double> &tau,
+    int dir,
+    const ModuleBase::Vector3<double> &w);
 
 // Integer FFT triple key (ix, iy, iz) on the cubic cell.
 long long fkey(int ix, int iy, int iz);
 // Key of g on the cubic cell (gcar * a is integral).
-long long gkey(const ModuleBase::Vector3<double>& g, double a);
+long long gkey(const ModuleBase::Vector3<double> &g, double a);
 
 } // namespace dfpt_test
 

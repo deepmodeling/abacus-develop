@@ -8,14 +8,14 @@
 #include <limits>
 #include <new>
 
-void pseudopot_cell_vnl::fill_vnl_table(const UnitCell& cell)
+void pseudopot_cell_vnl::fill_vnl_table(const UnitCell &cell)
 {
     ++this->table_version_;
     const double pref = ModuleBase::FOUR_PI / std::sqrt(cell.omega);
     this->tab.zero_out();
     for (int it = 0; it < cell.ntype; ++it)
     {
-        const Atom_pseudo& pp = cell.atoms[it].ncpp;
+        const Atom_pseudo &pp = cell.atoms[it].ncpp;
         int mesh = pp.kkbeta;
         if (mesh > 0 && mesh % 2 == 0)
         {
@@ -64,7 +64,7 @@ void pseudopot_cell_vnl::sync_vnl_table()
     }
 }
 
-void pseudopot_cell_vnl::ensure_vnl_range(const UnitCell& cell, const double& qmax)
+void pseudopot_cell_vnl::ensure_vnl_range(const UnitCell &cell, const double &qmax)
 {
     const double dq = this->table_dq_;
     if (!std::isfinite(qmax) || qmax < 0.0 || !std::isfinite(dq) || dq <= 0.0)
@@ -85,10 +85,11 @@ void pseudopot_cell_vnl::ensure_vnl_range(const UnitCell& cell, const double& qm
     }
     const double capacity = std::max(required + 100.0, std::ceil(1.25 * old_size));
     const double channels = static_cast<double>(this->tab.getBound1()) * this->tab.getBound2();
-    if (!std::isfinite(capacity) || channels <= 0.0 || capacity > std::numeric_limits<int>::max() / channels || !std::isfinite(cell.omega)
-        || cell.omega <= 0.0)
+    if (!std::isfinite(capacity) || channels <= 0.0 || capacity > std::numeric_limits<int>::max() / channels ||
+        !std::isfinite(cell.omega) || cell.omega <= 0.0)
     {
-        ModuleBase::WARNING_QUIT("ensure_vnl_range", "Requested projector table exceeds array limits or has invalid volume.");
+        ModuleBase::WARNING_QUIT(
+            "ensure_vnl_range", "Requested projector table exceeds array limits or has invalid volume.");
     }
     const bool has_derivative = this->tab_dq.getBound3() >= 4;
     try
@@ -101,18 +102,19 @@ void pseudopot_cell_vnl::ensure_vnl_range(const UnitCell& cell, const double& qm
         }
         this->sync_vnl_table();
     }
-    catch (const std::bad_alloc&)
+    catch (const std::bad_alloc &)
     {
         ModuleBase::WARNING_QUIT("ensure_vnl_range", "Unable to allocate the expanded projector table.");
     }
 }
 
-void pseudopot_cell_vnl::check_vnl_index(const double& index, const bool& derivative) const
+void pseudopot_cell_vnl::check_vnl_index(const double &index, const bool &derivative) const
 {
-    if (!std::isfinite(index) || index < 0.0 || std::floor(index) + 3.0 >= this->tab.getBound3()
-        || (derivative && std::floor(index) + 3.0 >= this->tab_dq.getBound3()))
+    if (!std::isfinite(index) || index < 0.0 || std::floor(index) + 3.0 >= this->tab.getBound3() ||
+        (derivative && std::floor(index) + 3.0 >= this->tab_dq.getBound3()))
     {
-        ModuleBase::WARNING_QUIT("check_vnl_index",
-                                 "Shifted projector momentum exceeds the prepared radial table; prepare its range before evaluation.");
+        ModuleBase::WARNING_QUIT(
+            "check_vnl_index",
+            "Shifted projector momentum exceeds the prepared radial table; prepare its range before evaluation.");
     }
 }

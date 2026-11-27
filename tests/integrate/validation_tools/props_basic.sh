@@ -52,11 +52,16 @@ run_basic_props() {
       echo "[ERROR] Invalid atom count for force collection: $natom" >&2
       return 1
     fi
-    # MDCell forces are in MD_dump; older MD and non-MD logs may still
-    # contain a TOTAL-FORCE table. Both paths require a complete last frame.
-    if [ "$calculation" = "md" ] && [ -f OUT.autotest/MD_dump ]; then
-      force_source=OUT.autotest/MD_dump
-      force_format=dump
+    # The final MD structure contains the evaluated force on every atom.
+    if [ "$calculation" = "md" ]; then
+      force_source=$(awk '/Write file: .*STRU_FINAL$/ {sub(/^.*Write file: /, ""); path=$0} END {print path}' "$running_path")
+      if [ -z "$force_source" ] || [ ! -f "$force_source" ]; then
+        force_source=OUT.autotest/STRU_FINAL
+        if [ ! -f "$force_source" ] && [ -f OUT.autotest/STRUC/STRU_FINAL ]; then
+          force_source=OUT.autotest/STRUC/STRU_FINAL
+        fi
+      fi
+      force_format=stru
     else
       force_source=$running_path
       force_format=log
@@ -73,16 +78,25 @@ run_basic_props() {
         delete force_y
         delete force_z
       }
-      format == "dump" && /^MDSTEP:/ { reset_frame(); next }
-      format == "dump" && /^INDEX[[:space:]]+LABEL[[:space:]]+POSITION.*FORCE/ {
-        in_atoms = 1
-        next
-      }
+      format == "stru" && /^ATOMIC_POSITIONS/ { reset_frame(); in_atoms = 1; next }
       format == "log" && /TOTAL-FORCE/ { reset_frame(); in_atoms = 1; next }
-      in_atoms && ((format == "dump" && $1 ~ /^[0-9]+$/ && NF >= 8) || (format == "log" && NF == 4 && $1 != "Atoms")) {
-        x = format == "dump" ? $6 : $2
-        y = format == "dump" ? $7 : $3
-        z = format == "dump" ? $8 : $4
+      in_atoms && ((format == "stru" && NF >= 3 && number($1) && number($2) && number($3)) || (format == "log" && NF == 4 && $1 != "Atoms")) {
+        x = $2
+        y = $3
+        z = $4
+        if (format == "stru") {
+          found_force = 0
+          for (field = 4; field <= NF; ++field) {
+            if ($field == "f") {
+              found_force = 1
+              x = $(field + 1)
+              y = $(field + 2)
+              z = $(field + 3)
+              break
+            }
+          }
+          if (!found_force) invalid = 1
+        }
         if (!number(x) || !number(y) || !number(z)) invalid = 1
         atom_count++
         force_x[atom_count] = x
@@ -110,7 +124,68 @@ run_basic_props() {
   # stress information
   #-------------------------------
   if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
-    grep -A6 "TOTAL-STRESS" $running_path | awk 'NF==3' | tail -3 > stress.txt
+    if [ "$calculation" = "md" ]; then
+      final_structure="OUT.autotest/STRU_FINAL"
+      if [ ! -f "$final_structure" ]; then
+        final_structure="OUT.autotest/STRUC/STRU_FINAL"
+      fi
+      if [ ! -f "$final_structure" ]; then
+        final_structure="OUT.autotest/STRU_FINAL.cif"
+      fi
+      if [ ! -f "$final_structure" ]; then
+        final_structure="OUT.autotest/STRUC/STRU_FINAL.cif"
+      fi
+      if [ ! -f "$final_structure" ]; then
+        echo "[ERROR] Cannot identify the final MD step without STRU_FINAL" >&2
+        return 1
+      fi
+      final_step=$(awk '/^# MD step [0-9]+/ { print $4; exit }' "$final_structure")
+      if [ -z "$final_step" ]; then
+        echo "[ERROR] Missing MD step marker in $final_structure" >&2
+        return 1
+      fi
+      # The MD virial is the electronic stress after external pressure is
+      # subtracted. Reconstruct the solver's former TOTAL-STRESS value so
+      # existing reference data continue to compare the same quantity.
+      press1=$(get_input_key_value press1 INPUT)
+      press2=$(get_input_key_value press2 INPUT)
+      press3=$(get_input_key_value press3 INPUT)
+      if [ "$esolver_type" = "ofdft" ] || [ "$esolver_type" = "sdft" ]; then
+        # These solvers return their electronic stress without subtracting
+        # the requested external pressure.
+        press1=0
+        press2=0
+        press3=0
+      fi
+      if ! awk -v p1="$press1" -v p2="$press2" -v p3="$press3" -v final="$final_step" '
+        /MD STEP:/ { step = $3 }
+        /VIRIAL \(kbar\):/ { rows = 3; count = 0; selected = (step == final); next }
+        rows > 0 {
+          if (NF != 3) exit 1
+          count++
+          if (selected) value[count] = $1 " " $2 " " $3
+          rows--
+        }
+        END {
+          if (!selected || count != 3 || rows != 0) exit 1
+          split(value[1], first)
+          split(value[2], second)
+          split(value[3], third)
+          # Keep the precision of the former TOTAL-STRESS table. awk print
+          # defaults to six significant digits, enough to change the summed
+          # stress by more than the existing test tolerance.
+          printf "%.10f %.10f %.10f\n", first[1] + p1, first[2], first[3]
+          printf "%.10f %.10f %.10f\n", second[1], second[2] + p2, second[3]
+          printf "%.10f %.10f %.10f\n", third[1], third[2], third[3] + p3
+        }
+      ' "$running_path" > stress.txt; then
+        echo "[ERROR] Failed to extract the MD virial from $running_path" >&2
+        rm -f stress.txt
+        return 1
+      fi
+    else
+      grep -A6 "TOTAL-STRESS" "$running_path" | awk 'NF==3' | tail -3 > stress.txt
+    fi
     total_stress=$(sum_file stress.txt)
     rm stress.txt
     echo "totalstressref $total_stress" >> $props_result_file

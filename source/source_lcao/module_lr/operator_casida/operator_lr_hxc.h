@@ -122,7 +122,7 @@ namespace LR
                                  T* hpsi,
                                  typename OperatorLRHxc<T>::TransitionDensityCache& density_cache)
     {
-        auto* hxc = dynamic_cast<OperatorLRHxc<T>*>(node);
+        OperatorLRHxc<T>* hxc = dynamic_cast<OperatorLRHxc<T>*>(node);
         if (hxc != nullptr)
         {
             hxc->act_with_shared_density(psi_in, hpsi, density_cache);

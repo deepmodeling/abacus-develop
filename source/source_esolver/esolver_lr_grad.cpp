@@ -158,7 +158,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(
     const LR::WindowResponse<T> window
         = LR::build_window_response(inputs, Xz, nst, this->nvirt[0], ispin, this->in_dir);
     const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz, window.density);
-    const auto dm_gs = this->cal_dm_gs();
+    const module_dm::DensityMatrix<T, double> dm_gs = this->cal_dm_gs();
     const LR::ForceSettings force_settings{
         this->nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
     LR_Force<T> force_terms(
@@ -169,8 +169,8 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(
         inputs.exx_lri, inputs.hybrid_alpha
 #endif
     );
-    const auto forces =
-        LR::evaluate_closed_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, ispin, window);
+    const std::vector<ModuleBase::matrix> forces
+        = LR::evaluate_closed_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, ispin, window);
     ModuleBase::timer::end("ESolver_LR", "cal_force_Xz");
     return forces;
 }
@@ -357,7 +357,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     const LR::GradientInputs<T> inputs = this->gradient_inputs_();
     const LR::WindowResponse<T> window = LR::build_open_shell_window_response(inputs, Xz, nst, this->nvirt);
     const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz, window.density);
-    const auto dm_gs = this->cal_dm_gs();
+    const module_dm::DensityMatrix<T, double> dm_gs = this->cal_dm_gs();
     const LR::ForceSettings force_settings{
         this->nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
     LR_Force<T> force_terms(
@@ -368,7 +368,8 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
         inputs.exx_lri, inputs.hybrid_alpha
 #endif
     );
-    const auto forces = LR::evaluate_open_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, window);
+    const std::vector<ModuleBase::matrix> forces
+        = LR::evaluate_open_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, window);
     ModuleBase::timer::end("ESolver_LR", "cal_force_openshell_Xz");
     return forces;
 }

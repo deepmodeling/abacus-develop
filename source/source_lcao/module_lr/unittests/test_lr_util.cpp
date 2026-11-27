@@ -105,7 +105,7 @@ TEST_F(LRDMTest, LRTransposePreservesAtomIndices)
     hr.allocate(nullptr, true);
     hr.fix_gamma();
     dm.init_dmr(hr);
-    auto& dk = dm.get_dmk_vec()[0];
+    std::vector<double>& dk = dm.get_dmk_vec()[0];
     for (int j = 0; j < paraV->para_2d().ncloc(); ++j)
     {
         for (int i = 0; i < paraV->para_2d().nrloc(); ++i)

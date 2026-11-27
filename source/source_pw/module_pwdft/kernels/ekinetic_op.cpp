@@ -1,19 +1,21 @@
 #include "source_pw/module_pwdft/kernels/ekinetic_op.h"
 
-namespace hamilt {
+namespace hamilt
+{
 
 template <typename FPTYPE>
 struct ekinetic_pw_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*dev*/,
-                    const int& nband,
-                    const int& npw,
-                    const int& max_npw,
-                    const bool& is_first_node,
-                    const FPTYPE& tpiba2,
-                    const FPTYPE* gk2_ik,
-                    std::complex<FPTYPE>* tmhpsi,
-                    const std::complex<FPTYPE>* tmpsi_in)
+    void operator()(
+        const base_device::DEVICE_CPU * /*dev*/,
+        const int &nband,
+        const int &npw,
+        const int &max_npw,
+        const bool &is_first_node,
+        const FPTYPE &tpiba2,
+        const FPTYPE *gk2_ik,
+        std::complex<FPTYPE> *tmhpsi,
+        const std::complex<FPTYPE> *tmpsi_in)
     {
         if (is_first_node)
         {
@@ -53,5 +55,4 @@ struct ekinetic_pw_op<FPTYPE, base_device::DEVICE_CPU>
 template struct ekinetic_pw_op<float, base_device::DEVICE_CPU>;
 template struct ekinetic_pw_op<double, base_device::DEVICE_CPU>;
 
-}  // namespace hamilt
-
+} // namespace hamilt

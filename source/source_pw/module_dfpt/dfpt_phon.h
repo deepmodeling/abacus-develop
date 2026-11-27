@@ -62,14 +62,14 @@ class DFPT_Phon
     DFPT_Phon();
     ~DFPT_Phon();
 
-    void init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, DFPT_Pert* pert);
+    void init(UnitCell &ucell, ModulePW::PW_Basis *pw_rho, DFPT_Pert *pert);
 
     /// providers for the nlcc direct terms: the first-order core response
     /// (DFPT_Rho::compute_drhoc_g) and the ground-state XC potential on
     /// the rho grid (for the diagonal term). Null/empty providers leave
     /// the nlcc terms inert.
-    void set_rho(const DFPT_Rho* rho);
-    void set_vxc_r(const std::vector<double>* vxc_r);
+    void set_rho(const DFPT_Rho *rho);
+    void set_vxc_r(const std::vector<double> *vxc_r);
 
     /// per-q table of dvxc^a = f_xc . (drho_val^a + drhoc^a) for every
     /// displacement slot [3*nat]: the first-order XC potential of the
@@ -78,9 +78,9 @@ class DFPT_Phon
     /// (the kernel term contracts it against the stashed valence
     /// responses of the mixed piece). Set by the solver once per q,
     /// before the accumulation pass; owned by the caller.
-    void set_dvxc_core_table(const std::vector<std::vector<std::complex<double>>>* table);
+    void set_dvxc_core_table(const std::vector<std::vector<std::complex<double>>> *table);
 
-    void assemble(int q_idx, DFPT_PW_Data& data);
+    void assemble(int q_idx, DFPT_PW_Data &data);
 
     /// Fill the D[b][*] row of the electronic dynamical-matrix contribution
     /// for the converged displacement (atom_idx, dir); psi/wg are the
@@ -89,50 +89,51 @@ class DFPT_Phon
     /// + core), computed by the caller from the analytic kernel; it gates
     /// the nlcc kernel term (empty = no nlcc). Requires a wired
     /// DFPT_Pert (init); a null pert leaves the row untouched.
-    void accumulate_electron(int q_idx,
-                             int atom_idx,
-                             int dir,
-                             const psi::Psi<std::complex<double>>& psi,
-                             const ModuleBase::matrix& wg,
-                             DFPT_PW_Data& data,
-                             const std::vector<std::complex<double>>& dvxc_r);
+    void accumulate_electron(
+        int q_idx,
+        int atom_idx,
+        int dir,
+        const psi::Psi<std::complex<double>> &psi,
+        const ModuleBase::matrix &wg,
+        DFPT_PW_Data &data,
+        const std::vector<std::complex<double>> &dvxc_r);
 
-    void diagonalize(int q_idx, DFPT_PW_Data& data);
+    void diagonalize(int q_idx, DFPT_PW_Data &data);
 
     /// Diagonalize the LO-TO corrected Gamma dynamical matrix (after
     /// add_loto has merged the non-analytic term into data.dynmat(0)) and
     /// store the signed frequencies (cm^-1) into data.phon_freq_loto; the
     /// uncorrected data.phon_freq(0) of the plain diagonalize stays intact.
-    void diagonalize_loto(DFPT_PW_Data& data);
+    void diagonalize_loto(DFPT_PW_Data &data);
 
     /// Human-readable per-q frequency report: a header carrying the q index
     /// and the direct q coordinates plus one signed-frequency line per mode.
     /// Deterministic fixed-precision formatting; consumed by the esolver
     /// post-processing output and pinned by the format regression test.
-    std::string format_q_report(int q_idx, const DFPT_PW_Data& data) const;
+    std::string format_q_report(int q_idx, const DFPT_PW_Data &data) const;
 
     /// Report of the LO-TO corrected Gamma frequencies along
     /// data.loto_dir(); returns an empty string unless the corrected
     /// frequencies have been computed (add_loto + diagonalize_loto).
-    std::string format_loto_report(const DFPT_PW_Data& data) const;
+    std::string format_loto_report(const DFPT_PW_Data &data) const;
 
     /// Non-analytic (LO-TO) term along the q->0 direction qhat (unit vector,
     /// Cartesian): D_NAC = (4 pi e^2/Omega) (qhat Z*_a)(qhat Z*_b) /
     /// (qhat eps_inf qhat) / sqrt(M_a M_b). Uses the dielectric tensor and
     /// Born charges stored in data (set by DFPT_Q0, C6).
-    void add_loto(const ModuleBase::Vector3<double>& qhat, DFPT_PW_Data& data);
+    void add_loto(const ModuleBase::Vector3<double> &qhat, DFPT_PW_Data &data);
 
     /// Acoustic sum rule check at q=Gamma: max_a |sum_b D_ab| relative to
     /// the largest matrix element; returns true when below 1e-6 (or away
     /// from Gamma, where the rule does not apply).
-    bool check_sum_rule(int q_idx, DFPT_PW_Data& data) const;
+    bool check_sum_rule(int q_idx, DFPT_PW_Data &data) const;
 
     /// translational sum-rule audit of the Gamma dynamical matrix
     /// (per-atom 3-vector row sums, relative to the matrix scale);
     /// diagnostics for the acoustic-branch investigation: the raw matrix
     /// and the LO-TO-corrected one are audited separately because the
     /// nonanalytic term carries its own Z* sum rule
-    void audit_asr(const std::string& label, int q_idx, const DFPT_PW_Data& data) const;
+    void audit_asr(const std::string &label, int q_idx, const DFPT_PW_Data &data) const;
 
     /// enforce the translational acoustic sum rule on the Gamma dynamical
     /// matrix (and, in every enforcing mode, the Z* sum rule
@@ -159,38 +160,32 @@ class DFPT_Phon
     /// which also keeps symmetry-equivalent atoms equivalent.
     ///
     /// Away from Gamma the call is a no-op.
-    void apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& data);
+    void apply_asr(const std::string &asr_type, int q_idx, DFPT_PW_Data &data);
 
     /// Ewald ion-ion force constants C^ewald_ab(q) (G-space + real-space +
     /// Gaussian self term), mass-reduced by 1/sqrt(M_a M_b). A stateless
     /// building block exposed publicly so the serial analytic tests can
     /// validate it directly (no internal state is touched).
-    void ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::ComplexMatrix& dyn);
+    void ion_ion(const ModuleBase::Vector3<double> &q_frac, ModuleBase::ComplexMatrix &dyn);
 
     /// Test hook: pin the Ewald screening alpha for the next ion_ion call
     /// (non-positive restores the internal search). Production paths never
     /// touch it; the serial analytic tests use it to verify the
     /// alpha-independence of the force constants and the determinism of
     /// repeated calls.
-    void set_ewald_alpha_override(double alpha)
-    {
-        ewald_alpha_override_ = alpha;
-    }
+    void set_ewald_alpha_override(double alpha) { ewald_alpha_override_ = alpha; }
 
     /// read-only view of the accumulated electronic dynamical-matrix rows
     /// (see dynmat_accum_); consumed by the serial analytic tests.
-    const ModuleBase::ComplexMatrix& dynmat_accum() const
-    {
-        return dynmat_accum_;
-    }
+    const ModuleBase::ComplexMatrix &dynmat_accum() const { return dynmat_accum_; }
 
   private:
-    UnitCell* ucell_ = nullptr;
-    ModulePW::PW_Basis* pw_rho_ = nullptr;
-    DFPT_Pert* pert_ = nullptr;
-    const DFPT_Rho* rho_ = nullptr;
-    const std::vector<double>* vxc_r_ = nullptr;
-    const std::vector<std::vector<std::complex<double>>>* dvxc_core_ = nullptr;
+    UnitCell *ucell_ = nullptr;
+    ModulePW::PW_Basis *pw_rho_ = nullptr;
+    DFPT_Pert *pert_ = nullptr;
+    const DFPT_Rho *rho_ = nullptr;
+    const std::vector<double> *vxc_r_ = nullptr;
+    const std::vector<std::vector<std::complex<double>>> *dvxc_core_ = nullptr;
 
     double ewald_alpha_ = 0.0;
     double ewald_alpha_override_ = 0.0; ///< test hook: >0 pins the screening alpha for one ion_ion call
@@ -199,24 +194,26 @@ class DFPT_Phon
     /// same-atom anharmonic term <psi | d2_ab V_ext | psi> accumulated into
     /// the (rowb, cola) entries of dynmat_accum_ (upper triangle only; the
     /// Hermitian partner is added here from conj(d2sum))
-    void accum_d2_same_atom(int atom_idx,
-                            int dir,
-                            int iat,
-                            int idir,
-                            int rowb,
-                            const psi::Psi<std::complex<double>>& psi,
-                            const ModuleBase::matrix& wg);
+    void accum_d2_same_atom(
+        int atom_idx,
+        int dir,
+        int iat,
+        int idir,
+        int rowb,
+        const psi::Psi<std::complex<double>> &psi,
+        const ModuleBase::matrix &wg);
 
     /// nlcc kernel term (QE dynmat_nlcc): for the converged displacement
     /// (atom_idx, dir) with first-order XC potential dvxc_r, contract with
     /// the core response of every displacement (iat2, idir2) and fill the
     /// Hermitian pair (row, col) / (col, row). Gated on dvxc_r and the
     /// providers set by set_rho.
-    void accum_nlcc_kernel(int atom_idx,
-                           int dir,
-                           int q_idx,
-                           DFPT_PW_Data& data,
-                           const std::vector<std::complex<double>>& dvxc_r);
+    void accum_nlcc_kernel(
+        int atom_idx,
+        int dir,
+        int q_idx,
+        DFPT_PW_Data &data,
+        const std::vector<std::complex<double>> &dvxc_r);
 
     /// nlcc diagonal term (QE dynmatcc): q-independent same-atom block
     /// -Omega tpiba^2 sum_G G_i G_j rhoc~(|G|) exp(-i G tau_a)
@@ -225,7 +222,7 @@ class DFPT_Phon
     void accum_nlcc_diag(int atom_idx, int q_idx);
 
     /// DFT+U contribution to the dynamical matrix (U0 reservation).
-    void dftu_onsite(int q_idx, DFPT_PW_Data& data);
+    void dftu_onsite(int q_idx, DFPT_PW_Data &data);
 
     /// accumulated electronic rows of the current q (merged and cleared by
     /// assemble)

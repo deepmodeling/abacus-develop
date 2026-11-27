@@ -8,10 +8,11 @@
 // NAME : YLM_REAL(Real spherical harmonics ylm(G) up to l=lmax
 // Use Numerical recursive algorithm as given in Numerical Recipes
 //==========================================================
-void Ylm_Real(const int lmax2,          // lmax2 = (lmax+1)^2
-              const int ng,             //
-              const Vector3<double>* g, // g_cartesian_vec(x,y,z)
-              matrix& ylm               // output
+void Ylm_Real(
+    const int lmax2,          // lmax2 = (lmax+1)^2
+    const int ng,             //
+    const Vector3<double> *g, // g_cartesian_vec(x,y,z)
+    matrix &ylm               // output
 )
 {
     //	TITLE("Mathzone","Ylm_Real");
@@ -62,8 +63,8 @@ void Ylm_Real(const int lmax2,          // lmax2 = (lmax+1)^2
     // NAME : cost = cos(theta),theta and phi are polar angles
     // NAME : phi
     //----------------------------------------------------------
-    double* cost = new double[ng];
-    double* phi = new double[ng];
+    double *cost = new double[ng];
+    double *phi = new double[ng];
 
     for (int ig = 0; ig < ng; ig++)
     {

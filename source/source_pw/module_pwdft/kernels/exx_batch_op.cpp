@@ -12,19 +12,20 @@ namespace hamilt
 // never activates the batched path, so they are never executed).
 
 template <typename T, typename Device>
-void exx_batch_density_real(const int nbands,
-                            const int nrxx,
-                            const T* nk_real_all,
-                            const T* mq_real,
-                            const double omega,
-                            T* out)
+void exx_batch_density_real(
+    const int nbands,
+    const int nrxx,
+    const T *nk_real_all,
+    const T *mq_real,
+    const double omega,
+    T *out)
 {
     using Real = typename T::value_type;
     const Real omega_inv = static_cast<Real>(1.0 / omega);
     for (int n = 0; n < nbands; n++)
     {
-        const T* nk_real = nk_real_all + n * nrxx;
-        T* out_n = out + n * nrxx;
+        const T *nk_real = nk_real_all + n * nrxx;
+        T *out_n = out + n * nrxx;
         for (int i = 0; i < nrxx; i++)
         {
             out_n[i] = nk_real[i] * std::conj(mq_real[i]) * omega_inv;
@@ -33,19 +34,20 @@ void exx_batch_density_real(const int nbands,
 }
 
 template <typename T, typename Device>
-void exx_batch_gather_pw(const int nbands,
-                         const int npw,
-                         const int nxyz,
-                         const int* box_map,
-                         const T* box,
-                         T* pw)
+void exx_batch_gather_pw(
+    const int nbands,
+    const int npw,
+    const int nxyz,
+    const int *box_map,
+    const T *box,
+    T *pw)
 {
     using Real = typename T::value_type;
     const Real nxyz_inv = static_cast<Real>(1.0) / static_cast<Real>(nxyz);
     for (int n = 0; n < nbands; n++)
     {
-        const T* box_n = box + n * nxyz;
-        T* pw_n = pw + n * npw;
+        const T *box_n = box + n * nxyz;
+        T *pw_n = pw + n * npw;
         for (int ig = 0; ig < npw; ig++)
         {
             pw_n[ig] = box_n[box_map[ig]] * nxyz_inv;
@@ -54,11 +56,15 @@ void exx_batch_gather_pw(const int nbands,
 }
 
 template <typename T, typename Real, typename Device>
-void exx_batch_mul_pot(const int nbands, const int npw, const Real* pot, T* pw)
+void exx_batch_mul_pot(
+    const int nbands,
+    const int npw,
+    const Real *pot,
+    T *pw)
 {
     for (int n = 0; n < nbands; n++)
     {
-        T* pw_n = pw + n * npw;
+        T *pw_n = pw + n * npw;
         for (int ig = 0; ig < npw; ig++)
         {
             pw_n[ig] *= pot[ig];
@@ -67,17 +73,18 @@ void exx_batch_mul_pot(const int nbands, const int npw, const Real* pot, T* pw)
 }
 
 template <typename T, typename Device>
-void exx_batch_scatter_pw(const int nbands,
-                          const int npw,
-                          const int nxyz,
-                          const int* box_map,
-                          const T* pw,
-                          T* box)
+void exx_batch_scatter_pw(
+    const int nbands,
+    const int npw,
+    const int nxyz,
+    const int *box_map,
+    const T *pw,
+    T *box)
 {
     for (int n = 0; n < nbands; n++)
     {
-        const T* pw_n = pw + n * npw;
-        T* box_n = box + n * nxyz;
+        const T *pw_n = pw + n * npw;
+        T *box_n = box + n * nxyz;
         for (int ig = 0; ig < npw; ig++)
         {
             box_n[box_map[ig]] = pw_n[ig];
@@ -86,11 +93,15 @@ void exx_batch_scatter_pw(const int nbands,
 }
 
 template <typename T, typename Device>
-void exx_batch_mul_real(const int nbands, const int nrxx, const T* mq_real, T* data)
+void exx_batch_mul_real(
+    const int nbands,
+    const int nrxx,
+    const T *mq_real,
+    T *data)
 {
     for (int n = 0; n < nbands; n++)
     {
-        T* data_n = data + n * nrxx;
+        T *data_n = data + n * nrxx;
         for (int i = 0; i < nrxx; i++)
         {
             data_n[i] *= mq_real[i];
@@ -99,20 +110,21 @@ void exx_batch_mul_real(const int nbands, const int nrxx, const T* mq_real, T* d
 }
 
 template <typename T, typename Real, typename Device>
-void exx_batch_gather_accum(const int nbands,
-                            const int npwk,
-                            const int nxyz,
-                            const int* box_map,
-                            const T* box,
-                            const Real factor,
-                            T* out,
-                            const int out_stride)
+void exx_batch_gather_accum(
+    const int nbands,
+    const int npwk,
+    const int nxyz,
+    const int *box_map,
+    const T *box,
+    const Real factor,
+    T *out,
+    const int out_stride)
 {
     const Real factor_scaled = factor / static_cast<Real>(nxyz);
     for (int n = 0; n < nbands; n++)
     {
-        const T* box_n = box + n * nxyz;
-        T* out_n = out + n * out_stride;
+        const T *box_n = box + n * nxyz;
+        T *out_n = out + n * out_stride;
         for (int ig = 0; ig < npwk; ig++)
         {
             out_n[ig] += factor_scaled * box_n[box_map[ig]];
@@ -121,18 +133,19 @@ void exx_batch_gather_accum(const int nbands,
 }
 
 template <typename T, typename Device>
-void exx_batch_scatter_wfc(const int nbands,
-                           const int npwk,
-                           const int nxyz,
-                           const int* map,
-                           const T* psi,
-                           const int psi_stride,
-                           T* box)
+void exx_batch_scatter_wfc(
+    const int nbands,
+    const int npwk,
+    const int nxyz,
+    const int *map,
+    const T *psi,
+    const int psi_stride,
+    T *box)
 {
     for (int n = 0; n < nbands; n++)
     {
-        const T* psi_n = psi + n * psi_stride;
-        T* box_n = box + n * nxyz;
+        const T *psi_n = psi + n * psi_stride;
+        T *box_n = box + n * nxyz;
         for (int ig = 0; ig < npwk; ig++)
         {
             box_n[map[ig]] = psi_n[ig];
@@ -140,14 +153,14 @@ void exx_batch_scatter_wfc(const int nbands,
     }
 }
 
-#define EXX_BATCH_INSTANTIATE(T, Real, DEV)                                                                 \
-    template void exx_batch_density_real<T, DEV>(int, int, const T*, const T*, double, T*);                 \
-    template void exx_batch_gather_pw<T, DEV>(int, int, int, const int*, const T*, T*);                     \
-    template void exx_batch_mul_pot<T, Real, DEV>(int, int, const Real*, T*);                               \
-    template void exx_batch_scatter_pw<T, DEV>(int, int, int, const int*, const T*, T*);                    \
-    template void exx_batch_mul_real<T, DEV>(int, int, const T*, T*);                                       \
-    template void exx_batch_gather_accum<T, Real, DEV>(int, int, int, const int*, const T*, Real, T*, int); \
-    template void exx_batch_scatter_wfc<T, DEV>(int, int, int, const int*, const T*, int, T*);
+#define EXX_BATCH_INSTANTIATE(T, Real, DEV)                                                                            \
+    template void exx_batch_density_real<T, DEV>(int, int, const T *, const T *, double, T *);                         \
+    template void exx_batch_gather_pw<T, DEV>(int, int, int, const int *, const T *, T *);                             \
+    template void exx_batch_mul_pot<T, Real, DEV>(int, int, const Real *, T *);                                        \
+    template void exx_batch_scatter_pw<T, DEV>(int, int, int, const int *, const T *, T *);                            \
+    template void exx_batch_mul_real<T, DEV>(int, int, const T *, T *);                                                \
+    template void exx_batch_gather_accum<T, Real, DEV>(int, int, int, const int *, const T *, Real, T *, int);         \
+    template void exx_batch_scatter_wfc<T, DEV>(int, int, int, const int *, const T *, int, T *);
 
 EXX_BATCH_INSTANTIATE(std::complex<double>, double, base_device::DEVICE_CPU)
 EXX_BATCH_INSTANTIATE(std::complex<float>, float, base_device::DEVICE_CPU)
@@ -173,12 +186,17 @@ struct ExxFftwPlanD
     fftw_plan bac = nullptr;
 };
 
-void exx_fftw_plan_create_d(void** plan, const int nx, const int ny, const int nz, const int batch)
+void exx_fftw_plan_create_d(
+    void **plan,
+    const int nx,
+    const int ny,
+    const int nz,
+    const int batch)
 {
     const int n[3] = {nx, ny, nz};
     const int nxyz = nx * ny * nz;
-    fftw_complex* tmp = reinterpret_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * nxyz * batch));
-    ExxFftwPlanD* p = new ExxFftwPlanD;
+    fftw_complex *tmp = reinterpret_cast<fftw_complex *>(fftw_malloc(sizeof(fftw_complex) * nxyz * batch));
+    ExxFftwPlanD *p = new ExxFftwPlanD;
     const unsigned flag = FFTW_ESTIMATE | FFTW_UNALIGNED;
     p->fwd = fftw_plan_many_dft(3, n, batch, tmp, nullptr, 1, nxyz, tmp, nullptr, 1, nxyz, FFTW_FORWARD, flag);
     p->bac = fftw_plan_many_dft(3, n, batch, tmp, nullptr, 1, nxyz, tmp, nullptr, 1, nxyz, FFTW_BACKWARD, flag);
@@ -186,19 +204,18 @@ void exx_fftw_plan_create_d(void** plan, const int nx, const int ny, const int n
     *plan = p;
 }
 
-void exx_fftw_exec_d(void* plan, std::complex<double>* data, const bool forward)
+void exx_fftw_exec_d(void *plan, std::complex<double> *data, const bool forward)
 {
-    ExxFftwPlanD* p = reinterpret_cast<ExxFftwPlanD*>(plan);
-    fftw_execute_dft(forward ? p->fwd : p->bac,
-                     reinterpret_cast<fftw_complex*>(data),
-                     reinterpret_cast<fftw_complex*>(data));
+    ExxFftwPlanD *p = reinterpret_cast<ExxFftwPlanD *>(plan);
+    fftw_execute_dft(
+        forward ? p->fwd : p->bac, reinterpret_cast<fftw_complex *>(data), reinterpret_cast<fftw_complex *>(data));
 }
 
-void exx_fftw_plan_destroy_d(void** plan)
+void exx_fftw_plan_destroy_d(void **plan)
 {
     if (*plan != nullptr)
     {
-        ExxFftwPlanD* p = reinterpret_cast<ExxFftwPlanD*>(*plan);
+        ExxFftwPlanD *p = reinterpret_cast<ExxFftwPlanD *>(*plan);
         fftw_destroy_plan(p->fwd);
         fftw_destroy_plan(p->bac);
         delete p;
@@ -208,25 +225,25 @@ void exx_fftw_plan_destroy_d(void** plan)
 } // namespace
 
 template <>
-void exx_batch_fft_plan_create<std::complex<double>, base_device::DEVICE_CPU>(void** plan,
-                                                                              const int nx,
-                                                                              const int ny,
-                                                                              const int nz,
-                                                                              const int batch)
+void exx_batch_fft_plan_create<std::complex<double>, base_device::DEVICE_CPU>(
+    void **plan,
+    const int nx,
+    const int ny,
+    const int nz,
+    const int batch)
 {
     exx_fftw_plan_create_d(plan, nx, ny, nz, batch);
 }
 
 template <>
-void exx_batch_fft_exec<std::complex<double>, base_device::DEVICE_CPU>(void* plan,
-                                                                       std::complex<double>* data,
-                                                                       const bool forward)
+void exx_batch_fft_exec<std::complex<double>, base_device::DEVICE_CPU>(
+    void *plan, std::complex<double> *data, const bool forward)
 {
     exx_fftw_exec_d(plan, data, forward);
 }
 
 template <>
-void exx_batch_fft_plan_destroy<std::complex<double>, base_device::DEVICE_CPU>(void** plan)
+void exx_batch_fft_plan_destroy<std::complex<double>, base_device::DEVICE_CPU>(void **plan)
 {
     exx_fftw_plan_destroy_d(plan);
 }
@@ -234,25 +251,25 @@ void exx_batch_fft_plan_destroy<std::complex<double>, base_device::DEVICE_CPU>(v
 #if !defined(__CUDA)
 // link fodder for the DEVICE_GPU instantiations, never executed (see above)
 template <>
-void exx_batch_fft_plan_create<std::complex<double>, base_device::DEVICE_GPU>(void** plan,
-                                                                              const int nx,
-                                                                              const int ny,
-                                                                              const int nz,
-                                                                              const int batch)
+void exx_batch_fft_plan_create<std::complex<double>, base_device::DEVICE_GPU>(
+    void **plan,
+    const int nx,
+    const int ny,
+    const int nz,
+    const int batch)
 {
     exx_fftw_plan_create_d(plan, nx, ny, nz, batch);
 }
 
 template <>
-void exx_batch_fft_exec<std::complex<double>, base_device::DEVICE_GPU>(void* plan,
-                                                                       std::complex<double>* data,
-                                                                       const bool forward)
+void exx_batch_fft_exec<std::complex<double>, base_device::DEVICE_GPU>(
+    void *plan, std::complex<double> *data, const bool forward)
 {
     exx_fftw_exec_d(plan, data, forward);
 }
 
 template <>
-void exx_batch_fft_plan_destroy<std::complex<double>, base_device::DEVICE_GPU>(void** plan)
+void exx_batch_fft_plan_destroy<std::complex<double>, base_device::DEVICE_GPU>(void **plan)
 {
     exx_fftw_plan_destroy_d(plan);
 }

@@ -244,12 +244,11 @@ void assemble_print_force(const UnitCell& ucell,
                           const double force_threshold,
                           ModuleBase::matrix& fcs)
 {
-    const Input_para& input = PARAM.inp;
     const int nat = ucell.nat;
+    const Input_para& input = PARAM.inp;
     //---------------------------------
     // sum all parts of force!
     //---------------------------------
-    ModuleBase::Vector3<double> net_force = {0.0, 0.0, 0.0};
     for (int i = 0; i < 3; i++)
     {
         for (int iat = 0; iat < nat; iat++)
@@ -275,15 +274,7 @@ void assemble_print_force(const UnitCell& ucell,
     // Force symmetrization is linear, so it commutes with the removal of a
     // uniform shift: the resulting fcs is identical to the previous ordering.
     // Net force is evaluated after symmetrization and before the uniform shift.
-    for (int i = 0; i < 3; i++)
-    {
-        double sum = 0.0;
-        for (int iat = 0; iat < nat; iat++)
-        {
-            sum += fcs(iat, i);
-        }
-        net_force[i] = sum;
-    }
+    const ModuleBase::Vector3<double> net_force = ModuleBase::net_force_vector(nat, fcs);
     if (!(input.gate_flag || input.efield_flag))
     {
         ModuleBase::remove_net_force(nat, fcs);
@@ -292,11 +283,14 @@ void assemble_print_force(const UnitCell& ucell,
     // compute forces using the DeePKS model
     DeePKS_domain::write_forces(fcs, parts.fvnl_dalpha, dpks_out_type, input);
 
+    if (input.calculation == "md")
+    {
+        return;
+    }
     if (istestf)
     {
         print_force_parts(ucell, vdw_result, parts);
     }
-
     GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
     // The coupled LR solver reports the ground-state force with the LR forces.
@@ -304,9 +298,7 @@ void assemble_print_force(const UnitCell& ucell,
     {
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", fcs, false);
     }
-    net_force*= ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Net force vector (eV/Ang)", net_force.x, net_force.y, net_force.z);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total drift (ev/Ang)", net_force.norm());
+    ModuleIO::print_net_force(GlobalV::ofs_running, net_force);
     if (istestf)
     {
         print_force_invalid_table(ucell, force_threshold, fcs);
@@ -322,6 +314,7 @@ void assemble_print_stress(const UnitCell& ucell,
                            const LCAOStressParts& sparts,
                            ModuleBase::matrix& scs)
 {
+    const auto& input = PARAM.inp;
     for (int i = 0; i < 3; i++)
     {
         for (int j = 0; j < 3; j++)
@@ -340,7 +333,7 @@ void assemble_print_stress(const UnitCell& ucell,
     bool ry = false;
 
     // test stress each terms if needed
-    if (istests)
+    if (istests && input.calculation != "md")
     {
         // test
         ModuleBase::matrix svlocal;
@@ -356,7 +349,7 @@ void assemble_print_stress(const UnitCell& ucell,
             }
         }
 
-        const bool screen = PARAM.inp.test_stress;
+        const bool screen = input.test_stress;
 
         GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
@@ -392,11 +385,14 @@ void assemble_print_stress(const UnitCell& ucell,
         ModuleIO::print_stress("TOTAL    STRESS", scs, screen, ry, GlobalV::ofs_running);
     } // end of test
 
-    GlobalV::ofs_running << std::setiosflags(std::ios::left);
+    if (input.calculation != "md")
+    {
+        GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
-    // print total stress
-    bool screen_normal = true;
-    ModuleIO::print_stress("TOTAL-STRESS", scs, screen_normal, ry, GlobalV::ofs_running);
+        // print total stress
+        bool screen_normal = true;
+        ModuleIO::print_stress("TOTAL-STRESS", scs, screen_normal, ry, GlobalV::ofs_running);
+    }
 
     double unit_transform = 0.0;
     unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;

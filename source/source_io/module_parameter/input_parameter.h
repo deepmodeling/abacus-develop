@@ -81,6 +81,7 @@ struct Input_para
 
     // ==============   #Parameters (2.Electronic structure) ===========================
     std::string ks_solver = "default"; ///< xiaohui add 2013-09-01
+    double lcao_sk_cut = 0.0; ///< relative cutoff for AO overlap eigenvalues
     std::string basis_type = "pw";     ///< xiaohui add 2013-09-01, for structural adjustment
     int nbands = 0;                    ///< number of bands
     double nelec = 0.0;                ///< total number of electrons
@@ -459,7 +460,7 @@ struct Input_para
     int dfpt_broyden_ndim = 8;                ///< Broyden history depth (broyden variants)
 
     // ==============   #Parameters (11.Output) ===========================
-    int out_stru = 1;                         ///< output stru file each ion step
+    int out_stru = 1;                         ///< 0: none, 1: ABACUS STRU, 2: CIF geometry
                                               ///< 0: no output, 1: STRU format, 2: CIF format
     int out_freq_elec = 0;                    ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                     ///< the frequency ( >= 0 ) of ionic step to output charge density;

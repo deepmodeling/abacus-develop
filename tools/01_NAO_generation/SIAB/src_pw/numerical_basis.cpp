@@ -4,13 +4,9 @@
 
 Bessel_Basis Numerical_Basis::bessel_basis;
 
-Numerical_Basis::Numerical_Basis()
-{
-}
+Numerical_Basis::Numerical_Basis() {}
 
-Numerical_Basis::~Numerical_Basis()
-{
-}
+Numerical_Basis::~Numerical_Basis() {}
 
 //============================================================
 // MEMBER FUNCTION :

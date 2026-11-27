@@ -118,7 +118,7 @@ void write_bz_sample(const std::string& filename, const BzSampleData& data)
         output << "full_kmap " << nk_full << '\n';
         for (std::size_t ik = 0; ik < full_count; ++ik)
         {
-            const auto& point = data.full_cartesian[ik];
+            const std::array<double, 3>& point = data.full_cartesian[ik];
             output << std::setw(8) << ik + 1 << std::setw(24) << point[0] << std::setw(24) << point[1] << std::setw(24)
                    << point[2] << std::setw(8) << data.full_map[ik] + 1 << '\n';
         }
