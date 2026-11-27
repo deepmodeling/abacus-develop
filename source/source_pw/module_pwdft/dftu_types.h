@@ -21,6 +21,10 @@ struct OccmatOutputCfg
     /// to avoid touching an empty l_channel vector. This honours the
     /// documented contract that out_occ_mat only takes effect for DFT+U.
     int dft_plus_u;
+    /// Output layout mode (INPUT parameter out_app_flag). When it equals 2,
+    /// occupation-matrix files are placed in the OCC/ sub-directory of the
+    /// OUT directory; otherwise they stay in the OUT directory itself.
+    int out_app_flag;
 };
 
 /// Electronic-step metadata recorded in an occupation-matrix snapshot.

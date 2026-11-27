@@ -81,6 +81,15 @@ std::string gen_ion_step_occ_mat_filename(const std::string &out_dir, const int 
     return ss.str();
 }
 
+std::string occ_mat_output_dir(const std::string &out_dir, const int out_app_flag)
+{
+    if (out_app_flag == 2)
+    {
+        return out_dir + "OCC/";
+    }
+    return out_dir;
+}
+
 std::string find_first_existing_file(const std::string &dir, const std::vector<std::string> &candidates)
 {
     for (const std::string &name : candidates)
@@ -133,7 +142,7 @@ void local_occup_bcast(const UnitCell &ucell, OccupationMatrix &occ, const std::
 }
 #endif
 
-static void prepare_ion_step_file(const std::string &global_out_dir, const int istep)
+static void prepare_ion_step_file(const std::string &global_out_dir, const int istep, const OccmatOutputCfg &cfg)
 {
     // Only the root process creates the per-ionic-step file.
     if (GlobalV::MY_RANK != 0)
@@ -141,9 +150,12 @@ static void prepare_ion_step_file(const std::string &global_out_dir, const int i
         return;
     }
 
+    const std::string out_dir = occ_mat_output_dir(global_out_dir, cfg.out_app_flag);
+    ModuleBase::GlobalFunc::MAKE_DIR(out_dir);
+
     // trunc makes a rerun start from a clean file instead of appending
     // snapshots left over from a previous calculation.
-    const std::string ion_step_fn = gen_ion_step_occ_mat_filename(global_out_dir, istep);
+    const std::string ion_step_fn = gen_ion_step_occ_mat_filename(out_dir, istep);
     std::ofstream ofs_ion_step;
     ofs_ion_step.open(ion_step_fn, std::ios::out | std::ios::trunc);
     if (!ofs_ion_step)
@@ -166,7 +178,7 @@ void prepare_ion_step_output(
     const bool ion_step_output = is_ion_step_output_step(istep, cfg);
     if (cfg.out_occ_mat && ion_step_output && iter == 1)
     {
-        prepare_ion_step_file(global_out_dir, istep);
+        prepare_ion_step_file(global_out_dir, istep, cfg);
     }
 }
 
@@ -235,7 +247,9 @@ void append_ion_step_snapshot(
         return;
     }
 
-    const std::string ion_step_fn = gen_ion_step_occ_mat_filename(global_out_dir, step.istep);
+    const std::string out_dir = occ_mat_output_dir(global_out_dir, cfg.out_app_flag);
+    ModuleBase::GlobalFunc::MAKE_DIR(out_dir);
+    const std::string ion_step_fn = gen_ion_step_occ_mat_filename(out_dir, step.istep);
 
     std::ofstream ofs_ion_step;
     ofs_ion_step.open(ion_step_fn, std::ios::app);
@@ -272,7 +286,9 @@ void write_latest_occmat(
         return;
     }
 
-    const std::string latest_fn = global_out_dir + "occ_mat.txt";
+    const std::string out_dir = occ_mat_output_dir(global_out_dir, cfg.out_app_flag);
+    ModuleBase::GlobalFunc::MAKE_DIR(out_dir);
+    const std::string latest_fn = out_dir + "occ_mat.txt";
     std::ofstream ofdftu;
     ofdftu.open(latest_fn, std::ios::out | std::ios::trunc);
     if (!ofdftu)

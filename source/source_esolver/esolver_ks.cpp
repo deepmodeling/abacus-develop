@@ -275,7 +275,7 @@ void ESolver_KS::iter_init(UnitCell &ucell, const int istep, const int iter)
     if (this->inp_->dft_plus_u > 0)
     {
         const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion, this->inp_->out_freq_elec,
-            this->scf_iter_limit(istep), this->inp_->out_occ_mat, this->inp_->dft_plus_u};
+            this->scf_iter_limit(istep), this->inp_->out_occ_mat, this->inp_->dft_plus_u, this->inp_->out_app_flag};
         DFTU_BASE::prepare_ion_step_output(PARAM.globalv.global_out_dir, istep, iter, occmat_cfg);
     }
 

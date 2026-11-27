@@ -40,6 +40,13 @@ bool is_elec_snapshot_trigger(int iter, bool conv_esolver, const OccmatOutputCfg
 /// @return occ_matg{istep+1}.txt
 std::string gen_ion_step_occ_mat_filename(const std::string &out_dir, int istep);
 
+/// Directory that holds the occupation-matrix files, with a trailing separator.
+///
+/// @param out_dir OUT directory (including the trailing separator)
+/// @param out_app_flag output layout mode
+/// @return out_dir + "OCC/" when out_app_flag == 2; out_dir otherwise
+std::string occ_mat_output_dir(const std::string &out_dir, int out_app_flag);
+
 /// Return the full path of the first candidate file that exists in @p dir.
 /// Returns an empty string if none of the candidates exist.
 /// Only the calling process probes the filesystem; callers must arrange

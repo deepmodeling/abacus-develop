@@ -130,14 +130,15 @@ void Plus_U_Base::init_base(
     {
         // Try the user-prepared dm_onsite_ini.txt first, then fall back to
         // the compact occupation-matrix snapshot written by a previous
-        // run (occ_mat.txt). Legacy dm_onsite.txt input is not supported.
-        const std::vector<std::string> candidates = {"dm_onsite_ini.txt", "occ_mat.txt"};
+        // run (occ_mat.txt, or OCC/occ_mat.txt in out_app_flag=2 mode).
+        // Legacy dm_onsite.txt input is not supported.
+        const std::vector<std::string> candidates = {"dm_onsite_ini.txt", "occ_mat.txt", "OCC/occ_mat.txt"};
         const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
         if (readin_fn.empty())
         {
             ModuleBase::WARNING_QUIT(
                 "Plus_U_Base::init_base", "init_occ_mat is set but no occupation-matrix file found in " +
-                                              global_readin_dir + ". Tried: dm_onsite_ini.txt, occ_mat.txt");
+                                              global_readin_dir + ". Tried: dm_onsite_ini.txt, occ_mat.txt, OCC/occ_mat.txt");
         }
         DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel, readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
@@ -157,7 +158,7 @@ void Plus_U_Base::init_base(
         if (init_chg == "file")
         {
             // Only the current compact restart output is supported.
-            const std::vector<std::string> candidates = {"occ_mat.txt"};
+            const std::vector<std::string> candidates = {"occ_mat.txt", "OCC/occ_mat.txt"};
             const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
             if (readin_fn.empty())
             {
@@ -165,7 +166,7 @@ void Plus_U_Base::init_base(
                     "Plus_U_Base::init_base", "init_chg is set to file but no occupation-matrix file "
                                               "found in " +
                                                   global_readin_dir +
-                                                  ". Tried: occ_mat.txt. Please do an scf "
+                                                  ". Tried: occ_mat.txt, OCC/occ_mat.txt. Please do an scf "
                                                   "calculation first.");
             }
             DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel, readin_fn, nspin, npol, soc_layout);

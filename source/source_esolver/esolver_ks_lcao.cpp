@@ -596,7 +596,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
     const int iter_limit = this->scf_iter_limit(istep);
     const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion, this->inp_->out_freq_elec, iter_limit,
-        this->inp_->out_occ_mat, this->inp_->dft_plus_u};
+        this->inp_->out_occ_mat, this->inp_->dft_plus_u, this->inp_->out_app_flag};
     // Read globalv values once into locals so the repeated DFT+U call sites
     // below do not each re-enter the global dependency surface.
     const std::string &global_out_dir = PARAM.globalv.global_out_dir;
