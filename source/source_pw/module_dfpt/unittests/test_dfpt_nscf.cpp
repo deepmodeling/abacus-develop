@@ -85,7 +85,8 @@ TEST(DFPTNscfTest, DiagonalOperatorRecoversLowestEigenpairs)
 
     std::vector<std::vector<std::complex<double>>> psi;
     std::vector<double> eig;
-    const int it = ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, approx_precond(d), 6, 200, 1e-9, psi, eig);
+    const std::vector<double> precond = approx_precond(d);
+    const int it = ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, precond, 6, 200, 1e-9, psi, eig);
     EXPECT_EQ(0, it);
     ASSERT_EQ(6u, psi.size());
     ASSERT_EQ(6u, eig.size());
@@ -124,7 +125,8 @@ TEST(DFPTNscfTest, DegeneratePairConvergesWithOrthogonalOutput)
 
     std::vector<std::vector<std::complex<double>>> psi;
     std::vector<double> eig;
-    const int it = ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, approx_precond(d), 3, 200, 1e-9, psi, eig);
+    const std::vector<double> precond = approx_precond(d);
+    const int it = ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, precond, 3, 200, 1e-9, psi, eig);
     EXPECT_EQ(0, it);
     ASSERT_EQ(3u, psi.size());
     EXPECT_NEAR(1.0, eig[0], 1e-8);
@@ -167,8 +169,11 @@ TEST(DFPTNscfTest, DeterministicAcrossCalls)
     std::vector<std::vector<std::complex<double>>> p2;
     std::vector<double> e1;
     std::vector<double> e2;
-    ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, approx_precond(d), 4, 200, 1e-9, p1, e1);
-    ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, approx_precond(d), 4, 200, 1e-9, p2, e2);
+    // a single named preconditioner emphasizes that both calls must use
+    // the same preconditioner for the determinism comparison
+    const std::vector<double> precond = approx_precond(d);
+    ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, precond, 4, 200, 1e-9, p1, e1);
+    ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, precond, 4, 200, 1e-9, p2, e2);
     ASSERT_EQ(e1.size(), e2.size());
     for (size_t j = 0; j < e1.size(); ++j)
     {
@@ -187,7 +192,8 @@ TEST(DFPTNscfTest, FullDimensionSingleBandExact)
     DiagonalOperator op(d);
     std::vector<std::vector<std::complex<double>>> psi;
     std::vector<double> eig;
-    const int it = ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, approx_precond(d), 1, 50, 1e-9, psi, eig);
+    const std::vector<double> precond = approx_precond(d);
+    const int it = ModuleDFPT::DFPT_NSCF::lowest_eigpairs(op, precond, 1, 50, 1e-9, psi, eig);
     EXPECT_EQ(0, it);
     ASSERT_EQ(1u, psi.size());
     ASSERT_EQ(1u, eig.size());

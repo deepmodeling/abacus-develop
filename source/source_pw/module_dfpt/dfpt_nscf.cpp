@@ -145,7 +145,8 @@ int DFPT_NSCF::lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
     // accumulated search directions and stalls the convergence short of
     // tight thresholds, so the cap is large enough that most problems
     // converge inside one window
-    const int m_cap = std::min(n, nwant * 8 + 32);
+    const int subspace_cap = nwant * 8 + 32;
+    const int m_cap = std::min(n, subspace_cap);
 
     // initial guess: deterministic pseudo-random vectors filtered by the
     // kinetic preconditioner (high-|G| damping), then orthonormalized;
@@ -277,7 +278,8 @@ int DFPT_NSCF::lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
             }
             // met the intermediate level: step toward the final target
             // and keep iterating
-            cur_tol = std::max(eig_tol, cur_tol / 10.0);
+            const double tightened_tol = cur_tol / 10.0;
+            cur_tol = std::max(eig_tol, tightened_tol);
             converged = false;
         }
         // expansion: preconditioned residuals, orthogonalized against the
@@ -290,7 +292,8 @@ int DFPT_NSCF::lowest_eigpairs(const DFPT_Stern::LinearOperator& hop,
         // through the project matrices of later rounds
         if (m + nwant > m_cap)
         {
-            const int keep = std::min(m, nwant + 4);
+            const int keep_count = nwant + 4;
+            const int keep = std::min(m, keep_count);
             std::vector<std::vector<std::complex<double>>> keep_basis;
             combine(basis, mat, n, m, keep, keep_basis);
             for (int k = 1; k < keep; ++k)
