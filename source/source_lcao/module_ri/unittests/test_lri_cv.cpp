@@ -1,8 +1,8 @@
 #include "../lri_cv.h"
-#include "source_base/parallel_global.h"
 
 #include <RI/physics/Exx.h>
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cmath>
@@ -117,22 +117,4 @@ TEST(LriCv, ReleaseRealCacheAfterHandoff)
 TEST(LriCv, ReleaseComplexCacheAfterHandoff)
 {
     check_cache_handoff<std::complex<double>>();
-}
-
-int main(int argc, char** argv)
-{
-    int processes = 1;
-    int threads = 1;
-    int rank = 0;
-    Parallel_Global::read_pal_param(argc, argv, processes, threads, rank);
-    POOL_WORLD = MPI_COMM_NULL;
-    KP_WORLD = MPI_COMM_NULL;
-    INT_BGROUP = MPI_COMM_NULL;
-    BP_WORLD = MPI_COMM_NULL;
-    GRID_WORLD = MPI_COMM_NULL;
-    DIAG_WORLD = MPI_COMM_NULL;
-    ::testing::InitGoogleTest(&argc, argv);
-    const int result = RUN_ALL_TESTS();
-    Parallel_Global::finalize_mpi();
-    return result;
 }
