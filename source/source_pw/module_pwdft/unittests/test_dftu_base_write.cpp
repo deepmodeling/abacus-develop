@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 
-
 /// append_ion_step_snapshot must record an "N/A" placeholder instead of a
 /// silent zero matrix when the occupation matrix does not exist yet (the PW
 /// istep 0 / iter 1 case), and the real matrix body when it does.
@@ -26,14 +25,10 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
 
     // fresh run: no occupation matrix has been computed or loaded
     ASSERT_FALSE(dftu.is_occmat_ready());
-    DFTU_BASE::append_ion_step_snapshot(dftu,
-                                        ucell,
-                                        out_dir,
-                                        first_step,
-                                        false,
-                                        false, // occmat_ready
-                                        cfg,
-                                        DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::append_ion_step_snapshot(
+        dftu, ucell, out_dir, first_step, false,
+        false, // occmat_ready
+        cfg, DFTU_BASE::SOC_LAYOUT_PAULI);
 
     const std::string fn1 = temp_dir.file("occ_matg1.txt");
     std::ifstream ifs(fn1.c_str());
@@ -49,14 +44,10 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
     EXPECT_EQ(content.find("Atom"), std::string::npos);
 
     // ready case: the matrix body is written for the atom (fresh file g2)
-    DFTU_BASE::append_ion_step_snapshot(dftu,
-                                        ucell,
-                                        out_dir,
-                                        second_step,
-                                        false,
-                                        true, // occmat_ready
-                                        cfg,
-                                        DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::append_ion_step_snapshot(
+        dftu, ucell, out_dir, second_step, false,
+        true, // occmat_ready
+        cfg, DFTU_BASE::SOC_LAYOUT_PAULI);
 
     const std::string fn2 = temp_dir.file("occ_matg2.txt");
     std::ifstream ifs2(fn2.c_str());
@@ -68,7 +59,6 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
     EXPECT_NE(content2.find("Fe Atom 1 L 2"), std::string::npos);
     EXPECT_EQ(content2.find("N/A"), std::string::npos);
     EXPECT_EQ(content2.find("# eigenvalues"), std::string::npos);
-
 }
 
 /// out_occ_mat = false must suppress both the numbered snapshot file and the
@@ -83,25 +73,16 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
     const std::string out_dir = temp_dir.path();
     const DFTU_BASE::OccmatStepInfo step = {0, 1, 1e-6, 0.5};
 
-    DFTU_BASE::append_ion_step_snapshot(dftu,
-                                        ucell,
-                                        out_dir,
-                                        step,
-                                        false,
-                                        true, // occmat_ready
-                                        cfg,
-                                        DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::append_ion_step_snapshot(
+        dftu, ucell, out_dir, step, false,
+        true, // occmat_ready
+        cfg, DFTU_BASE::SOC_LAYOUT_PAULI);
 
     const std::string fn_g1 = temp_dir.file("occ_matg1.txt");
     std::ifstream ifs(fn_g1.c_str());
     EXPECT_FALSE(ifs.is_open());
 
-    DFTU_BASE::write_latest_occmat(dftu,
-                                   ucell,
-                                   out_dir,
-                                   step,
-                                   cfg,
-                                   DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::write_latest_occmat(dftu, ucell, out_dir, step, cfg, DFTU_BASE::SOC_LAYOUT_PAULI);
 
     const std::string fn_latest = temp_dir.file("occ_mat.txt");
     std::ifstream ifs_latest(fn_latest.c_str());
@@ -117,8 +98,8 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
 /// out_occ_mat only takes effect for DFT+U calculations (dft_plus_u > 0).
 TEST_F(DFTUBaseTest, DftPlusUDisabledWritesNothing)
 {
-    Plus_U_Base dftu;  // default-constructed: l_channel is empty, mirroring
-                       // the LCAO/PW esolver path when dft_plus_u == 0
+    Plus_U_Base dftu; // default-constructed: l_channel is empty, mirroring
+                      // the LCAO/PW esolver path when dft_plus_u == 0
     // Deliberately skip init_dftu(): the bug is that the IO functions must
     // not even reach has_l_channel() when dft_plus_u == 0.
 
@@ -127,25 +108,16 @@ TEST_F(DFTUBaseTest, DftPlusUDisabledWritesNothing)
     const std::string out_dir = temp_dir.path();
     const DFTU_BASE::OccmatStepInfo step = {0, 1, 1e-6, 0.5};
 
-    DFTU_BASE::append_ion_step_snapshot(dftu,
-                                        ucell,
-                                        out_dir,
-                                        step,
-                                        false,
-                                        true, // occmat_ready
-                                        cfg,
-                                        DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::append_ion_step_snapshot(
+        dftu, ucell, out_dir, step, false,
+        true, // occmat_ready
+        cfg, DFTU_BASE::SOC_LAYOUT_PAULI);
 
     const std::string fn_g1 = temp_dir.file("occ_matg1.txt");
     std::ifstream ifs(fn_g1.c_str());
     EXPECT_FALSE(ifs.is_open());
 
-    DFTU_BASE::write_latest_occmat(dftu,
-                                   ucell,
-                                   out_dir,
-                                   step,
-                                   cfg,
-                                   DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::write_latest_occmat(dftu, ucell, out_dir, step, cfg, DFTU_BASE::SOC_LAYOUT_PAULI);
 
     const std::string fn_latest = temp_dir.file("occ_mat.txt");
     std::ifstream ifs_latest(fn_latest.c_str());
@@ -171,8 +143,7 @@ TEST_F(DFTUBaseTest, LatestOccMatIncludesSortedCollinearEigenvalues)
     const DFTU_BASE::OccmatStepInfo step = {0, 2, 1e-6, 1e-7};
     DFTUTestDirectory temp_dir;
     const std::string filename = temp_dir.file("occ_mat.txt");
-    DFTU_BASE::write_latest_occmat(dftu, ucell, temp_dir.path(), step, cfg,
-                                   DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::write_latest_occmat(dftu, ucell, temp_dir.path(), step, cfg, DFTU_BASE::SOC_LAYOUT_PAULI);
 
     std::ifstream input(filename.c_str());
     ASSERT_TRUE(input.is_open());
@@ -191,8 +162,7 @@ TEST_F(DFTUBaseTest, LatestOccMatIncludesSortedCollinearEigenvalues)
         const std::size_t values_start = separator + 1;
         const std::string values_text = line.substr(values_start);
         std::istringstream values(values_text);
-        const double expected[2][5] = {{0.7, 0.8, 0.8, 0.8, 0.9},
-                                       {0.2, 0.2, 0.2, 0.2, 0.2}};
+        const double expected[2][5] = {{0.7, 0.8, 0.8, 0.8, 0.9}, {0.2, 0.2, 0.2, 0.2, 0.2}};
         double value = 0.0;
         for (int m = 0; m < 5; ++m)
         {
@@ -206,8 +176,7 @@ TEST_F(DFTUBaseTest, LatestOccMatIncludesSortedCollinearEigenvalues)
     OccupationMatrix restored;
     const std::vector<int> l_channel = {2};
     restored.init(ucell, l_channel, 2, 1);
-    DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 2, 1,
-                            DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::read_occup_m(ucell, restored, l_channel, filename, 2, 1, DFTU_BASE::SOC_LAYOUT_PAULI);
     EXPECT_NEAR(restored.get(0, 2, 0, 0, 1), 0.1, 1e-8);
 }
 
@@ -224,8 +193,7 @@ TEST_F(DFTUBaseTest, SocEigenvaluesIncludeImaginarySpinCoupling)
         dftu.occmat().mat(0, 2, 0).c[3 * block_size + index] = 0.6;
     }
     std::ostringstream output;
-    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
-                                       DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, DFTU_BASE::SOC_LAYOUT_PAULI);
     const std::string line = output.str();
     ASSERT_EQ(line.find("# eigenvalues atom 1 L 2 spinor:"), 0);
     const std::size_t separator = line.find(':');
@@ -255,8 +223,7 @@ TEST_F(DFTUBaseTest, CollinearEigenvaluesStopAtJacobiCutoff)
     dftu.occmat().set(0, 2, 0, 1, 0, 1.0e-10);
 
     std::ostringstream output;
-    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
-                                       DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, DFTU_BASE::SOC_LAYOUT_PAULI);
     std::istringstream lines(output.str());
     std::string first_line;
     const bool first_line_read = static_cast<bool>(std::getline(lines, first_line));
@@ -287,8 +254,7 @@ TEST_F(DFTUBaseTest, NonmagneticEigenvaluesUseOnlyMaintainedChannel)
     dftu.occmat().set(0, 2, 1, 0, 0, 0.1); // unused or stale channel
 
     std::ostringstream output;
-    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
-                                       DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, DFTU_BASE::SOC_LAYOUT_PAULI);
     const std::string result = output.str();
     EXPECT_EQ(result.find("spin 2"), std::string::npos);
     EXPECT_EQ(result.find("spin 1"), std::string::npos);
@@ -319,13 +285,10 @@ TEST_F(DFTUBaseTest, NonmagneticPwEigenvaluesKeepSpinSummedWeight)
     projector_overlap[0] = {1.0, 0.0};
     ModuleBase::matrix band_weight(1, 1);
     band_weight(0, 0) = 2.0; // nspin=1 k-point weights include spin degeneracy
-    pw::accumulate_occ_scalar(dftu.occmat().mat(0, 2, 0).c,
-                              projector_overlap.data(), 1, 5, 0, 0, 5,
-                              band_weight, 0);
+    pw::accumulate_occ_scalar(dftu.occmat().mat(0, 2, 0).c, projector_overlap.data(), 1, 5, 0, 0, 5, band_weight, 0);
 
     std::ostringstream output;
-    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
-                                       DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, DFTU_BASE::SOC_LAYOUT_PAULI);
     const std::string result = output.str();
     EXPECT_EQ(result.find("# eigenvalues atom 1 L 2 nonmagnetic:"), 0u);
     const std::size_t separator = result.find(':');
@@ -360,8 +323,7 @@ TEST_F(DFTUBaseTest, LcaoMethodTwoSocEigenvaluesPreserveCrossOrbitalCoupling)
     dftu.occmat().set(0, 2, 0, cross_spin_orbital, 0, 0.2);
 
     std::ostringstream output;
-    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output,
-                                       DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    DFTU_BASE::write_occup_eigenvalues(dftu, ucell, output, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
     const std::string line = output.str();
     const std::size_t separator = line.find(':');
     ASSERT_NE(separator, std::string::npos);
@@ -401,14 +363,7 @@ TEST_F(DFTUBaseTest, AppendSnapshotGuardDftuOffBeforeIterValidation)
 
     // iter=0 is intentionally invalid; the guard-first check ensures
     // this does not abort.
-    DFTU_BASE::append_ion_step_snapshot(dftu,
-                                        ucell,
-                                        out_dir,
-                                        step,
-                                        false,
-                                        false,
-                                        cfg,
-                                        DFTU_BASE::SOC_LAYOUT_PAULI);
+    DFTU_BASE::append_ion_step_snapshot(dftu, ucell, out_dir, step, false, false, cfg, DFTU_BASE::SOC_LAYOUT_PAULI);
 
     // If we reach here the guard worked.  No file should have been written
     // (the directory may not even exist, which is fine — the guard

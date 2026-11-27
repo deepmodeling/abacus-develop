@@ -1,18 +1,22 @@
 #include "exx_helper.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_estate/elecstate_pw.h"               // use ElecStatePW
+#include "source_estate/module_charge/charge.h"       // use Charge
+#include "source_estate/update_pot.h"                 // use elecstate::update_pot
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
-#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
+#include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/hamilt_pw.h" // use HamiltPW
-#include "source_estate/update_pot.h" // use elecstate::update_pot
-#include "source_estate/elecstate_pw.h" // use ElecStatePW
-#include "source_estate/module_charge/charge.h" // use Charge
-#include <chrono> // for timing
+#include <chrono>                             // for timing
 
 template <typename T, typename Device>
-void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info)
+void Exx_Helper<T, Device>::init(
+    const UnitCell &ucell,
+    const Input_para &inp,
+    const ModuleBase::matrix &wg,
+    const General_Exx_Info &exx_info)
 {
-    if (inp.calculation != "scf" && inp.calculation != "relax"
-        && inp.calculation != "cell-relax" && inp.calculation != "md" && inp.calculation != "nscf")
+    if (inp.calculation != "scf" && inp.calculation != "relax" && inp.calculation != "cell-relax" &&
+        inp.calculation != "md" && inp.calculation != "nscf")
     {
         return;
     }
@@ -32,11 +36,15 @@ void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, c
 }
 
 template <typename T, typename Device>
-void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_para& inp, const General_Exx_Info& exx_info)
+void Exx_Helper<T, Device>::before_scf(
+    void *p_hamilt,
+    void *psi,
+    const Input_para &inp,
+    const General_Exx_Info &exx_info)
 {
     /// Return if not a valid calculation type
-    if (inp.calculation != "scf" && inp.calculation != "relax"
-        && inp.calculation != "cell-relax" && inp.calculation != "md" && inp.calculation != "nscf")
+    if (inp.calculation != "scf" && inp.calculation != "relax" && inp.calculation != "cell-relax" &&
+        inp.calculation != "md" && inp.calculation != "nscf")
     {
         return;
     }
@@ -48,7 +56,7 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_pa
     }
 
     /// Set EXX helper to Hamiltonian
-    hamilt::HamiltPW<T, Device>* hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(p_hamilt);
+    hamilt::HamiltPW<T, Device> *hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device> *>(p_hamilt);
     hamilt_pw->set_exx_helper(*this);
 
     /// Set psi for EXX calculation
@@ -56,9 +64,14 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_pa
 }
 
 template <typename T, typename Device>
-bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* psi,
-                                        UnitCell& ucell, const Input_para& inp,
-                                        bool& conv_esolver, int iter)
+bool Exx_Helper<T, Device>::iter_finish(
+    void *p_elec,
+    Charge *p_charge,
+    void *psi,
+    UnitCell &ucell,
+    const Input_para &inp,
+    bool &conv_esolver,
+    int iter)
 {
     if (inp.calculation == "nscf")
     {
@@ -99,7 +112,8 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* ps
                     this->set_psi(psi);
                 }
 
-                auto duration = std::chrono::high_resolution_clock::now() - start;
+                std::chrono::high_resolution_clock::duration duration =
+                    std::chrono::high_resolution_clock::now() - start;
                 std::cout << " Setting Psi for EXX PW Inner Loop took "
                           << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / 1000.0 << "s"
                           << std::endl;
@@ -107,7 +121,7 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* ps
                 this->op_exx->first_iter = false;
                 XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
 
-                elecstate::ElecState* pelec = reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(p_elec);
+                elecstate::ElecState *pelec = reinterpret_cast<elecstate::ElecStatePW<T, Device> *>(p_elec);
                 elecstate::update_pot(ucell, pelec, *p_charge, conv_esolver);
 
                 this->iter_inc();
@@ -123,10 +137,9 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* ps
 }
 
 template <typename T, typename Device>
-double Exx_Helper<T, Device>::cal_exx_energy(void* psi_)
+double Exx_Helper<T, Device>::cal_exx_energy(void *psi_)
 {
-    return op_exx->cal_exx_energy(static_cast<psi::Psi<T, Device>*>(psi_));
-
+    return op_exx->cal_exx_energy(static_cast<psi::Psi<T, Device> *>(psi_));
 }
 
 template <typename T, typename Device>
@@ -163,18 +176,21 @@ bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv)
     // writers (append_ion_step_snapshot validates iter>=1) and broke the
     // 1-based iteration invariant for every downstream reader of iter.
     return false;
-
 }
 
 template <typename T, typename Device>
-void Exx_Helper<T, Device>::set_psi(void* psi_)
+void Exx_Helper<T, Device>::set_psi(void *psi_)
 {
-    psi::Psi<T, Device>* psi = static_cast<psi::Psi<T, Device>*>(psi_);
+    psi::Psi<T, Device> *psi = static_cast<psi::Psi<T, Device> *>(psi_);
     if (psi == nullptr)
+    {
         return;
+    }
     this->psi = psi;
     if (op_exx == nullptr)
+    {
         return;
+    }
     op_exx->set_psi(*psi);
     if (PARAM.inp.exxace && op_exx->separate_loop)
     {
@@ -188,4 +204,3 @@ template class Exx_Helper<std::complex<double>, base_device::DEVICE_CPU>;
 template class Exx_Helper<std::complex<float>, base_device::DEVICE_GPU>;
 template class Exx_Helper<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
-

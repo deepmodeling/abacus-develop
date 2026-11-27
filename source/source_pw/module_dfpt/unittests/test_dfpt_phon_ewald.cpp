@@ -6,17 +6,17 @@
 // incommensurate q where the dipole sum is oscillation-screened.
 
 #include "dfpt_test_tool.h"
+#include "source_base/complexmatrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
-#include "source_base/complexmatrix.h"
 #include "source_cell/stru_fac.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_phon.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -59,14 +59,13 @@ class DFPTPhonSerialTest : public ::testing::Test
 
     // (re)initialize the bases and the pert/phon wiring for a given (k, q)
     // pair; SetUp uses the default fixture values
-    void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    void SetupPhon(const ModuleBase::Vector3<double> &k_d, const ModuleBase::Vector3<double> &q_d)
     {
         dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, 2, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
         phon_.init(ucell_, &pw_rho_, &pert_);
     }
 };
-
 
 TEST_F(DFPTPhonSerialTest, IonIonAcousticSumRuleGamma)
 {
@@ -179,9 +178,10 @@ TEST_F(DFPTPhonSerialTest, IonIonGenericQVsDirectSum)
                         {
                             continue;
                         }
-                        const ModuleBase::Vector3<double> r((n1 * dfpt_test::cubic_edge + dt.x) * dfpt_test::lat0,
-                                                            (n2 * dfpt_test::cubic_edge + dt.y) * dfpt_test::lat0,
-                                                            (n3 * dfpt_test::cubic_edge + dt.z) * dfpt_test::lat0);
+                        const ModuleBase::Vector3<double> r(
+                            (n1 * dfpt_test::cubic_edge + dt.x) * dfpt_test::lat0,
+                            (n2 * dfpt_test::cubic_edge + dt.y) * dfpt_test::lat0,
+                            (n3 * dfpt_test::cubic_edge + dt.z) * dfpt_test::lat0);
                         const double r2 = r * r;
                         const double r5 = r2 * r2 * std::sqrt(r2);
                         const double ph = ModuleBase::TWO_PI * (q_d_.x * n1 + q_d_.y * n2 + q_d_.z * n3);
@@ -195,8 +195,8 @@ TEST_F(DFPTPhonSerialTest, IonIonGenericQVsDirectSum)
                                 const double h0 = (3.0 * r[da] * r[db] - delta * r2) / r5;
                                 if (self)
                                 {
-                                    ref(3 * ia + da, 3 * ia + db)
-                                        += z[ia] * z[ia] * ModuleBase::e2 / m[ia] * h0 * (1.0 - phase);
+                                    ref(3 * ia + da, 3 * ia + db) +=
+                                        z[ia] * z[ia] * ModuleBase::e2 / m[ia] * h0 * (1.0 - phase);
                                 }
                                 else
                                 {
@@ -241,12 +241,11 @@ TEST_F(DFPTPhonSerialTest, IonIonFccSiQHalfEwaldConsistency)
     // are conditionally convergent and convention-dependent; the
     // element-exact agreement with a verbatim QE d2ionq transcription
     // was verified externally instead.)
-    const double a_edge = 10.0;        // fcc cubic edge in lat0 units
-    const double half_edge = 0.5 * a_edge; // face-diagonal component of the fcc primitive vectors
+    const double a_edge = 10.0;                // fcc cubic edge in lat0 units
+    const double half_edge = 0.5 * a_edge;     // face-diagonal component of the fcc primitive vectors
     const double quarter_edge = 0.25 * a_edge; // basis-atom offset along the cubic diagonal
-    ucell_.latvec = ModuleBase::Matrix3(0.0, half_edge, half_edge,
-                                        half_edge, 0.0, half_edge,
-                                        half_edge, half_edge, 0.0);
+    ucell_.latvec =
+        ModuleBase::Matrix3(0.0, half_edge, half_edge, half_edge, 0.0, half_edge, half_edge, half_edge, 0.0);
     ucell_.GT = ucell_.latvec.Inverse();
     ucell_.G = ucell_.GT.Transpose();
     ucell_.omega = a_edge * a_edge * a_edge * dfpt_test::lat0 * dfpt_test::lat0 * dfpt_test::lat0 / 4.0;
@@ -305,9 +304,8 @@ TEST_F(DFPTPhonSerialTest, IonIonAlphaIndependenceAndDeterminism)
     const double a_edge = 10.0;
     const double half_edge = 0.5 * a_edge;
     const double quarter_edge = 0.25 * a_edge;
-    ucell_.latvec = ModuleBase::Matrix3(0.0, half_edge, half_edge,
-                                        half_edge, 0.0, half_edge,
-                                        half_edge, half_edge, 0.0);
+    ucell_.latvec =
+        ModuleBase::Matrix3(0.0, half_edge, half_edge, half_edge, 0.0, half_edge, half_edge, half_edge, 0.0);
     ucell_.GT = ucell_.latvec.Inverse();
     ucell_.G = ucell_.GT.Transpose();
     ucell_.omega = a_edge * a_edge * a_edge * dfpt_test::lat0 * dfpt_test::lat0 * dfpt_test::lat0 / 4.0;

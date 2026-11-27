@@ -10,9 +10,9 @@ For Detailed usage of CANDELA, please refer to the [official document](https://c
 There are two things which need special attention in using CANDELA with ABACUS.
 First, the input file of CANDELA only takes the name of `INPUT`, the same as ABACUS input file, so you should not run CANDELA in the same folder where you run ABACUS.
 Second, to use CANDELA to postprocess ABACUS MD trajectory, the following parameters have to be specified in the `INPUT` file of CANDELA in addition to other required parameters:
-1. `geo_in_type` has to be set to `ABACUS`;
+1. For current ABACUS MD output, convert the STRU trajectory to a CANDELA-supported format and set `geo_in_type` to that format, such as `LAMMPS`. The older `ABACUS` setting applies only to legacy MD dump files;
 2. `msd_dt` has to be specified in unit of picosecond, especially in the case of `calculation` = `msd`;
-3. `geo_directory` has to be set to the path to the `MD_dump` file in the `OUT.xxx` folder.
+3. `geo_directory` has to point to the converted trajectory. CANDELA's older `geo_in_type ABACUS` reader does not read current STRU trajectories directly.
 As a result, a CANDELA `INPUT` file for calculating PDF from ABACUS should be something like this:
 ```
 calculation  pdf # Pair Distribution Function.

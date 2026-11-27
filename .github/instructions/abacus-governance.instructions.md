@@ -30,14 +30,6 @@ Apply these instructions when reviewing or changing ABACUS code:
   generated YAML or Markdown documentation files to be committed.
 - Check that new source files are linked through the relevant `CMakeLists.txt`
   unless the PR explains generated or indirect inclusion.
-- Apply `docs/developers_guide/cmake_guidelines.md` for CMake edits: require
-  `cmake-format` on changed CMake files; flag newly added `${math_libs}`,
-  `USE_LIBXC`, `ENABLE_RAPIDJSON`, `ENABLE_LIBCOMM`, `remove_definitions()`,
-  directory-scoped compile/include/link or `find_package`/`find_library`
-  commands under `source/`, and `install()` or `file(COPY ...)` in unit-test
-  CMake files as blocking; and confirm new options or external dependencies
-  update `_abacus_feature_definitions`, `abacus_add_target_compile_requirements()`,
-  and `cmake/CollectBuildInfoVars.cmake`.
 - Unit tests under `source/` belong in a flat `unittests/` directory, with
   sources named `test_<file under test>.cpp`. The checker blocks the layout
   and the `test_` prefix; confirm in review that the rest of the name matches

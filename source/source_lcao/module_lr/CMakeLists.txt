@@ -41,6 +41,8 @@ if(ENABLE_LCAO)
     potentials/xc_kernel.cpp
     potentials/xc_kxc.cpp
     gradient_output.cpp
+    window_response.cpp
+    window_response_math.cpp
     lr_grad_cs.cpp
     lr_grad_os.cpp
     lr_force.cpp

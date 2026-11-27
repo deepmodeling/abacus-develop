@@ -259,8 +259,8 @@ void LCAO_Deepks<T>::init_dmr(const UnitCell& ucell,
                                    const int start2,
                                    const int nw2_tot,
                                    ModuleBase::Vector3<int> dR2) {
-                                   auto row_indexes = pv.get_indexes_row(ibt1);
-                                   auto col_indexes = pv.get_indexes_col(ibt2);
+                                   std::vector<int> row_indexes = pv.get_indexes_row(ibt1);
+                                   std::vector<int> col_indexes = pv.get_indexes_col(ibt2);
                                    if (row_indexes.size() * col_indexes.size() == 0)
                                    {
                                        return; // to next loop

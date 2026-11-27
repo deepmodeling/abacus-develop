@@ -1,79 +1,75 @@
 #!/usr/bin/env python3
-"""
-Extract proton kinetic energy from TDOFDFT MD_dump output.
+"""Extract the last proton's kinetic energy from MD STRU frames.
 
-Usage:
-    python3 get_kinetic.py [md_dump_file] [output_file]
-
-Default:
-    md_dump_file = OUT.autotest/MD_dump
-    output_file  = kinetic.txt
-
-Output format:
-    time(fs)    kinetic_energy(eV)
+Usage: python3 get_kinetic.py [stru_file] [output_file]
+Default input: OUT.autotest/STRU (out_stru=1, out_freq_ion=1, out_app_flag=1).
 """
 
 import sys
-import os
+from pathlib import Path
 
-# ========== Parameters ==========
-md_dump_file = "OUT.autotest/MD_dump"
-output_file = "kinetic.txt"
-md_dt = 0.0005          # fs, must match md_dt in INPUT
-m_H = 1.008             # amu, proton mass
-# ================================
 
-if len(sys.argv) >= 2:
-    md_dump_file = sys.argv[1]
-if len(sys.argv) >= 3:
-    output_file = sys.argv[2]
+stru_file = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("OUT.autotest/STRU")
+output_file = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("kinetic.txt")
+md_dt = 0.0005  # fs; must match md_dt in INPUT
+m_H = 1.008  # amu
 
-# Conversion factor: E_k(eV) = 0.5 * m(amu) * v(Ang/fs)^2 * factor
+# Match the constants used by ABACUS to convert STRU atomic-unit velocities.
+angstrom_au = 1.8897270
+au_to_fs = 2.418884326505e-2
+au_velocity_to_ang_fs = 1.0 / angstrom_au / au_to_fs
 amu_to_kg = 1.66053906660e-27
-ang_fs_to_m_s = 1e5         # 1 Ang/fs = 10^5 m/s
+ang_fs_to_m_s = 1e5
 eV_to_J = 1.602176634e-19
-factor = amu_to_kg * ang_fs_to_m_s**2 / eV_to_J   # ≈ 103.6427
+kinetic_factor = amu_to_kg * ang_fs_to_m_s**2 / eV_to_J
 
-if not os.path.exists(md_dump_file):
-    print(f"Error: {md_dump_file} not found!")
-    sys.exit(1)
 
-with open(md_dump_file, "r") as f:
-    lines = f.readlines()
+def proton_velocity(frame):
+    data = [line.split("#", 1)[0].strip() for line in frame]
+    data = [line for line in data if line]
+    position_index = data.index("ATOMIC_POSITIONS") + 2
+    last_velocity = None
+    while position_index < len(data):
+        label = data[position_index]
+        count = int(data[position_index + 2])
+        position_index += 3
+        for atom_line in data[position_index:position_index + count]:
+            fields = atom_line.split()
+            if label == "H" and "v" in fields:
+                velocity_index = fields.index("v")
+                last_velocity = tuple(float(value) for value in fields[velocity_index + 1:velocity_index + 4])
+        position_index += count
+    if last_velocity is None:
+        raise ValueError("Frame has no H atom velocity")
+    return last_velocity
 
-kinetic_data = []
-i = 0
-while i < len(lines):
-    line = lines[i].strip()
-    if line.startswith("MDSTEP:"):
-        step = int(line.split(":")[1].strip())
-        time_fs = step * md_dt
 
-        i += 1
-        # Skip lattice + virial + header lines to reach atom data
-        while i < len(lines) and "INDEX" not in lines[i] and "MDSTEP:" not in lines[i]:
-            i += 1
-        i += 1  # skip INDEX header
+if not stru_file.is_file():
+    raise SystemExit(f"Error: {stru_file} not found")
 
-        # Atom data: INDEX LABEL x y z Fx Fy Fz Vx Vy Vz
-        # Find the last H atom (proton)
-        last_vx = last_vy = last_vz = 0.0
-        while i < len(lines) and not lines[i].strip().startswith("MDSTEP:"):
-            parts = lines[i].split()
-            if len(parts) >= 11 and parts[1] == "H":
-                last_vx = float(parts[8])
-                last_vy = float(parts[9])
-                last_vz = float(parts[10])
-            i += 1
+frames = []
+step = None
+frame = []
+for line in stru_file.read_text().splitlines():
+    if line.startswith("# MD step "):
+        if step is not None:
+            frames.append((step, frame))
+        step = int(line.split()[3])
+        frame = []
+    elif step is not None:
+        frame.append(line)
+if step is not None:
+    frames.append((step, frame))
 
-        v_sq = last_vx**2 + last_vy**2 + last_vz**2
-        ek_eV = 0.5 * m_H * v_sq * factor
-        kinetic_data.append((time_fs, ek_eV))
-        continue
-    i += 1
+if not frames:
+    raise ValueError(f"No MD frames found in {stru_file}")
 
-with open(output_file, "w") as f:
-    for t, ek in kinetic_data:
-        f.write(f"{t:.4f}\t{ek:.10f}\n")
+with output_file.open("w") as output:
+    for step, frame in frames:
+        velocity = proton_velocity(frame)
+        velocity_squared = sum((value * au_velocity_to_ang_fs) ** 2 for value in velocity)
+        time_fs = (step - 1) * md_dt
+        energy = 0.5 * m_H * velocity_squared * kinetic_factor
+        output.write(f"{time_fs:.4f}\t{energy:.10f}\n")
 
-print(f"Done! {len(kinetic_data)} steps written to {output_file}")
+print(f"Done! {len(frames)} steps written to {output_file}")

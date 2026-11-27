@@ -1470,14 +1470,14 @@ updates structures smoothly enough for second-order extrapolation.)";
         Input_Item item("diag_subspace");
         item.domain.set_choices({"0", "1", "2"});
         item.domain.add_requirement("ks_solver==lobpcg", "diag_subspace in [0, 2]");
-        item.annotation = "method of subspace diagonalization in dav_subspace or lobpcg. 0:LaPack; 1:genelpa, 2:scalapack";
+        item.annotation = "subspace diagonalization backend for dav_subspace and lobpcg";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = R"(The method to diagonalize subspace in dav_subspace or lobpcg method.
-* 0: by LAPACK
-* 1: by GenELPA (dav_subspace only)
-* 2: by ScaLAPACK
-LOBPCG supports 0 and 2. On CUDA, LOBPCG option 0 uses cuSOLVER on the GPU.)";
+        item.description = R"(Subspace diagonalization backend for dav_subspace and lobpcg.
+
+* 0: LAPACK (cuSOLVER for LOBPCG on CUDA).
+* 1: GenELPA (dav_subspace only).
+* 2: ScaLAPACK.)";
         item.default_value = "0";
         item.set_availability("basis_type==pw and (ks_solver==dav_subspace or ks_solver==lobpcg)");
         read_sync_int(input.diag_subspace);

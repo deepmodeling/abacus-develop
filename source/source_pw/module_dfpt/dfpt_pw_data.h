@@ -29,10 +29,7 @@ namespace ModuleDFPT
 /// that channel open for tail bands (their occupied-type contribution is
 /// f-weighted and negligible), reproducing the insulator limit that
 /// finite-difference references follow.
-inline bool dfpt_band_occupied(const ModuleBase::matrix& wg, int ik, int ib)
-{
-    return wg(ik, ib) > 0.5 * wg(ik, 0);
-}
+inline bool dfpt_band_occupied(const ModuleBase::matrix &wg, int ik, int ib) { return wg(ik, ib) > 0.5 * wg(ik, 0); }
 
 /// Validate the q-point ordering for the polar (dfpt_compute_q0)
 /// pipeline: when compute_q0 is on, Gamma must be the FIRST q point
@@ -43,7 +40,7 @@ inline bool dfpt_band_occupied(const ModuleBase::matrix& wg, int ik, int ib)
 /// the offending index otherwise; a no-op when compute_q0 is off, so
 /// arbitrary orderings (e.g. an explicit [X, Gamma] file) stay legal
 /// for plain phonon runs.
-void validate_q_ordering(const ModuleCell::QList& qlist, bool compute_q0);
+void validate_q_ordering(const ModuleCell::QList &qlist, bool compute_q0);
 
 class DFPT_PW_Data
 {
@@ -51,14 +48,15 @@ class DFPT_PW_Data
     DFPT_PW_Data();
     ~DFPT_PW_Data();
 
-    void init(ModuleCell::QList* qlist,
-              int nk,
-              int nbands,
-              int npw_max,
-              int nrxx,
-              int nspin,
-              int nat,
-              const Plus_U_Base* dftu);
+    void init(
+        ModuleCell::QList *qlist,
+        int nk,
+        int nbands,
+        int npw_max,
+        int nrxx,
+        int nspin,
+        int nat,
+        const Plus_U_Base *dftu);
 
     void clean();
 
@@ -67,20 +65,24 @@ class DFPT_PW_Data
     int get_nirr(int q_idx) const;
     std::vector<int> get_irrep_modes(int q_idx, int irrep) const;
 
-    void set_dpsi(int q_idx, int k_idx, int band_idx, const std::vector<std::complex<double>>& psi);
+    void set_dpsi(
+        int q_idx,
+        int k_idx,
+        int band_idx,
+        const std::vector<std::complex<double>> &psi);
     std::vector<std::complex<double>> get_dpsi(int q_idx, int k_idx, int band_idx) const;
 
-    void set_drho_r(int q_idx, int spin, const std::vector<double>& rho);
+    void set_drho_r(int q_idx, int spin, const std::vector<double> &rho);
     std::vector<double> get_drho_r(int q_idx, int spin) const;
-    void set_drho_g(int q_idx, int spin, const std::vector<std::complex<double>>& rho);
+    void set_drho_g(int q_idx, int spin, const std::vector<std::complex<double>> &rho);
 
     /// q-shifted first-order core-density amplitude (G space, npw);
     /// zero-size means no nlcc atoms / not yet computed
-    void set_drhoc_g(int q_idx, const std::vector<std::complex<double>>& rho_c);
+    void set_drhoc_g(int q_idx, const std::vector<std::complex<double>> &rho_c);
     std::vector<std::complex<double>> get_drhoc_g(int q_idx) const;
     std::vector<std::complex<double>> get_drho_g(int q_idx, int spin) const;
 
-    void set_dv_r(int q_idx, int spin, const std::vector<double>& v);
+    void set_dv_r(int q_idx, int spin, const std::vector<double> &v);
     std::vector<double> get_dv_r(int q_idx, int spin) const;
 
     /// First-order perturbation potential dV stored as complex plane-wave
@@ -90,145 +92,76 @@ class DFPT_PW_Data
     /// and the atomic phase exp(i(Delta+q).tau); the real-space array is
     /// their inverse Fourier transform, so that dV.psi is a plain cyclic
     /// convolution on the shared grid (apply_dv needs no extra q-phase).
-    void set_dv_recip_c(int q_idx, int spin, const std::vector<std::complex<double>>& v);
+    void set_dv_recip_c(int q_idx, int spin, const std::vector<std::complex<double>> &v);
     std::vector<std::complex<double>> get_dv_recip_c(int q_idx, int spin) const;
-    void set_dv_rc(int q_idx, int spin, const std::vector<std::complex<double>>& v);
+    void set_dv_rc(int q_idx, int spin, const std::vector<std::complex<double>> &v);
     std::vector<std::complex<double>> get_dv_rc(int q_idx, int spin) const;
 
     /// The dynamical matrix at a generic q is complex Hermitian; stored as a
     /// ModuleBase::ComplexMatrix (C5), consumed by DFPT_Phon::diagonalize
     /// through the LapackConnector::zheev wrapper.
-    void set_dynmat(int q_idx, const ModuleBase::ComplexMatrix& dm);
+    void set_dynmat(int q_idx, const ModuleBase::ComplexMatrix &dm);
     ModuleBase::ComplexMatrix get_dynmat(int q_idx) const;
 
     /// stash the raw (pre-ASR, pre-LO-TO) dynamical matrix for the dyn
     /// file output; the working dynmat_ is mutated in place by apply_asr
     /// and add_loto at Gamma, so the file writer needs this untouched copy
-    void set_dynmat_raw(int q_idx, const ModuleBase::ComplexMatrix& dm);
+    void set_dynmat_raw(int q_idx, const ModuleBase::ComplexMatrix &dm);
     ModuleBase::ComplexMatrix get_dynmat_raw(int q_idx) const;
     bool has_dynmat_raw(int q_idx) const;
-    void set_phon_freq(int q_idx, const std::vector<double>& freq);
+    void set_phon_freq(int q_idx, const std::vector<double> &freq);
     std::vector<double> get_phon_freq(int q_idx) const;
 
-    void set_dielectric(const ModuleBase::matrix& eps);
+    void set_dielectric(const ModuleBase::matrix &eps);
     ModuleBase::matrix get_dielectric() const;
-    void set_born(int atom_idx, const ModuleBase::matrix& z);
+    void set_born(int atom_idx, const ModuleBase::matrix &z);
     ModuleBase::matrix get_born(int atom_idx) const;
 
-    void set_compute_q0(bool flag)
-    {
-        compute_q0_ = flag;
-    }
-    bool get_compute_q0() const
-    {
-        return compute_q0_;
-    }
-    void set_loto(bool flag)
-    {
-        loto_ = flag;
-    }
-    bool get_loto() const
-    {
-        return loto_;
-    }
+    void set_compute_q0(bool flag) { compute_q0_ = flag; }
+    bool get_compute_q0() const { return compute_q0_; }
+    void set_loto(bool flag) { loto_ = flag; }
+    bool get_loto() const { return loto_; }
 
     /// q->0 direction of the non-analytic (LO-TO) term, as a unit vector.
     /// The setter normalizes; a null vector falls back to the isotropic
     /// default (1,1,1)/sqrt(3) (documented cubic-crystal default; a general
     /// direction control arrives with the irrep machinery of stage A).
-    void set_loto_dir(const ModuleBase::Vector3<double>& dir);
-    ModuleBase::Vector3<double> get_loto_dir() const
-    {
-        return loto_dir_;
-    }
+    void set_loto_dir(const ModuleBase::Vector3<double> &dir);
+    ModuleBase::Vector3<double> get_loto_dir() const { return loto_dir_; }
 
     /// signed Gamma frequencies (cm^-1) after the non-analytic LO-TO term
     /// along loto_dir_; empty until add_loto + diagonalize_loto have run
-    void set_phon_freq_loto(const std::vector<double>& freq)
-    {
-        phon_freq_loto_ = freq;
-    }
-    std::vector<double> get_phon_freq_loto() const
-    {
-        return phon_freq_loto_;
-    }
+    void set_phon_freq_loto(const std::vector<double> &freq) { phon_freq_loto_ = freq; }
+    std::vector<double> get_phon_freq_loto() const { return phon_freq_loto_; }
 
     /// The perturbation currently being solved: displacement of which linear
     /// atom index (over all atoms) and along which cartesian direction.
     /// Set by DFPT_Pert::build_dv and consumed by DFPT_Pert::apply_dv so the
     /// Stern solver can keep applying the same perturbation per irrep without
     /// re-passing (atom,dir) on every matrix-vector product.
-    void set_pert_atom(int atom_idx)
-    {
-        pert_atom_ = atom_idx;
-    }
-    int get_pert_atom() const
-    {
-        return pert_atom_;
-    }
-    void set_pert_dir(int dir)
-    {
-        pert_dir_ = dir;
-    }
-    int get_pert_dir() const
-    {
-        return pert_dir_;
-    }
+    void set_pert_atom(int atom_idx) { pert_atom_ = atom_idx; }
+    int get_pert_atom() const { return pert_atom_; }
+    void set_pert_dir(int dir) { pert_dir_ = dir; }
+    int get_pert_dir() const { return pert_dir_; }
 
-    void set_is_metal(bool flag)
-    {
-        is_metal_ = flag;
-    }
-    bool get_is_metal() const
-    {
-        return is_metal_;
-    }
-    void set_dmu(double dmu)
-    {
-        dmu_ = dmu;
-    }
-    double get_dmu() const
-    {
-        return dmu_;
-    }
+    void set_is_metal(bool flag) { is_metal_ = flag; }
+    bool get_is_metal() const { return is_metal_; }
+    void set_dmu(double dmu) { dmu_ = dmu; }
+    double get_dmu() const { return dmu_; }
 
-    void set_max_iter(int iter)
-    {
-        max_iter_ = iter;
-    }
-    int get_max_iter() const
-    {
-        return max_iter_;
-    }
-    void set_conv_thr(double thr)
-    {
-        conv_thr_ = thr;
-    }
-    double get_conv_thr() const
-    {
-        return conv_thr_;
-    }
+    void set_max_iter(int iter) { max_iter_ = iter; }
+    int get_max_iter() const { return max_iter_; }
+    void set_conv_thr(double thr) { conv_thr_ = thr; }
+    double get_conv_thr() const { return conv_thr_; }
 
     /// Dedicated knobs of the inner Sternheimer linear solve. Both default
     /// to the inherit sentinel: unless set explicitly they track the outer
     /// mixing values (the historical single-knob behavior), so existing
     /// INPUT files are unaffected.
-    void set_lin_max_iter(int iter)
-    {
-        lin_max_iter_ = iter;
-    }
-    int get_lin_max_iter() const
-    {
-        return lin_max_iter_ > 0 ? lin_max_iter_ : max_iter_;
-    }
-    void set_lin_conv_thr(double thr)
-    {
-        lin_conv_thr_ = thr;
-    }
-    double get_lin_conv_thr() const
-    {
-        return lin_conv_thr_ > 0.0 ? lin_conv_thr_ : conv_thr_;
-    }
+    void set_lin_max_iter(int iter) { lin_max_iter_ = iter; }
+    int get_lin_max_iter() const { return lin_max_iter_ > 0 ? lin_max_iter_ : max_iter_; }
+    void set_lin_conv_thr(double thr) { lin_conv_thr_ = thr; }
+    double get_lin_conv_thr() const { return lin_conv_thr_ > 0.0 ? lin_conv_thr_ : conv_thr_; }
 
     /// Per-(q, irrep) SCF convergence ledger (B4: sunk from the retired
     /// DFPT_IrrepData adapter). The irrep dimension is a stage-A slot:
@@ -251,19 +184,13 @@ class DFPT_PW_Data
     /// u_active(): the provider is additionally usable (occupation matrices
     ///             initialized, which the ground state does when DFT+U
     ///             actually runs; a provider without them stays inactive).
-    bool with_u() const
-    {
-        return dftu_ != nullptr;
-    }
+    bool with_u() const { return dftu_ != nullptr; }
     bool u_active() const;
-    const Plus_U_Base* get_dftu() const
-    {
-        return dftu_;
-    }
+    const Plus_U_Base *get_dftu() const { return dftu_; }
 
     /// first-order occupation matrix (docc) storage, indexed by q.
     /// lazy allocation: unset / out-of-range reads return an empty vector.
-    void set_docc(int q_idx, const std::vector<std::complex<double>>& occ);
+    void set_docc(int q_idx, const std::vector<std::complex<double>> &occ);
     std::vector<std::complex<double>> get_docc(int q_idx) const;
 
     /// converged screened response potential of displacement (atom, dir):
@@ -271,21 +198,21 @@ class DFPT_PW_Data
     /// Sternheimer iteration of that displacement. The 2n+1 accumulation
     /// needs it to complete the term2 cross section
     /// 2<dpsi^a|dV_ext^b + dV_sc^b|psi> (screening channel).
-    void set_vsc_r(int atom_idx, int dir, const std::vector<std::complex<double>>& v);
+    void set_vsc_r(int atom_idx, int dir, const std::vector<std::complex<double>> &v);
     std::vector<std::complex<double>> get_vsc_r(int atom_idx, int dir) const;
 
     /// converged first-order density response (G space) of displacement
     /// (atom, dir): the two-pass 2n+1 accumulation needs it to rebuild the
     /// nlcc kernel input f_xc.(drho_val + drhoc) per displacement, after
     /// the working drho slots hold the last solved displacement
-    void set_drho_disp(int atom_idx, int dir, const std::vector<std::complex<double>>& rho);
+    void set_drho_disp(int atom_idx, int dir, const std::vector<std::complex<double>> &rho);
     std::vector<std::complex<double>> get_drho_disp(int atom_idx, int dir) const;
 
     /// converged dpsi of displacement (atom, dir), indexed [k][band]; the
     /// two-pass 2n+1 accumulation reads it back after all displacements of
     /// the basis have been solved (the working dpsi slots get overwritten by
     /// later solves).
-    void set_dpsi_disp(int atom_idx, int dir, const std::vector<std::vector<std::vector<std::complex<double>>>>& d);
+    void set_dpsi_disp(int atom_idx, int dir, const std::vector<std::vector<std::vector<std::complex<double>>>> &d);
     std::vector<std::vector<std::vector<std::complex<double>>>> get_dpsi_disp(int atom_idx, int dir) const;
 
     /// conduction-projected position operator P_c r_dir |u_(k,band)> of the
@@ -293,17 +220,17 @@ class DFPT_PW_Data
     /// -(i/tpiba) dH/dk_dir |u>), indexed [dir][k][band]; the screened Born
     /// charge contraction <dpsi^kappa|P_c r|u> avoids the empty-eigenvector
     /// truncation of the explicit r-matrix sum
-    void set_pos_resp(int dir, const std::vector<std::vector<std::vector<std::complex<double>>>>& y);
+    void set_pos_resp(int dir, const std::vector<std::vector<std::vector<std::complex<double>>>> &y);
     std::vector<std::vector<std::vector<std::complex<double>>>> get_pos_resp(int dir) const;
 
     /// converged screened E-field response dpsi^E(dir) of the q = 0 mesh
     /// (QE solve_e + dfpt_kernel fixed point on the rhs
     /// -(Y^dir + dV_sc^E|psi>)), indexed [dir][k][band]
-    void set_dpsi_efield(int dir, const std::vector<std::vector<std::vector<std::complex<double>>>>& d);
+    void set_dpsi_efield(int dir, const std::vector<std::vector<std::vector<std::complex<double>>>> &d);
     std::vector<std::vector<std::vector<std::complex<double>>>> get_dpsi_efield(int dir) const;
 
   private:
-    ModuleCell::QList* qlist_ = nullptr;
+    ModuleCell::QList *qlist_ = nullptr;
 
     int nk_ = 0;
     int nbands_ = 0;
@@ -344,7 +271,7 @@ class DFPT_PW_Data
     double dmu_ = 0.0;
 
     /// DFT+U reservation state (U0)
-    const Plus_U_Base* dftu_ = nullptr;
+    const Plus_U_Base *dftu_ = nullptr;
     std::vector<std::vector<std::complex<double>>> docc_;
 
     /// converged v_sc per displacement (atom, dir): [3*nat] entries

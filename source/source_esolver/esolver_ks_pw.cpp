@@ -307,6 +307,13 @@ void ESolver_KS_PW<T, Device>::iter_finish(
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 
     // Call iter_finish() of ESolver_KS
+    if (this->inp_->sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<std::complex<double>>& sc
+            = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        const double escon = sc.cal_escon();
+        this->pelec->set_spin_constrain_energy(escon);
+    }
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
 
     // D in USPP needs vloc, thus needs update when veff updated
@@ -381,7 +388,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell &ucell, const int istep, const
     if (this->inp_->out_elf[0] > 0)
     {
         elecstate::ElecStatePW<T, Device>* elec_pw = static_cast<elecstate::ElecStatePW<T, Device> *>(this->pelec);
-        auto &psi = *this->stp.template get_psi_t<T, Device>();
+        psi::Psi<T, Device>& psi = *this->stp.template get_psi_t<T, Device>();
         elec_pw->cal_tau(psi);
     }
 

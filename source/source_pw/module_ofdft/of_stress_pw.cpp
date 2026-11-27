@@ -115,7 +115,7 @@ void OF_Stress_PW::cal_stress(const int nspin,
     }
 
     const bool ry = false;
-    const bool screen = PARAM.inp.test_stress;
+    const bool screen = PARAM.inp.test_stress && PARAM.inp.calculation != "md";
     ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, GlobalV::ofs_running);
 
     if (screen)

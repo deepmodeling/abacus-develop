@@ -48,8 +48,9 @@ class DFPT_PW::Impl
     ~Impl();
 
     /// occupied-state projector set at k+q for every k of this q
-    /// (commensurate q: kvec_d[ik] + q must be a k point of the
-    /// ground-state list mod lattice)
+    /// (nscf path: the k+q states come from a block-Davidson
+    /// diagonalization of the full H(k+q) on the k+q ball, QE run_nscf
+    /// alignment)
     void build_occ_kq(int q_idx);
 
     /// one self-consistent Sternheimer cycle for the displacement
@@ -67,36 +68,29 @@ class DFPT_PW::Impl
     /// v_sc^q = v_Hartree(drho_in) + xc(drho_in) on the shared grid;
     /// shared by solve_displacement and solve_efield_resp so the
     /// real-space Hartree+XC add loop is not duplicated
-    void assemble_v_sc(int q_idx,
-                       const ModuleBase::Vector3<double>& q_cart,
-                       const std::vector<std::complex<double>>& drho_in_g,
-                       std::vector<std::complex<double>>& v_sc_r) const;
+    void assemble_v_sc(
+        int q_idx,
+        const ModuleBase::Vector3<double> &q_cart,
+        const std::vector<std::complex<double>> &drho_in_g,
+        std::vector<std::complex<double>> &v_sc_r) const;
 
   private:
     friend class DFPT_PW;
 
     // ----- initialisation helpers (dfpt_pw_init.cpp) -----
-    void check_metallic_occ(const ModuleBase::matrix& wg) const;
-    void setup_q_list(UnitCell& ucell);
-    void init_submodules(const DFPT_PW_InitContext& ctx,
-                         int nk,
-                         int nbands,
-                         int npw_max,
-                         int nrxx,
-                         int nspin,
-                         int nat);
+    void check_metallic_occ(const ModuleBase::matrix &wg) const;
+    void setup_q_list(UnitCell &ucell);
+    void init_submodules(
+        const DFPT_PW_InitContext &ctx,
+        int nk,
+        int nbands,
+        int npw_max,
+        int nrxx,
+        int nspin,
+        int nat);
 
     // ----- build_occ_kq helpers (dfpt_pw_init.cpp) -----
-    int match_commensurate_kq(int ik,
-                              const ModuleBase::Vector3<double>& q_frac,
-                              double tol,
-                              ModuleBase::Vector3<int>& dn_out) const;
-    void copy_occ_state_ball(int ik,
-                             int ikq,
-                             const ModuleBase::Vector3<int>& dn,
-                             const DFPT_KQ_Basis& kq,
-                             const ModuleBase::Matrix3& ginv,
-                             std::vector<std::vector<std::complex<double>>>& occ_ik) const;
+    int occupied_band_count(int ik) const;
 
     // ----- run() dispatch helpers (dfpt_pw_run.cpp) -----
     void run_q0_pre(int q_idx);
@@ -105,42 +99,55 @@ class DFPT_PW::Impl
     void run_assemble(int q_idx);
 
     // ----- solve_displacement helpers (dfpt_pw_solve.cpp) -----
-    double sternheimer_per_band(int ik,
-                                int ib,
-                                const std::vector<std::vector<std::complex<double>>>& dv_sc,
-                                int nbands,
-                                int lin_max,
-                                double lin_thr);
-    void stash_converged_disp_response(int q_idx,
-                                       int iat,
-                                       int idir,
-                                       const std::vector<std::complex<double>>& v_sc_r_last,
-                                       int nk,
-                                       int nbands);
+    double sternheimer_per_band(
+        int ik,
+        int ib,
+        const std::vector<std::vector<std::complex<double>>> &dv_sc,
+        int nbands,
+        int lin_max,
+        double lin_thr);
+    void stash_converged_disp_response(
+        int q_idx,
+        int iat,
+        int idir,
+        const std::vector<std::complex<double>> &v_sc_r_last,
+        int nk,
+        int nbands);
 
     // ----- q=0 solve helpers (dfpt_pw_q0.cpp) -----
-    void vel_diag_part(int ik, int a, int nbands, std::vector<std::vector<std::complex<double>>>& vel) const;
-    void vel_nl_per_atom(int ik,
-                         int a,
-                         int it,
-                         int ia,
-                         int nbands,
-                         const std::vector<ModuleBase::Vector3<double>>& gk,
-                         std::vector<std::vector<std::complex<double>>>& vel);
-    void pos_per_band_solve(int ik,
-                            int a,
-                            int nbands,
-                            int lin_max,
-                            double lin_thr,
-                            std::vector<std::vector<std::vector<std::complex<double>>>>& yvec);
-    void efield_per_band_solve(int ik,
-                               int a,
-                               int nbands,
-                               int lin_max,
-                               double lin_thr,
-                               const std::vector<std::vector<std::vector<std::complex<double>>>>& yr,
-                               const std::vector<std::vector<std::complex<double>>>& dv_sc);
-    void stash_dpsi_efield(int q_idx, int a, int nk, int nbands);
+    void vel_diag_part(
+        int ik,
+        int a,
+        int nbands,
+        std::vector<std::vector<std::complex<double>>> &vel) const;
+    void vel_nl_per_atom(
+        int ik,
+        int a,
+        int it,
+        int ia,
+        int nbands,
+        const std::vector<ModuleBase::Vector3<double>> &gk,
+        std::vector<std::vector<std::complex<double>>> &vel);
+    void pos_per_band_solve(
+        int ik,
+        int a,
+        int nbands,
+        int lin_max,
+        double lin_thr,
+        std::vector<std::vector<std::vector<std::complex<double>>>> &yvec);
+    void efield_per_band_solve(
+        int ik,
+        int a,
+        int nbands,
+        int lin_max,
+        double lin_thr,
+        const std::vector<std::vector<std::vector<std::complex<double>>>> &yr,
+        const std::vector<std::vector<std::complex<double>>> &dv_sc);
+    void stash_dpsi_efield(
+        int q_idx,
+        int a,
+        int nk,
+        int nbands);
 
     bool wired() const;
 
@@ -155,10 +162,10 @@ class DFPT_PW::Impl
     std::unique_ptr<DFPT_HamiltShift> hamilt_;
 
     psi::Psi<std::complex<double>> gs_psi_;
-    UnitCell* ucell_ = nullptr;
-    ModulePW::PW_Basis* pw_rho_ = nullptr;
-    ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
-    Structure_Factor* sf_ = nullptr;
+    UnitCell *ucell_ = nullptr;
+    ModulePW::PW_Basis *pw_rho_ = nullptr;
+    ModulePW::PW_Basis_K *pw_wfc_ = nullptr;
+    Structure_Factor *sf_ = nullptr;
     std::vector<double> veff_r_;
     /// ground-state XC potential (valence + core input), copied from the
     /// init context: the nlcc diagonal 2n+1 term consumes it; the copy
@@ -166,18 +173,22 @@ class DFPT_PW::Impl
     std::vector<double> vxc_r_;
     ModuleBase::matrix wg_;
     ModuleBase::matrix eig_;
-    const XC_First_Order* xc_ = nullptr;
+    const XC_First_Order *xc_ = nullptr;
     double nelec_ = 0.0;
     double ecutwfc_ = 0.0;
-    const Plus_U_Base* dftu_ = nullptr;
+    const Plus_U_Base *dftu_ = nullptr;
 
     ///< occupied states at k+q on the k+q G list, [ik][occ m][igl];
-    ///< rebuilt per q (they depend on q and k only)
+    ///< rebuilt per q (they depend on q and k only); produced by the nscf
+    ///< diagonalization (DFPT_NSCF on the full H(k+q)), aligned with QE
     std::vector<std::vector<std::vector<std::complex<double>>>> occ_kq_;
+    ///< nscf eigenvalues at k+q, [ik][occ m] (Ry), ascending; diagnostic
+    ///< companion of occ_kq_ (the Sternheimer shift keeps using the GS
+    ///< eigenvalue of the coupled k band)
+    std::vector<std::vector<double>> eig_kq_;
     ///< remembers the (q_idx, ik) the shifted operator was last cached at
     int last_q_ = -1;
     int last_ik_ = -1;
-    std::vector<int> ikq_of_k_;
 
     int nqx_ = 1, nqy_ = 1, nqz_ = 1;
     std::string qfile_;
@@ -187,10 +198,10 @@ class DFPT_PW::Impl
     /// file writer for the rank-0 output gate
     int myrank_ = 0;
     double mix_beta_ = 0.4;
-    std::string asr_type_ = "no"; ///< acoustic sum rule mode on the Gamma matrix
+    std::string asr_type_ = "no";           ///< acoustic sum rule mode on the Gamma matrix
     std::string mix_type_ = "v_sc_broyden"; ///< response SCF mixing scheme
-    double kerker_a2_ = 1.0;         ///< Kerker screening a^2, 1/lat0^2 (rho_kerker only)
-    int broyden_ndim_ = 8;           ///< Broyden history depth (rho/v_sc Broyden)
+    double kerker_a2_ = 1.0;                ///< Kerker screening a^2, 1/lat0^2 (rho_kerker only)
+    int broyden_ndim_ = 8;                  ///< Broyden history depth (rho/v_sc Broyden)
     ///< Broyden on the screening potential for v_sc mode (separate instance
     /// from the density Broyden because the array length differs: nrxx vs npw)
     std::unique_ptr<Base_Mixing::Broyden_Mixing> vsc_broyden_;

@@ -1,25 +1,11 @@
 #include "hsolver_lcao.h"
 
+#include "diag_sk_cut.h"
+
 #include "source_base/matrix_block.h"
 
 #ifdef __MPI
-#include "diago_scalapack.h"
 #include "source_base/module_external/scalapack_connector.h"
-#endif
-
-#include "diago_lapack.h"
-
-#ifdef __CUSOLVERMP
-#include "diago_cusolvermp.h"
-#endif
-
-#ifdef __ELPA
-#include "diago_elpa.h"
-#include "diago_elpa_native.h"
-#endif
-
-#ifdef __CUDA
-#include "diago_cusolver.h"
 #endif
 
 #ifdef __PEXSI
@@ -35,9 +21,10 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hsolver/parallel_k2d.h"
 
+#include <iostream>
+
 namespace hsolver
 {
-
 template <typename TK>
 void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
                                    psi::Psi<TK>& psi,
@@ -79,7 +66,8 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
                 psi.fix_k(ik);
 
                 /// solve eigenvector and eigenvalue for H(k)
-                this->hamiltSolvePsiK(hk, sk, psi, &(pes->ekb(ik, 0)));
+                double* eigenvalues = &pes->ekb(ik, 0);
+                this->hamiltSolvePsiK(hk, sk, psi, eigenvalues, ik, nullptr);
             }
         }
         else
@@ -138,55 +126,35 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
 
 template <typename T>
 void HSolverLCAO<T>::hamiltSolvePsiK(ModuleBase::MatrixBlock<T>& hk,
-                                     ModuleBase::MatrixBlock<T>& sk,
-                                     psi::Psi<T>& psi,
-                                     double* eigenvalue)
+                                    ModuleBase::MatrixBlock<T>& sk,
+                                    psi::Psi<T>& psi,
+                                    double* eigenvalue,
+                                    const int kpoint,
+                                    const Parallel_Blkcyclic* pool)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::start("HSolverLCAO", "hamiltSolvePsiK");
 
-    if (this->method == "scalapack_gvx")
+    const LcaoDiagOptions options{this->method, this->nlocal, this->nbands, this->use_gpu, pool, true};
+    if (this->overlap_cutoff > 0.0)
     {
-#ifdef __MPI
-        DiagoScalapack<T> sa(this->nlocal, this->nbands);
-        sa.diag(hk, sk, psi, eigenvalue);
-#endif
-    }
-#ifdef __ELPA
-    else if (this->method == "genelpa")
-    {
-        DiagoElpa<T> el(this->nlocal, this->nbands);
-        el.diag(hk, sk, psi, eigenvalue);
-    }
-    else if (this->method == "elpa")
-    {
-        DiagoElpaNative<T> el(this->nlocal, this->nbands, this->use_gpu);
-        el.diag(hk, sk, psi, eigenvalue);
-    }
-#endif
+        bool report = this->world_rank == 0;
+        if (pool != nullptr)
+        {
+            report = pool->irproc() == 0 && pool->icproc() == 0;
+        }
 #ifdef __CUDA
-    else if (this->method == "cusolver")
-    {
-        // Note: This branch will only be executed in the single-process case
-        DiagoCusolver<T> cu(this->nlocal, this->nbands);
-        cu.diag(hk, sk, psi, eigenvalue);
-    }
-#ifdef __CUSOLVERMP
-    else if (this->method == "cusolvermp")
-    {
-        DiagoCusolverMP<T> cm(this->nlocal, this->nbands);
-        cm.diag(hk, sk, psi, eigenvalue);
-    }
+        if (this->method == "cusolver")
+        {
+            report = true; // the GPU assigned to this k point owns the serial solve
+        }
 #endif
-#endif
-    else if (this->method == "lapack") // only for single core
-    {
-        DiagoLapack<T> la(this->nlocal, this->nbands);
-        la.diag(hk, sk, psi, eigenvalue);
+        std::ostream* log = report ? &std::cout : nullptr;
+        diag_sk_cut(hk, sk, psi, eigenvalue, options, kpoint, this->overlap_cutoff, log);
     }
     else
     {
-        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method is not supported for lcao basis in ABACUS!");
+        diag_lcao(hk, sk, psi, eigenvalue, options);
     }
 
     ModuleBase::timer::end("HSolverLCAO", "hamiltSolvePsiK");
@@ -242,7 +210,7 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
         /// global index of k point
         int ik_global = ik + k2d.get_pKpoints()->startk_pool[k2d.get_my_pool()];
         const int pool_local_rows = k2d.get_p2D_pool()->nrloc();
-        auto psi_pool = psi::Psi<T>(1, ncol_bands_pool, pool_local_rows, pool_local_rows, true);
+        psi::Psi<T> psi_pool = psi::Psi<T>(1, ncol_bands_pool, pool_local_rows, pool_local_rows, true);
         ModuleBase::Memory::record("HSolverLCAO::psi_pool", nrow * ncol_bands_pool * sizeof(T));
         if (ik_global < psi.get_nk() && ik < k2d.get_pKpoints()->nks_pool[k2d.get_my_pool()])
         {
@@ -256,34 +224,9 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
                                                                             (size_t)k2d.get_p2D_pool()->nrloc(),
                                                                             (size_t)k2d.get_p2D_pool()->ncloc(),
                                                                             k2d.get_p2D_pool()->desc()};
-            /// solve eigenvector and eigenvalue for H(k)
-            if (this->method == "scalapack_gvx")
-            {
-                DiagoScalapack<T> sa(this->nlocal, this->nbands);
-                sa.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
-            }
-            else if (this->method == "lapack")
-            {
-                DiagoLapack<T> la(this->nlocal, this->nbands);
-                la.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
-            }
-#ifdef __ELPA
-            else if (this->method == "genelpa")
-            {
-                DiagoElpa<T> el(this->nlocal, this->nbands);
-                el.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
-            }
-            else if (this->method == "elpa")
-            {
-                DiagoElpaNative<T> el(this->nlocal, this->nbands, this->use_gpu);
-                el.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
-            }
-#endif
-            else
-            {
-                ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
-                                         "This type of eigensolver for k-parallelism diagnolization is not supported!");
-            }
+            double* eigenvalues = &pes->ekb(ik_global, 0);
+            const auto* pool = k2d.get_p2D_pool();
+            this->hamiltSolvePsiK(hk_pool, sk_pool, psi_pool, eigenvalues, ik_global, pool);
         }
         MPI_Barrier(MPI_COMM_WORLD);
         ModuleBase::timer::start("HSolverLCAO", "collect_psi");
@@ -438,14 +381,14 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
         if(kpt_assigned != -1)
         {
             psi_local.resize(1, nbands, nrow);
-            DiagoCusolver<T> cu(this->nlocal, this->nbands);
             ModuleBase::MatrixBlock<T> hk_local = ModuleBase::MatrixBlock<T>{
                     hk_mat.data(), (size_t)nrow, (size_t)ncol,
                     mat_para_local.desc()};
             ModuleBase::MatrixBlock<T> sk_local = ModuleBase::MatrixBlock<T>{
                     sk_mat.data(), (size_t)nrow, (size_t)ncol,
                     mat_para_local.desc()};
-            cu.diag(hk_local, sk_local, psi_local, &(pes->ekb(kpt_assigned, 0)));
+            double* eigenvalues = &pes->ekb(kpt_assigned, 0);
+            this->hamiltSolvePsiK(hk_local, sk_local, psi_local, eigenvalues, kpt_assigned, nullptr);
         }
 
         // transfer the eigenvectors and eigenvalues to all processes

@@ -73,6 +73,7 @@ addtest(
   TARGET MODULE_DFPT_phon_serial
   LIBS parameter dfpt_planewave_serial device base symmetry
   SOURCES test_dfpt_phon_ewald.cpp
+          test_dfpt_nscf.cpp
           test_dfpt_phon_elec.cpp
           test_dfpt_phon_asr.cpp
           test_dfpt_phon.cpp
@@ -80,6 +81,7 @@ addtest(
           ../dfpt_phon_asr.cpp
           ../dfpt_phon_ewald.cpp
           ../dfpt_phon_elec.cpp
+          ../dfpt_nscf.cpp
           # Shared Ewald neighbor-shell generator (ion_ion real-space sum);
           # raw sources because hamilt_general is an MPI-ABI object library
           ../../../source_hamilt/module_ewald/h_ewald_pw.cpp
@@ -152,10 +154,10 @@ if(ENABLE_LIBXC)
     SOURCES test_dfpt_xc_analytic.cpp
             ../dfpt_xc_analytic.cpp
             ../dfpt_rho.cpp
-          ../dfpt_rho_mix.cpp
-          ../../../source_estate/module_charge/chg_tools.cpp
+            ../dfpt_rho_mix.cpp
+            ../../../source_estate/module_charge/chg_tools.cpp
             ../dfpt_pw_data.cpp
-          ../dfpt_pw_data_resp.cpp
+            ../dfpt_pw_data_resp.cpp
             ../dfpt_kq_basis.cpp
             ../../../source_cell/qlist.cpp
             ../../../source_cell/reciprocal_grid.cpp
@@ -220,6 +222,7 @@ if(ENABLE_MPI)
             ../dfpt_pert_nl.cpp
             ../dfpt_kq_basis.cpp
             ../dfpt_stern.cpp
+            ../dfpt_nscf.cpp
             ../dfpt_rho.cpp
             ../dfpt_rho_mix.cpp
             ../../../source_estate/module_charge/chg_tools.cpp

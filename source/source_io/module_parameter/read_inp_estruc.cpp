@@ -209,6 +209,29 @@ Then the user has to correct the input file and restart the calculation.)";
         this->add_item(item);
     }
     {
+        Input_Item item("lcao_sk_cut");
+        item.domain.set_rule("value>=0 and value<1");
+        item.set_availability("basis_type==lcao and ks_solver!=pexsi");
+        item.annotation = "relative threshold for canonical orthogonalization of the AO overlap";
+        item.category = "Electronic structure";
+        item.type = "Real";
+        item.description = R"(At zero, use the original generalized eigensolver. For a positive threshold, at each k point discard overlap eigenvalues at or below the threshold times the largest eigenvalue at that k point. Solve in the retained subspace and express the wavefunctions in the original AO basis. The retained rank at each k point must be at least nbands. This setting applies to Hamiltonian diagonalization. Force, stress, and response equations do not include derivatives of the retained subspace.)";
+        item.default_value = "0.0";
+        read_sync_double(input.lcao_sk_cut);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const double cutoff = para.input.lcao_sk_cut;
+            if (!(cutoff >= 0.0 && cutoff < 1.0))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lcao_sk_cut must be in [0, 1).");
+            }
+            if (cutoff > 0.0 && (para.input.basis_type != "lcao" || para.input.ks_solver == "pexsi"))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lcao_sk_cut requires an LCAO diagonalization solver.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("nbands");
         item.domain.set_rule("value>=0");
         item.annotation = "number of bands";

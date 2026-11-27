@@ -36,7 +36,7 @@ class DFPT_Stern
       public:
         virtual ~LinearOperator() = default;
         virtual int dimension() const = 0;
-        virtual void apply(const std::complex<double>* x, std::complex<double>* y) const = 0;
+        virtual void apply(const std::complex<double> *x, std::complex<double> *y) const = 0;
     };
 
     /**
@@ -51,20 +51,21 @@ class DFPT_Stern
      * @param residual  achieved relative residual
      * @return          number of iterations used
      */
-    int solve(const LinearOperator& aop,
-              const std::vector<std::vector<std::complex<double>>>& occ_kq,
-              const std::vector<std::complex<double>>& b,
-              int max_iter,
-              double conv_thr,
-              std::vector<std::complex<double>>& dpsi,
-              double& residual) const;
+    int solve(
+        const LinearOperator &aop,
+        const std::vector<std::vector<std::complex<double>>> &occ_kq,
+        const std::vector<std::complex<double>> &b,
+        int max_iter,
+        double conv_thr,
+        std::vector<std::complex<double>> &dpsi,
+        double &residual) const;
 
   private:
     /// P_c x by modified Gram-Schmidt against the occupied states; safe for
     /// px to alias x (projection coefficients are collected before subtracting)
-    void apply_pv(const std::vector<std::vector<std::complex<double>>>& occ_kq,
-                  const std::vector<std::complex<double>>& x,
-                  std::vector<std::complex<double>>& px) const;
+    void apply_pv(
+        const std::vector<std::vector<std::complex<double>>> &occ_kq, const std::vector<std::complex<double>> &x,
+        std::vector<std::complex<double>> &px) const;
 };
 
 } // namespace ModuleDFPT

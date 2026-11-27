@@ -32,7 +32,7 @@ Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.
 To employ CMD calculations, `esolver_type` should be set to be `lj` or `dp`.
 If DP model is selected, the filename of DP model is specified by keyword `pot_file`.
 
-The MD output information will be written into the file `MD_dump`， in which the atomic forces, atomic velocities, and lattice virial are controlled by keyword `dump_force`, `dump_vel`, and `dump_virial`, respectively.
+MD trajectories are written to STRU files when `out_stru=1` and `out_freq_ion>0`. Each ordinary frame contains positions, forces, and velocities. The full virial tensor is written to `running_md.log` when stress is calculated.
 
 Note:
 1) When doing md calculations, turn off `symmetry`.

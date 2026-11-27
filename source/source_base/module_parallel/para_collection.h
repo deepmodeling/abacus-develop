@@ -68,7 +68,7 @@ private:
 template <typename T>
 const T* ParaCollection::find_as(const std::string& tag) const
 {
-    for (const auto& world : worlds_)
+    for (const std::unique_ptr<Parallel::ParaWorld>& world : worlds_)
     {
         if (world->tag() == tag)
         {

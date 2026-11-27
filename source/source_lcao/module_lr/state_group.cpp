@@ -21,7 +21,7 @@ GroupMatch match_state_group(const std::vector<std::complex<double>>& overlap,
     result.reference_weights.resize(groups.size());
     for (size_t ig = 0; ig < groups.size(); ++ig)
     {
-        const auto& group = groups[ig];
+        const std::vector<int>& group = groups[ig];
         const int dimension = group.size();
         if (dimension == 0)
         {
@@ -61,7 +61,7 @@ GroupMatch match_state_group(const std::vector<std::complex<double>>& overlap,
         result.old_coverage = weight / old_dimension;
         result.new_coverage = weight / dimension;
     }
-    const auto& selected = groups[result.group];
+    const std::vector<int>& selected = groups[result.group];
     const int selected_dimension = static_cast<int>(selected.size());
     const int rank = std::min(old_dimension, selected_dimension);
     std::vector<std::complex<double>> gram(rank * rank, 0.0);

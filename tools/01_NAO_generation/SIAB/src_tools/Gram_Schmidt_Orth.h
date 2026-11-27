@@ -14,26 +14,23 @@ class Gram_Schmidt_Orth
 {
   public:
     ~Gram_Schmidt_Orth();
-    Func_Type** orth();
+    Func_Type **orth();
 
   private:
     int coordinate; // 0:cartesian, 1:sphere
     size_t func_num;
     size_t variable_num;
-    Func_Type** func{nullptr};
-    R_Type* r{nullptr};
-    R_Type* r_2{nullptr};
-    R_Type* rab{nullptr};
+    Func_Type **func{nullptr};
+    R_Type *r{nullptr};
+    R_Type *r_2{nullptr};
+    R_Type *rab{nullptr};
 
   private:
     bool finish_init{false};
 
   public:
-    size_t get_coordinate() const
-    {
-        return coordinate;
-    }
-    Gram_Schmidt_Orth& set_coordinate(size_t coordinate_in)
+    size_t get_coordinate() const { return coordinate; }
+    Gram_Schmidt_Orth &set_coordinate(size_t coordinate_in)
     {
         if (0 != coordinate_in && 1 != coordinate_in)
         {
@@ -43,67 +40,53 @@ class Gram_Schmidt_Orth
         return *this;
     }
 
-    size_t get_func_num() const
-    {
-        return func_num;
-    }
-    Gram_Schmidt_Orth& set_func_num(size_t func_num_in)
+    size_t get_func_num() const { return func_num; }
+    Gram_Schmidt_Orth &set_func_num(size_t func_num_in)
     {
         func_num = func_num_in;
         return *this;
     }
 
-    size_t get_variable_num() const
-    {
-        return variable_num;
-    }
-    Gram_Schmidt_Orth& set_variable_num(size_t variable_num_in)
+    size_t get_variable_num() const { return variable_num; }
+    Gram_Schmidt_Orth &set_variable_num(size_t variable_num_in)
     {
         variable_num = variable_num_in;
         return *this;
     }
 
-    Func_Type** get_func() const
-    {
-        return func;
-    }
-    Gram_Schmidt_Orth& set_func(Func_Type** func_in)
+    Func_Type **get_func() const { return func; }
+    Gram_Schmidt_Orth &set_func(Func_Type **func_in)
     {
         func = func_in;
         return *this;
     }
 
-    R_Type* get_r() const
-    {
-        return r;
-    }
-    Gram_Schmidt_Orth& set_r(R_Type* r_in)
+    R_Type *get_r() const { return r; }
+    Gram_Schmidt_Orth &set_r(R_Type *r_in)
     {
         r = r_in;
         return *this;
     }
 
-    R_Type* get_r_2() const
-    {
-        return r_2;
-    }
+    R_Type *get_r_2() const { return r_2; }
 
-    R_Type* get_rab() const
-    {
-        return rab;
-    }
-    Gram_Schmidt_Orth& set_rab_element(const R_Type& rab_element_in)
+    R_Type *get_rab() const { return rab; }
+    Gram_Schmidt_Orth &set_rab_element(const R_Type &rab_element_in)
     {
         if (NULL == rab)
+        {
             rab = new R_Type[variable_num];
+        }
         for (size_t i(0); i < variable_num; ++i)
+        {
             rab[i] = rab_element_in;
+        }
         return *this;
     }
 
   private:
     void init();
-    Func_Type cal_norm(Func_Type* func_in);
+    Func_Type cal_norm(Func_Type *func_in);
 };
 
 #include "lapack_connector.h"
@@ -113,7 +96,9 @@ template <typename Func_Type, typename R_Type>
 void Gram_Schmidt_Orth<Func_Type, R_Type>::init()
 {
     if (this->finish_init)
+    {
         return;
+    }
     if (nullptr == this->r_2)
     {
         this->r_2 = new R_Type[variable_num];
@@ -140,7 +125,7 @@ Gram_Schmidt_Orth<Func_Type, R_Type>::~Gram_Schmidt_Orth()
 }
 
 template <typename Func_Type, typename R_Type>
-Func_Type** Gram_Schmidt_Orth<Func_Type, R_Type>::orth()
+Func_Type **Gram_Schmidt_Orth<Func_Type, R_Type>::orth()
 {
     init();
 
@@ -154,7 +139,7 @@ Func_Type** Gram_Schmidt_Orth<Func_Type, R_Type>::orth()
         for (size_t if2(0); if2 < if1; ++if2)
         {
             // (hn,ei)
-            Func_Type* mul_func = new Func_Type[this->variable_num];
+            Func_Type *mul_func = new Func_Type[this->variable_num];
             Mathzone::Pointwise_Product(this->variable_num, this->func[if1], this->func[if2], mul_func);
             const Func_Type in_product = cal_norm(mul_func);
             delete[] mul_func;
@@ -165,7 +150,7 @@ Func_Type** Gram_Schmidt_Orth<Func_Type, R_Type>::orth()
         }
 
         // ||gn||
-        Func_Type* func_2 = new Func_Type[this->variable_num];
+        Func_Type *func_2 = new Func_Type[this->variable_num];
         Mathzone::Pointwise_Product(this->variable_num, this->func[if1], this->func[if1], func_2);
         const Func_Type norm = sqrt(cal_norm(func_2));
         delete[] func_2;
@@ -178,7 +163,7 @@ Func_Type** Gram_Schmidt_Orth<Func_Type, R_Type>::orth()
 }
 
 template <typename Func_Type, typename R_Type>
-Func_Type Gram_Schmidt_Orth<Func_Type, R_Type>::cal_norm(Func_Type* func_in)
+Func_Type Gram_Schmidt_Orth<Func_Type, R_Type>::cal_norm(Func_Type *func_in)
 {
     Func_Type norm(0.0);
     switch (coordinate)
@@ -187,7 +172,7 @@ Func_Type Gram_Schmidt_Orth<Func_Type, R_Type>::cal_norm(Func_Type* func_in)
         Mathzone::Simpson_Integral(this->variable_num, func_in, this->rab, norm);
         break;
     case 1:
-        Func_Type* tmp_func = new Func_Type[this->variable_num];
+        Func_Type *tmp_func = new Func_Type[this->variable_num];
         Mathzone::Pointwise_Product(this->variable_num, func_in, this->r_2, tmp_func);
         Mathzone::Simpson_Integral(this->variable_num, tmp_func, this->rab, norm);
         delete[] tmp_func;

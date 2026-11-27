@@ -28,7 +28,7 @@ template <typename T>
 const ModuleIO::SparseRBlock<T>& block_or_empty(const ModuleIO::SparseRMatrix<T>& matrix,
                                                 const ModuleIO::RCoordinate& R_coor)
 {
-    auto iter = matrix.find(R_coor);
+    typename ModuleIO::SparseRMatrix<T>::const_iterator iter = matrix.find(R_coor);
     if (iter != matrix.end())
     {
         return iter->second;

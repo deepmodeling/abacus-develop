@@ -25,11 +25,11 @@ int NE = -1;
 // global information
 int STRNUM = -1;
 int NTYPE = -1;
-string* LABEL;
-int* NA;
-double** CARPOSX;
-double** CARPOSY;
-double** CARPOSZ;
+string *LABEL;
+int *NA;
+double **CARPOSX;
+double **CARPOSY;
+double **CARPOSZ;
 Matrix3 LATVEC;
 
 // plane wave information
@@ -37,9 +37,9 @@ bool USEPW = true;
 double LAT0 = -1.0;
 
 // k points
-double* CARKX;
-double* CARKY;
-double* CARKZ;
+double *CARKX;
+double *CARKY;
+double *CARKZ;
 
 // orbital + energy cutoff
 double ECUT = -1.0;

@@ -40,7 +40,7 @@ namespace LR
         {
             std::streamsize old = std::cout.precision();
             std::cout << label << std::setprecision(8) << std::endl;
-            for (auto& e : eigs) { std::cout << e * factor << " "; }
+            for (const T& e : eigs) { std::cout << e * factor << " "; }
             std::cout << std::endl;
             std::cout.precision(old);
         }
