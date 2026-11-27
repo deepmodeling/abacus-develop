@@ -6,13 +6,13 @@
 
 #include "deepks_orbpre.h"
 
-#include "LCAO_deepks_io.h" // mohan add 2024-07-22
+#include "lcao_deepks_io.h" // mohan add 2024-07-22
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
+#include "source_hamilt/module_hcontainer/atom_pair.h"
 
 // calculates orbital_precalc[nks,NAt,NDscrpt] = gevdm * orbital_pdm;
 // orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap;
@@ -31,14 +31,14 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                                         torch::Tensor& orbital_precalc)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_orbital_precalc");
-    ModuleBase::timer::tick("DeePKS_domain", "calc_orbital_precalc");
+    ModuleBase::timer::start("DeePKS_domain", "calc_orbital_precalc");
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
     torch::Tensor orbital_pdm
         = torch::zeros({nks, deepks_param.inlmax, (2 * deepks_param.lmaxd + 1), (2 * deepks_param.lmaxd + 1)},
                        torch::dtype(torch::kFloat64));
-    auto accessor = orbital_pdm.accessor<double, 4>();
+    at::TensorAccessor<double, 4> accessor = orbital_pdm.accessor<double, 4>();
 
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
@@ -97,7 +97,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                     continue;
                 }
 
-                auto row_indexes = pv.get_indexes_row(ibt1);
+                std::vector<int> row_indexes = pv.get_indexes_row(ibt1);
 
                 const int row_size = row_indexes.size();
 
@@ -148,7 +148,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                         continue;
                     }
 
-                    auto col_indexes = pv.get_indexes_col(ibt2);
+                    std::vector<int> col_indexes = pv.get_indexes_col(ibt2);
                     const int col_size = col_indexes.size();
                     if (col_size == 0)
                     {
@@ -197,11 +197,11 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
 
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
-                            dm_pair.add_from_matrix(dm_hl[ik].c, pv.get_row_size(), *kphase_ptr, 1);
+                            dm_pair.add_from_matrix(dm_hl[ik].c, pv.para_2d().nrloc(), *kphase_ptr, 1);
                         }
                         else
                         {
-                            dm_pair.add_from_matrix(dm_hl[ik].c, pv.get_col_size(), *kphase_ptr, 0);
+                            dm_pair.add_from_matrix(dm_hl[ik].c, pv.para_2d().ncloc(), *kphase_ptr, 0);
                         }
                     } // ik
 
@@ -289,7 +289,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     }
 
     orbital_precalc = torch::cat(orbital_precalc_vector, -1);
-    ModuleBase::timer::tick("DeePKS_domain", "calc_orbital_precalc");
+    ModuleBase::timer::end("DeePKS_domain", "calc_orbital_precalc");
     return;
 }
 

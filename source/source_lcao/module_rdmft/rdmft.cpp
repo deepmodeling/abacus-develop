@@ -4,10 +4,17 @@
 //==========================================================
 
 #include "rdmft.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_rdmft/rdmft_tools.h"
+#include "source_base/basis_flattened_indexing.h"
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_cell/module_symmetry/symmetry.h"
+
+#ifdef __EXX
+#include "source_lcao/module_ri/exx_lri.h"
+#endif
 
 #include <iostream>
 #include <cmath>
@@ -61,7 +68,8 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
                          LCAO_Orbitals& orb_in,
                          TwoCenterBundle& two_center_bundle_in,
                          std::string XC_func_rdmft_in,
-                         double alpha_power_in)
+                         double alpha_power_in,
+                         const Exx_Info& exx_info)
 {
     ParaV = &ParaV_in;
     ucell = &ucell_in;
@@ -74,15 +82,21 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
     XC_func_rdmft = XC_func_rdmft_in;
     alpha_power = alpha_power_in;
 
+    const ModuleBase::Element_Basis_Index::Range basis_range =
+        ModuleBase::Element_Basis_Index::construct_range(orb_in);
+    const ModuleBase::Element_Basis_Index::IndexLNM basis_hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(basis_range);
+    basis_index_.reset(new BasisFlattenedIndexing(basis_hierarchy, ucell_in.iat2it, ucell_in.get_npol()));
+
     nspin = PARAM.inp.nspin;
     nbands_total = PARAM.inp.nbands;
-    nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->get_nkstot_full(): kv->get_nks();
+    nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->get_nkstot_nospin(): kv->get_nks();
     nk_total *= nspin;
     only_exx_type = ( XC_func_rdmft == "hf" || XC_func_rdmft == "muller" || XC_func_rdmft == "power" );
 
     // create desc[] and something about MPI to Eij(nbands*nbands)
 #ifdef __MPI
-    para_Eij.set(nbands_total, nbands_total, ParaV->nb, ParaV->blacs_ctxt); // maybe in default, PARAM.inp.nb2d = 0, can't be used
+    para_Eij.set(nbands_total, nbands_total, ParaV->para_2d().nb(), ParaV->para_2d().ictxt()); // maybe in default, PARAM.inp.nb2d = 0, can't be used
 #endif
 
     // 
@@ -98,13 +112,13 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
     wfcHwfc_dft_XC.create(nk_total, nbands_total);
 
     // 
-    wfc.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);   // test ParaV->nrow
-    occNum_HamiltWfc.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_TV.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_hartree.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_exx_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_dft_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
+    wfc.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());   // test ParaV->nrow
+    occNum_HamiltWfc.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
+    H_wfc_TV.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
+    H_wfc_hartree.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
+    H_wfc_XC.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
+    H_wfc_exx_XC.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
+    H_wfc_dft_XC.resize(nk_total, ParaV->ncol_bands, ParaV->para_2d().nrloc());
 
     //
     hsk_TV = new hamilt::HS_Matrix_K<TK>(ParaV, true);
@@ -112,15 +126,15 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
     hsk_dft_XC = new hamilt::HS_Matrix_K<TK>(ParaV, true);
     hsk_exx_XC = new hamilt::HS_Matrix_K<TK>(ParaV, true);
 
-    HK_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    HK_XC.resize( ParaV->para_2d().nrloc()*ParaV->para_2d().ncloc() );
     // HK_RDMFT_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
     // HK_XC_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
 
 
-    Eij_TV.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
-    Eij_hartree.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
-    Eij_XC.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
-    Eij_exx_XC.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
+    Eij_TV.resize( para_Eij.nrloc()*para_Eij.ncloc() );
+    Eij_hartree.resize( para_Eij.nrloc()*para_Eij.ncloc() );
+    Eij_XC.resize( para_Eij.nrloc()*para_Eij.ncloc() );
+    Eij_exx_XC.resize( para_Eij.nrloc()*para_Eij.ncloc() );
 
     // 
     HR_TV = new hamilt::HContainer<TR>(*ucell, ParaV);
@@ -144,26 +158,31 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
     // HR_local->set_zero();
 
 #ifdef __EXX
-    if( GlobalC::exx_info.info_global.cal_exx )
+    this->exx_info_ = &exx_info;
+    if( this->exx_info_->info_global.cal_exx )
     {
         // if the irreducible k-points can change with symmetry during cell-relax, it should be moved back to update_ion()
         exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
         if (exx_spacegroup_symmetry)
         {
             const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(*kv);
-            this->symrot_exx.find_irreducible_sector(ucell->symm, ucell->atoms, ucell->st,
-                    RI_Util::get_Born_von_Karmen_cells(period), period, ucell->lat);
-            this->symrot_exx.cal_Ms(*kv, *ucell, *ParaV);
+            this->symrot_exx.find_irred_sector(ucell->symm, ucell->atoms,
+                    ucell->nat, ucell->ntype, ucell->iat2it, ucell->iat2ia,
+                    RI_Util::get_Born_von_Karmen_cells(period), period, ucell->lat, PARAM.globalv.global_out_dir);
+            this->symrot_exx.cal_Ms(*kv, ucell->symm, ucell->atoms,
+                    ucell->latvec, ucell->lmax,
+                    ucell->nat, ucell->iat2it, ucell->iat2ia,
+                    ParaV->para_2d(), nspin);
         }
 
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (this->exx_info_->info_ri.real_number)
         {
-            Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+            Vxc_fromRI_d = new Exx_LRI<double>(this->exx_info_->info_ri);
             Vxc_fromRI_d->init(MPI_COMM_WORLD, ucell_in,*kv, *orb);
         }
         else
         {
-            Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(GlobalC::exx_info.info_ri);
+            Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(this->exx_info_->info_ri);
             Vxc_fromRI_c->init(MPI_COMM_WORLD, ucell_in,*kv, *orb);
         }
     }
@@ -212,7 +231,7 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
         _diagonal_in_serial( para_Eij, Eij_hartree, &(wfcHwfc_hartree(ik, 0)) );
 
 #ifdef __EXX
-        if(GlobalC::exx_info.info_global.cal_exx)
+        if(this->exx_info_->info_global.cal_exx)
         {
             hsk_exx_XC->set_zero_hk();
 
@@ -314,7 +333,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
         // for Exc
         E_RDMFT[2] = 0.0;
 #ifdef __EXX
-        if( GlobalC::exx_info.info_global.cal_exx )
+        if( this->exx_info_->info_global.cal_exx )
         {
             ModuleBase::matrix Exc_n_k(wg.nr, wg.nc, true);
             // because we have got wk_fun_occNum, we can use symbol=1 realize it
@@ -339,27 +358,24 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     {
         this->pelec->f_en.deband  = this->pelec->cal_delta_eband(*ucell);
         E_descf = pelec->f_en.descf = 0.0;
-        this->pelec->cal_energies(2);
+        const bool sc_mag_switch = PARAM.inp.sc_mag_switch;
+        if (sc_mag_switch)
+        {
+            spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+            const double escon = sc.cal_escon();
+            this->pelec->set_spin_constrain_energy(escon);
+        }
+        this->pelec->cal_energies(2,
+                                  PARAM.inp.imp_sol,
+                                  sc_mag_switch,
+                                  PARAM.inp.dft_plus_u,
+                                  PARAM.inp.assume_isolated);
         Etotal = this->pelec->f_en.etot;
 
-        // if( GlobalC::exx_info.info_global.cal_exx )
-        // {
-        //     ModuleBase::matrix Exc_n_k(wg.nr, wg.nc, true);
-        //     // because we have got wk_fun_occNum, we can use symbol=1 realize it
-        //     occNum_Mul_wfcHwfc(wk_fun_occNum, wfcHwfc_XC, Exc_n_k, 1);
-        //     E_RDMFT[2] = getEnergy(Exc_n_k);
-        //     Parallel_Reduce::reduce_all(E_RDMFT[2]);
-
-        //     // test
-        //     Etotal -= E_RDMFT[2];
-        // }
-    }
+            }
 
 //     // print results
 //     std::cout << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
-// #ifdef __EXX
-//     if( GlobalC::exx_info.info_global.cal_exx ) std::cout << "alpha_power: " << alpha_power << std::endl;
-// #endif
 //     std::cout << std::fixed << std::setprecision(10) 
 //                 << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] 
 //                 << "\n\nE_TV_RDMFT:      " << E_RDMFT[0] 
@@ -380,7 +396,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     {
         GlobalV::ofs_running << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
 #ifdef __EXX
-        if( GlobalC::exx_info.info_global.cal_exx ) { GlobalV::ofs_running << "alpha_power: " << alpha_power << std::endl;
+        if( this->exx_info_->info_global.cal_exx ) { GlobalV::ofs_running << "alpha_power: " << alpha_power << std::endl;
 }
 #endif
         // GlobalV::ofs_running << std::setprecision(12);
@@ -408,7 +424,7 @@ template <typename TK, typename TR>
 double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
 {
     ModuleBase::TITLE("RDMFT", "E_Egradient");
-    ModuleBase::timer::tick("RDMFT", "E_Egradient");
+    ModuleBase::timer::start("RDMFT", "E_Egradient");
 
     // this->cal_V_hartree();
     // this->cal_V_XC();
@@ -423,7 +439,7 @@ double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
     for(int i=0; i<wfc.size(); ++i) { pwfc_out[i] = pwfc[i]; }
 
-    ModuleBase::timer::tick("RDMFT", "E_Egradient");
+    ModuleBase::timer::end("RDMFT", "E_Egradient");
     // return E_RDMFT[3];
     return Etotal;
 }

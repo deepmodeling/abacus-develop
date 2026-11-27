@@ -55,8 +55,7 @@ void KEDF_WT::set_para(double dV,
     this->wt_coef_
         = 5. / (9. * this->alpha_ * this->beta_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 5. / 3.));
 
-    delete[] this->kernel_;
-    this->kernel_ = new double[pw_rho->npw];
+    this->kernel_.resize(pw_rho->npw);
 
     if (read_kernel) {
         this->read_kernel(kernel_file, pw_rho);
@@ -75,14 +74,15 @@ void KEDF_WT::set_para(double dV,
  */
 double KEDF_WT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho)
 {
-    double** kernelRhoBeta = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    const int nspin = PARAM.inp.nspin;
+    double** kernelRhoBeta = new double*[nspin];
+    for (int is = 0; is < nspin; ++is) {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
 }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double energy = 0.; // in Ry
-    if (PARAM.inp.nspin == 1)
+    if (nspin == 1)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
@@ -90,9 +90,9 @@ double KEDF_WT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho
         }
         energy *= this->dV_ * this->c_tf_;
     }
-    else if (PARAM.inp.nspin == 2)
+    else if (nspin == 2)
     {
-        // for (int is = 0; is < PARAM.inp.nspin; ++is)
+        // for (int is = 0; is < nspin; ++is)
         // {
         //     for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         //     {
@@ -104,13 +104,13 @@ double KEDF_WT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho
     this->wt_energy = energy;
     Parallel_Reduce::reduce_all(this->wt_energy);
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] kernelRhoBeta[is];
     }
     delete[] kernelRhoBeta;
 
-    return energy;
+    return this->wt_energy;
 }
 
 /**
@@ -125,15 +125,16 @@ double KEDF_WT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho
  */
 double KEDF_WT::get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho)
 {
-    double** kernelRhoBeta = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    const int nspin = PARAM.inp.nspin;
+    double** kernelRhoBeta = new double*[nspin];
+    for (int is = 0; is < nspin; ++is) {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
 }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double result = this->c_tf_ * std::pow(prho[is][ir], this->alpha_) * kernelRhoBeta[is][ir];
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] kernelRhoBeta[is];
     }
@@ -151,25 +152,26 @@ double KEDF_WT::get_energy_density(const double* const* prho, int is, int ir, Mo
  */
 void KEDF_WT::tau_wt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_wt)
 {
-    double** kernelRhoBeta = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    const int nspin = PARAM.inp.nspin;
+    double** kernelRhoBeta = new double*[nspin];
+    for (int is = 0; is < nspin; ++is) {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
 }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
-    if (PARAM.inp.nspin == 1)
+    if (nspin == 1)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
             rtau_wt[ir] += std::pow(prho[0][ir], this->alpha_) * kernelRhoBeta[0][ir] * this->c_tf_;
         }
     }
-    else if (PARAM.inp.nspin == 2)
+    else if (nspin == 2)
     {
         // Waiting for update
     }
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] kernelRhoBeta[is];
     }
@@ -188,21 +190,23 @@ void KEDF_WT::tau_wt(const double* const* prho, ModulePW::PW_Basis* pw_rho, doub
  */
 void KEDF_WT::wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
 {
-    ModuleBase::timer::tick("KEDF_WT", "wt_potential");
+    const int nspin = PARAM.inp.nspin;
+    ModuleBase::TITLE("KEDF_WT", "wt_potential");
+    ModuleBase::timer::start("KEDF_WT", "wt_potential");
 
-    double** kernelRhoBeta = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    double** kernelRhoBeta = new double*[nspin];
+    for (int is = 0; is < nspin; ++is) {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
 }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
-    double** kernelRhoAlpha = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    double** kernelRhoAlpha = new double*[nspin];
+    for (int is = 0; is < nspin; ++is) {
         kernelRhoAlpha[is] = new double[pw_rho->nrxx];
 }
     this->multi_kernel(prho, kernelRhoAlpha, this->alpha_, pw_rho);
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
@@ -214,7 +218,7 @@ void KEDF_WT::wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho
 
     // calculate energy
     double energy = 0.; // in Ry
-    if (PARAM.inp.nspin == 1)
+    if (nspin == 1)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
@@ -222,9 +226,9 @@ void KEDF_WT::wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho
         }
         energy *= this->dV_ * this->c_tf_;
     }
-    else if (PARAM.inp.nspin == 2)
+    else if (nspin == 2)
     {
-        // for (int is = 0; is < PARAM.inp.nspin; ++is)
+        // for (int is = 0; is < nspin; ++is)
         // {
         //     for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         //     {
@@ -236,14 +240,14 @@ void KEDF_WT::wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho
     this->wt_energy = energy;
     Parallel_Reduce::reduce_all(this->wt_energy);
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] kernelRhoBeta[is];
         delete[] kernelRhoAlpha[is];
     }
     delete[] kernelRhoBeta;
     delete[] kernelRhoAlpha;
-    ModuleBase::timer::tick("KEDF_WT", "wt_potential");
+    ModuleBase::timer::end("KEDF_WT", "wt_potential");
 }
 
 /**
@@ -255,6 +259,8 @@ void KEDF_WT::wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho
  */
 void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, double vw_weight)
 {
+    const int nspin = PARAM.inp.nspin;
+    const bool gamma_only = PARAM.globalv.gamma_only_pw;
     double coef = 0.;
     double mult = 0.;
     if (this->hold_rho0_)
@@ -268,10 +274,10 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
         mult = 2. / 3.;
     }
 
-    std::complex<double>** recipRhoAlpha = new std::complex<double>*[PARAM.inp.nspin];
-    std::complex<double>** recipRhoBeta = new std::complex<double>*[PARAM.inp.nspin];
+    std::complex<double>** recipRhoAlpha = new std::complex<double>*[nspin];
+    std::complex<double>** recipRhoBeta = new std::complex<double>*[nspin];
     double* tempRho = new double[pw_rho->nrxx];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         recipRhoAlpha[is] = new std::complex<double>[pw_rho->npw];
         recipRhoBeta[is] = new std::complex<double>[pw_rho->npw];
@@ -293,7 +299,7 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
     double diff = 0.;
     this->stress.zero_out();
     const int ig0 = pw_rho->ig_gge0;
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         for (int ip = 0; ip < pw_rho->npw; ++ip)
         {
@@ -309,7 +315,7 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
                 for (int b = a; b < 3; ++b)
                 {
                     this->stress(a, b) += -diff * pw_rho->gcar[ip][a] * pw_rho->gcar[ip][b] / pw_rho->gg[ip];
-                    if (a == b) 
+                    if (a == b)
                     {
                         this->stress(a, b) += diff * coef;
                     }
@@ -325,7 +331,7 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
         {
             Parallel_Reduce::reduce_all(this->stress(a, b));
 
-            if (PARAM.globalv.gamma_only_pw)
+            if (gamma_only)
             {
                 this->stress(a, b) *= -std::pow(ModuleBase::PI, 2)
                                       / (this->alpha_ * this->beta_ * this->kf_
@@ -351,7 +357,7 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
         }
     }
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] recipRhoAlpha[is];
         delete[] recipRhoBeta[is];
@@ -456,8 +462,16 @@ double KEDF_WT::diff_linhard(double eta, double vw_weight)
  */
 void KEDF_WT::multi_kernel(const double* const* prho, double** rkernel_rho, double exponent, ModulePW::PW_Basis* pw_rho)
 {
-    std::complex<double>** recipkernelRho = new std::complex<double>*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    const int nspin = PARAM.inp.nspin;
+#ifdef __CUDA
+    if (pw_rho->get_device() == "gpu") {
+        this->multi_kernel_gpu(prho, rkernel_rho, nspin, exponent, pw_rho);
+        return;
+    }
+#endif
+
+    std::complex<double>** recipkernelRho = new std::complex<double>*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         recipkernelRho[is] = new std::complex<double>[pw_rho->npw];
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
@@ -472,7 +486,7 @@ void KEDF_WT::multi_kernel(const double* const* prho, double** rkernel_rho, doub
         pw_rho->recip2real(recipkernelRho[is], rkernel_rho[is]);
     }
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] recipkernelRho[is];
     }

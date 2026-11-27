@@ -2,7 +2,6 @@
 
 #include "source_base/vector3.h"
 #include "source_base/ylm.h"
-#include "source_base/array_pool.h"
 
 TwoCenterIntegrator::TwoCenterIntegrator():
     is_tabulated_(false),
@@ -30,7 +29,7 @@ void TwoCenterIntegrator::calculate(const int itype1,
                                     const int l2,
                                     const int izeta2,
                                     const int m2,
-	                                const ModuleBase::Vector3<double>& vR, // R = R2 - R1
+                                    const ModuleBase::Vector3<double>& vR, // R = R2 - R1
                                     double* out,
                                     double* grad_out,
                                     double* hess_out) const
@@ -68,13 +67,13 @@ void TwoCenterIntegrator::calculate(const int itype1,
 
     // generate all necessary real (solid) spherical harmonics
     const int lmax = l1 + l2;
-	std::vector<double> Rl_Y((lmax+1) * (lmax+1));
-	ModuleBase::Array_Pool<double> grad_Rl_Y((lmax+1) * (lmax+1), 3);
+    std::vector<double> Rl_Y((lmax+1) * (lmax+1));
+    std::vector<double> grad_Rl_Y((lmax+1) * (lmax+1) * 3);
     std::vector<std::vector<double>> hess_Rl_Y;
 
     // R^l * Y is necessary anyway
     ModuleBase::Ylm::rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y);
-    if (grad_out || hess_out) ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y.data(), grad_Rl_Y.get_ptr_2D());
+    if (grad_out || hess_out) ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y.data(), grad_Rl_Y.data());
     if (hess_out) ModuleBase::Ylm::hes_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], hess_Rl_Y);
 
     double tmp[3] = {0.0, 0.0, 0.0};
@@ -89,7 +88,7 @@ void TwoCenterIntegrator::calculate(const int itype1,
         // look up S/R^l, (d/dR)(S/R^l), and (d²/dR²)(S/R^l) from the radial table
         table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, S_by_Rl, d_S_by_Rl, d2_S_by_Rl);
 
-		for (int m = -l; m <= l; ++m)
+        for (int m = -l; m <= l; ++m)
         {
             double G = RealGauntTable::instance()(l1, l2, l, m1, m2, m);
             int lm_idx = ylm_index(l, m);
@@ -104,7 +103,7 @@ void TwoCenterIntegrator::calculate(const int itype1,
                 for (int i = 0; i < 3; ++i)
                 {
                     grad_out[i] += sign * G * ( (*d_S_by_Rl) * uR[i] * Rl_Y[lm_idx]
-                                                + (*S_by_Rl) * grad_Rl_Y[lm_idx][i] );
+                                                + (*S_by_Rl) * grad_Rl_Y[lm_idx*3 + i] );
                 }
             }
 
@@ -133,8 +132,8 @@ void TwoCenterIntegrator::calculate(const int itype1,
                         else du_dR = 0.0;
 
                         double term2 = (*d_S_by_Rl) * (du_dR * Rl_Y[lm_idx]
-                                                      + uR[alpha] * grad_Rl_Y[lm_idx][beta]
-                                                      + uR[beta] * grad_Rl_Y[lm_idx][alpha]);
+                                                      + uR[alpha] * grad_Rl_Y[lm_idx*3 + beta]
+                                                      + uR[beta] * grad_Rl_Y[lm_idx*3 + alpha]);
                         double term3 = (*S_by_Rl) * H_full[idx];
 
                         hess_out[idx] += sign * G * (term1 + term2 + term3);
@@ -151,7 +150,7 @@ void TwoCenterIntegrator::snap(const int itype1,
                                const int izeta1, 
                                const int m1, 
                                const int itype2,
-	                           const ModuleBase::Vector3<double>& vR,
+                               const ModuleBase::Vector3<double>& vR,
                                const bool deriv,
                                std::vector<std::vector<double>>& out) const
 {
@@ -173,11 +172,11 @@ void TwoCenterIntegrator::snap(const int itype1,
         return;
     }
 
-	for(size_t i = 0; i < out.size(); ++i)
-	{
-		out[i].resize(num_ket);
+    for(size_t i = 0; i < out.size(); ++i)
+    {
+        out[i].resize(num_ket);
         std::fill(out[i].begin(), out[i].end(), 0.0);
-	}
+    }
 
     int index = 0;
     double tmp[3] = {0.0, 0.0, 0.0};

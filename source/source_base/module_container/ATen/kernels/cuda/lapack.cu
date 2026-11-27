@@ -7,6 +7,7 @@
 #include <thrust/complex.h>
 
 #include <cassert>
+#include <cstddef>
 
 #include "source_base/module_device/device_check.h"
 
@@ -68,22 +69,6 @@ struct set_matrix<T, DEVICE_GPU> {
 
 // --- 1. Matrix Decomposition ---
 template <typename T>
-struct lapack_trtri<T, DEVICE_GPU> {
-    void operator()(
-        const char& uplo,
-        const char& diag,
-        const int& dim,
-        T* Mat,
-        const int& lda)
-    {
-        // TODO: trtri is not implemented in this method yet
-        // Cause the trtri in cuSolver is not stable for ABACUS!
-        cuSolverConnector::trtri(cusolver_handle, uplo, diag, dim, Mat, lda);
-        // cuSolverConnector::potri(cusolver_handle, uplo, diag, dim, Mat, lda);
-    }
-};
-
-template <typename T>
 struct lapack_potrf<T, DEVICE_GPU> {
     void operator()(
         const char& uplo,
@@ -129,7 +114,8 @@ struct lapack_geqrf_inplace<T, DEVICE_GPU> {
         const int m,
         const int n,
         T *d_A,
-        const int lda)
+        const int lda,
+        T* rdiag)
     {
         const int k = std::min(m, n);
 
@@ -138,6 +124,18 @@ struct lapack_geqrf_inplace<T, DEVICE_GPU> {
         CHECK_CUDA(cudaMalloc(&d_tau, sizeof(T) * k));
 
         cuSolverConnector::geqrf(cusolver_handle, m, n, d_A, lda, d_tau);
+
+        // Capture the diagonal of R before orgqr overwrites d_A with Q.
+        if (rdiag != nullptr)
+        {
+            for (int j = 0; j < k; ++j)
+            {
+                CHECK_CUDA(cudaMemcpy(rdiag + j,
+                                      d_A + static_cast<std::size_t>(j) * lda + j,
+                                      sizeof(T),
+                                      cudaMemcpyDeviceToHost));
+            }
+        }
 
         cuSolverConnector::orgqr(cusolver_handle, m, n, k, d_A, lda, d_tau);
 
@@ -342,11 +340,6 @@ template struct set_matrix<float,  DEVICE_GPU>;
 template struct set_matrix<double, DEVICE_GPU>;
 template struct set_matrix<std::complex<float>,  DEVICE_GPU>;
 template struct set_matrix<std::complex<double>, DEVICE_GPU>;
-
-template struct lapack_trtri<float,  DEVICE_GPU>;
-template struct lapack_trtri<double, DEVICE_GPU>;
-template struct lapack_trtri<std::complex<float>,  DEVICE_GPU>;
-template struct lapack_trtri<std::complex<double>, DEVICE_GPU>;
 
 template struct lapack_potrf<float,  DEVICE_GPU>;
 template struct lapack_potrf<double, DEVICE_GPU>;

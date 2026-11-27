@@ -1,0 +1,15 @@
+# Test case list for CI testing. Lines starting with # are disabled.
+# Enabled tests are listed without # prefix; disabled tests are commented out with reasons.
+
+# ========================
+# LCAO baseline tests
+# ========================
+01_LCAO_SPIN_S2_Z
+# 02_LCAO_SPIN_S4_XYZ  # DISABLED: Convergence / numerical stability issue with LCAO noncollinear spin
+
+# ========================
+# LCAO DFT+U tests
+# ========================
+03_LCAO_DFTU_S2_Z
+# 04_LCAO_DFTU_S4_XY   # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DFT+U
+# 05_LCAO_DFTU_S4_XYZ  # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DFT+U

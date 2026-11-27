@@ -1,9 +1,9 @@
 #include "pw_basis_k.h"
 
 #include "source_base/constants.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <utility>
 namespace ModulePW
@@ -145,10 +145,18 @@ void PW_Basis_K::setupIndGk()
             }
         }
         this->npwk[ik] = ng;
+        int ng_global_k = ng;
+#ifdef __MPI
+        MPI_Allreduce(MPI_IN_PLACE, &ng_global_k, 1, MPI_INT, MPI_SUM, this->pool_world);
+#endif
+        const char* no_pw_message = "Current core has no plane waves! Please reduce the cores.";
+        if (ng_global_k == 0)
+        {
+            no_pw_message = "No plane waves are available for this k-point across the whole pool. Please increase ecutwfc or check KPT settings.";
+        }
         ModuleBase::CHECK_WARNING_QUIT((ng == 0),
                                        "pw_basis_k.cpp",
-                                       PARAM.inp.calculation,
-                                       "Current core has no plane waves! Please reduce the cores.");
+                                       no_pw_message);
         if (this->npwk_max < ng)
         {
             this->npwk_max = ng;
@@ -197,7 +205,7 @@ void PW_Basis_K::setupIndGk()
 ///
 void PW_Basis_K::setuptransform()
 {
-    ModuleBase::timer::tick(this->classname, "setuptransform");
+    ModuleBase::timer::start(this->classname, "setuptransform");
     this->distribute_r();
     this->distribute_g();
     this->getstartgr();
@@ -206,6 +214,7 @@ void PW_Basis_K::setuptransform()
     std::string fft_device = this->device;
 #if defined(__DSP)
     fft_device = "dsp";
+    this->fft_bundle.set_dsp_cluster_id(base_device::memory::get_dsp_cluster_id());
 #endif
     this->fft_bundle.setfft(fft_device, this->precision);
     if (this->xprime)
@@ -235,7 +244,7 @@ void PW_Basis_K::setuptransform()
                                  this->xprime);
     }
     this->fft_bundle.setupFFT();
-    ModuleBase::timer::tick(this->classname, "setuptransform");
+    ModuleBase::timer::end(this->classname, "setuptransform");
 }
 
 void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_height_in, const double& erf_sigma_in)

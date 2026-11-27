@@ -4,6 +4,7 @@
 #include <cstring> // Dependency for memset initialization
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 #ifdef __MPI
 #include "mpi.h"
@@ -287,12 +288,15 @@ TEST_F(Sphbes, SphericalBesselPrecisionGrid)
         r[i] = (i + 1) * dr;
     }
 
-    // test for new sphbesj
+    // Check both scalar and batch interfaces against the same reference data.
+    std::vector<double> jl_new(nr);
     for (int l = l_lo; l <= l_hi; ++l)
     {
+        ModuleBase::Sphbes::sphbesj(nr, r, q, l, jl_new.data());
         for (int i = 0; i < nr; ++i)
         {
             EXPECT_NEAR(ModuleBase::Sphbes::sphbesj(l, r[i] * q), Y[l * nr + i], 1e-12);
+            EXPECT_NEAR(jl_new[i], Y[l * nr + i], 1e-12);
             double tmp = std::abs(Y[l * nr + i] - ModuleBase::Sphbes::sphbesj(l, r[i] * q));
             file_n.write(reinterpret_cast<char*>(&tmp), sizeof(double));
         }

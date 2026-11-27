@@ -112,7 +112,7 @@ double cal_carrier(const UnitCell& ucell,
                   const int& a_rate)
 {
     ModuleBase::TITLE("Singular_Value", "cal_carrier");
-    ModuleBase::timer::tick("Singular_Value", "cal_carrier");
+    ModuleBase::timer::start("Singular_Value", "cal_carrier");
 
     std::vector<ModuleBase::Vector3<double>> avec = {ucell.a1, ucell.a2, ucell.a3};
     std::vector<ModuleBase::Vector3<double>> bvec;
@@ -142,7 +142,7 @@ double cal_carrier(const UnitCell& ucell,
         = std::bind(&fq_carrier, ucell.tpiba, std::placeholders::_1, qdiv, avec, bvec);
 
     double val = solve_chi(ucell.G, kvec_c, func_cal_fq_carrier, nq_arr, niter, eps, a_rate);
-    ModuleBase::timer::tick("Singular_Value", "cal_carrier");
+    ModuleBase::timer::end("Singular_Value", "cal_carrier");
     return val;
 }
 
@@ -157,7 +157,7 @@ double fq_massidda(const double& tpiba,
     const bool exclude_Gamma = true;
     const ModuleBase::Vector3<double> tau(0, 0, 0);
 
-    auto lattice_sum = gaussian_abfs.get_lattice_sum(tpiba, ik, qexpo, lambda, exclude_Gamma, lmax, tau);
+    std::vector<std::complex<double>> lattice_sum = gaussian_abfs.get_lattice_sum(tpiba, ik, qexpo, lambda, exclude_Gamma, lmax, tau);
     assert(lattice_sum[0].imag() < 1e-10);
     double fq = lattice_sum[0].real() * std::sqrt(ModuleBase::FOUR_PI);
 
@@ -172,7 +172,7 @@ double cal_massidda(const UnitCell& ucell,
                   const double& eps)
 {
     ModuleBase::TITLE("Singular_Value", "cal_massidda");
-    ModuleBase::timer::tick("Singular_Value", "cal_massidda");
+    ModuleBase::timer::start("Singular_Value", "cal_massidda");
 
     ModuleBase::Matrix3 bvec;
     bvec.e11 = ucell.G.e11 / nmp[0];
@@ -231,7 +231,7 @@ double cal_massidda(const UnitCell& ucell,
     if (tot_iter == niter)
         ModuleBase::WARNING_QUIT("Singular_Value::cal_massidda", "not converged!");
 
-    ModuleBase::timer::tick("Singular_Value", "cal_massidda");
+    ModuleBase::timer::end("Singular_Value", "cal_massidda");
     return val_extra;
 }
 

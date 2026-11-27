@@ -7,11 +7,11 @@
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_estate/module_pot/pot_local.h"
 #include "source_estate/module_pot/pot_xc.h"
-#include "source_pw/module_pwdft/structure_factor.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <iostream>
 #include <cmath>
@@ -24,10 +24,7 @@ namespace rdmft
 {
 
 template <>
-void conj_psi<double>(psi::Psi<double>& wfc) {}
-
-template <>
-void HkPsi<double>(const Parallel_Orbitals* ParaV, 
+void HkPsi<double>(const Parallel_Orbitals* ParaV,
                    const double& HK, 
                    const double& wfc, 
                    double& H_wfc)
@@ -39,11 +36,11 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV,
     const char C_char = 'C';
 
 #ifdef __MPI
-    const int nbasis = ParaV->desc[2];
+    const int nbasis = ParaV->para_2d().desc()[2];
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_double, &HK, 1, 1, ParaV->desc,
+    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_double, &HK, 1, 1, ParaV->para_2d().desc(),
         &wfc, 1, 1, ParaV->desc_wfc, zero_double, &H_wfc, 1, 1, ParaV->desc_wfc );
 #endif
 
@@ -52,7 +49,7 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV,
 
 template <>
 void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, 
-                            const Parallel_2D& para_Eij_in,
+                            const Parallel_Blkcyclic& para_Eij_in,
                             const double& wfc, 
                             const double& H_wfc, 
                             std::vector<double>& Dmn)
@@ -63,15 +60,15 @@ void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV,
     const char N_char = 'N';
     const char T_char = 'T';
 
-    const int nrow_bands = para_Eij_in.get_row_size();
-    const int ncol_bands = para_Eij_in.get_col_size();
+    const int nrow_bands = para_Eij_in.nrloc();
+    const int ncol_bands = para_Eij_in.ncloc();
 
 #ifdef __MPI
-    const int nbasis = ParaV->desc[2];
+    const int nbasis = ParaV->para_2d().desc()[2];
     const int nbands = ParaV->desc_wfc[3];
 
     ScalapackConnector::gemm( T_char, N_char, nbands, nbands, nbasis, one_double, &wfc, 1, 1, ParaV->desc_wfc,
-            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.desc );
+            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.desc() );
 #endif
 }
 
@@ -191,15 +188,15 @@ template <typename TK, typename TR>
 void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Veff", "initialize_HR");
-    ModuleBase::timer::tick("Veff", "initialize_HR");
+    ModuleBase::timer::start("Veff", "initialize_HR");
 
     this->nspin = PARAM.inp.nspin;
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    const Parallel_Orbitals* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)
     {
-        auto tau1 = ucell_in->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell_in->get_tau(iat1);
         int T1 = 0;
         int I1 = 0;
         ucell_in->iat2iait(iat1, &I1, &T1);
@@ -211,7 +208,7 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driv
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell_in->itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -231,7 +228,7 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driv
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     this->hR->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("Veff", "initialize_HR");
+    ModuleBase::timer::end("Veff", "initialize_HR");
 }
 
 
@@ -241,7 +238,7 @@ template<>
 void Veff_rdmft<std::complex<double>, double>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::start("Veff", "contributeHR");
 
     double* vr_eff_rdmft = nullptr;
 
@@ -281,7 +278,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
         ModuleBase::matrix vofk = *vloc_;
         vofk.zero_out();
         ModuleBase::matrix v_matrix_XC(this->nspin, charge_->nrxx);
-        elecstate::PotXC potXC(rho_basis_, etxc, vtxc, &vofk);
+        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, false, rho_basis_, etxc, vtxc, &vofk);
         potXC.cal_v_eff(charge_, ucell, v_matrix_XC);
 
         // if need meta-GGA, go to study veff_lcao.cpp and modify the code
@@ -306,7 +303,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
         this->current_spin = 1 - this->current_spin; 
     }
 
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::end("Veff", "contributeHR");
     return;
 }
 
@@ -322,7 +319,7 @@ template<>
 void Veff_rdmft<double, double>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::start("Veff", "contributeHR");
 
 
     double* vr_eff_rdmft = nullptr;
@@ -363,7 +360,7 @@ void Veff_rdmft<double, double>::contributeHR()
         ModuleBase::matrix vofk = *vloc_;
         vofk.zero_out();
         ModuleBase::matrix v_matrix_XC(this->nspin, charge_->nrxx);
-        elecstate::PotXC potXC(rho_basis_, etxc, vtxc, &vofk);
+        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, false, rho_basis_, etxc, vtxc, &vofk);
         potXC.cal_v_eff(charge_, ucell, v_matrix_XC);
         
         for(int is=0; is<this->nspin; ++is)
@@ -387,6 +384,7 @@ void Veff_rdmft<double, double>::contributeHR()
         this->current_spin = 1 - this->current_spin;
     }
 
+    ModuleBase::timer::end("Veff", "contributeHR");
     return;
 }
 

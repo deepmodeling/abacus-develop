@@ -24,6 +24,5 @@ mixing_beta       0.7
 gamma_only        1
 
 relax_method      cg
-relax_new         1
 relax_nmax        2
 relax_scale_force  0.4

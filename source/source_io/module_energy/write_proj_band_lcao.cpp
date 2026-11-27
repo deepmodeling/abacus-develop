@@ -6,7 +6,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_io/module_output/write_orb_info.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_lcao/hamilt_lcao.h"
 
 template<>
@@ -16,10 +16,12 @@ void ModuleIO::write_proj_band_lcao(
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell &ucell,
-    hamilt::Hamilt<double>* p_ham)
+    hamilt::Hamilt<double>* p_ham,
+    const int istep,
+    const int out_app_flag)
 {
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
-    ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
+    ModuleBase::timer::start("ModuleIO", "write_proj_band_lcao");
 
     GlobalV::ofs_running << "\n";
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -59,7 +61,7 @@ void ModuleIO::write_proj_band_lcao(
     {
         std::vector<ModuleBase::matrix> Mulk;
         Mulk.resize(1);
-        Mulk[0].create(pv.ncol, pv.nrow);
+        Mulk[0].create(pv.para_2d().ncloc(), pv.para_2d().nrloc());
 
         psi->fix_k(is);
         for (int i = 0; i < PARAM.inp.nbands; ++i)
@@ -77,26 +79,26 @@ void ModuleIO::write_proj_band_lcao(
                 sk,
                 &one_int,
                 &one_int,
-                pv.desc,
+                pv.para_2d().desc(),
                 psi->get_pointer(),
                 &one_int,
                 &NB,
-                pv.desc,
+                pv.para_2d().desc(),
                 &one_int,
                 &zero_float,
                 Mulk[0].c,
                 &one_int,
                 &NB,
-                pv.desc,
+                pv.para_2d().desc(),
                 &one_int);
 #endif
             for (int j = 0; j < PARAM.globalv.nlocal; ++j)
             {
 
-                if (pv.in_this_processor(j, i))
+                if (pv.para_2d().in_this_processor(j, i))
                 {
-                    const int ir = pv.global2local_row(j);
-                    const int ic = pv.global2local_col(i);
+                    const int ir = pv.para_2d().irloc(j);
+                    const int ic = pv.para_2d().icloc(i);
                     weightk(is, i * PARAM.globalv.nlocal + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
                 }
             }
@@ -108,11 +110,20 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1 << ".xml";
-            GlobalV::ofs_running << " Output projected bands are in file: " << ps2.str() << std::endl;
+            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1;
+            // XML documents cannot be appended, so mode 1 keeps the fixed name
+            // and overwrites; only mode 2 writes one numbered file per step.
+            if (out_app_flag == 2)
+            {
+                ps2 << "g" << istep + 1;
+            }
+            ps2 << ".xml";
+            ModuleIO::write_notice(GlobalV::ofs_running, "Projected bands", ps2.str());
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
+            // XML comment keeps the frame annotation invisible to XML parsers.
+            out << "<!-- Ionic_Step " << istep + 1 << " -->" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
             if (PARAM.inp.nspin == 4) 
 			{
@@ -176,9 +187,8 @@ void ModuleIO::write_proj_band_lcao(
             out.close();
         }
     } // is
-    ModuleIO::write_orb_info(&ucell);
 
-    ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
+    ModuleBase::timer::end("ModuleIO", "write_proj_band_lcao");
     return;
 }
 
@@ -189,15 +199,17 @@ void ModuleIO::write_proj_band_lcao(
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell& ucell,
-    hamilt::Hamilt<std::complex<double>>* p_ham)
+    hamilt::Hamilt<std::complex<double>>* p_ham,
+    const int istep,
+    const int out_app_flag)
 {
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
-    ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
+    ModuleBase::timer::start("ModuleIO", "write_proj_band_lcao");
 
     GlobalV::ofs_running << "\n";
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " |       #Print out projected bands (psi in std::complex<double>)#         |" << std::endl;
+    GlobalV::ofs_running << " |     #Print out projected bands (psi in std::complex<double>)#      |" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
     GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     GlobalV::ofs_running << "\n";
@@ -227,7 +239,7 @@ void ModuleIO::write_proj_band_lcao(
     {
             std::vector<ModuleBase::ComplexMatrix> Mulk;
             Mulk.resize(1);
-            Mulk[0].create(pv.ncol, pv.nrow);
+            Mulk[0].create(pv.para_2d().ncloc(), pv.para_2d().nrloc());
 
             for (int ik = 0; ik < kv.get_nks(); ik++)
             {
@@ -276,27 +288,27 @@ void ModuleIO::write_proj_band_lcao(
                             sk,
                             &one_int,
                             &one_int,
-                            pv.desc,
+                            pv.para_2d().desc(),
                             p_dwfc,
                             &one_int,
                             &NB,
-                            pv.desc,
+                            pv.para_2d().desc(),
                             &one_int,
                             &zero_float[0],
                             Mulk[0].c,
                             &one_int,
                             &NB,
-                            pv.desc,
+                            pv.para_2d().desc(),
                             &one_int);
 #endif
                         for (int j = 0; j < PARAM.globalv.nlocal; ++j)
                         {
 
-                            if (pv.in_this_processor(j, i))
+                            if (pv.para_2d().in_this_processor(j, i))
                             {
 
-                                const int ir = pv.global2local_row(j);
-                                const int ic = pv.global2local_col(i);
+                                const int ir = pv.para_2d().irloc(j);
+                                const int ic = pv.para_2d().icloc(i);
 
                                 weightk(ik, i * PARAM.globalv.nlocal + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
                             }
@@ -313,11 +325,20 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1 << ".xml";
-            GlobalV::ofs_running << " Output projected bands in file: " << ps2.str() << std::endl;
+            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1;
+            // XML documents cannot be appended, so mode 1 keeps the fixed name
+            // and overwrites; only mode 2 writes one numbered file per step.
+            if (out_app_flag == 2)
+            {
+                ps2 << "g" << istep + 1;
+            }
+            ps2 << ".xml";
+            ModuleIO::write_notice(GlobalV::ofs_running, "Projected bands", ps2.str());
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
+            // XML comment keeps the frame annotation invisible to XML parsers.
+            out << "<!-- Ionic_Step " << istep + 1 << " -->" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
             if (PARAM.inp.nspin == 4)
             {
@@ -394,8 +415,7 @@ void ModuleIO::write_proj_band_lcao(
             out.close();
         }
     } // is
-    ModuleIO::write_orb_info(&ucell);
 
-    ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
+    ModuleBase::timer::end("ModuleIO", "write_proj_band_lcao");
     return;
 }

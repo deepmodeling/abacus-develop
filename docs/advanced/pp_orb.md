@@ -38,7 +38,7 @@ Stable orbital generation programs can be found in guidelines above, there is al
 
 For treating BSSE(Basis Set Superposition Error), we allow for the inclusion of "empty" or "ghost" atoms in the calculation. Namely, when expanding the Hamiltonian, basis sets on the atoms are used, while the ionic potentials on those atoms are not included when constructing the Hamiltonian.
 
-An empty atom is defined in the `STRU` file when an element name contains the "empty" suffix, such as "H_empty", "O_empty" and so on. Here we provide an [example](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/bsse/water) of calculating the molecular formation energy of $H_2O$ with BSSE correction.
+An empty atom is defined in the `STRU` file when an element name contains the "empty" suffix, such as "H_empty", "O_empty" and so on. Here we provide an [example](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/32_bsse/01_water) of calculating the molecular formation energy of $H_2O$ with BSSE correction.
 
 In the example, we provide four STRU files:
 
@@ -76,11 +76,10 @@ When performing spin-orbit coupling (SOC) calculations with `lspinorb=1`, specif
 Full-relativistic pseudopotentials suitable for SOC calculations can be identified by checking the UPF file header (`PP_HEADER` section):
 
 ```xml
+<!-- Other attributes omitted -->
 <PP_HEADER
-   ...
    relativistic="full"
    has_so="T"
-   ...
 />
 ```
 
@@ -127,7 +126,7 @@ Users can find pseudopotentials in the following links:
 - [Quantum ESPRESSO](https://www.quantum-espresso.org/pseudopotentials): the official website of Quantum ESPRESSO, where you can find a large number of pseudopotential files.
 - [Stantard Solid State Pseudopotential library](https://www.materialscloud.org/sssp): a library of **high-quality** pseudopotentials for solid-state calculations, with **a large number of tests on efficiency and precison**.
 - [PWmat](http://www.pwmat.com/potential-download): a website that provides a large number of pseudopotential files, various kinds of semi-core constructed pseudopotentials are included. **Several sets (with or without f-electrons/noncolinear core correction) of Lanthanide pseudopotentials are also available**.
-- [THEOS](http://theossrv1.epfl.ch/Main/Pseudopotentials): PSlibrary 0.3.1, a library of pseudopotentials for DFT calculations, including ultrasoft, paw, norm-conserving both full-relativistic and scalar-relativistic pseudopotentials.
+- [THEOS](http://theossrv1.epfl.ch/Main/Pseudopotentials): PSlibrary 0.3.1, a library of pseudopotentials for DFT calculations, including ultrasoft, norm-conserving both full-relativistic and scalar-relativistic pseudopotentials.
 - [ABACUS@USTC](https://abacus.ustc.edu.cn/pseudo/list.htm): **ABACUS official website** where you can find a large number of pseudopotential files and numerical atomic orbital files.
 - [BLPS](https://github.com/PrincetonUniversity/BLPSLibrary): BLPS format pseudopotential library
 

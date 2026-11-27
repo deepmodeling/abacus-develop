@@ -1,7 +1,93 @@
-These examples show how to do a real-time tddft calculation.
-One can set 'calculation' to be 'md' and 'esolver_type' to be 'tddft' to do TDDFT calculation.
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
 
-A time-dependent E-field can be applied by setting 'td_vext' to '1'.
-- For non-periodic system, you could set 'stype' to '0' to do length gauge calculation, which would be faster.
-- For periodic system, you could set 'stype' to '1' to do velocity gauge calculation.
-Velocity gauge has not been fully tested yet, so be careful about its results.
+# RT-TDDFT Examples
+
+This directory contains examples for performing Real-Time Time-Dependent Density Functional Theory (RT-TDDFT) calculations in ABACUS.
+
+## What is RT-TDDFT?
+
+Real-Time Time-Dependent Density Functional Theory (RT-TDDFT) is a computational method used to study the time evolution of electronic systems in response to external perturbations, such as time-dependent electric fields. Unlike linear response TDDFT (LR-TDDFT), RT-TDDFT directly solves the time-dependent Kohn-Sham equations, allowing for the study of non-linear responses and time-dependent phenomena.
+
+### Key Features:
+- Simulates the time evolution of electronic systems
+- Studies non-linear responses to strong external fields
+- Calculates absorption spectra through Fourier transform of dipole moment
+- Provides insights into charge dynamics and electronic excitations
+- Can model pump-probe experiments and other time-dependent processes
+
+## Examples Included
+
+### 1. 01_H2_length_gauge
+- **System**: Hydrogen molecule (H2)
+- **Gauge**: Length gauge
+- **Purpose**: Demonstrates RT-TDDFT calculation using length gauge for a molecular system
+- **Advantage**: Faster for non-periodic systems
+
+### 2. 02_H2_velocity_gauge
+- **System**: Hydrogen molecule (H2)
+- **Gauge**: Velocity gauge
+- **Purpose**: Demonstrates RT-TDDFT calculation using velocity gauge for a molecular system
+- **Advantage**: Suitable for periodic systems
+
+## Input Files
+
+Each example directory contains the following files:
+
+- `INPUT`: Contains the RT-TDDFT calculation parameters
+- `KPT`: Defines the k-point sampling
+- `STRU`: Describes the atomic structure
+- `run.sh`: Script to run the calculation
+
+## Key Parameters in INPUT
+
+The INPUT files include specific parameters for RT-TDDFT calculations:
+
+- `calculation`: Set to 'md' for molecular dynamics/RT-TDDFT
+- `esolver_type`: Set to 'tddft' to enable TDDFT calculation
+- `td_vext`: Set to '1' to apply a time-dependent electric field
+- `stype`: Gauge type (0 for length gauge, 1 for velocity gauge)
+- `out_dipole`: Set to '1' to output dipole moment
+- `md_nstep`: Number of time steps for the simulation
+- `md_dt`: Time step size (in atomic units)
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/22_rt-tddft/01_H2_length_gauge
+   ```
+
+2. Run the calculation using the provided script:
+   ```bash
+   bash run.sh
+   ```
+
+3. Check the output files, particularly the dipole moment data which can be used to calculate the absorption spectrum.
+
+## Output Files
+
+After running the calculation, you will find the following key output files:
+
+- `dipole.dat`: Contains the time evolution of the dipole moment
+- `running_md.log`: Log file for the MD/RT-TDDFT calculation
+- Other standard ABACUS output files
+
+## Calculating Absorption Spectra
+
+To obtain the absorption spectrum from the RT-TDDFT calculation:
+
+1. Extract the dipole moment data from `dipole.dat`
+2. Perform a Fourier transform on the dipole moment time series
+3. The imaginary part of the Fourier transform gives the absorption spectrum
+
+## Notes
+
+- For accurate absorption spectra, use a larger `md_nstep` (typically 5000 or more) to capture sufficient frequency information
+- Velocity gauge has not been fully tested yet, so use its results with caution
+- The examples apply Gaussian wave packets along the z-axis to simulate a complex electric field
+- RT-TDDFT calculations can be computationally intensive, especially for larger systems
+- The accuracy of RT-TDDFT results depends on the choice of exchange-correlation functional and the time step size

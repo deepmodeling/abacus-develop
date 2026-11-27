@@ -1,11 +1,12 @@
 #include "diago_elpa_native.h"
 
+#include "source_base/global_function.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/blacs_connector.h"
-#include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/module_genelpa/elpa_new.h"
+#include "source_hsolver/module_linalg/matrix_block_ops.h"
 #include "omp.h"
 
 namespace hsolver
@@ -48,16 +49,16 @@ MPI_Comm DiagoElpaNative<T>::setmpicomm()
 
 #ifdef __MPI
 template <typename T>
-void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
-                                   hamilt::MatrixBlock<T>& s_mat,
+void DiagoElpaNative<T>::diag_pool(ModuleBase::MatrixBlock<T>& h_mat,
+                                   ModuleBase::MatrixBlock<T>& s_mat,
                                    psi::Psi<T>& psi,
                                    Real* eigenvalue_in,
                                    MPI_Comm& comm)
 {
 
-    ModuleBase::timer::tick("DiagoElpaNative", "elpa_solve");
+    ModuleBase::timer::start("DiagoElpaNative", "elpa_solve");
 
-    int nev = PARAM.inp.nbands;
+    int nev = this->nbands;
     int narows = h_mat.row;
     int nacols = h_mat.col;
 
@@ -68,8 +69,32 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     int nprows, npcols, myprow, mypcol;
 
     Cblacs_gridinfo(cblacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
-    std::vector<Real> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<Real> eigen(this->nlocal, 0.0);
     std::vector<T> eigenvectors(narows * nacols);
+
+    // The complex LCAO matrices follow the LAPACK UPLO='U' convention: only
+    // their upper triangles are guaranteed to contain the Hermitian matrix.
+    // ELPA's native generalized solver consumes both triangles, so complete
+    // private Hermitian copies before the solve.
+    std::vector<T> h_work;
+    std::vector<T> s_work;
+    T* h_elpa = h_mat.p;
+    T* s_elpa = s_mat.p;
+    int decomposed_state = this->overlap_factor;
+    if (!std::is_same<T, double>::value)
+    {
+        h_work.resize(narows * nacols);
+        s_work.resize(narows * nacols);
+        auto h_full = h_mat;
+        auto s_full = s_mat;
+        h_full.p = h_work.data();
+        s_full.p = s_work.data();
+        copy_hermitian_upper(nFull, h_mat, h_full);
+        copy_hermitian_upper(nFull, s_mat, s_full);
+        h_elpa = h_full.p;
+        s_elpa = s_full.p;
+        decomposed_state = 0;
+    }
 
     if (elpa_init(20210430) != ELPA_OK)
     {
@@ -96,6 +121,12 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     elpa_set(handle, "blacs_context", (int)cblacs_ctxt, &success);
     elpa_setup(handle);
     elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &success);
+    // Older ELPA Cannon kernels divide by the local eigenvector column count.
+    // Choose the ScaLAPACK path on every rank if any process column is empty.
+    if (nev <= (npcols - 1) * nblk)
+    {
+        elpa_set(handle, "cannon_for_generalized", 0, &success);
+    }
 
 /*  ELPA_WITH_NVIDIA_GPU_VERSION is a symbol defined in elpa/elpa_configured_options.h
     For example:
@@ -105,7 +136,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     #define ELPA_WITH_SYCL_GPU_VERSION 0
  */
 #if ELPA_WITH_NVIDIA_GPU_VERSION
-    if (PARAM.inp.device == "gpu")
+    if (this->use_gpu)
     {
         elpa_set(handle, "nvidia-gpu", 1, &success);
         elpa_set(handle, "real_kernel", ELPA_2STAGE_REAL_NVIDIA_GPU, &success);
@@ -114,41 +145,42 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
 #endif
 
     elpa_generalized_eigenvectors(handle,
-                                  h_mat.p,
-                                  s_mat.p,
+                                  h_elpa,
+                                  s_elpa,
                                   eigen.data(),
                                   eigenvectors.data(),
-                                  this->DecomposedState,
+                                  decomposed_state,
                                   &success);
     elpa_deallocate(handle, &success);
     elpa_uninit(&success);
 
-    ModuleBase::timer::tick("DiagoElpaNative", "elpa_solve");
+    ModuleBase::timer::end("DiagoElpaNative", "elpa_solve");
     if (std::is_same<T, double>::value)
     {
         // for gamma only, the decomposed s_mat will be reused
-        this->DecomposedState = 1;
+        this->overlap_factor = 1;
     }
     else
     {
         // for k pointer, the decomposed s_mat can not be reused
-        this->DecomposedState = 0;
+        this->overlap_factor = 0;
     }
 
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
     const int size = psi.get_nbands() * psi.get_nbasis();
     BlasConnector::copy(size, eigenvectors.data(), inc, psi.get_pointer(), inc);
 }
 #endif
 
 template <typename T>
-void DiagoElpaNative<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in)
+void DiagoElpaNative<T>::diag(ModuleBase::MatrixBlock<T>& h_mat,
+                              ModuleBase::MatrixBlock<T>& s_mat,
+                              psi::Psi<T>& psi,
+                              Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpaNative", "diag");
 #ifdef __MPI
-    hamilt::MatrixBlock<T> h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
     MPI_Comm COMM_DIAG = setmpicomm(); // set mpi_comm needed
     diag_pool(h_mat, s_mat, psi, eigenvalue_in, COMM_DIAG);
 #else

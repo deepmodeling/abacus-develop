@@ -14,7 +14,6 @@ nbands            5
 #Parameter (Electronic Structure)
 scf_nmax          50
 
-ks_solver         scalapack_gvx
 md_nstep          3
 estep_per_md      1
 

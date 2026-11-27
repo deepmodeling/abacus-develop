@@ -1,73 +1,60 @@
 #include "ions_move_sd.h"
 
-#include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include<vector>
+
+#include <algorithm>
 
 using namespace Ions_Move_Basic;
 
-Ions_Move_SD::Ions_Move_SD()
-{
-    this->energy_saved = 1.0e10;
-    this->grad_saved = nullptr;
-    this->pos_saved = nullptr;
-}
-Ions_Move_SD::~Ions_Move_SD()
-{
-    delete[] grad_saved;
-    delete[] pos_saved;
-}
+Ions_Move_SD::Ions_Move_SD() : energy_saved(1.0e10) {}
 
 void Ions_Move_SD::allocate()
 {
     ModuleBase::TITLE("Ions_Move_SD", "allocate");
     assert(dim > 0);
-    delete[] grad_saved;
-    delete[] pos_saved;
-    this->grad_saved = new double[dim];
-    this->pos_saved = new double[dim];
-    ModuleBase::GlobalFunc::ZEROS(grad_saved, dim);
-    ModuleBase::GlobalFunc::ZEROS(pos_saved, dim);
+    grad_saved.resize(dim, 0.0);
+    pos_saved.resize(dim, 0.0);
 }
 
-void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in)
+bool Ions_Move_SD::start(
+    UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    const double &etot_in,
+    const int istep,
+    int &update_iter,
+    std::ofstream &ofs,
+    std::vector<double> &etot_info,
+    const Relax_Criteria &criteria)
 {
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
     assert(dim > 0);
-    assert(grad_saved != nullptr);
-    assert(pos_saved != nullptr);
+    assert(grad_saved.size() == static_cast<size_t>(dim));
+    assert(pos_saved.size() == static_cast<size_t>(dim));
 
-    std::vector<double> pos(dim);
-    std::vector<double> grad(dim);
-    std::vector<double> move(dim);
-    ModuleBase::GlobalFunc::ZEROS(pos.data(), dim);
-    ModuleBase::GlobalFunc::ZEROS(grad.data(), dim);
-    ModuleBase::GlobalFunc::ZEROS(move.data(), dim);
+    std::vector<double> pos(dim, 0.0);
+    std::vector<double> grad(dim, 0.0);
+    std::vector<double> move(dim, 0.0);
 
-    // 1: ediff = 0
-    // 0: ediff < 0
-    bool judgement = false;
-    setup_etot(etot_in, judgement);
-    setup_gradient(ucell, force, pos.data(), grad.data());
+    Ions_Move_Basic::setup_etot(etot_in, istep, etot_info);
+    Ions_Move_Basic::setup_gradient(ucell, force, pos.data(), grad.data(), ofs);
 
     if (istep == 1 || etot_in <= energy_saved)
     {
         printf("in cheak_converged");
         printf("pos[0]: %f\n", pos[0]);
         energy_saved = etot_in;
-        for (int i = 0; i < dim; i++) {
+        for (int i = 0; i < dim; i++)
+        {
             pos_saved[i] = pos[i];
-}
+        }
         for (int i = 0; i < dim; i++)
         {
             grad_saved[i] = grad[i];
         }
-        // normalize the gradient, in convinience to
-        // move atom.
-        double norm = dot_func(grad_saved, grad_saved, dim);
+        double norm = dot_func(grad_saved.data(), grad_saved.data(), dim);
         norm = sqrt(norm);
         for (int i = 0; i < dim; i++)
         {
@@ -75,36 +62,39 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         }
     }
 
-    Ions_Move_Basic::check_converged(ucell, grad.data());
-    if (Ions_Move_Basic::converged)
+    bool converged = Ions_Move_Basic::check_converged(
+        ucell, grad.data(), update_iter, ofs, etot_info, criteria.force_thr, criteria.force_thr_ev, criteria.out_level,
+        criteria.test_relax_method);
+    if (converged)
     {
-        Ions_Move_Basic::terminate(ucell);
+        Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);
+        return true;
     }
     else
     {
-        this->cal_tradius_sd();
+        ions_move_sd::cal_tradius_sd(istep, etot_info, criteria.out_level);
         for (int i = 0; i < dim; i++)
         {
             move[i] = -grad_saved[i] * trust_radius;
         }
-        move_atoms(ucell, move.data(), pos_saved);
-        Ions_Move_Basic::update_iter++;
+        move_atoms(ucell, move.data(), pos_saved.data(), ofs, criteria.test_relax_method);
+        update_iter++;
+        return false;
     }
-
-    return;
 }
 
-void Ions_Move_SD::cal_tradius_sd() const
+void ions_move_sd::cal_tradius_sd(const int istep, std::vector<double> &etot_info, const std::string &out_level)
 {
     static int accepted_number = 0;
 
-    if (Ions_Move_Basic::istep == 1)
+    if (istep == 1)
     {
         Ions_Move_Basic::trust_radius = Ions_Move_Basic::relax_bfgs_init;
     }
-    else if (Ions_Move_Basic::istep > 1)
+    else if (istep > 1)
     {
-        if (Ions_Move_Basic::ediff < 0.0)
+        const double ediff = etot_info[0] - etot_info[1];
+        if (ediff < 0.0)
         {
             accepted_number++;
             if (accepted_number > 3 && accepted_number % 3 == 1)
@@ -112,7 +102,7 @@ void Ions_Move_SD::cal_tradius_sd() const
                 Ions_Move_Basic::trust_radius *= 1.5;
             }
         }
-        else if (Ions_Move_Basic::ediff >= 0.0) // == 0 means no accept!
+        else if (ediff >= 0.0)
         {
             accepted_number = 0;
             Ions_Move_Basic::trust_radius *= 0.5;
@@ -120,9 +110,9 @@ void Ions_Move_SD::cal_tradius_sd() const
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Ions_Move_SD::cal_tradius_sd", "istep < 1!");
+        ModuleBase::WARNING_QUIT("ions_move_sd::cal_tradius_sd", "istep < 1!");
     }
-    if (PARAM.inp.out_level == "ie")
+    if (out_level == "ie")
     {
         std::cout << " SD RADIUS (Bohr)     : " << trust_radius << std::endl;
     }

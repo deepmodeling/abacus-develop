@@ -1,8 +1,14 @@
 #include "ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 
+#include "source_base/global_variable.h" // use GlobalC
+#include "source_hamilt/module_xc/exx_info.h"
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_deepks/LCAO_deepks_interface.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks_iface.h"
+#endif
+#include "source_io/module_restart/restart.h"
+#ifdef __EXX
+#include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
 
 namespace ModuleIO
@@ -13,7 +19,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
 		elecstate::ElecState* pelec, // electronic info * 
-        elecstate::DensityMatrix<TK, double>& dm, // density matrix, mohan add 2025-11-03
+        module_dm::DensityMatrix<TK, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<TK>* psi, // wave functions *
@@ -23,13 +29,14 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 		LCAO_Orbitals &orb, // orbital info *
         Setup_DeePKS<TK> &deepks,
         Exx_NAO<TK> &exx_nao,
+        const Exx_Info& exx_info,
         int &iter,
         const int istep,
         bool &conv_esolver,
 		const double &scf_ene_thr)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_lcao");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_iter_lcao");
+    ModuleBase::timer::start("ModuleIO", "ctrl_iter_lcao");
 
     // save charge density
     // Peize Lin add 2020.04.04
@@ -42,16 +49,18 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
     }
 
 #ifdef __EXX
-    // save exx matrix
+    bool cal_exx = exx_info.info_global.cal_exx;
+    bool real_number = exx_info.info_ri.real_number;
+
     if (inp.calculation != "nscf")
     {
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (cal_exx)
         {
-            GlobalC::exx_info.info_ri.real_number ?
-              exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm, 
-                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
+            real_number ?
+              exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
+                pv, *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
               exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
-                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver);
+                pv, *p_chgmix, scf_ene_thr, iter, istep, conv_esolver);
         }
     }
 #endif
@@ -63,8 +72,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
     {
         if (iter % inp.deepks_out_freq_elec == 0 )
         {
-            std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&deepks.ld, [](LCAO_Deepks<TK>*) {});
-            LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
+            LCAO_Deepks_Interface<TK, TR> deepks_interface(&deepks.ld);
 
             deepks_interface.out_deepks_labels(pelec->f_en.etot, kv.get_nks(),
               ucell.nat, PARAM.globalv.nlocal, pelec->ekb, kv.kvec_d,
@@ -74,7 +82,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
     }
 #endif
 
-    ModuleBase::timer::tick("ModuleIO", "ctrl_iter_lcao");
+    ModuleBase::timer::end("ModuleIO", "ctrl_iter_lcao");
 }
 
 // TK: double  TR: double 
@@ -82,7 +90,7 @@ template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
 		elecstate::ElecState* pelec, // electronic info * 
-        elecstate::DensityMatrix<double, double>& dm, // density matrix, mohan add 2025-11-03
+        module_dm::DensityMatrix<double, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<double>* psi, // wave functions *
@@ -92,6 +100,7 @@ template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
 		LCAO_Orbitals &orb, // orbital info *
         Setup_DeePKS<double> &deepks,
         Exx_NAO<double> &exx_nao,
+        const Exx_Info& exx_info,
         int &iter,
         const int istep,
         bool &conv_esolver,
@@ -102,7 +111,7 @@ template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // u
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
 		elecstate::ElecState* pelec, // electronic info * 
-        elecstate::DensityMatrix<std::complex<double>, double>& dm, // density matrix, mohan add 2025-11-03
+        module_dm::DensityMatrix<std::complex<double>, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<std::complex<double>>* psi, // wave functions *
@@ -112,6 +121,7 @@ template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // u
 		LCAO_Orbitals &orb, // orbital info *
         Setup_DeePKS<std::complex<double>> &deepks,
         Exx_NAO<std::complex<double>> &exx_nao,
+        const Exx_Info& exx_info,
         int &iter,
         const int istep,
         bool &conv_esolver,
@@ -122,7 +132,7 @@ template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCel
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
 		elecstate::ElecState* pelec, // electronic info * 
-        elecstate::DensityMatrix<std::complex<double>, double>& dm, // density matrix, mohan add 2025-11-03
+        module_dm::DensityMatrix<std::complex<double>, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<std::complex<double>>* psi, // wave functions *
@@ -132,6 +142,7 @@ template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCel
 		LCAO_Orbitals &orb, // orbital info *
         Setup_DeePKS<std::complex<double>> &deepks,
         Exx_NAO<std::complex<double>> &exx_nao,
+        const Exx_Info& exx_info,
         int &iter,
         const int istep,
         bool &conv_esolver,

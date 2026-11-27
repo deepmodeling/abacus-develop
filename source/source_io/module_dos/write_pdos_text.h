@@ -1,0 +1,37 @@
+#ifndef WRITE_PDOS_TEXT_H
+#define WRITE_PDOS_TEXT_H
+
+#include "source_base/matrix.h"
+#include "source_cell/unitcell.h"
+#include <vector>
+
+#include <iosfwd>
+
+namespace ModuleIO
+{
+
+/// Write PDOS in plain text long-table format.
+/// File name: pdoss{spin}g{geom}.txt (g{geom} omitted when out_app_flag == 1)
+/// Columns: energy(eV)  atom  species  l  z  m  pdos(1/eV)
+/// For nspin=4, the two spinor components are summed.
+void write_pdos_text(
+        const UnitCell& ucell,
+        const ModuleBase::matrix* pdos,
+        const int nspin,
+        const int nlocal,
+        const int npoints,
+        const double& emin,
+        const double& dos_edelta_ev,
+        const std::string& out_dir,
+        const int istep,
+        const int out_app_flag,
+        const int precision,
+        std::ofstream& ofs_running);
+
+/// Write one NPY array of atom- and orbital-projected spin spectra.
+void write_pdos_npy(const UnitCell& cell, const std::vector<ModuleBase::matrix>& pdos,
+                    int nspin, double emin, double de, const std::string& path);
+
+}
+
+#endif

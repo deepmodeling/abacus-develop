@@ -14,28 +14,28 @@ class Sto_Func
     void set_E_range(REAL* Emin_in, REAL* Emax_in);
 
   public:
-    REAL root_fd(REAL e);
-    REAL fd(REAL e);
-    REAL nroot_fd(REAL e);
-    REAL nfd(REAL e);
-    REAL nxfd(REAL e);
-    REAL fdlnfd(REAL e);
-    REAL nfdlnfd(REAL e);
-    REAL n_root_fdlnfd(REAL e);
-    REAL nroot_mfd(REAL e);
+    REAL root_fd(REAL e) const;
+    REAL fd(REAL e) const;
+    REAL nroot_fd(REAL e) const;
+    REAL nfd(REAL e) const;
+    REAL nxfd(REAL e) const;
+    REAL fdlnfd(REAL e) const;
+    REAL nfdlnfd(REAL e) const;
+    REAL n_root_fdlnfd(REAL e) const;
+    REAL nroot_mfd(REAL e) const;
 
   public:
     REAL t;
-    REAL ncos(REAL e);
-    REAL nsin(REAL e);
-    REAL n_sin(REAL e);
+    REAL ncos(REAL e) const;
+    REAL nsin(REAL e) const;
+    REAL n_sin(REAL e) const;
 
   public:
     REAL sigma;
     REAL targ_e;
-    REAL gauss(REAL e);
-    REAL ngauss(REAL e);
-    REAL nroot_gauss(REAL e);
+    REAL gauss(REAL e) const;
+    REAL ngauss(REAL e) const;
+    REAL nroot_gauss(REAL e) const;
 };
 
 #endif

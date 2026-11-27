@@ -1,0 +1,108 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+# PEXSI (Pole EXpansion and Selected Inversion) Examples
+
+This directory contains examples for performing calculations with PEXSI (Pole EXpansion and Selected Inversion) in ABACUS. PEXSI is an efficient method for electronic structure calculations of large systems, particularly for metallic systems at finite temperature.
+
+## What is PEXSI?
+
+PEXSI (Pole EXpansion and Selected Inversion) is a computational method designed to efficiently calculate the electronic structure of large systems. It is particularly well-suited for:
+
+- Metallic systems at finite temperature
+- Large supercells with many atoms
+- Systems where traditional diagonalization methods become computationally prohibitive
+
+PEXSI works by:
+
+1. Expanding the Fermi-Dirac distribution function using a pole expansion
+2. Performing selected inversion of the Hamiltonian matrix
+3. Reducing the computational complexity compared to traditional methods
+
+## PEXSI in ABACUS
+
+To enable PEXSI in ABACUS, set the following parameter in the INPUT file:
+
+```
+INPUT_PARAMETERS
+ks_solver        pexsi    # Use PEXSI solver
+```
+
+### Key PEXSI Parameters:
+
+- `pexsi_npole`: Number of poles in the expansion (default: 40)
+- `pexsi_nmin`: Minimum number of eigenvalues to compute
+- `pexsi_nmax`: Maximum number of eigenvalues to compute
+- `pexsi_temperature`: Temperature for Fermi-Dirac distribution
+- `pexsi_energy_shift`: Energy shift for pole expansion
+
+## Examples Included
+
+### 1. 01_spin_Fe2
+- **System**: Iron dimer (Fe2) with spin polarization
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates PEXSI calculation for a spin-polarized system
+- **Input Files**:
+  - `INPUT`: Contains the PEXSI calculation parameters
+  - `KPT`: Defines the k-point sampling
+  - `STRU`: Describes the iron dimer structure
+
+### 2. 02_scf_Si64
+- **System**: Silicon supercell with 64 atoms
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates PEXSI calculation for a large supercell system
+- **Input Files**:
+  - `INPUT`: Contains the PEXSI calculation parameters
+  - `KPT`: Defines the k-point sampling
+  - `STRU`: Describes the silicon supercell structure
+
+### 3. 03_md_Si8
+- **System**: Silicon cluster with 8 atoms
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates PEXSI calculation for molecular dynamics
+- **Input Files**:
+  - `INPUT`: Contains the PEXSI calculation parameters for MD
+  - `KPT`: Defines the k-point sampling
+  - `STRU`: Describes the silicon cluster structure
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/33_pexsi/01_spin_Fe2
+   ```
+
+2. Run ABACUS:
+   ```bash
+   abacus
+   ```
+
+3. Check the output files in the `OUT.ABACUS` directory.
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.ABACUS` directory:
+
+- `running_scf.log`: Log file for the SCF calculation, includes details about PEXSI setup
+- `STRU_*`: Contains the atomic positions at different time steps (for MD calculations)
+
+## Notes
+
+- PEXSI is particularly efficient for metallic systems at finite temperature
+- The performance of PEXSI depends on the choice of `pexsi_npole`; a larger number of poles gives more accurate results but increases computational cost
+- PEXSI can significantly speed up calculations for large systems compared to traditional diagonalization methods
+- PEXSI is compatible with both LCAO and plane wave basis sets
+- The examples provided are for demonstration purposes; for production calculations, you should carefully test the convergence of results with respect to PEXSI parameters, basis set, and k-point sampling
+
+## Applications
+
+PEXSI calculations in ABACUS can be used to study:
+
+- Metallic systems at finite temperature
+- Large supercells and nanostructures
+- Molecular dynamics of metallic systems
+- Electronic structure of complex materials
+- Systems where traditional diagonalization methods are computationally prohibitive

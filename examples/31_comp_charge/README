@@ -4,22 +4,89 @@
 /
 /*******************************************************************************/
 
-ABACUS supports adding a distribution of compensating charge to maintain the supercell's neutrality due to the periodic boundary condition. The compensating charge implemented in ABACUS follows the [methodology](http://dx.doi.org/10.1103/PhysRevB.89.245406) developed by Brumme, Calandra, and Mauri in 2014.
+# Compensating Charge Examples
 
-The ditrubution of compensating charge can be added with the following 
-parameters in INPUT file, 
+This directory contains examples for performing calculations with compensating charge in ABACUS. The compensating charge is used to maintain supercell neutrality in periodic boundary condition calculations, particularly for systems with excess charge or when simulating field-effect devices.
+
+## What is Compensating Charge?
+
+Compensating charge is a distribution of charge added to a supercell to maintain overall neutrality when the system contains excess charge. This is particularly important in periodic DFT calculations because:
+
+- Periodic boundary conditions require the system to be overall neutral
+- Excess charge in a supercell would create artificial long-range Coulomb interactions between periodic images
+- Compensating charge mimics the effect of a gate electrode in field-effect devices
+
+ABACUS implements the compensating charge method developed by Brumme, Calandra, and Mauri in 2014 [1], which distributes the compensating charge in a block-like region of the supercell.
+
+## Compensating Charge in ABACUS
+
+To enable compensating charge in ABACUS, set the following parameters in the INPUT file:
 
 ```
 INPUT_PARAMETERS
-gate_flag           1
-zgate               0.7
-block_down          0.65
-block_up            0.75
-block_height        0.01
-block               1
-nelec               217
+gate_flag           1    # Enable compensating charge
+gate_z              0.7  # Position of the compensating charge layer (fraction of cell length)
+block_down          0.65 # Lower boundary of the charge block (fraction of cell length)
+block_up            0.75 # Upper boundary of the charge block (fraction of cell length)
+block_height        0.01 # Height of the charge block
+b_block             1    # Block type (1 for uniform block)
+nelec               217  # Number of electrons (adjust to create excess charge)
 ```
 
-Detailed explaination of these keywords can be found [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#gate-field-compensating-charge). An additional electron is included via `nelec` so as to trigger on the positive compensating charge. The energy contribution from the compensating charge is given as `E_gatefield` in the output file. See `running_scf.ref` for the output of this example. Note that both `pw` and `lcao` (specified via `basis type`) are supported for this functionality. 
+### Key Parameters:
 
+- `gate_flag`: Set to 1 to enable compensating charge
+- `gate_z`: Position of the compensating charge layer as a fraction of the cell length (0 to 1)
+- `block_down`: Lower boundary of the charge block as a fraction of the cell length
+- `block_up`: Upper boundary of the charge block as a fraction of the cell length
+- `block_height`: Height of the charge block
+- `b_block`: Block type (1 for uniform block)
+- `nelec`: Number of electrons (adjust to create excess charge)
 
+Both plane wave (PW) and LCAO basis sets are supported for compensating charge calculations.
+
+## Examples Included
+
+### 1. 01_Pt_slab
+- **System**: Platinum slab with compensating charge
+- **Basis**: Plane wave (PW)
+- **Purpose**: Demonstrates compensating charge calculation for a metal slab system
+- **Input Files**:
+  - `INPUT`: Contains the compensating charge parameters
+  - `STRU`: Describes the platinum slab structure
+  - `run.sh`: Script to run the calculation
+  - `running_scf.ref`: Reference output for comparison
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.ABACUS` directory:
+
+- `running_scf.log`: Log file for the SCF calculation, includes details about the compensating charge setup
+
+### Energy Contribution
+
+The energy contribution from the compensating charge is given as `E_gatefield` in the output files. This term represents the interaction energy between the system and the compensating charge.
+
+## Notes
+
+- Compensating charge is used to maintain supercell neutrality when the system has excess charge
+- The position and shape of the compensating charge block can be adjusted using the `gate_z`, `block_down`, `block_up`, and `block_height` parameters
+- The `nelec` parameter is used to introduce excess charge, which triggers the compensating charge
+- Compensating charge calculations are particularly useful for simulating field-effect devices and charged interfaces
+- The computational cost of compensating charge calculations is similar to standard DFT calculations
+- The examples provided are for demonstration purposes; for production calculations, you should carefully test the convergence of results with respect to basis set, k-point sampling, and compensating charge parameters
+
+## Applications
+
+Compensating charge calculations in ABACUS can be used to study:
+
+- Field-effect transistors and other gate-controlled devices
+- Charged interfaces and surfaces
+- Electrochemical systems
+- Catalytic reactions under applied bias
+- Charge transfer at interfaces
+- Electronic structure changes under gate voltage
+
+## References
+
+[1] Brumme, T., Calandra, M., & Mauri, F. (2014). First-principles simulations of field-effect devices: A practical approach. Physical Review B, 89(24), 245406.

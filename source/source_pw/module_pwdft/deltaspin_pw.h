@@ -1,9 +1,10 @@
 #ifndef DELTASPIN_PW_H
 #define DELTASPIN_PW_H
 
-#include "source_io/module_parameter/parameter.h"
+#include <iosfwd>
 
 class Charge_Mixing;
+struct Input_para;
 
 namespace pw
 {
@@ -17,12 +18,15 @@ namespace pw
  * @param iter The current iteration number (0-indexed).
  * @param drho The current charge density difference.
  * @param inp The input parameters.
+ * @param ofs_running The output stream for running log (e.g. running_scf.log).
  * @return true if the solver should be skipped (lambda loop was executed),
  *         false otherwise.
  */
-bool run_deltaspin_lambda_loop(const int iter,
-                               const double drho,
-                               const Input_para& inp);
+bool run_deltaspin_lambda_loop(
+    const int iter,
+    const double drho,
+    const Input_para &inp,
+    std::ostream &ofs_running);
 
 /**
  * @brief Check if SCF oscillation occurs for DeltaSpin method.
@@ -36,11 +40,12 @@ bool run_deltaspin_lambda_loop(const int iter,
  * @param p_chgmix Pointer to the Charge_Mixing object.
  * @param inp The input parameters.
  */
-void check_deltaspin_oscillation(const int iter,
-                                 const double drho,
-                                 Charge_Mixing* p_chgmix,
-                                 const Input_para& inp);
+void check_deltaspin_oscillation(
+    const int iter,
+    const double drho,
+    Charge_Mixing *p_chgmix,
+    const Input_para &inp);
 
-}
+} // namespace pw
 
 #endif

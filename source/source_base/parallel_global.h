@@ -6,10 +6,7 @@
 #ifndef PARALLEL_GLOBAL_H
 #define PARALLEL_GLOBAL_H
 
-#include <complex>
 #include "parallel_comm.h"
-
-// void myProd(std::complex<double> *in,std::complex<double> *inout,int *len,MPI_Datatype *dptr);
 
 namespace Parallel_Global
 {
@@ -21,9 +18,6 @@ extern int omp_number;
 
 // changed from read_mpi_parameters in 2024-1018
 void read_pal_param(int argc, char** argv, int& NPROC, int& NTHREAD_PER_PROC, int& MY_RANK);
-#ifdef __MPI
-void myProd(std::complex<double>* in, std::complex<double>* inout, int* len, MPI_Datatype* dptr);
-#endif
 
 /**-------------------------------------------
  * call to split the "diago world"

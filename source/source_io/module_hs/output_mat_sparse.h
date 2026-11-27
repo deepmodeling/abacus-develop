@@ -6,27 +6,49 @@
 #include "source_cell/klist.h"
 #include "source_hamilt/hamilt.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
+#include "source_pw/module_pwdft/dftu_base.h" // mohan add 20251107
+
+#include <fstream>
 
 namespace ModuleIO
 {
-/// @brief the output interface to write the sparse matrix of H, S, T, and r
-template <typename T> 
-void output_mat_sparse(const bool& out_mat_hsR,
-                       const bool& out_mat_dh,
-                       const bool& out_mat_ds,
-                       const bool& out_mat_t,
-                       const bool& out_mat_r,
+struct MatSparseOutputOptions
+{
+    bool out_mat_dh = false;
+    bool out_mat_ds = false;
+    bool out_mat_t = false;
+    bool out_mat_r = false;
+    int dh_precision = 16;
+    int ds_precision = 16;
+    int t_precision = 16;
+    int r_precision = 16;
+    double sparse_threshold = 1e-10;
+    bool binary = false;
+};
+
+/// @brief the output interface to write the sparse matrix of dH, dS, T, and r
+template <typename T>
+void output_mat_sparse(const MatSparseOutputOptions& options,
                        const int& istep,
                        const ModuleBase::matrix& v_eff,
                        const Parallel_Orbitals& pv,
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        UnitCell& ucell,
-                       const Grid_Driver& grid, // mohan add 2024-04-06
+                       const Grid_Driver& grid,
                        const K_Vectors& kv,
-					   hamilt::Hamilt<T>* p_ham,
-					   Plus_U* p_dftu); // mohan add 20251107
+                       hamilt::Hamilt<T>* p_ham,
+                       Plus_U_Base* p_dftu,
+                       const std::string& global_out_dir,
+                       const std::string& global_matrix_dir,
+                       const std::string& calculation,
+                       const int out_app_flag,
+                       const int nspin,
+                       const bool gamma_only_local,
+                       const int npol,
+                       const int nlocal,
+                       const bool cal_force,
+                       std::ofstream& ofs_running);
 } // namespace ModuleIO
 
 #endif // OUTPUT_MAT_SPARSE_H

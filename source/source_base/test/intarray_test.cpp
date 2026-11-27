@@ -31,6 +31,12 @@
  *     - without changing its elements
  *   -IntArrayAlloc
  *     - Warning of integer array allocation error
+ *   - CopyConstructor
+ *     - test copy constructor
+ *   - MoveConstructor
+ *     - test move constructor
+ *   - MoveAssignment
+ *     - test move assignment operator
  */
 
 namespace ModuleBase
@@ -41,12 +47,16 @@ void IntArrayAlloc();
 class IntArrayTest : public testing::Test
 {
 protected:
-	ModuleBase::IntArray a2, a3, a4, a5, a6;
-	int aa = 11;
-	int bb = 1;
-	int count0;
-	int count1;
-	const int zero = 0;
+    ModuleBase::IntArray a2, a3, a4, a5, a6;
+    int aa;
+    int bb;
+    int count0;
+    int count1;
+    const int zero;
+
+    IntArrayTest() : aa(11), bb(1), zero(0)
+    {
+    }
 };
 
 TEST_F(IntArrayTest,Construct)
@@ -312,3 +322,63 @@ TEST_F(IntArrayTest,Alloc)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Allocation error for IntArray"));
 }
+
+TEST_F(IntArrayTest,CopyConstructor)
+{
+	a2.create(2,3);
+	a2 = aa;
+	ModuleBase::IntArray x2(a2);
+	EXPECT_EQ(x2.getSize(),a2.getSize());
+	EXPECT_EQ(x2.getDim(),a2.getDim());
+	EXPECT_EQ(x2.getBound1(),a2.getBound1());
+	EXPECT_EQ(x2.getBound2(),a2.getBound2());
+	for (int i=0;i<x2.getSize();++i)
+	{
+		EXPECT_EQ(x2.ptr[i],a2.ptr[i]);
+	}
+}
+
+TEST_F(IntArrayTest,MoveConstructor)
+{
+	a2.create(2,3);
+	a2 = aa;
+	int size = a2.getSize();
+	int dim = a2.getDim();
+	ModuleBase::IntArray x2(std::move(a2));
+	EXPECT_EQ(x2.getSize(),size);
+	EXPECT_EQ(x2.getDim(),dim);
+	EXPECT_EQ(a2.getSize(),0);
+	EXPECT_EQ(a2.getDim(),0);
+}
+
+TEST_F(IntArrayTest,MoveAssignment)
+{
+	a2.create(2,3);
+	a2 = aa;
+	int size = a2.getSize();
+	int dim = a2.getDim();
+	ModuleBase::IntArray x2(1,1);
+	x2 = std::move(a2);
+	EXPECT_EQ(x2.getSize(),size);
+	EXPECT_EQ(x2.getDim(),dim);
+	EXPECT_EQ(a2.getSize(),0);
+	EXPECT_EQ(a2.getDim(),0);
+}
+
+// Override global operator new to simulate memory allocation failure
+static bool g_throw_bad_alloc = false;
+
+void* operator new(size_t size)
+{
+    if (g_throw_bad_alloc)
+    {
+        throw std::bad_alloc();
+    }
+    return std::malloc(size);
+}
+
+void operator delete(void* ptr) noexcept
+{
+    std::free(ptr);
+}
+

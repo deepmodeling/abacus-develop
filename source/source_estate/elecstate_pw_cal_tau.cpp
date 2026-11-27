@@ -1,5 +1,7 @@
 #include "elecstate_pw.h"
 
+#include "source_estate/module_charge/chg_parallel.h"
+
 namespace elecstate {
 
 template<typename T, typename Device>
@@ -7,9 +9,9 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
 {
     ModuleBase::TITLE("ElecStatePW", "cal_tau");
     for(int is=0; is<PARAM.inp.nspin; is++)
-	{
+    {
         setmem_var_op()(this->kin_r[is], 0,  this->charge->nrxx);
-	}
+    }
 
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
@@ -25,7 +27,7 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
         {
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
-            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
+            const Real w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
 
             // kinetic energy density
             for (int j = 0; j < 3; j++)
@@ -45,7 +47,7 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
 
                 this->basis->recip_to_real(this->ctx, this->wfcr, this->wfcr, ik);
 
-                elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, w1, this->kin_r, this->wfcr);
+                elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, this->charge->nrxx, w1, this->kin_r, this->wfcr);
             }
         }
     }
@@ -54,7 +56,13 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
             castmem_var_d2h_op()(this->charge->kin_r[ii], this->kin_r[ii], this->charge->nrxx);
         }
     }
-    this->parallelK();
+#ifdef __MPI
+    module_charge::kin_r_mpi(*this->charge,
+                             GlobalV::KPAR,
+                             PARAM.globalv.all_ks_run,
+                             PARAM.inp.bndpar,
+                             PARAM.inp.nspin);
+#endif
     ModuleBase::TITLE("ElecStatePW", "cal_tau");
 }
 

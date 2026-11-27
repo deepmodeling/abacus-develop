@@ -5,30 +5,39 @@
 
 #include "unitcell.h"
 #include "read_atoms_helper.h"
-#include "source_io/module_parameter/parameter.h"
+
 #include "print_cell.h"
 #include "read_stru.h"
-#include "source_estate/read_orb.h"
 #include "source_base/timer.h"
 #include "source_base/constants.h"
 #include "source_base/formatter.h"
 #include "source_base/mathzone.h"
 
-#ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
-#endif
-
 bool unitcell::read_atom_positions(UnitCell& ucell,
                          std::ifstream &ifpos,
                          std::ofstream &ofs_running,
-                         std::ofstream &ofs_warning)
+                         std::ofstream &ofs_warning,
+                         const int nspin,
+                         const std::string& basis_type,
+                         const std::string& orbital_dir,
+                         const std::string& init_wfc,
+                         const double onsite_radius,
+                         const bool fixed_atoms,
+                         const bool noncolin,
+                         const std::string& calculation,
+                         const std::string& esolver_type,
+                         const int symmetry)
 {
     ModuleBase::TITLE("UnitCell","read_atom_positions");
 
     std::string& Coordinate  = ucell.Coordinate;
     const int ntype = ucell.ntype;
-    const int nspin = PARAM.inp.nspin;
     assert (nspin==1 || nspin==2 || nspin==4);
+
+    if (ucell.magnet.start_mag.size() != static_cast<size_t>(ntype))
+    {
+        ucell.magnet.start_mag.resize(ntype, 0.0);
+    }
 
     if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifpos, "ATOMIC_POSITIONS"))
     {
@@ -51,7 +60,9 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
 
             bool set_element_mag_zero = false;
             if (!unitcell::read_atom_type_header(it, ucell, ifpos, ofs_running,
-                                       ofs_warning, set_element_mag_zero))
+                                       ofs_warning, set_element_mag_zero,
+                                       basis_type, orbital_dir,
+                                       init_wfc, onsite_radius))
             {
                 return false;
             }
@@ -59,15 +70,29 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             int na = ucell.atoms[it].na;
             ucell.nat += na;
 
+            // Number of atoms of this type whose x/y moment was discarded by
+            // the collinear projection (nspin=4 with noncolin=0). Reported
+            // once per type after the atom loop instead of once per atom.
+            int n_xy_discarded = 0;
+
             if (na > 0)
             {
-                unitcell::allocate_atom_properties(ucell.atoms[it], na, ucell.atom_mass[it]);
+                unitcell::allocate_atom_properties(ucell.atoms[it], na);
                 for (int ia = 0;ia < na; ia++)
                 {
                  // modify the reading of frozen ions and velocities  -- Yuanbo Li 2021/8/20
                     ModuleBase::Vector3<double> v;
                     ModuleBase::Vector3<int> mv;
                     ifpos >> v.x >> v.y >> v.z;
+                    // An EOF failure means fewer coordinate lines than the
+                    // declared atom count; leave that to the existing
+                    // mismatch-in-atom-number exit in parse_atom_properties.
+                    if (ifpos.fail() && !ifpos.eof())
+                    {
+                        ofs_warning << " Error: failed to read the coordinate triplet of atom "
+                                    << ia + 1 << " for atom type " << ucell.atoms[it].label << std::endl;
+                        return false;
+                    }
                     mv.x = true ;
                     mv.y = true ;
                     mv.z = true ;
@@ -92,18 +117,28 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                     }
 
                     // Process magnetization
-                    unitcell::process_magnetization(ucell.atoms[it], it, ia, nspin,
-                                        input_vec_mag, input_angle_mag, ofs_running);
+                    const bool xy_discarded
+                        = unitcell::process_magnetization(ucell.atoms[it], it, ia, nspin,
+                                            input_vec_mag, input_angle_mag, ofs_running,
+                                            noncolin);
+                    if (xy_discarded)
+                    {
+                        ++n_xy_discarded;
+                    }
 
                     // Transform coordinates
                     unitcell::transform_atom_coordinates(ucell.atoms[it], ia, Coordinate,
                                              v, ucell.latvec, ucell.lat0, ucell.latcenter);
 
                     // Set movement flags
-                    unitcell::set_atom_movement_flags(ucell.atoms[it], ia, mv);
+                    unitcell::set_atom_movement_flags(ucell.atoms[it], ia, mv,
+                                        fixed_atoms);
                     ucell.atoms[it].dis[ia].set(0, 0, 0);
                 }//endj
             }    // end na
+
+            unitcell::warn_xy_magnetization_ignored(ucell.atoms[it].label,
+                                        n_xy_discarded, na, ofs_running);
             // reset some useless parameters
             if (set_element_mag_zero)
             {
@@ -111,11 +146,40 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             }
         } // end for ntype
 
-        // Auto-set magnetization if needed
-        unitcell::autoset_magnetization(ucell, nspin, ofs_running);
+        // Auto-set magnetization if needed.
+        // symmetry=1 means "analyze and preserve the symmetry of the initial magnetic moment"; 
+        // an all-zero moment is a legitimate nonmagnetic choice under the full point group, 
+        // so do not override it with an autoset seed. Warn instead.
+        if (symmetry == 1)
+        {
+            // Only report the skipped autoset when there is in fact
+            // nothing set: this message used to be printed even for an
+            // explicitly magnetized STRU.
+            if (unitcell::is_magnetization_all_zero(ucell))
+            {
+                ofs_running << "\n WARNING: initial magmom is all zero and symmetry = 1." << std::endl;
+                ofs_running << "          Autoset magnetism is skipped to preserve the symmetry" << std::endl;
+                ofs_running << "          of the initial nonmagnetic structure." << std::endl;
+                ofs_running << "          If spontaneous magnetism is expected, set magmom" << std::endl;
+                ofs_running << "          explicitly in STRU, or use symmetry = 0 or -1." << std::endl;
+            }
+        }
+        else
+        {
+            unitcell::autoset_magnetization(ucell, nspin, ofs_running);
+        }
+
+        // nspin=4 never autosets a moment, so the zero-moment start has to
+        // be reported for every symmetry setting, not only on the autoset
+        // path that symmetry=1 skips.
+        if (nspin == 4)
+        {
+            unitcell::warn_zero_magnetization_nspin4(ucell, ofs_running);
+        }
     }   // end scan_begin
 
     // Final validation and output
-    return unitcell::finalize_atom_positions(ucell, ofs_running, ofs_warning);
+    return unitcell::finalize_atom_positions(ucell, ofs_running, ofs_warning,
+                                        calculation, esolver_type);
 
 }//end read_atom_positions

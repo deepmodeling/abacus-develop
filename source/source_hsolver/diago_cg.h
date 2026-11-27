@@ -1,11 +1,13 @@
 #ifndef MODULE_HSOLVER_DIAGO_CG_H_
 #define MODULE_HSOLVER_DIAGO_CG_H_
 
-#include <functional>
 #include <vector>
 
 #include <source_base/macros.h>
 #include <source_base/kernels/math_kernel_op.h>
+
+#include "source_hsolver/diag_comm_info.h"
+#include "source_hsolver/hs_operator.h"
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
@@ -22,30 +24,23 @@ class DiagoCG final
     using Real = typename GetTypeReal<T>::type;
     using ct_Device = typename ct::PsiToContainer<Device>::type;
   public:
-        using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
-        using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
-        using SubspaceFunc = std::function<void(T*, T*, const int, const int, const bool)>;
     // Constructor need:
-    // 1. temporary mock of Hamiltonian "Hamilt_PW"
-    // 2. precondition pointer should point to place of precondition array.
+    // 1. basis type and calculation type of ABACUS
+    // 2. diag_comm: the pool over which the subspace matrices are reduced
     DiagoCG(const std::string& basis_type, const std::string& calculation);
     DiagoCG(
         const std::string& basis_type,
         const std::string& calculation,
         const bool& need_subspace,
-        const SubspaceFunc& subspace_func,
+        const diag_comm_info& diag_comm,
         const Real& pw_diag_thr,
-        const int& pw_diag_nmax,
-        const int& nproc_in_pool);
+        const int& pw_diag_nmax);
 
     ~DiagoCG();
 
-    // virtual void init(){};
-    // refactor hpsi_info
     // this is the diag() function for CG method
     // returns avg_iter
-    double diag(const HPsiFunc& hpsi_func,
-                const SPsiFunc& spsi_func,
+    double diag(const HSOperator<T, Device>& op,
                 const int ld_psi,
                 const int nband,
                 const int dim,
@@ -72,20 +67,16 @@ class DiagoCG final
     Real pw_diag_thr_ = 1e-5;
     /// maximum iteration steps for cg diagonalization
     int pw_diag_nmax_ = 0;
-    /// number of processors in a node
-    int nproc_in_pool_ = 0;
+    /// communicator of the pool sharing the plane waves
+    const diag_comm_info diag_comm_;
     /// basis_type of psi
     std::string basis_type_ = {};
     /// calculation type of ABACUS
     std::string calculation_ = {};
 
     bool need_subspace_ = false;
-    /// A function object that performs the hPsi calculation.
-    HPsiFunc hpsi_func_ = nullptr;
-    /// A function object that performs the sPsi calculation.
-    SPsiFunc spsi_func_ = nullptr;
-    /// A function object that performs the subspace calculation.
-    SubspaceFunc subspace_func_ = nullptr;
+    /// The H and S operator being diagonalized, set for the duration of diag().
+    const HSOperator<T, Device>* op_ = nullptr;
 
     void calc_grad(
         const ct::Tensor& prec,
@@ -134,6 +125,9 @@ class DiagoCG final
                    const std::vector<double>& ethr_band);
 
     bool test_exit_cond(const int& ntry, const int& notconv) const;
+
+    /// subspace rotation of the current nband vectors (packed, leading dimension dim)
+    void diag_subspace(const T* psi_in, T* psi_out, const int dim, const int nband, const bool S_orth);
 
     using dot_real_op = ModuleBase::dot_real_op<T, Device>;
     const T * one_ = nullptr, * zero_ = nullptr, * neg_one_ = nullptr;

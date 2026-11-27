@@ -2,8 +2,9 @@
 #define DIAGOELPA_H
 
 #include "source_base/macros.h"   // GetRealType
-#include "source_hamilt/hamilt.h"
+#include "source_base/matrix_block.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_psi/psi.h"
 
 namespace hsolver
 {
@@ -15,10 +16,21 @@ class DiagoElpa
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
+    /// @param nlocal_in global dimension of the NAO Hamiltonian
+    /// @param nbands_in number of lowest eigenpairs to compute
+    DiagoElpa(const int nlocal_in, const int nbands_in) : DiagoElpa(nlocal_in, nbands_in, DecomposedState) {}
+
+    /// @param overlap_factor_in Factorization state of the supplied overlap buffer.
+    DiagoElpa(const int nlocal_in, const int nbands_in, int& overlap_factor_in)
+        : nlocal(nlocal_in), nbands(nbands_in), overlap_factor(overlap_factor_in) {}
+
+    void diag(ModuleBase::MatrixBlock<T>& h_mat,
+              ModuleBase::MatrixBlock<T>& s_mat,
+              psi::Psi<T>& psi,
+              Real* eigenvalue_in);
 #ifdef __MPI
     // diagnolization used in parallel-k case
-    void diag_pool(hamilt::MatrixBlock<T>& h_mat, hamilt::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm);
+    void diag_pool(ModuleBase::MatrixBlock<T>& h_mat, ModuleBase::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm);
     MPI_Comm setmpicomm(); // set mpi comm;
     static int elpa_num_thread;  // need to set mpi_comm or not,-1 not,else the number of mpi needed
 #endif
@@ -27,9 +39,13 @@ class DiagoElpa
 
   private:
 #ifdef __MPI
-    bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF);
+    bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF) const;
     static int lastmpinum; // last using mpi;
 #endif
+
+    const int nlocal;
+    const int nbands;
+    int& overlap_factor;
 };
 
 template <typename T>

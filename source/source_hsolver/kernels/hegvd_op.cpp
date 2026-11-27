@@ -1,8 +1,10 @@
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/module_container/base/third_party/lapack.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <type_traits>
 
 namespace lapackConnector = container::lapackConnector; // see "source_base/module_container/base/third_party/lapack.h"
 
@@ -26,17 +28,19 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
             vcc[i] = hcc[i];
         }
         int info = 0;
-        int lwork = 2 * nstart + nstart * nstart;
+        // SYGVD needs more WORK than HEGVD when eigenvectors are requested.
+        const bool real_problem = std::is_same<T, Real>::value;
+        int lwork = real_problem ? 1 + 6 * nstart + 2 * nstart * nstart : 2 * nstart + nstart * nstart;
         T* work = new T[lwork];
-        Parallel_Reduce::ZEROS(work, lwork);
+        std::fill(work, work + lwork, T(0));
 
         int lrwork = 1 + 5 * nstart + 2 * nstart * nstart;
         Real* rwork = new Real[lrwork];
-        Parallel_Reduce::ZEROS(rwork, lrwork);
+        std::fill(rwork, rwork + lrwork, Real(0));
 
         int liwork = 3 + 5 * nstart;
         int* iwork = new int[liwork];
-        Parallel_Reduce::ZEROS(iwork, liwork);
+        std::fill(iwork, iwork + liwork, 0);
 
         //===========================
         // calculate all eigenvalues

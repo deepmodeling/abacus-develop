@@ -8,10 +8,9 @@
 #include "source_base/module_container/ATen/kernels/lapack.h"
 
 #include "source_hsolver/diag_comm_info.h"
-#include "source_hsolver/diag_const_nums.h"
+#include "source_hsolver/hs_operator.h"
 
 #include <vector>
-#include <functional>
 
 namespace hsolver
 {
@@ -38,16 +37,22 @@ class Diago_DavSubspace
 
     ~Diago_DavSubspace();
 
-    // See diago_david.h for information on the HPsiFunc function type
-    using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
-
-    int diag(const HPsiFunc& hpsi_func,
-             const HPsiFunc& spsi_func,
+    /// General operators (for example LR-TDDFT) need not have a single k point.
+    int diag(const HSOperator<T, Device>& op,
              T* psi_in,
              const int psi_in_dmax,
              Real* eigenvalue_in,
              const std::vector<double>& ethr_band,
              const bool& scf_type);
+
+    /// ik is the pool-local k-point index, used only in breakdown diagnostics.
+    int diag(const HSOperator<T, Device>& op,
+             T* psi_in,
+             const int psi_in_dmax,
+             Real* eigenvalue_in,
+             const std::vector<double>& ethr_band,
+             const bool& scf_type,
+             const int ik);
 
   private:
     /// for MPI communication
@@ -100,17 +105,18 @@ class Diago_DavSubspace
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    void cal_grad(const HPsiFunc& hpsi_func,
-                  const HPsiFunc& spsi_func,
+    void cal_grad(const HSOperator<T, Device>& op,
                   const int& dim,
                   const int& nbase,
-                  const int& notconv,
+                  int& notconv,
                   T* psi_iter,
                   T* hpsi,
                   T* spsi,
                   T* vcc,
-                  const int* unconv,
-                  std::vector<Real>* eigenvalue_iter);
+                  int* unconv,
+                  const std::vector<Real>* eigenvalue_iter,
+                  const std::vector<double>& ethr_band,
+                  const int ik);
 
     void cal_elem(const int& dim,
                   int& nbase,
@@ -148,12 +154,12 @@ class Diago_DavSubspace
                      std::vector<Real>* eigenvalue_iter,
                      T* vcc);
 
-    int diag_once(const HPsiFunc& hpsi_func,
-                  const HPsiFunc& spsi_func,
+    int diag_once(const HSOperator<T, Device>& op,
                   T* psi_in,
                   const int psi_in_dmax,
                   Real* eigenvalue_in,
-                  const std::vector<double>& ethr_band);
+                  const std::vector<double>& ethr_band,
+                  const int ik);
 
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 

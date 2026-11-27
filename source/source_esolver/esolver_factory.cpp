@@ -1,0 +1,429 @@
+#include "esolver_factory.h"
+
+#include "esolver.h"
+#include "esolver_dfpt_pw.h"
+#include "esolver_ks_pw.h"
+#include "esolver_ks_pw_tddft.h"
+#include "esolver_sdft_pw.h"
+#include "source_base/global_variable.h"
+#include "source_base/module_device/device.h"
+#include "source_hamilt/module_xc/general_exx_info.h"
+#include "source_io/module_parameter/parameter.h"
+#ifdef __LCAO
+#include "esolver_dm2rho.h"
+#include "esolver_double_xc.h"
+#include "esolver_gets.h"
+#include "esolver_ks_lcao.h"
+#include "esolver_ks_lcao_tddft.h"
+#include "esolver_ks_lcaopw.h"
+#include "esolver_lr_lcao_tddft.h"
+#ifdef __EXX
+#include "esolver_lr_lcao_bse.h"
+#endif
+#include "source_base/module_external/blacs_connector.h"
+#endif
+#include "esolver_forcefields.h"
+#include "esolver_of.h"
+#include "esolver_of_tddft.h"
+#include "source_md/module_dp/dp_forcefield.h"
+#include "source_md/module_lj/lj_forcefield.h"
+#include "source_md/module_nep/nep_forcefield.h"
+#include "source_md/module_snap/snap_forcefield.h"
+
+#include <sstream>
+#include <stdexcept>
+
+namespace ModuleESolver
+{
+
+std::string determine_type(const Input_para &inp)
+{
+    std::string esolver_type = "none";
+    if (inp.basis_type == "pw")
+    {
+        if (inp.esolver_type == "sdft")
+        {
+            esolver_type = "sdft_pw";
+        }
+        else if (inp.esolver_type == "ofdft")
+        {
+            esolver_type = "ofdft";
+        }
+        else if (inp.esolver_type == "tdofdft")
+        {
+            esolver_type = "tdofdft";
+        }
+        else if (inp.esolver_type == "ksdft")
+        {
+            esolver_type = "ksdft_pw";
+        }
+        else if (inp.esolver_type == "dfpt")
+        {
+            esolver_type = "dfpt_pw";
+        }
+        else if (inp.esolver_type == "tddft")
+        {
+            esolver_type = "ksdft_pw_tddft";
+        }
+    }
+    else if (inp.basis_type == "lcao_in_pw")
+    {
+#ifdef __LCAO
+        if (inp.esolver_type == "sdft")
+        {
+            esolver_type = "sdft_pw";
+        }
+        else if (inp.esolver_type == "ksdft")
+        {
+            esolver_type = "ksdft_lip";
+        }
+#else
+        ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
+#endif
+    }
+    else if (inp.basis_type == "lcao")
+    {
+#ifdef __LCAO
+        if (inp.esolver_type == "tddft")
+        {
+            esolver_type = "ksdft_lcao_tddft";
+        }
+        else if (inp.esolver_type == "ksdft")
+        {
+            esolver_type = "ksdft_lcao";
+        }
+        else if (inp.esolver_type == "ks-lr")
+        {
+            esolver_type = "ksdft_lr_lcao";
+        }
+        else if (inp.esolver_type == "lr")
+        {
+            esolver_type = "lr_lcao";
+        }
+#else
+        ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
+#endif
+    }
+
+    if (inp.esolver_type == "lj")
+    {
+        esolver_type = "lj_pot";
+    }
+    else if (inp.esolver_type == "dp")
+    {
+        esolver_type = "dp_pot";
+    }
+    else if (inp.esolver_type == "nep")
+    {
+        esolver_type = "nep_pot";
+    }
+    else if (inp.esolver_type == "snap")
+    {
+        esolver_type = "snap_pot";
+    }
+    else if (esolver_type == "none")
+    {
+        ModuleBase::WARNING_QUIT("ESolver", "No such esolver_type combined with basis_type");
+    }
+
+    std::ostream &running_log = GlobalV::ofs_running;
+    running_log << "\n #ENERGY SOLVER# " << esolver_type << std::endl;
+
+    std::string device_info = inp.device;
+
+    for (char &c : device_info)
+    {
+        if (std::islower(c))
+        {
+            c = std::toupper(c);
+        }
+    }
+    std::ostringstream device_summary;
+    base_device::information::output_device_info(device_summary, inp.device);
+    const std::string summary = device_summary.str();
+    if (!summary.empty())
+    {
+        std::cout << summary;
+        running_log << summary;
+    }
+    /***auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::cout << "hipGetDeviceInfo took " << duration.count() << " seconds" << std::endl;***/
+    return esolver_type;
+}
+
+// Some API to operate E_Solver
+ESolver *init_esolver(const Input_para &inp)
+{
+    // determine type of esolver based on INPUT information
+    const std::string esolver_type = determine_type(inp);
+    const bool gamma_only = inp.gamma_only;
+#ifdef __LCAO
+    const LRRuntime lr_runtime{GlobalV::ofs_running, GlobalV::ofs_warning, GlobalV::MY_RANK};
+#endif
+
+    // initialize the corresponding Esolver child class
+    if (esolver_type == "ksdft_pw")
+    {
+#if ((defined __CUDA) || (defined __ROCM))
+        if (inp.device == "gpu")
+        {
+            if (inp.precision == "single")
+            {
+                return new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>();
+            }
+            else
+            {
+                return new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>();
+            }
+        }
+#endif
+        if (inp.precision == "single")
+        {
+            return new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>();
+        }
+        else
+        {
+            return new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>();
+        }
+    }
+    else if (esolver_type == "dfpt_pw")
+    {
+        return new ESolver_DFPT_PW();
+    }
+    else if (esolver_type == "ksdft_pw_tddft")
+    {
+#if defined(__CUDA) || defined(__ROCM)
+        if (inp.device == "gpu")
+        {
+            if (inp.precision == "single")
+            {
+                return new ESolver_KS_PW_TDDFT<std::complex<float>, base_device::DEVICE_GPU>();
+            }
+            else
+            {
+                return new ESolver_KS_PW_TDDFT<std::complex<double>, base_device::DEVICE_GPU>();
+            }
+        }
+#endif
+        if (inp.precision == "single")
+        {
+            return new ESolver_KS_PW_TDDFT<std::complex<float>, base_device::DEVICE_CPU>();
+        }
+        else
+        {
+            return new ESolver_KS_PW_TDDFT<std::complex<double>, base_device::DEVICE_CPU>();
+        }
+    }
+    else if (esolver_type == "sdft_pw")
+    {
+#if ((defined __CUDA) || (defined __ROCM))
+        if (inp.device == "gpu")
+        {
+            // if (inp.precision == "single")
+            // {
+            //     return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_GPU>();
+            // }
+            // else
+            // {
+            return new ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_GPU>();
+            // }
+        }
+#endif
+        // if (inp.precision == "single")
+        // {
+        // 	return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>();
+        // }
+        // else
+        // {
+        return new ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>();
+        // }
+    }
+#ifdef __LCAO
+    else if (esolver_type == "ksdft_lip")
+    {
+        if (inp.precision == "single")
+        {
+            return new ESolver_KS_LIP<std::complex<float>>();
+        }
+        else
+        {
+            return new ESolver_KS_LIP<std::complex<double>>();
+        }
+    }
+    else if (esolver_type == "ksdft_lcao")
+    {
+        if (inp.calculation == "get_s")
+        {
+            if (gamma_only)
+            {
+                ModuleBase::WARNING_QUIT("ESolver", "get_s is not implemented for gamma_only");
+            }
+            else
+            {
+                return new ESolver_GetS();
+            }
+        }
+        else if (inp.deepks_out_base != "none")
+        {
+            if (gamma_only)
+            {
+                return new ESolver_DoubleXC<double, double>();
+            }
+            else if (inp.nspin < 4)
+            {
+                return new ESolver_DoubleXC<std::complex<double>, double>();
+            }
+            else
+            {
+                return new ESolver_DoubleXC<std::complex<double>, std::complex<double>>();
+            }
+        }
+        else if (inp.dm_to_rho)
+        {
+            if (gamma_only)
+            {
+                ModuleBase::WARNING_QUIT("ESolver", "dm_to_rho is not implemented for gamma_only");
+            }
+            else if (inp.nspin < 4)
+            {
+                return new ESolver_DM2rho<std::complex<double>, double>();
+            }
+            else
+            {
+                return new ESolver_DM2rho<std::complex<double>, std::complex<double>>();
+            }
+        }
+        else
+        {
+            if (gamma_only)
+            {
+                return new ESolver_KS_LCAO<double, double>();
+            }
+            else if (inp.nspin < 4)
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, double>();
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+            }
+        }
+    }
+    else if (esolver_type == "ksdft_lcao_tddft")
+    {
+        // Hybrid RT-TDDFT stores the complete Hamiltonian in complex H(R),
+        // even for collinear spin. The final operator-chain fold then applies
+        // the same TD gauge phase to local, non-local, and EXX terms.
+        General_Exx_Info exx_info;
+        init_general_exx_info(exx_info, inp);
+        const bool use_complex_hr = inp.nspin >= 4 || exx_info.cal_exx;
+        if (!use_complex_hr)
+        {
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+            if (inp.device == "gpu")
+            {
+                return new ESolver_KS_LCAO_TDDFT<double, base_device::DEVICE_GPU>();
+            }
+#endif
+            return new ESolver_KS_LCAO_TDDFT<double, base_device::DEVICE_CPU>();
+        }
+        else
+        {
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+            if (inp.device == "gpu")
+            {
+                return new ESolver_KS_LCAO_TDDFT<std::complex<double>, base_device::DEVICE_GPU>();
+            }
+#endif
+            return new ESolver_KS_LCAO_TDDFT<std::complex<double>, base_device::DEVICE_CPU>();
+        }
+    }
+    else if (esolver_type == "lr_lcao")
+    {
+        const std::string &in_dir = PARAM.globalv.global_readin_dir;
+        const std::string &out_dir = PARAM.globalv.global_out_dir;
+        if (inp.xc_kernel != "bse")
+        {
+            if (gamma_only)
+            {
+                return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir, lr_runtime);
+            }
+            else
+            {
+                return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
+            }
+        }
+        else
+        {
+#ifdef __EXX
+            if (gamma_only)
+            {
+                return new ModuleESolver::ESolver_BSE<double, double>(inp, in_dir, out_dir, lr_runtime);
+            }
+            else
+            {
+                return new ModuleESolver::ESolver_BSE<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
+            }
+#else
+            ModuleBase::WARNING_QUIT("ESolver", "BSE requires ENABLE_LIBRI=ON");
+            return nullptr;
+#endif
+        }
+    }
+    else if (esolver_type == "ksdft_lr_lcao")
+    {
+        const std::string &in_dir = PARAM.globalv.global_readin_dir;
+        const std::string &out_dir = PARAM.globalv.global_out_dir;
+        if (gamma_only)
+        {
+            return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir, lr_runtime);
+        }
+        else
+        {
+            return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
+        }
+    }
+#endif
+    else if (esolver_type == "ofdft")
+    {
+        return new ESolver_OF();
+    }
+    else if (esolver_type == "tdofdft")
+    {
+        return new ESolver_OF_TDDFT();
+    }
+    else if (esolver_type == "lj_pot")
+    {
+        std::ofstream &running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::ForceField> potential(new ModuleMD::LJ(PARAM.globalv.global_out_dir, running_log));
+        return new esolver_forcefields(std::move(potential), running_log);
+    }
+    else if (esolver_type == "dp_pot")
+    {
+        std::ofstream &running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::ForceField> potential(
+            new ModuleMD::DP(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
+        return new esolver_forcefields(std::move(potential), running_log);
+    }
+    else if (esolver_type == "nep_pot")
+    {
+        std::ofstream &running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::ForceField> potential(
+            new ModuleMD::NEPPotential(inp.mdp.pot_file, PARAM.globalv.global_out_dir, running_log));
+        return new esolver_forcefields(std::move(potential), running_log);
+    }
+    else if (esolver_type == "snap_pot")
+    {
+        const int rank = GlobalV::MY_RANK;
+        std::ofstream &running_log = GlobalV::ofs_running;
+        std::unique_ptr<ModuleMD::ForceField> potential(
+            new ModuleMD::SnapPotential(inp.mdp.pot_file, inp.mdp.snap_param_file, running_log, rank));
+        return new esolver_forcefields(std::move(potential), running_log);
+    }
+    throw std::invalid_argument(
+        "esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__) + " line " +
+        std::to_string(__LINE__));
+}
+
+} // namespace ModuleESolver

@@ -1,18 +1,17 @@
 add_subdirectory(module_vdw)
 add_subdirectory(module_surchem)
+add_subdirectory(module_sccs)
 add_subdirectory(module_xc)
+add_subdirectory(module_hcontainer)
 
-list(APPEND objects
-    operator.cpp
-    module_ewald/H_Ewald_pw.cpp
-    module_ewald/dnrm2.cpp
-)
+if(ENABLE_LCAO)
+  add_subdirectory(module_gint)
+endif()
 
-add_library(
-    hamilt_general
-    OBJECT
-    ${objects}
-)
+list(APPEND objects operator.cpp hs_matrix_k.cpp module_ewald/h_ewald_pw.cpp
+     module_ewald/dnrm2.cpp)
+
+add_library(hamilt_general OBJECT ${objects})
 
 if(ENABLE_COVERAGE)
   add_coverage(hamilt_general)

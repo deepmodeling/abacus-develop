@@ -4,23 +4,45 @@
 #include "source_base/matrix.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/cell_index.h"
-#include "source_estate/elecstate_lcao.h"
-#include "source_io/module_mulliken/output_dmk.h"
-#include "source_io/module_mulliken/output_sk.h"
-#include "source_base/formatter.h"
-#include "source_lcao/module_operator_lcao/dspin_lcao.h"
-#include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
 
+#include <iosfwd>
 #include <map>
 #include <vector>
 
 namespace ModuleIO
 {
 
+class OutputMullikenNspin4Test; // Defined in source/source_io/unittests/test_output_mulliken.cpp
+
+template <typename TK>
+class Output_Sk;
+
+template <typename TK>
+class Output_DMK;
+
+/**
+ * @brief Accumulate the nspin=4 Mulliken charge and Mx/My/Mz components.
+ *
+ * @details Decomposes one k-point mud = DM*S^T into the Pauli components using
+ * the conj-first DM convention (DM = conj(P), see dm_from_psi.h):
+ * Mx = Re(mud_ud + mud_du), My = Im(mud_ud - mud_du), Mz = Re(mud_uu - mud_dd).
+ *
+ * @param MecMulP accumulators [4 x nw/2]: 0 = charge, 1/2/3 = Mx/My/Mz
+ * @param mud     DM*S^T stored in ScaLAPACK column-major layout
+ * @param nw      total number of spinor orbitals (2 * number of spatial orbitals)
+ * @param pv      orbital distribution mapping
+ */
+void collect_MW_nspin4(ModuleBase::matrix& MecMulP,
+                       const ModuleBase::ComplexMatrix& mud,
+                       int nw,
+                       const Parallel_Orbitals* pv);
+
 /// @brief the output interface to write the Mulliken population charges
 template <typename TK>
 class Output_Mulliken
 {
+    friend class OutputMullikenNspin4Test;
+
   public:
     /// constructor of Output_Mulliken
     Output_Mulliken(Output_Sk<TK>* output_sk,
@@ -30,7 +52,13 @@ class Output_Mulliken
                     const std::vector<int>& isk,
                     int nspin);
     /// the outer interface to write the Mulliken population charges
-    void write(int istep, std::string out_dir);
+    /// @param istep zero-based ionic step index; printed one-based and used for
+    ///        the g{step} filename suffix in out_app_flag mode 2
+    /// @param out_app_flag output mode: 0 overwrites, 1 appends, 2 writes one
+    ///        numbered file per written step
+    /// @param out_dir directory that receives mulliken.txt
+    /// @param ofs_running running log stream, open on the writing rank only
+    void write(int istep, int out_app_flag, std::string out_dir, std::ofstream& ofs_running);
     /// print atom mag to running log file
     void print_atom_mag(const std::vector<std::vector<double>>& atom_chg, std::ostream& os);
     /// get total charge
@@ -85,101 +113,6 @@ class Output_Mulliken
     int nspin_;
     ModuleBase::matrix orbMulP_;
 };
-
-template <typename TK>
-void cal_mag(Parallel_Orbitals* pv,
-             hamilt::Hamilt<TK>* p_ham,
-             K_Vectors& kv,
-             elecstate::DensityMatrix<TK,double>* dm, // mohan add 2025-11-04
-             const TwoCenterBundle& two_center_bundle,
-             const LCAO_Orbitals& orb,
-             UnitCell& ucell,
-             const Grid_Driver& gd,
-             const int istep,
-             const bool print)
-{
-    // 1) calculate and output Mulliken population charges and magnetic moments
-    if (PARAM.inp.out_mul)
-    {
-        auto cell_index
-            = CellIndex(ucell.get_atomLabels(), 
-			ucell.get_atomCounts(), ucell.get_lnchiCounts(), PARAM.inp.nspin);
-        auto out_s_k = ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
-        auto out_dm_k = ModuleIO::Output_DMK<TK>(dm, pv, PARAM.inp.nspin, kv.get_nks());
-
-        auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_s_k), 
-			&(out_dm_k), pv, &cell_index, kv.isk, PARAM.inp.nspin);
-        auto atom_chg = mulp.get_atom_chg();
-        /// used in updating mag info in STRU file
-        ucell.atom_mulliken = mulp.get_atom_mulliken(atom_chg);
-        if (print && GlobalV::MY_RANK == 0)
-        {
-            /// write the Orbital file
-            cell_index.write_orb_info(PARAM.globalv.global_out_dir);
-            /// write mulliken.txt
-            mulp.write(istep, PARAM.globalv.global_out_dir);
-            /// write atomic mag info in running log file
-            mulp.print_atom_mag(atom_chg, GlobalV::ofs_running);
-        }
-    }
-    // 2) calculate and output the magnetizations of each atom with projection method
-    if (PARAM.inp.onsite_radius > 0)
-    {
-        std::vector<std::vector<double>> atom_mag(ucell.nat, std::vector<double>(PARAM.inp.nspin, 0.0));
-        std::vector<ModuleBase::Vector3<int>> constrain(ucell.nat, ModuleBase::Vector3<int>(1, 1, 1));
-        const hamilt::HContainer<double>* dmr = dm->get_DMR_pointer(1);
-        std::vector<double> moments;
-        std::vector<double> mag_x(ucell.nat, 0.0);
-        std::vector<double> mag_y(ucell.nat, 0.0);
-        std::vector<double> mag_z(ucell.nat, 0.0);
-        auto atomLabels = ucell.get_atomLabels();
-
-        if(PARAM.inp.nspin == 2)
-        {
-            auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(nullptr,
-		kv.kvec_d,
-		dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham)->getHR(),
-		ucell,
-		&gd,
-		two_center_bundle.overlap_orb_onsite.get(),
-		orb.cutoffs());
-
-	    dm->switch_dmr(2);
-	    moments = sc_lambda->cal_moment(dmr, constrain);
-	    dm->switch_dmr(0);
-
-	    delete sc_lambda;
-
-            for(int iat=0;iat<ucell.nat;iat++)
-            {
-                atom_mag[iat][0] = 0.0;
-                atom_mag[iat][1] = moments[iat];
-            }
-        }
-        else if(PARAM.inp.nspin == 4)
-        {
-            auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
-                nullptr,
-                kv.kvec_d,
-                dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getHR(),
-                ucell,
-                &gd,
-                two_center_bundle.overlap_orb_onsite.get(),
-                orb.cutoffs());
-            moments = sc_lambda->cal_moment(dmr, constrain);
-            delete sc_lambda;
-
-            for(int iat=0;iat<ucell.nat;iat++)
-            {
-                atom_mag[iat][0] = 0.0;
-                atom_mag[iat][1] = moments[iat*3];
-                atom_mag[iat][2] = moments[iat*3+1];
-                atom_mag[iat][3] = moments[iat*3+2];
-            }
-        }
-        ucell.atom_mulliken = atom_mag;
-    }
-}
 
 } // namespace ModuleIO
 

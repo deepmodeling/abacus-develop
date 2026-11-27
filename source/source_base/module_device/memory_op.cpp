@@ -1,11 +1,9 @@
 #include "memory_op.h"
 
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/tool_threading.h"
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
-#include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
 #endif
 
 #include <complex>
@@ -444,6 +442,21 @@ template struct delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 #ifdef __DSP
 
+namespace
+{
+int g_dsp_cluster_id = 0;
+}
+
+void set_dsp_cluster_id(int id)
+{
+    g_dsp_cluster_id = id;
+}
+
+int get_dsp_cluster_id()
+{
+    return g_dsp_cluster_id;
+}
+
 template <typename FPTYPE>
 struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
 {
@@ -453,7 +466,7 @@ struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
         {
             mtfunc::free_ht(arr);
         }
-        arr = (FPTYPE*)mtfunc::malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        arr = (FPTYPE*)mtfunc::malloc_ht(sizeof(FPTYPE) * size, g_dsp_cluster_id);
         std::string record_string;
         if (record_in != nullptr)
         {
@@ -468,6 +481,19 @@ struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
         {
             ModuleBase::Memory::record(record_string, sizeof(FPTYPE) * size);
         }
+    }
+};
+
+template <typename FPTYPE>
+struct set_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(FPTYPE* arr, const int var, const size_t size)
+    {
+        ModuleBase::OMP_PARALLEL([&](int num_thread, int thread_id) {
+            int beg = 0, len = 0;
+            ModuleBase::BLOCK_TASK_DIST_1D(num_thread, thread_id, size, (size_t)4096 / sizeof(FPTYPE), beg, len);
+            memset(arr + beg, var, sizeof(FPTYPE) * len);
+        });
     }
 };
 
@@ -487,77 +513,18 @@ template struct resize_memory_op_mt<double, base_device::DEVICE_CPU>;
 template struct resize_memory_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
 template struct resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 
+template struct set_memory_op_mt<int, base_device::DEVICE_CPU>;
+template struct set_memory_op_mt<float, base_device::DEVICE_CPU>;
+template struct set_memory_op_mt<double, base_device::DEVICE_CPU>;
+template struct set_memory_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
+template struct set_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
+
 template struct delete_memory_op_mt<int, base_device::DEVICE_CPU>;
 template struct delete_memory_op_mt<float, base_device::DEVICE_CPU>;
 template struct delete_memory_op_mt<double, base_device::DEVICE_CPU>;
 template struct delete_memory_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
 template struct delete_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 #endif
-
-template <typename FPTYPE>
-void resize_memory(FPTYPE* arr, const size_t size, base_device::AbacusDevice_t device_type)
-{
-    if (device_type == base_device::AbacusDevice_t::CpuDevice){
-        resize_memory_op<FPTYPE, base_device::DEVICE_CPU>()(arr, size);
-    }
-    else if (device_type == base_device::AbacusDevice_t::GpuDevice){
-        resize_memory_op<FPTYPE, base_device::DEVICE_GPU>()(arr, size);
-    }
-}
-
-template <typename FPTYPE>
-void set_memory(FPTYPE* arr, const int var, const size_t size, base_device::AbacusDevice_t device_type){
-    if (device_type == base_device::AbacusDevice_t::CpuDevice){
-        set_memory_op<FPTYPE, base_device::DEVICE_CPU>()(arr, var, size);
-    }
-    else if (device_type == base_device::AbacusDevice_t::GpuDevice){
-        set_memory_op<FPTYPE, base_device::DEVICE_GPU>()(arr, var, size);
-    }
-}
-
-template <typename FPTYPE>
-void synchronize_memory(FPTYPE* arr_out, const FPTYPE* arr_in, const size_t size, base_device::AbacusDevice_t device_type_out, base_device::AbacusDevice_t device_type_in){
-    if (device_type_out == base_device::AbacusDevice_t::CpuDevice || device_type_in == base_device::AbacusDevice_t::CpuDevice){
-        synchronize_memory_op<FPTYPE, DEVICE_CPU, DEVICE_CPU>()(arr_out, arr_in, size);
-    }
-    else if (device_type_out == base_device::AbacusDevice_t::CpuDevice || device_type_in == base_device::AbacusDevice_t::GpuDevice){
-        synchronize_memory_op<FPTYPE, DEVICE_CPU, DEVICE_GPU>()(arr_out, arr_in, size);
-    }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice || device_type_in == base_device::AbacusDevice_t::CpuDevice){
-        synchronize_memory_op<FPTYPE, DEVICE_GPU, DEVICE_CPU>()(arr_out, arr_in, size);
-    }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice || device_type_in == base_device::AbacusDevice_t::GpuDevice){
-        synchronize_memory_op<FPTYPE, DEVICE_GPU, DEVICE_GPU>()(arr_out, arr_in, size);
-    }
-}
-
-template <typename FPTYPE_out, typename FPTYPE_in>
-void cast_memory(FPTYPE_out* arr_out, const FPTYPE_in* arr_in, const size_t size, base_device::AbacusDevice_t device_type_out, base_device::AbacusDevice_t device_type_in)
-{
-    if (device_type_out == base_device::AbacusDevice_t::CpuDevice || device_type_in == base_device::AbacusDevice_t::CpuDevice){
-        cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_CPU, DEVICE_CPU>()(arr_out, arr_in, size);
-    }
-    else if (device_type_out == base_device::AbacusDevice_t::CpuDevice || device_type_in == base_device::AbacusDevice_t::GpuDevice){
-        cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_CPU, DEVICE_GPU>()(arr_out, arr_in, size);
-    }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice || device_type_in == base_device::AbacusDevice_t::CpuDevice){
-        cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_GPU, DEVICE_CPU>()(arr_out, arr_in, size);
-    }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice || device_type_in == base_device::AbacusDevice_t::GpuDevice){
-        cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_GPU, DEVICE_GPU>()(arr_out, arr_in, size);
-    }
-}
-
-template <typename FPTYPE>
-void delete_memory(FPTYPE* arr, base_device::AbacusDevice_t device_type)
-{
-    if (device_type == base_device::AbacusDevice_t::CpuDevice){
-        delete_memory_op<FPTYPE, DEVICE_CPU>()(arr);
-    }
-    else if (device_type == base_device::AbacusDevice_t::GpuDevice){
-        delete_memory_op<FPTYPE, DEVICE_GPU>()(arr);
-    }
-}
 
 } // namespace memory
 } // namespace base_device

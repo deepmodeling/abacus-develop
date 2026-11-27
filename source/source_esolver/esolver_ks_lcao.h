@@ -2,116 +2,154 @@
 #define ESOLVER_KS_LCAO_H
 
 #include "esolver_ks.h"
-#include "source_lcao/record_adj.h" // adjacent atoms
 #include "source_basis/module_nao/two_center_bundle.h" // nao basis
-#include "source_lcao/module_gint/gint.h" // gint
-#include "source_lcao/module_gint/gint_info.h"
+#include "source_cell/record_adj.h"                    // adjacent atoms
+#include "source_hamilt/module_gint/gint_info.h"
+#include "source_hamilt/module_gint/gint_prec_ctrl.h"
+#include "source_hamilt/module_xc/exx_info.h" // LCAO owns full Exx_Info
+#include "source_lcao/allocate_dm.h"          // mohan add 2025-10-30
+#include "source_lcao/module_rdmft/rdmft.h"   // rdmft
+#include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
-#include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
-#include "source_lcao/module_rdmft/rdmft.h" // rdmft
-#include "source_lcao/setup_dm.h" // mohan add 2025-10-30
+#include "source_lcao/setup_exx.h"    // for exx, mohan add 20251008
 
+#include <complex>
 #include <memory>
 
-
-// for Linear Response
-namespace LR
-{
-template <typename T, typename TR>
-class ESolver_LR;
-}
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
 
 //-----------------------------------
 // ESolver for LCAO
 //-----------------------------------
 namespace ModuleESolver
 {
+//! Forward declaration for the linear-response solver.
+template <typename T, typename TR>
+class ESolver_LR;
 
+//! Kohn-Sham energy solver using the LCAO basis.
 template <typename TK, typename TR>
 class ESolver_KS_LCAO : public ESolver_KS
 {
   public:
+    //! Initialize the solver identity and DFT+U storage.
     ESolver_KS_LCAO();
+    //! Release the electronic wave functions.
     ~ESolver_KS_LCAO();
 
-    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    //! Initialize the LCAO basis, electronic state, and potentials before all steps.
+    void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
+    //! Return the electronic total energy in Ry.
     double cal_energy() override;
 
-    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
+    //! Calculate the requested forces and stress, caching the stress for cal_stress().
+    void cal_force(BaseCell &basecell, ModuleBase::matrix &force) override;
 
-    void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
+    //! Return the cached stress, calling cal_force() first when needed.
+    void cal_stress(BaseCell &basecell, ModuleBase::matrix &stress) override;
 
-    void after_all_runners(UnitCell& ucell) override;
+    //! Perform final LCAO output and postprocessing after all steps.
+    void after_all_runners(BaseCell &basecell) override;
 
   protected:
-    virtual void before_scf(UnitCell& ucell, const int istep) override;
+    //! Optional solver-owned RT state passed to LCAO consumers.
+    virtual TD_info *get_td_info() const { return nullptr; }
 
-    virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
+    //! Prepare an ionic step using istep for both initialization and initial-state output.
+    virtual void before_scf(UnitCell &ucell, const int istep) override;
 
-    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
+    //! Prepare an ionic step with a separate index for initial charge and potential output.
+    void before_scf(UnitCell &ucell, const int istep, const int output_step);
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    /// Ionic step index of the most recent ionic step, recorded in before_scf().
+    /// Read by after_all_runners() when labelling provenance headers of files
+    /// written once at the end of a run.
+    int istep_ = 0;
 
-    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
+    /// @brief Whether the current after_scf() call ends the final electronic step of the run.
+    /// @details Non-RT solvers perform one electronic calculation per ionic step, so
+    /// the default stays true and the final-snapshot override keeps covering every
+    /// call of the final ionic step. RT-TDDFT updates this flag before each
+    /// electronic substep, so the override in ctrl_scf_lcao applies only to the
+    /// last substep of the final ionic step instead of bypassing out_freq_ion for
+    /// the whole final ionic step.
+    bool final_electronic_step_ = true;
 
-    virtual void others(UnitCell& ucell, const int istep) override;
+    //! Prepare charge mixing and Hamiltonian updates for an SCF iteration.
+    virtual void iter_init(UnitCell &ucell, const int istep, const int iter) override;
+
+    //! Solve the Hamiltonian and update the charge density and energy terms.
+    virtual void hamilt2rho_single(
+        UnitCell &ucell,
+        const int istep,
+        const int iter,
+        const double ethr) override;
+
+    //! Finish an SCF iteration with energy corrections, mixing, convergence checks, and output.
+    virtual void iter_finish(
+        UnitCell &ucell,
+        const int istep,
+        int &iter,
+        bool &conv_esolver) override;
+
+    //! Write the SCF results and release adjacency records when forces and stress are not requested.
+    virtual void after_scf(UnitCell &ucell, const int istep, const bool conv_esolver) override;
+
+    //! Run specialized LCAO calculations outside the standard SCF workflow.
+    virtual void others(BaseCell &basecell, const int istep) override;
 
     //! Electronic wave functions (moved from base class)
-    psi::Psi<TK>* psi = nullptr;
+    psi::Psi<TK> *psi = nullptr;
 
-    //! Store information about Adjacent Atoms 
+    //! Store information about adjacent atoms for the distributed matrix layout.
     Record_adj RA;
 
-    //! Store information about Adjacent Atoms 
+    //! Search for adjacent atoms and provide their positions and cell indices.
     Grid_Driver gd;
 
-    //! NAO orbitals: 2d block-cyclic distribution info
+    //! NAO orbitals: 2D block-cyclic distribution info
     Parallel_Orbitals pv;
 
-    //! GintInfo: used to store some basic infomation about module_gint
+    //! Canonical global ordering and atom slices of the LCAO basis.
+    std::unique_ptr<BasisFlattenedIndexing> basis_index_;
+
+    //! GintInfo: used to store basic grid-integration information for module_gint
     std::unique_ptr<ModuleGint::GintInfo> gint_info_;
 
-    //! NAO: store related information 
+    //! Store NAO orbitals and their radial tables.
     LCAO_Orbitals orb_;
 
     //! NAO orbitals: two-center integrations
     TwoCenterBundle two_center_bundle_;
 
-    //! Add density matrix class, mohan add 2025-10-30
-    LCAO_domain::Setup_DM<TK> dmat;
+    //! Own the density matrix, mohan add 2025-10-30.
+    module_dm::Setup_DM<TK> dmat;
 
-
-    // For deepks method, mohan add 2025-10-08
+    //! For DeePKS calculations, mohan add 2025-10-08.
     Setup_DeePKS<TK> deepks;
 
-    // For exact-exchange energy, mohan add 2025-10-08
+    //! Full EXX info for LCAO (includes info_ri, info_opt_abfs, info_lip)
+    Exx_Info exx_info_;
+
+    //! For exact-exchange calculations, mohan add 2025-10-08.
     Exx_NAO<TK> exx_nao;
 
-    //! For RDMFT calculations, added by jghan, 2024-03-16 
+    //! For RDMFT calculations, added by jghan, 2024-03-16
     rdmft::RDMFT<TK, TR> rdmft_solver;
 
     //! For linear-response TDDFT
-    friend class LR::ESolver_LR<double, double>;
-    friend class LR::ESolver_LR<std::complex<double>, double>;
+    friend class ESolver_LR<double, double>;
+    //! For linear-response TDDFT
+    friend class ESolver_LR<std::complex<double>, double>;
 
-    // Temporarily store the stress to unify the interface with PW,
-    // because it's hard to seperate force and stress calculation in LCAO.
+    //! Cache the stress computed by cal_force() for the separate cal_stress() interface.
     ModuleBase::matrix scs;
+    //! Track whether cal_force() has run since the last cal_stress() call.
     bool have_force = false;
 
-
-  public:
-    const Record_adj & get_RA() const { return RA; }
-    const Grid_Driver & get_gd() const { return gd; }
-    const Parallel_Orbitals & get_pv() const { return pv; }
-    const std::unique_ptr<ModuleGint::GintInfo> & get_gint_info() const { return gint_info_; }
-    const TwoCenterBundle & get_two_center_bundle() const { return two_center_bundle_; }
-    const rdmft::RDMFT<TK, TR> & get_rdmft_solver() const { return rdmft_solver; }
-    const LCAO_Orbitals & get_orb() const { return orb_; }
-    const ModuleBase::matrix & get_scs() const { return scs; }
-    const Setup_DeePKS<TK> & get_deepks() const { return deepks; }
-    const Exx_NAO<TK> & get_exx_nao() const { return exx_nao; }
+    //! Control grid-integration precision and its switching during SCF iterations.
+    GintPrecisionController gint_precision_controller_;
 };
 } // namespace ModuleESolver
 #endif

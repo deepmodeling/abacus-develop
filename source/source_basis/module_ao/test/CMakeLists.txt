@@ -1,12 +1,14 @@
-remove_definitions(-D__EXX)
+abacus_disable_feature_definitions(__EXX)
 
-list(APPEND depend_files
- ../../../source_base/math_integral.cpp
+list(
+  APPEND
+  depend_files
+  ../../../source_base/math_integral.cpp
   ../../../source_base/math_sphbes.cpp
   ../../../source_base/math_polyint.cpp
   ../../../source_base/math_ylmreal.cpp
   ../../../source_base/ylm.cpp
-  ../../../source_base/memory.cpp
+  ../../../source_base/memory_recorder.cpp
   ../../../source_base/module_external/blas_connector_base.cpp
   ../../../source_base/module_external/blas_connector_vector.cpp
   ../../../source_base/module_external/blas_connector_matrix.cpp
@@ -15,8 +17,8 @@ list(APPEND depend_files
   ../../../source_base/matrix.cpp
   ../../../source_base/realarray.cpp
   ../../../source_base/intarray.cpp
-  ../../../source_base/sph_bessel_recursive-d1.cpp
-  ../../../source_base/sph_bessel_recursive-d2.cpp
+  ../../../source_base/sph_bessel_rec_d1.cpp
+  ../../../source_base/sph_bessel_rec_d2.cpp
   ../../../source_base/tool_title.cpp
   ../../../source_base/tool_quit.cpp
   ../../../source_base/tool_check.cpp
@@ -27,69 +29,68 @@ list(APPEND depend_files
   ../../../source_base/global_file.cpp
   ../../../source_base/libm/branred.cpp
   ../../../source_base/libm/sincos.cpp
-  ../../../source_base/spherical_bessel_transformer.cpp
+  ../../../source_base/sph_bessel_tf.cpp
   ../../../source_base/cubic_spline.cpp
-  ../../../source_base/parallel_2d.cpp
-  ../ORB_read.cpp
-  ../ORB_atomic.cpp
-  ../ORB_atomic_lm.cpp
-  ../ORB_nonlocal.cpp
-  ../ORB_nonlocal_lm.cpp
-  ../ORB_gaunt_table.cpp
+    ../../../source_base/parallel_blkcyc.cpp
+  ../orb_read.cpp
+  ../orb_atomic.cpp
+  ../orb_atomic_lm.cpp
+  ../orb_nonlocal.cpp
+  ../orb_nonlocal_lm.cpp
+  ../orb_gaunt_table.cpp
   ../parallel_orbitals.cpp
-  ../../../source_lcao/center2_orb-orb11.cpp
-  ../../../source_lcao/center2_orb.cpp
-  )
+  ../../../source_lcao/center2orb_orb11.cpp
+  ../../../source_lcao/center2orb.cpp)
 
-install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
-install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(GaAs)
 
+addtest(
+  TARGET MODULE_AO_ORB_nonlocal_test
+  SOURCES orb_nonlocal_test.cpp ../orb_nonlocal.cpp ../orb_nonlocal_lm.cpp
+  LIBS parameter device base)
 
-AddTest(
-    TARGET MODULE_AO_ORB_nonlocal_test
-    SOURCES ORB_nonlocal_test.cpp
-        ../ORB_nonlocal.cpp
-        ../ORB_nonlocal_lm.cpp
-    LIBS parameter ${math_libs} device base
-)
+addtest(
+  TARGET MODULE_AO_ORB_nonlocal_lm_test
+  SOURCES orb_nonlocal_lm_test.cpp ../orb_nonlocal_lm.cpp
+  LIBS parameter device base)
 
-AddTest(
-    TARGET MODULE_AO_ORB_nonlocal_lm_test
-    SOURCES ORB_nonlocal_lm_test.cpp
-        ../ORB_nonlocal_lm.cpp
-    LIBS parameter ${math_libs} device base
-)
+addtest(
+  TARGET MODULE_AO_ORB_atomic_lm_test
+  SOURCES orb_atomic_lm_test.cpp test_orb_atomic_lm.cpp ../orb_atomic_lm.cpp
+  LIBS parameter device base)
 
-AddTest(
-    TARGET MODULE_AO_ORB_atomic_lm_test
-    SOURCES ORB_atomic_lm_test.cpp
-        ../ORB_atomic_lm.cpp
-    LIBS parameter ${math_libs} device base
-)
+addtest(
+  TARGET MODULE_AO_ORB_read_test
+  SOURCES orb_read_test.cpp ../orb_read.cpp ../orb_atomic.cpp
+          ../orb_atomic_lm.cpp
+  LIBS parameter device base)
 
-AddTest(
-    TARGET MODULE_AO_ORB_read_test
-    SOURCES ORB_read_test.cpp
-        ../ORB_read.cpp
-        ../ORB_atomic.cpp
-        ../ORB_atomic_lm.cpp
-    LIBS parameter ${math_libs} device base 
-)
+addtest(
+  TARGET MODULE_AO_parallel_orbitals_test
+  SOURCES parallel_orbitals_test.cpp ../parallel_orbitals.cpp
+  LIBS parameter device base)
 
-
-AddTest(
-    TARGET MODULE_AO_parallel_orbitals_test 
-    SOURCES parallel_orbitals_test.cpp ../parallel_orbitals.cpp
-    LIBS parameter ${math_libs} device base
-)
-
-install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(parallel_orbitals_test.sh)
 find_program(BASH bash)
-add_test(NAME MODULE_AO_parallel_orbitals_test_para
-      COMMAND ${BASH} parallel_orbitals_test.sh
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_AO_parallel_orbitals_test_para
+    COMMAND ${BASH} parallel_orbitals_test.sh
+            "$<TARGET_FILE:MODULE_AO_parallel_orbitals_test>"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif()
 
-install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
+abacus_copy_test_files(lcao_H2O)
+addtest(
+  TARGET MODULE_AO_parallel_orbitals_composition_test
+  SOURCES test_parallel_orbitals_composition.cpp ../parallel_orbitals.cpp
+  LIBS parameter device base)
 
+abacus_copy_test_files(test_parallel_orbitals_composition.sh)
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_AO_parallel_orbitals_composition_test_para
+    COMMAND ${BASH} test_parallel_orbitals_composition.sh
+            "$<TARGET_FILE:MODULE_AO_parallel_orbitals_composition_test>"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif()

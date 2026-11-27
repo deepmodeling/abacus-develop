@@ -1,21 +1,20 @@
-#include "H_Hartree_pw.h"
+#include "h_hartree_pw.h"
 #include "efield.h"
-#include "source_io/module_parameter/parameter.h"
 #include "gatefield.h"
+#include "pot_local.h"
+#include "pot_pcc.h"
+#include "pot_sccs.h"
+#include "pot_sep.h"
+#include "pot_surchem.h"
+#include "pot_xc.h"
+#include "potential_new.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
-#include "pot_local.h"
-#include "pot_surchem.hpp"
-#include "pot_xc.h"
-#include "potential_new.h"
-#include "pot_sep.h"
-#ifdef __LCAO
-#include "H_TDDFT_pw.h"
-#endif
+#include "source_io/module_parameter/parameter.h"
+#include "h_tddft_pw.h"
 #ifdef __MLALGO
 #include "pot_ml_exx.h"
 #endif
@@ -23,7 +22,28 @@
 namespace elecstate
 {
 
-PotBase* Potential::get_pot_type(const std::string& pot_type)
+PotBase* Potential::make_sccs_pot(const Input_para& input, const SccsResume& resume)
+{
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    sccs_cfg_input(input, config, solver);
+    if (this->ucell_ != nullptr)
+    {
+        const std::string structure_warning = check_sccs_cell(config, *this->ucell_);
+        if (!structure_warning.empty())
+        {
+            ModuleBase::WARNING("Potential::make_sccs_pot", structure_warning);
+        }
+        const std::string charge_warning = check_charge(config, *this->ucell_, input.nelec);
+        if (!charge_warning.empty())
+        {
+            ModuleBase::WARNING("Potential::make_sccs_pot", charge_warning);
+        }
+    }
+    return new PotSccs(this->rho_basis_, config, solver, input.nelec, resume);
+}
+
+PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& input, const SccsResume& resume)
 {
     ModuleBase::TITLE("Potential", "get_pot_type");
     if (pot_type == "local")
@@ -36,36 +56,50 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "xc")
     {
-        return new PotXC(this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
+        const bool xc_gpu = input.device_xc == "gpu";
+        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, input.gga_grad, xc_gpu,
+                         this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
+    }
+    else if (pot_type == "pcc" || pot_type == "pcc_2d")
+    {
+        const double electron_count = input.nelec;
+        if (pot_type == "pcc")
+        {
+            return new PotPcc(this->rho_basis_, electron_count);
+        }
+        const int open_axis = input.pcc_2d_axis;
+        return new PotPcc(this->rho_basis_, PotPcc::Dimension::slab, open_axis, electron_count);
+    }
+    else if (pot_type == "sccs")
+    {
+        return this->make_sccs_pot(input, resume);
     }
     else if (pot_type == "surchem")
     {
-        return new PotSurChem(this->rho_basis_,
-                              this->structure_factors_,
-                              this->v_eff_fixed.data(),
-                              this->solvent_);
+        return new PotSurChem(this->rho_basis_, this->structure_factors_, this->v_eff_fixed.data(), this->solvent_);
     }
     else if (pot_type == "efield")
     {
-        return new PotEfield(this->rho_basis_, this->ucell_, this->solvent_, PARAM.inp.dip_cor_flag);
+        return new PotEfield(this->rho_basis_, this->ucell_, this->solvent_, input.dip_cor_flag);
     }
     else if (pot_type == "gatefield")
     {
         return new PotGate(this->rho_basis_, this->ucell_);
     }
-#ifdef __LCAO
     else if (pot_type == "tddft")
     {
-        return new H_TDDFT_pw(this->rho_basis_, this->ucell_);
+        // The RT-TDDFT ESolver injects this manager before potential
+        // registration so the potential does not own a separate time counter.
+        return new H_TDDFT_pw(this->rho_basis_, this->ucell_, this->td_field_manager_);
     }
-#endif
 #ifdef __MLALGO
     else if (pot_type == "ml_exx")
     {
         return new PotML_EXX(this->rho_basis_, this->ucell_);
     }
 #endif
-    else if (pot_type == "dfthalf") {
+    else if (pot_type == "dfthalf")
+    {
         return new PotSep(&(this->structure_factors_->strucFac), this->rho_basis_, this->vsep_cell);
     }
     else

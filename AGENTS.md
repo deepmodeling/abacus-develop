@@ -1,0 +1,258 @@
+# ABACUS Agent Instructions
+
+This file is the entry point for AI agents, automated review tools, and human
+contributors who want the short operational version of the ABACUS development
+rules. Read the complete governance documents before making or reviewing changes:
+
+- [ABACUS Agent Governance](docs/developers_guide/agent_governance.md)
+- [CMake Build Guidelines](docs/developers_guide/cmake_guidelines.md)
+
+## Required Baseline
+
+- Follow the nine ABACUS coding rules summarized from the project governance:
+  1. Do not increase cross-layer control through `GlobalV`, `GlobalC`, or
+     `PARAM`; pass dependencies explicitly where practical. Migration-neutral
+     moves must keep the PR-level global dependency budget non-increasing and
+     explain the remaining global usage.
+  2. Do not hide workflow switches in mutable member variables that can be
+     changed from multiple places.
+  3. Keep header dependencies clean and explicit; avoid unnecessary includes,
+     and do not replace `#include` directives with forward declarations just to
+     avoid header include warnings.
+  4. Avoid adding `.hpp` implementation headers or propagating them through
+     other headers unless there is a narrow reason.
+  5. Do not add default arguments to existing interfaces; update call sites or
+     design a clearer extension.
+  6. Add focused tests for key features, bug fixes, INPUT behavior changes,
+     heterogeneous kernels, and core-module refactors.
+  7. Keep code compatible with the repository C++11 baseline.
+  8. Declare one variable per line; do not use comma-separated declarations.
+  9. Do not call MPI routines directly; use the internally-guarded wrappers
+     (e.g., `Parallel_Reduce::reduce_*`, `Parallel_Common::bcast_*`) instead.
+  10. Do not write new `#define private public` or `#define protected public`
+      access hacks in test files; the governance checker **blocks** a net
+      increase. These macros reinterpret access control for every declaration
+      in the translation unit -- standard library headers included -- and make
+      the test TU disagree with the rest of the build. The usual root cause is
+      that the code under test reads global `PARAM` itself, so the test has to
+      reach in to drive it; the fix is to pass those INPUT values as explicit
+      arguments (see `Relax_Criteria` and `K_Vectors::read_kpoints`). Where the
+      test genuinely needs internal state, add a public `const` observer, or an
+      explicit `friend class XxxTest;` on the class under test.
+  11. Unit tests under `source/` live in a directory named `unittests/`, and
+      their source files are named `test_<module_name>.cpp`, matching the
+      source file they exercise. For example, the test for `rhog_io.cpp`
+      shall be `unittests/test_rhog_io.cpp`. The governance checker
+      **blocks**:
+      - adding any file (tests, headers, data, `CMakeLists.txt`) to a legacy
+        test directory such as `test/`, `tests/`, `test_serial/`,
+        `test_parallel/`, `test_gpu/`; modifying a `.cpp`/`.cu` there blocks
+        too, so a touched legacy test must be migrated into `unittests/`.
+        Deleting files and editing a legacy `CMakeLists.txt`, header, or data
+        file stays allowed, so legacy directories can shrink;
+      - a `.c`/`.cc`/`.cpp`/`.cxx`/`.cu` file added or modified directly in
+        `unittests/` whose name does not start with `test_`. Headers
+        (`.h`/`.hpp`/`.cuh`) are free-named, so mocks and shared helpers go
+        into headers;
+      - any code file (sources or headers) in a subdirectory of `unittests/`.
+        Subdirectories, with any name and depth, hold test data only.
+      Whether the name after `test_` matches the file under test is checked
+      in review, not by the checker.
+  12. Place `ModuleBase::timer::start`/`end` at the beginning and end of a
+      function, not around isolated statements inside the function body. Use
+      the enclosing function name (or constructor name) as the timer label so
+      the timer scopes the whole unit of work.
+  13. Do not call non-trivial functions inside a constructor's member
+      initializer list (e.g., `member(compute_something(...))`); limit the
+      initializer list to direct parameter passthrough. Perform multi-step
+      computations in the constructor body instead, so failures are easy to
+      debug and each intermediate result is inspectable.
+  14. Do not write conditional or computed expressions in a function's
+      argument list; first assign the value to a named local variable, then
+      pass that variable. This keeps each argument inspectable and makes the
+      call site self-documenting. For example, prefer
+      `const int isk = (nspin == 2 && isk_ptr) ? isk_ptr[ik] : 0;`
+      followed by `f(..., isk, ...)` over inlining the ternary into the call.
+  15. Do not use `#pragma once` in header files; use traditional
+      `#ifndef`/`#define`/`#endif` include guards instead.
+  16. When reading a file, print a one-line confirmation with its full path to
+      both stdout and the running log; when creating or overwriting a file,
+      print the same confirmation to the running log.
+  17. Do not create or delete files or directories from inside a unit test
+      via shell calls (`std::system("mkdir")`, `std::system("rm")`); scratch
+      files shall be written to `testing::TempDir()` rather than the working
+      directory. Direct library calls (`std::remove`,
+      `std::filesystem::remove_all`) on test-written files are acceptable.
+  18. Do not use non-reentrant C standard library functions that return
+      pointers to static internal buffers (`std::localtime`, `std::gmtime`,
+      `std::asctime`, `std::ctime`, `std::strtok`, etc.) in new or modified
+      code; use the `_r` suffix variants or equivalent thread-safe
+      alternatives instead.
+  19. When reading structured numerical data from user-supplied files, check
+      the stream state (`fail()`/`eof()`) after extraction and abort with a
+      diagnostic message on malformed input rather than silently defaulting
+      to zero.
+  20. Do not introduce new `#define` macros without approval. Include
+      guards and `#ifdef`/`#ifndef` usages of existing macros are exempt.
+  21. Do not initialize member variables from `PARAM` in `.h`/`.hpp`
+      files; pass the value through the constructor or a setter instead.
+  22. Print ionic-step indices one-based (starting from 1) in user-facing
+      output files, matching the `g{N}` filename suffix convention; do not
+      write zero-based step counters such as `STEP: 0` into output files.
+  23. Use Autotest cases for integration tests. Standalone `add_test()` drivers
+      require a check Autotest cannot express, a PR rationale, and compliance
+      with "Integration Test Drivers" in the governance document. Autotest
+      helpers are unaffected.
+  24. Follow `docs/developers_guide/cmake_guidelines.md` for all CMake edits:
+      format changed CMake files with `cmake-format` (enforced on PR diffs by
+      CI); do not introduce removed variables/macros (`${math_libs}`,
+      `USE_LIBXC`, `ENABLE_RAPIDJSON`, `ENABLE_LIBCOMM`) or
+      `remove_definitions()`; do not add directory-scoped commands
+      (`add_definitions`, `add_compile_definitions`, `add_compile_options`,
+      `include_directories`, `link_directories`, `link_libraries`) or package
+      discovery (`find_package`, `find_library`) under `source/`; stage
+      unit-test scripts/data with `abacus_copy_test_files()` instead of
+      `install()` or `file(COPY ...)`; and keep `_abacus_feature_definitions`,
+      `abacus_add_target_compile_requirements()`, and
+      `cmake/CollectBuildInfoVars.cmake` in sync when adding options or
+      external dependencies.
+- Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
+- Keep source file additions deterministic: update the relevant `CMakeLists.txt`
+  or explain why the file is generated or included indirectly.
+- Report the exact verification performed. Do not claim completion without
+  fresh test or check output.
+- For multi-step refactors (e.g., splitting a large `.cpp` into several
+  files), build and commit after each step rather than batching all changes
+  before verification. This keeps the blast radius small when a step
+  surfaces a missing include or instantiation error.
+- Prefer `std::vector` over raw `new`/`delete` for dynamic arrays; before
+  converting class members, confirm no external code consumes them as raw
+  pointers (e.g., `std::vector<bool>` has no `.data()`), and use
+  `std::fill`/`std::copy` instead of `ZEROS`/`COPYARRAY` on vector buffers.
+
+## Repository Map
+
+- Core C++ implementation lives under `source/`; source additions must be wired
+  through the relevant `CMakeLists.txt`.
+- Each module directory under `source/` (e.g., `source/source_esolver/`,
+  `source/source_io/`) may carry its own `AGENTS.md` describing module-specific
+  design constraints and conventions. When working inside such a directory,
+  read and follow its `AGENTS.md` in addition to this file; the module-level
+  rules refine, but never override, this root file.
+- INPUT parsing and help metadata live under `source/source_io/`; user-facing
+  INPUT reference is generated from that metadata during the documentation
+  build.
+- Unit tests are colocated under module `test/` directories such as
+  `source/source_md/test/`; integration and workflow tests are selected through
+  CTest labels and patterns.
+- Developer and user build/install references live in `docs/quick_start/`,
+  `docs/advanced/`, `toolchain/`, `Dockerfile.gnu`, `Dockerfile.intel`, and
+  `Dockerfile.cuda`.
+
+## File Move / Split Checklist
+
+When moving, splitting, or deleting a `.cpp`/`.h`, update **all** build surfaces:
+
+1. `source/Makefile.Objects` (legacy Makefile object lists)
+2. All C++ `CMakeLists.txt`
+3. `python/pyabacus/src/*/CMakeLists.txt` — pyabacus has independent hardcoded source lists that do not track the main CMake build
+
+When splitting a function into a new `.cpp`, if its callers span LCAO and PW, put it in an unconditionally-built OBJECT library, not inside `if(ENABLE_LCAO)`.
+
+## Build And Test Entry Points
+
+- Prefer the repository CMake/CTest flow already used by CI. For focused local
+  checks, use commands such as `ctest --test-dir build -V -R MODULE_MD` after a
+  usable build exists.
+- For INPUT-related changes, verify both documentation and CLI behavior when an
+  executable is available: `./build/abacus -h <parameter>` and
+  `./build/abacus --check-input` from a valid case directory.
+- For executable identity, record `./build/abacus --version` or the equivalent
+  installed `abacus --version` command used during verification.
+- Reuse existing Docker and toolchain assets. Do not add a new container,
+  compiler setup, or calculation-task skill unless the PR explicitly requires
+  and justifies it.
+
+## Local Runtime Testing
+
+- Set `OMP_NUM_THREADS=1` for ABACUS runtime, integration, and MPI tests unless
+  a test explicitly requires another value.
+- Run MPI/runtime tests outside restricted sandboxes when process visibility,
+  sockets, or MPI launch behavior matters.
+- Treat OpenMPI `opal_ifinit: socket() failed errno=1` warnings from sandboxed
+  MPI-linked builds or runs as expected sandbox artifacts; rerun outside the
+  sandbox before treating them as ABACUS failures.
+- Do not relax existing tests or references merely to make a failure pass.
+  Update references only when the intended behavior changed and the PR explains
+  why.
+
+## Review And Exception Flow
+
+- Mechanical blockers are enforced by hook and CI only for new files, changed
+  files, or diff-added lines. Historical untouched code is not a default blocker.
+- Warnings from CI or AI review require reviewer attention but do not block by
+  themselves.
+- Semantic questions such as module ownership, member-variable workflow state,
+  test sufficiency, and exception approval require human review.
+- Exceptions must be recorded in the PR with reason, scope, risk, and a follow-up
+  cleanup plan, using the `### Governance Exception` template. CI downgrades a
+  covered blocker to a warning only after a maintainer applies the
+  `governance-exception-approved` label.
+- After a refactor, propose brief lessons worth recording in this file, then
+  ask the developer whether to write them in; be cautious and skip unclear
+  or unverified lessons.
+
+## Refactoring Patterns
+
+- Member -> free function: inventory `this->` reads; pass as params (const
+  for config, ref for mutable state); move only when body is `this`-free;
+  keep thin wrapper; compile each step.
+- Extract a base-class nested-vector member in three steps (hold + forward,
+  switch writers, delete legacy) so no commit mixes old-storage writes with
+  new-storage reads.
+- Keep MD geometry output separate from restart checkpoints. A restart STRU
+  must retain atomic velocities and a step marker matching Restart_md.txt;
+  ordinary MD STRU files carry per-atom forces and velocities for analysis.
+- Sort distributed trajectory output by stable atom identity, not MPI rank or
+  local storage order; check for duplicate and missing atom indices before
+  writing each frame.
+
+## Local Commands
+
+```bash
+python3 tools/03_code_analysis/agent_governance_check.py --staged
+python3 tools/03_code_analysis/agent_governance_check.py --base upstream/develop --head HEAD --format text
+pre-commit run abacus-agent-governance --all-files
+# Score changed C++ files for quality debt (pass line is 60):
+python3 tools/03_code_analysis/code_quality_score.py $(git diff --name-only upstream/develop...HEAD | grep -E '\.(cpp|h)$')
+```
+
+The repository text files have been normalized to LF once. Day-to-day line
+ending enforcement should rely on staged/changed-file hooks and CI; rerun the
+full mixed-line-ending hook only for intentional repository-wide normalization.
+
+## Upstream Repository
+
+- Repository: https://github.com/deepmodeling/abacus-develop
+- Issues: https://github.com/deepmodeling/abacus-develop/issues
+- Pull requests: https://github.com/deepmodeling/abacus-develop/pulls
+- Upstream PRs are opened from personal fork branches
+  (`<fork-owner>:<branch>` into `develop`).
+- When synchronizing a local branch with `upstream/develop`, prefer
+  `git merge upstream/develop` over `git rebase upstream/develop`. Merge
+  preserves the original commit SHAs of the local work, keeps the branch
+  pushable without `--force`, and avoids re-applying a long patch series
+  when conflicts arise. Use rebase only when the user explicitly asks for
+  a linear history.
+- `workflow_dispatch`-only workflows (e.g. `.github/workflows/interface.yml`)
+  are not triggered by push/PR events; PR CI cannot verify such fixes, so
+  state "manual dispatch run required" in the PR verification notes.
+
+## PR Self-Check
+
+- Confirm the PR body states exact commands run, whether they passed or failed,
+  and why any expected check could not be run.
+- Keep warning rationales concrete. For example, a header include warning is
+  acceptable when the header uses types declared in that header directly.
+- Keep historical-debt notes separate from new deterministic errors introduced
+  by the PR.

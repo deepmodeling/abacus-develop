@@ -1,0 +1,267 @@
+#include <gtest/gtest.h>
+#include "../hamilt_bse_solver.h"
+#include <chrono>
+#include <mpi.h>
+#include "source_base/module_container/base/third_party/blas.h"
+
+#ifdef __ELPA
+#define rand01 (static_cast<double>(rand()) / static_cast<double>(RAND_MAX) - 0.5 ) // [-0.5, 0.5]
+
+std::vector<std::complex<double>> generate_conjugate_matrix(int n) {
+    std::vector<std::complex<double>> matrix(n*n, 0.0);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j <= i; ++j) {
+            if(i==j) matrix[i * n + j] = std::complex<double>(20+rand01, 0); // gaurantee {{A,B},{A*,B*}} is positive definite
+            else{
+                matrix[i * n + j] = std::complex<double>(rand01, rand01);
+                matrix[j * n + i] = std::conj(matrix[i * n + j]);
+            }
+        }
+    }
+    return matrix;
+}
+std::vector<std::complex<double>> generate_symmetry_matrix(int n) {
+    std::vector<std::complex<double>> matrix(n*n, 0.0);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j <= i; ++j) {
+            if(i==j) matrix[i * n + j] = std::complex<double>(rand01, rand01);
+            else{
+                matrix[i * n + j] = std::complex<double>(rand01, rand01);
+                matrix[j * n + i] = matrix[i * n + j];
+            }
+        }
+    }
+    return matrix;
+}
+void check_eq(std::complex<double>* data1, std::complex<double>* data2, int size, double eps)
+    {
+        for (int i = 0;i < size;++i)
+        {
+            EXPECT_NEAR(data1[i].real(), data2[i].real(), eps);
+            EXPECT_NEAR(data1[i].imag(), data2[i].imag(), eps);
+        }
+    };
+
+TEST(BSETest, skewSolver) {
+    int my_rank, num_procs;
+    Cblacs_pinfo(&my_rank, &num_procs); 
+
+    int nA = 2;
+    std::vector<double> ev(2*nA);
+    Parallel_Blkcyclic pM, pA, pA_glb;
+    pM.init(2*nA, 2*nA, 1, MPI_COMM_WORLD, false);
+    pA.set(nA, nA, 1, pM.ictxt());
+    pA_glb.set(nA, nA, nA, pM.ictxt());
+    std::vector<std::complex<double>> v(pM.size(), 0.0);
+    std::vector<std::complex<double>> A_part(pA.size(), 0.0);
+    std::vector<std::complex<double>> B_part(pA.size(), 0.0);
+    std::vector<std::complex<double>> A_glb = {
+    {3.0, 0.0}, {0.5, -1.0}, {0.5, 1.0}, {6.0, 0.0}
+    };
+    std::vector<std::complex<double>> B_glb = {
+    {1.2, 0.6}, {0.4, 0.5}, {0.4, 0.5}, {1.4, 0.3}
+    };
+    Cpxgemr2d(nA, nA, A_glb.data(), 1, 1, pA_glb.desc(),
+        A_part.data(), 1, 1, pA.desc(),
+        pA_glb.ictxt());
+    Cpxgemr2d(nA, nA, B_glb.data(), 1, 1, pA_glb.desc(),
+        B_part.data(), 1, 1, pA.desc(),
+        pA_glb.ictxt());
+    BSE::solve_full(my_rank, A_part, B_part, pA, pM, ev, v);
+    EXPECT_NEAR(ev[0], -6.127295611, 1e-8); 
+    EXPECT_NEAR(ev[1], -2.299184312, 1e-8);
+}
+
+TEST(BSETest, TDASolver) {
+    int my_rank, num_procs;
+    Cblacs_pinfo(&my_rank, &num_procs); 
+    int nA = 5;
+    Parallel_Blkcyclic pA_glb, pA;
+    pA.init(nA, nA, 1, MPI_COMM_WORLD, false);
+    pA_glb.set(nA, nA, nA, pA.ictxt());
+
+    std::vector<double> ev(nA);
+    std::vector<std::complex<double>> A_glb;
+    if (my_rank == 0){
+        A_glb = generate_conjugate_matrix(nA);
+    }
+    std::vector<std::complex<double>> A_part(pA.size(), 0.0);
+    std::vector<std::complex<double>> v(pA.size(), 0.0);
+
+    Cpxgemr2d(nA, nA, A_glb.data(), 1, 1, pA_glb.desc(),
+                A_part.data(), 1, 1, pA.desc(),
+                pA_glb.ictxt());
+
+    std::vector<std::complex<double>> Hv(pA.size(), 0.0);
+    std::vector<std::complex<double>> Ωv(pA.size(), 0.0);
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    BSE::solve_tda(A_part, pA, ev, v);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    if (my_rank == 0){
+        std::cout << "BSE::solve_tda execution time: " << elapsed.count() << " seconds" << std::endl;    
+    }
+
+    start = std::chrono::high_resolution_clock::now();
+    #pragma omp parallel for
+    for (int i = 0; i < pA.ncloc(); ++i) {
+        int col_glb = pA.icglb(i);
+        for (int j = 0; j < pA.nrloc(); ++j) {
+            Ωv[i * pA.nrloc() + j] = ev[col_glb] * v[i * pA.nrloc() + j];
+        }
+    }
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    if (my_rank == 0)
+        std::cout << "Ωv construction time: " << elapsed.count() << " seconds" << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
+    ScalapackConnector::gemm('N', 'N', nA, nA, nA, 1.0,
+        A_part.data(), 1, 1, pA.desc(),
+        v.data(), 1, 1, pA.desc(),
+        0.0,
+        Hv.data(), 1, 1, pA.desc());
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    if (my_rank == 0)
+        std::cout << "Hv execution time: " << elapsed.count() << " seconds" << std::endl;
+    check_eq(Hv.data(), Ωv.data(), pA.size(), 1e-6);
+}
+
+TEST(BSETest, skewSolver2) {
+    int my_rank, num_procs;
+    Cblacs_pinfo(&my_rank, &num_procs); 
+
+    int nA = 5;
+    int nM = 2 * nA; // Full matrix dimension
+    Parallel_Blkcyclic pM, pA, pA_glb;
+    pM.init(nM, nM, 1, MPI_COMM_WORLD, false);
+    pA.set(nA, nA, 1, pM.ictxt());
+    pA_glb.set(nA, nA, nA, pM.ictxt());
+
+    std::vector<std::complex<double>> A_glb, B_glb;
+    if (my_rank==0){
+        A_glb = generate_conjugate_matrix(nA);
+        B_glb = generate_symmetry_matrix(nA);
+    }
+    std::vector<std::complex<double>> A_part(pA.size(), 0.0);
+    std::vector<std::complex<double>> B_part(pA.size(), 0.0);
+    std::vector<double> ev(nM, 0.0);
+    std::vector<std::complex<double>> v(pM.size(), 0.0);
+    Cpxgemr2d(nA, nA, A_glb.data(), 1, 1, pA_glb.desc(),
+                A_part.data(), 1, 1, pA.desc(),
+                pA_glb.ictxt());
+    Cpxgemr2d(nA, nA, B_glb.data(), 1, 1, pA_glb.desc(),
+                B_part.data(), 1, 1, pA.desc(),
+                pA_glb.ictxt());
+    // solve_full destroys A_part and B_part; pass copies to preserve originals
+    auto A_copy = A_part;
+    auto B_copy = B_part;
+    auto start = std::chrono::high_resolution_clock::now();
+    BSE::solve_full(my_rank, A_copy, B_copy, pA, pM, ev, v);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    if (my_rank == 0){
+        std::cout << "BSE::solve_full execution time: " << elapsed.count() << " seconds" << std::endl;    
+    }
+
+    std::vector<std::complex<double>> full_H (pM.size(), 0.0);
+    std::vector<std::complex<double>> Hv(pM.size(), 0.0);
+    std::vector<std::complex<double>> Ωv(pM.size(), 0.0);
+
+    start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < pM.ncloc(); ++i) {
+        int col_glb = pM.icglb(i);
+        for (int j = 0; j < pM.nrloc(); ++j) {
+            Ωv[i * pM.nrloc() + j] = ev[col_glb] * v[i * pM.nrloc() + j];
+        }
+    }
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    if (my_rank == 0)
+        std::cout << "Ωv construction time: " << elapsed.count() << " seconds" << std::endl;
+
+    BSE::arrayFlatten1(A_part, B_part, full_H, pA, pM);
+
+    start = std::chrono::high_resolution_clock::now();
+    ScalapackConnector::gemm('N', 'N', nM, nM, nM, 1.0,
+        full_H.data(), 1, 1, pM.desc(),
+        v.data(), 1, 1, pM.desc(),
+        0.0,
+        Hv.data(), 1, 1, pM.desc());
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    if (my_rank == 0)
+        std::cout << "Hv execution time: " << elapsed.count() << " seconds" << std::endl;
+
+    check_eq(Hv.data(), Ωv.data(), pM.size(), 1e-6);
+    
+    std::vector<std::complex<double>> identity(pM.size(), 0.0);
+    for (int i = 0; i < pM.ncloc(); ++i) {
+        int col_glb = pM.icglb(i);
+        int row_loc = pM.irloc(col_glb);
+        if (row_loc != -1)
+            identity[i * pM.nrloc() + row_loc] = 1.0;
+    }
+    // v = ｢Y* X      left_v = ｢-Y*  X
+    //      X* Y｣                X* -Y｣
+    std::vector<std::complex<double>> left_v(pM.size(), 0.0);
+    for (int i = 0; i < pM.ncloc(); ++i) {
+        int col_glb = pM.icglb(i);
+        for (int j = 0; j < pM.nrloc(); ++j) {
+            int row_glb = pM.irglb(j);
+            if (col_glb < nA && row_glb < nA)
+                left_v[i * pM.nrloc() + j] = -v[i * pM.nrloc() + j];
+            else if (col_glb >= nA && row_glb < nA)
+                left_v[i * pM.nrloc() + j] = v[i * pM.nrloc() + j];
+            else if (col_glb < nA && row_glb >= nA)
+                left_v[i * pM.nrloc() + j] = v[i * pM.nrloc() + j];
+            else // if (col_glb >= nA && row_glb >= nA)
+                left_v[i * pM.nrloc() + j] = -v[i * pM.nrloc() + j];
+        }
+    }
+
+    start = std::chrono::high_resolution_clock::now();
+    ScalapackConnector::gemm('C', 'N', nM, nM, nM, 1.0,
+        left_v.data(), 1, 1, pM.desc(),
+        v.data(), 1, 1, pM.desc(),
+        0.0,
+        Ωv.data(), 1, 1, pM.desc());// overwrite Ωv by left_v.v
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    if (my_rank == 0)
+        std::cout << "left_v.v execution time: " << elapsed.count() << " seconds" << std::endl;
+    check_eq(Ωv.data(), identity.data(), pM.size(), 1e-6);
+}
+#else
+TEST(BSETest, MissingDiagonalizationBackend)
+{
+    Parallel_Blkcyclic pA;
+    Parallel_Blkcyclic pM;
+    std::vector<double> ev;
+    std::vector<double> A;
+    std::vector<double> v_tda;
+    std::vector<std::complex<double>> A_full;
+    std::vector<std::complex<double>> B_full;
+    std::vector<std::complex<double>> v_full;
+
+    EXPECT_EXIT(BSE::solve_tda(A, pA, ev, v_tda), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(BSE::solve_full(0, A_full, B_full, pA, pM, ev, v_full), ::testing::ExitedWithCode(1), "");
+}
+#endif
+
+
+int main(int argc, char **argv) {
+    srand(time(nullptr));
+    int thread_level = -1;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_level);
+    if (thread_level != MPI_THREAD_MULTIPLE)
+    {
+        std::cerr << "MPI_Init_thread request " << MPI_THREAD_MULTIPLE << " but provide " << thread_level << std::endl;
+    }
+    testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+    MPI_Finalize();
+    return result;
+}

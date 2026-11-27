@@ -1,9 +1,13 @@
+/**
+ * @file sep.cpp
+ * @brief Implementation of Sep class.
+ */
 #include "sep.h"
 
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/tool_title.h"
-#include "source_io/module_output/output.h"
+#include "source_base/output.h"
 
 #include <fstream>
 #include <sstream>
@@ -15,10 +19,6 @@ SepPot::SepPot()
 
 SepPot::~SepPot()
 {
-    delete[] r;
-    r = nullptr;
-    delete[] rv;
-    rv = nullptr;
 }
 
 int SepPot::read_sep(std::ifstream& ifs)
@@ -45,10 +45,8 @@ int SepPot::read_sep(std::ifstream& ifs)
         else if (key == "Sep.Points")
         {
             iss >> mesh;
-            delete[] r;
-            r = new double[mesh];
-            delete[] rv;
-            rv = new double[mesh];
+            r.resize(mesh);
+            rv.resize(mesh);
         }
         else if (key == "Sep.StripAmount")
         {
@@ -74,7 +72,7 @@ int SepPot::read_sep(std::ifstream& ifs)
     return 0;
 }
 
-void SepPot::print_sep_info(std::ofstream& ofs)
+void SepPot::print_sep_info(std::ofstream& ofs) const
 {
     ofs << "\n sep_vl:";
     ofs << "\n sep_info:";
@@ -84,11 +82,11 @@ void SepPot::print_sep_info(std::ofstream& ofs)
     ofs << "\n strip electron" << strip_elec;
 }
 
-void SepPot::print_sep_vsep(std::ofstream& ofs)
+void SepPot::print_sep_vsep(std::ofstream& ofs) const
 {
     ofs << "\n mesh  " << mesh;
-    output::printr1_d(ofs, " r : ", r, mesh);
-    output::printr1_d(ofs, " vsep : ", rv, mesh);
+    output::printr1_d(ofs, " r : ", r.data(), mesh);
+    output::printr1_d(ofs, " vsep : ", rv.data(), mesh);
     ofs << "\n -----------------------------";
 }
 
@@ -110,12 +108,12 @@ void SepPot::bcast_sep()
 
     if (GlobalV::MY_RANK != 0 && mesh > 0)
     {
-        r = new double[mesh];
-        rv = new double[mesh];
+        r.resize(mesh);
+        rv.resize(mesh);
     }
 
-    Parallel_Common::bcast_double(r, mesh);
-    Parallel_Common::bcast_double(rv, mesh);
+    Parallel_Common::bcast_double(r.data(), mesh);
+    Parallel_Common::bcast_double(rv.data(), mesh);
 
     return;
 }

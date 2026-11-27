@@ -66,14 +66,14 @@ ModuleBase::ComplexArray cal_overlap_Sq(const char type, const int lmax, const i
     int t1 = 0, a1 = 0, l1 = 0, m1 = 0;
     int t2 = 0, a2 = 0, l2 = 0, m2 = 0;
 
-    for (auto it1 = mu_index.cbegin(); it1 != mu_index.cend(); ++it1)
+    for (std::vector<std::tuple<int, int, int, int>>::const_iterator it1 = mu_index.cbegin(); it1 != mu_index.cend(); ++it1)
     {
         std::tie(t1, a1, l1, m1) = *it1;
-        for (auto it2 = mu_index.cbegin(); it2 != mu_index.cend(); ++it2)
+        for (std::vector<std::tuple<int, int, int, int>>::const_iterator it2 = mu_index.cbegin(); it2 != mu_index.cend(); ++it2)
         {
             std::tie(t2, a2, l2, m2) = *it2;
             std::vector<Vec3> dR_all = neighbor_vec(R[t2][a2] - R[t1][a1], latvec, 2 * rcut);
-            for (auto& dR: dR_all)
+            for (ModuleBase::Vector3<double>& dR: dR_all)
             {
                 for (int zeta1 = 0; zeta1 < nbes; ++zeta1)
                 {

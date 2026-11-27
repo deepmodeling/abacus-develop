@@ -1,3 +1,7 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include <gtest/gtest.h>
 #include "source_base/ndarray.h"
 #include <utility>
@@ -140,6 +144,8 @@ TEST(NDArray, Reshape)
     EXPECT_EQ(a.empty(), false);
     // expect assert error if the size is not the same
     EXPECT_DEATH(a.reshape(2, 3, 2), "");
+    // 2 * 1 * 2147483651 is 2^32 + 6; an int accumulator truncates to 6.
+    EXPECT_DEATH(a.reshape(2, 1, 2147483651LL), "");
 }
 
 TEST(NDArray, ReshapeValue)

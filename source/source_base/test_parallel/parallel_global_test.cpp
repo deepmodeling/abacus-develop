@@ -12,6 +12,8 @@
 
 #include "source_base/global_variable.h"
 
+namespace legacy_global = GlobalV;
+
 /************************************************
  *  unit test of functions in parallel_global.cpp
  ***********************************************/
@@ -22,9 +24,8 @@
  *   used in David diagonalization in pw basis
  *   calculation.
  *   ii. Parallel_Global::split_grid_world()
- *   iii. Parallel_Global::MyProd(std::complex<double> *in,std::complex<double> *inout,int *len,MPI_Datatype *dptr);
- *   iv. Parallel_Global::init_pools();
- *   v. Parallel_Global::divide_pools(void);
+ *   iii. Parallel_Global::init_pools();
+ *   iv. Parallel_Global::divide_pools(void);
  */
 
 class MPIContext
@@ -153,20 +154,6 @@ TEST_F(ParaGlobal, SplitDiag)
     // std::cout<<mpi.drank<<" "<<mpi.dsize<<std::endl;
 }
 
-TEST_F(ParaGlobal, MyProd)
-{
-    std::complex<double> in[2] = {std::complex<double>(1.0, 2.0), std::complex<double>(-1, -2)};
-    std::complex<double> inout[2] = {std::complex<double>(2.0, 1.0), std::complex<double>(-2, -1)};
-
-    int len = 2;
-    MPI_Datatype dptr = MPI_DOUBLE_COMPLEX;
-    Parallel_Global::myProd(in, inout, &len, &dptr);
-    EXPECT_EQ(inout[0], std::complex<double>(3.0, 3.0));
-    EXPECT_EQ(inout[1], std::complex<double>(-3.0, -3.0));
-}
-
-
-
 TEST_F(ParaGlobal, DivideMPIPools)
 {
     this->nproc = 12;
@@ -255,7 +242,7 @@ class ParaGlobalDeathTest : public ::testing::Test
         my_rank = mpi.GetRank();
 
         // init log file needed by WARNING_QUIT
-        GlobalV::ofs_warning.open("warning.log");
+        legacy_global::ofs_warning.open("warning.log");
 
 
     }
@@ -265,7 +252,7 @@ class ParaGlobalDeathTest : public ::testing::Test
     {
         if (real_rank != 0) return;
 
-        GlobalV::ofs_warning.close();
+        legacy_global::ofs_warning.close();
         remove("warning.log");
     }
 };

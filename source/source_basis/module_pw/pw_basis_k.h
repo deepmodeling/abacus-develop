@@ -2,7 +2,6 @@
 #define PWBASISK_H
 
 #include "pw_basis.h"
-#include "source_psi/psi.h"
 #include "source_base/module_device/device.h"
 namespace ModulePW
 {
@@ -279,6 +278,4 @@ private:
 
 }
 #endif //PlaneWave_K class
-
-#include "./pw_basis_k_big.h" //temporary it will be removed
 

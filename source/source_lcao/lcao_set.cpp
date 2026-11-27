@@ -1,0 +1,469 @@
+#include "source_lcao/lcao_set.h"
+#include "source_base/global_function.h"
+#include "source_base/parallel_common.h"
+#include "source_io/module_dm/write_dmk.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_psi/setup_psi.h" // use Setup_Psi
+#include "source_io/module_wf/read_wfc_nao.h" // use read_wfc_nao
+#include "source_estate/elecstate_tools.h" // use fixed_weights
+#include "source_hamilt/module_hcontainer/read_hcontainer.h"
+#include "source_lcao/rho_tau_lcao.h" // use dm2rho
+#include "source_lcao/hamilt_lcao.h" // use HamiltLCAO for init_chg_hr
+#include "source_hamilt/hamilt_hs_adapter.h"
+#include "source_hsolver/hsolver_lcao.h" // use HSolverLCAO for init_chg_hr
+#include "source_pw/module_pwdft/dftu_base.h" // use Plus_U_Base for the DFT+U init
+
+template <typename TK>
+void LCAO_domain::set_psi_occ_dm_chg(
+        const K_Vectors &kv, // k-points
+        psi::Psi<TK>* &psi, // coefficients of NAO basis
+        const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        elecstate::ElecState* pelec, // eigen values and weights
+        module_dm::Setup_DM<TK> &dmat, // density matrix 
+        Charge &chr, // charge density 
+        const Input_para &inp) // input parameters
+{
+
+    //! 1) init electronic wave function psi
+    Setup_Psi<TK>::allocate_psi(psi, kv, pv, inp);
+
+    //! 2) read psi from file
+    if (inp.init_wfc == "file" && inp.esolver_type != "tddft")
+    {
+        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
+             pv, *psi, pelec->ekb, pelec->wg, kv.ik2iktot,
+             kv.get_nkstot(), inp.nspin, inp.init_wfc_file_format == "binary"))
+        {
+            ModuleBase::WARNING_QUIT("set_psi_occ_dm_chg", "read electronic wave functions failed");
+        }
+    }
+
+    //! 3) set occupations, tddft does not need to set occupations in the first scf
+    if (inp.ocp && inp.esolver_type != "tddft")
+    {
+        elecstate::fixed_weights(inp.ocp_kb, inp.nbands, inp.nelec,
+          &kv, pelec->wg, pelec->skip_weights);
+    }
+
+    //! 4) init DMK, but DMR is constructed in before_scf()
+    LCAO_domain::allocate_dm(dmat, &kv, &pv, inp.nspin);
+
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "CHARGE");
+
+    return;
+}
+
+
+template <typename TK>
+void LCAO_domain::set_pot(
+        UnitCell &ucell, // not const because of dftu
+        K_Vectors &kv, // not const due to exx
+        Structure_Factor& sf, // will be modified in potential
+        const ModulePW::PW_Basis &pw_rho,
+        const ModulePW::PW_Basis &pw_rhod,
+        elecstate::ElecState* pelec,
+        const LCAO_Orbitals& orb,
+        Parallel_Orbitals &pv, // not const due to deepks
+        pseudopot_cell_vl &locpp,
+        Plus_U_Base &dftu,
+        surchem& solvent,
+        Exx_NAO<TK> &exx_nao,
+        Setup_DeePKS<TK> &deepks,
+        const Input_para &inp,
+        Exx_Info& exx_info)
+{
+    //! 1) init local pseudopotentials
+    locpp.init_vloc(ucell, &pw_rho);
+    locpp.print_vloc(ucell, &pw_rho, inp.out_element_info, PARAM.globalv.global_out_dir);
+    if (inp.out_element_info && GlobalV::MY_RANK == 0)
+    {
+        GlobalV::ofs_running << " Write element information to directory: "
+                             << PARAM.globalv.global_out_dir
+                             << " (" << ucell.ntype << " element type(s))" << std::endl;
+    }
+
+    //! 2) init potentials
+    if (pelec->pot == nullptr)
+    {
+        // where is the pot deleted?
+        pelec->pot = new elecstate::Potential(&pw_rhod, &pw_rho,
+          &ucell, &locpp.vloc, &sf, &solvent,
+          &(pelec->f_en.etxc), &(pelec->f_en.vtxc));
+    }
+
+    if (inp.dft_plus_u)
+    {
+        // init_base does not see paraV; validate the square-matrix invariant
+        // of the LCAO parallel distribution here.
+        const int global_rows = pv.para_2d().nrglb();
+        const int global_cols = pv.para_2d().ncglb();
+        if (global_rows != global_cols)
+        {
+            ModuleBase::WARNING_QUIT("LCAO_domain::set_pot",
+                                     "Global row and column dimensions do not match");
+        }
+        const DFTU_BASE::OccmatSocLayout occmat_soc_layout
+            = DFTU_BASE::lcao_soc_layout(inp.dft_plus_u);
+        dftu.init_base(ucell,
+                       PARAM.globalv.npol,
+                       inp.nspin,
+                       inp.l_channel,
+                       inp.yukawa_potential,
+                       inp.yukawa_lambda,
+                       PARAM.globalv.global_readin_dir,
+                       PARAM.globalv.global_out_dir,
+                       inp.init_chg,
+                       inp.device,
+                       PARAM.globalv.hubbard_u,
+                       PARAM.globalv.uramping,
+                       inp.init_occ_mat,
+                       inp.mixing_dftu,
+                       occmat_soc_layout);
+    }
+
+    //! 4) init exact exchange calculations
+    exx_nao.before_runner(ucell, kv, orb, pv, inp, exx_info);
+
+    //! 5) init deepks
+    deepks.before_runner(ucell, kv.get_nks(), orb, pv, inp);
+
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "POTENTIALS");
+
+    return;
+}
+
+template <typename TK>
+void LCAO_domain::init_dm_from_file(
+    const std::string& readin_dir,
+    const int nspin,
+    module_dm::Setup_DM<TK>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv)
+{
+    ModuleBase::TITLE("LCAO_domain", "init_dm_from_file");
+    const int nspin_dm = (nspin == 2) ? 2 : 1;
+    for (int is = 0; is < nspin_dm; ++is)
+    {
+        // readin_dir is normalized by to_dir() and always ends with '/'
+        const std::string dmfile = readin_dir + "dmrs" + std::to_string(is + 1) + "_nao.csr";
+        // EXX-specific: add rank guard because OperatorEXX is constructed on all MPI ranks,
+        // unlike most other places where ofs_running is only written on rank 0
+        if (GlobalV::MY_RANK == 0)
+        {
+            GlobalV::ofs_running << " Read density matrix from " << dmfile << std::endl;
+        }
+        hamilt::HContainer<double>* dm_container = dmat.dm->get_dmr_vec()[is];
+        hamilt::Read_HContainer<double> reader_dm(
+            dm_container,
+            dmfile,
+            PARAM.globalv.nlocal,
+            &ucell,
+            GlobalV::MY_RANK
+        );
+        reader_dm.read();
+    }
+    return;
+}
+
+template <typename TK>
+void LCAO_domain::init_chg_dm(
+    const std::string& readin_dir,
+    const int nspin,
+    module_dm::Setup_DM<TK>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    Charge* chr,
+    const K_Vectors& kv,
+    const int istep,
+    const int out_app_flag,
+    const std::string& ks_solver)
+{
+    ModuleBase::TITLE("LCAO_domain", "init_chg_dm");
+
+    const int nspin_dm = (nspin == 2) ? 2 : 1;
+    bool dmr_found = false;
+    // Rank 0 probes the DMR files and broadcasts the decision so every rank
+    // takes the same communication path (DMR distribution vs DM(k) broadcast);
+    // a rank-local decision could deadlock the two mismatched collectives.
+    if (GlobalV::MY_RANK == 0)
+    {
+        for (int is = 0; is < nspin_dm; ++is)
+        {
+            const std::string dmfile = readin_dir + "dmrs" + std::to_string(is + 1) + "_nao.csr";
+            std::ifstream ifs(dmfile.c_str());
+            if (ifs.good())
+            {
+                dmr_found = true;
+                break;
+            }
+        }
+    }
+    Parallel_Common::bcast_bool(dmr_found);
+
+    // Preserve the established DMR restart path. Only when no DMR file exists
+    // do we interpret init_chg=dm as a request to restart from dense DM(k).
+    // An incomplete DMR set is not silently replaced by a different format.
+    if (dmr_found)
+    {
+        LCAO_domain::init_dm_from_file<TK>(readin_dir, nspin, dmat, ucell, pv);
+    }
+    else
+    {
+        const int nk = kv.get_nks() / nspin_dm;
+        const bool column_major = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver);
+        const std::string dmk_dir = (out_app_flag == 2) ? readin_dir + "MAT/" : readin_dir;
+        std::vector<std::vector<TK>>& dmk = dmat.dm->get_dmk_vec();
+        const bool read_success = ModuleIO::read_dmk(nspin_dm,
+                                                     nk,
+                                                     kv,
+                                                     pv->para_2d(),
+                                                     column_major,
+                                                     dmk_dir,
+                                                     istep,
+                                                     out_app_flag,
+                                                     dmk,
+                                                     GlobalV::ofs_running);
+        if (!read_success)
+        {
+            ModuleBase::WARNING_QUIT(
+                "LCAO_domain::init_chg_dm",
+                "Failed to initialize the density: no usable DMR CSR or DM(k) files were found in "
+                    + readin_dir);
+        }
+        dmat.dm->cal_dmr(-1);
+    }
+
+    // Convert density matrix to charge density. The loaded DM is already
+    // normalized, so omega is unused when skip_normalize is true.
+    LCAO_domain::dm2rho(dmat.dm->get_dmr_vec(), nspin, chr, PARAM.inp.nelec, ucell.omega, true);
+
+    return;
+}
+
+template <typename TR>
+void LCAO_domain::init_hr_from_file(
+    const std::string hrfile,
+    hamilt::HContainer<TR>* hmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv)
+{
+    ModuleBase::TITLE("LCAO_domain", "init_hr_from_file");
+
+    // Check if file exists
+    std::ifstream test_file(hrfile);
+    if (!test_file.good())
+    {
+        std::string error_msg = "Cannot open Hamiltonian file: " + hrfile + "\n\n";
+        error_msg += "When using init_chg=hr, you need to provide Hamiltonian matrix files:\n";
+        error_msg += "  - For nspin=1: hrs1_nao.csr\n";
+        error_msg += "  - For nspin=2: hrs1_nao.csr (spin-up) and hrs2_nao.csr (spin-down)\n\n";
+        error_msg += "Solutions:\n";
+        error_msg += "  1. Run an SCF calculation first with 'out_hsr 1' to generate HR files\n";
+        error_msg += "  2. Check that 'read_file_dir' points to the correct directory\n";
+        error_msg += "  3. Use 'init_chg file' or 'init_chg atomic' instead";
+        ModuleBase::WARNING_QUIT("LCAO_domain::init_hr_from_file", error_msg);
+    }
+    test_file.close();
+
+    hmat->set_zero();
+    hamilt::Read_HContainer<TR> reader_hr(hmat, hrfile, PARAM.globalv.nlocal, &ucell, GlobalV::MY_RANK);
+    reader_hr.read();
+    return;
+}
+
+template <typename TK, typename TR>
+void LCAO_domain::init_chg_hr(
+    const std::string& readin_dir,
+    const int nspin,
+    hamilt::Hamilt<TK>* p_hamilt,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    psi::Psi<TK>& psi,
+    elecstate::ElecState* pelec,
+    module_dm::DensityMatrix<TK, double>& dm,
+    Charge& chr,
+    const std::string& ks_solver)
+{
+    ModuleBase::TITLE("LCAO_domain", "init_chg_hr");
+
+    hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
+    if (!hamilt_lcao)
+    {
+        ModuleBase::WARNING_QUIT("LCAO_domain::init_chg_hr", "p_hamilt is not HamiltLCAO");
+    }
+
+    // Step 1: Read HR from file(s)
+    if (nspin == 2)
+    {
+        // nspin=2: load spin-up into first half of hRS2, spin-down into second half
+        const std::string hrfile_up = readin_dir + "/hrs1_nao.csr";
+        LCAO_domain::init_hr_from_file<TR>(hrfile_up, hamilt_lcao->getHR(), ucell, pv);
+
+        // switch hR data pointer to spin-down half, then read hrs2
+        std::vector<TR>& hRS2 = hamilt_lcao->getHRS2();
+        hamilt_lcao->getHR()->allocate(hRS2.data() + hRS2.size() / 2, 0);
+        const std::string hrfile_down = readin_dir + "/hrs2_nao.csr";
+        LCAO_domain::init_hr_from_file<TR>(hrfile_down, hamilt_lcao->getHR(), ucell, pv);
+
+        // restore hR to spin-up half
+        hamilt_lcao->getHR()->allocate(hRS2.data(), 0);
+    }
+    else
+    {
+        const std::string hrfile = readin_dir + "/hrs1_nao.csr";
+        LCAO_domain::init_hr_from_file<TR>(hrfile, hamilt_lcao->getHR(), ucell, pv);
+    }
+
+    // Step 2: Mark HR as loaded from file (skip operator recalculation)
+    p_hamilt->refresh(false);
+
+    // Step 3: Diagonalize to get wavefunctions and charge density
+    const auto& input = PARAM.inp;
+    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(pv,
+                                              ks_solver,
+                                              PARAM.globalv.kpar_lcao,
+                                              PARAM.globalv.nlocal,
+                                              input.nbands,
+                                              input.nelec,
+                                              input.device == "gpu",
+                                              GlobalV::NPROC,
+                                              GlobalV::MY_RANK,
+                                              input.lcao_sk_cut);
+    hamilt::HamiltHSMatrix<TK> hs(p_hamilt);
+    hsolver_lcao_obj.solve(hs, psi, pelec, dm, chr, nspin, ucell.omega, 0);
+}
+
+
+
+template void LCAO_domain::set_psi_occ_dm_chg<double>(
+        const K_Vectors &kv, // k-points
+        psi::Psi<double>* &psi, // coefficients of NAO basis
+        const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        elecstate::ElecState* pelec, // eigen values and weights
+        module_dm::Setup_DM<double> &dmat, // density matrix 
+        Charge &chr, // charge density 
+        const Input_para &inp);
+
+template void LCAO_domain::set_psi_occ_dm_chg<std::complex<double>>(
+        const K_Vectors &kv, // k-points
+        psi::Psi<std::complex<double>>* &psi, // coefficients of NAO basis
+        const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        elecstate::ElecState* pelec, // eigen values and weights
+        module_dm::Setup_DM<std::complex<double>> &dmat, // density matrix 
+        Charge &chr, // charge density 
+        const Input_para &inp);
+
+template void LCAO_domain::set_pot<double>(
+        UnitCell &ucell,
+        K_Vectors &kv,
+        Structure_Factor& sf,
+        const ModulePW::PW_Basis &pw_rho,
+        const ModulePW::PW_Basis &pw_rhod,
+        elecstate::ElecState* pelec,
+        const LCAO_Orbitals& orb,
+        Parallel_Orbitals &pv,
+        pseudopot_cell_vl &locpp,
+        Plus_U_Base &dftu,
+        surchem& solvent,
+        Exx_NAO<double> &exx_nao,
+        Setup_DeePKS<double> &deepks,
+        const Input_para &inp,
+        Exx_Info& exx_info);
+
+template void LCAO_domain::set_pot<std::complex<double>>(
+        UnitCell &ucell,
+        K_Vectors &kv,
+        Structure_Factor& sf,
+        const ModulePW::PW_Basis &pw_rho,
+        const ModulePW::PW_Basis &pw_rhod,
+        elecstate::ElecState* pelec,
+        const LCAO_Orbitals& orb,
+        Parallel_Orbitals &pv,
+        pseudopot_cell_vl &locpp,
+        Plus_U_Base &dftu,
+        surchem& solvent,
+        Exx_NAO<std::complex<double>> &exx_nao,
+        Setup_DeePKS<std::complex<double>> &deepks,
+        const Input_para &inp,
+        Exx_Info& exx_info);
+
+template void LCAO_domain::init_dm_from_file<double>(
+    const std::string& readin_dir,
+    const int nspin,
+    module_dm::Setup_DM<double>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv);
+template void LCAO_domain::init_dm_from_file<std::complex<double>>(
+    const std::string& readin_dir,
+    const int nspin,
+    module_dm::Setup_DM<std::complex<double>>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv);
+
+template void LCAO_domain::init_chg_dm<double>(
+    const std::string& readin_dir,
+    const int nspin,
+    module_dm::Setup_DM<double>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    Charge* chr,
+    const K_Vectors& kv,
+    const int istep,
+    const int out_app_flag,
+    const std::string& ks_solver);
+template void LCAO_domain::init_chg_dm<std::complex<double>>(
+    const std::string& readin_dir,
+    const int nspin,
+    module_dm::Setup_DM<std::complex<double>>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    Charge* chr,
+    const K_Vectors& kv,
+    const int istep,
+    const int out_app_flag,
+    const std::string& ks_solver);
+
+template void LCAO_domain::init_hr_from_file<double>(
+    const std::string hrfile,
+    hamilt::HContainer<double>* hmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv);
+template void LCAO_domain::init_hr_from_file<std::complex<double>>(
+    const std::string hrfile,
+    hamilt::HContainer<std::complex<double>>* hmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv);
+
+template void LCAO_domain::init_chg_hr<double, double>(
+    const std::string& readin_dir,
+    const int nspin,
+    hamilt::Hamilt<double>* p_hamilt,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    psi::Psi<double>& psi,
+    elecstate::ElecState* pelec,
+    module_dm::DensityMatrix<double, double>& dm,
+    Charge& chr,
+    const std::string& ks_solver);
+template void LCAO_domain::init_chg_hr<std::complex<double>, double>(
+    const std::string& readin_dir,
+    const int nspin,
+    hamilt::Hamilt<std::complex<double>>* p_hamilt,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    psi::Psi<std::complex<double>>& psi,
+    elecstate::ElecState* pelec,
+    module_dm::DensityMatrix<std::complex<double>, double>& dm,
+    Charge& chr,
+    const std::string& ks_solver);
+template void LCAO_domain::init_chg_hr<std::complex<double>, std::complex<double>>(
+    const std::string& readin_dir,
+    const int nspin,
+    hamilt::Hamilt<std::complex<double>>* p_hamilt,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    psi::Psi<std::complex<double>>& psi,
+    elecstate::ElecState* pelec,
+    module_dm::DensityMatrix<std::complex<double>, double>& dm,
+    Charge& chr,
+    const std::string& ks_solver);

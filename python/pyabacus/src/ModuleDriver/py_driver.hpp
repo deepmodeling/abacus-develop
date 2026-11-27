@@ -9,16 +9,15 @@
 #ifndef PY_DRIVER_HPP
 #define PY_DRIVER_HPP
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
-
-#include <string>
 #include <iomanip>
-#include <memory>
-#include <vector>
 #include <map>
+#include <memory>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <sstream>
+#include <string>
+#include <vector>
 
 namespace py = pybind11;
 
@@ -57,24 +56,27 @@ struct CalculationResult
     bool has_stress = false;
 
     // Electronic structure info
-    double fermi_energy = 0.0;  // in eV
-    double bandgap = 0.0;       // in eV
+    double fermi_energy = 0.0; // in eV
+    double bandgap = 0.0;      // in eV
     int nat = 0;
     int ntype = 0;
     int nbands = 0;
     int nks = 0;
 
     // Output file tracking
-    std::string output_dir = "";   // Path to OUT.$suffix folder
-    std::string log_file = "";     // Path to the main log file
-    std::map<std::string, std::string> output_files;  // filename -> full path
+    std::string output_dir = "";                     // Path to OUT.$suffix folder
+    std::string log_file = "";                       // Path to the main log file
+    std::map<std::string, std::string> output_files; // filename -> full path
 
     // Unit conversion constants
     static constexpr double Ry_to_eV = 13.605693122994;
     static constexpr double Bohr_to_Ang = 0.529177249;
 
     // Convenience methods
-    double etot_eV() const { return etot * Ry_to_eV; }
+    double etot_eV() const
+    {
+        return etot * Ry_to_eV;
+    }
 
     py::dict get_energies() const
     {
@@ -177,7 +179,7 @@ struct CalculationResult
  */
 class PyDriver
 {
-public:
+  public:
     PyDriver();
     ~PyDriver();
 
@@ -200,30 +202,34 @@ public:
      * @param verbosity Output verbosity level (0=silent, 1=normal, 2=verbose)
      * @return CalculationResult containing all results
      */
-    CalculationResult run(
-        const std::string& input_dir = ".",
-        const std::string& input_file = "",
-        const std::string& stru_file = "",
-        const std::string& kpt_file = "",
-        const std::string& pseudo_dir = "",
-        const std::string& orbital_dir = "",
-        const std::string& output_dir = "",
-        bool calculate_force = true,
-        bool calculate_stress = false,
-        int verbosity = 1
-    );
+    CalculationResult run(const std::string& input_dir = ".",
+                          const std::string& input_file = "",
+                          const std::string& stru_file = "",
+                          const std::string& kpt_file = "",
+                          const std::string& pseudo_dir = "",
+                          const std::string& orbital_dir = "",
+                          const std::string& output_dir = "",
+                          bool calculate_force = true,
+                          bool calculate_stress = false,
+                          int verbosity = 1);
 
     /**
      * @brief Check if the driver is ready for calculation
      */
-    bool is_ready() const { return initialized_; }
+    bool is_ready() const
+    {
+        return initialized_;
+    }
 
     /**
      * @brief Get the last calculation result
      */
-    const CalculationResult& get_last_result() const { return last_result_; }
+    const CalculationResult& get_last_result() const
+    {
+        return last_result_;
+    }
 
-private:
+  private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 

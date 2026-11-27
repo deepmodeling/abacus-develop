@@ -5,6 +5,9 @@
 #SBATCH -o compile.log
 #SBATCH -e compile.err
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "${SCRIPT_DIR}/scripts/lib/wrapper_runner.sh"
+
 # Users can easily modify these parameters to customize the build
 # Before running this script, ensure you have loaded your system packages
 
@@ -22,18 +25,18 @@ WITH_AOCL="system"
 MPI_MODE="openmpi"
 WITH_OPENMPI="install"
 WITH_MPICH="no"
-WITH_4TH_OPENMPI="no"  # Set to "yes" for OpenMPI v4, deprecated
+WITH_4TH_OPENMPI="no" # Set to "yes" for OpenMPI v4, deprecated
 
 # Core Dependencies
 WITH_CMAKE="install"
-WITH_SCALAPACK="system"  # AOCL provides ScaLAPACK
-WITH_FFTW="system"       # AOCL provides FFTW
+WITH_SCALAPACK="system" # AOCL provides ScaLAPACK
+WITH_FFTW="system"      # AOCL provides FFTW
 WITH_LIBXC="install"
 WITH_ELPA="install"
 
 # Utility Libraries
 WITH_CEREAL="install"
-WITH_RAPIDJSON="install"
+WITH_JSON="install"
 
 # Advanced Features (EXX calculations)
 WITH_LIBRI="install"
@@ -45,7 +48,7 @@ WITH_LIBNPY="no"
 WITH_NEP="no"
 
 # AMD Compiler Options
-WITH_FLANG="no"     # Flang is not recommended in current stage
+WITH_FLANG="no" # Flang is not recommended in current stage
 
 # ELPA-GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"
@@ -56,10 +59,10 @@ WITH_FLANG="no"     # Flang is not recommended in current stage
 # Execution Mode Control
 # ============================================================================
 # Dry-run mode: Show what would be done without actually executing
-DRY_RUN_MODE="no"   # Set to "yes" to enable dry-run mode
+DRY_RUN_MODE="no" # Set to "yes" to enable dry-run mode
 
 # Pack-run mode: Only check and install required packages
-PACK_RUN_MODE="no"  # Set to "yes" to enable pack-run mode
+PACK_RUN_MODE="no" # Set to "yes" to enable pack-run mode
 
 # ============================================================================
 # Package Version Selection (main/alt versions)
@@ -67,12 +70,12 @@ PACK_RUN_MODE="no"  # Set to "yes" to enable pack-run mode
 # Choose between main (latest stable) and alt (alternative/legacy) versions
 # Refer to scripts/package_versions.sh for specific version numbers
 
-CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
-OPENMPI_VERSION="main"      # main=5.0.8, alt=4.1.6
-ELPA_VERSION="main"         # main=2025.06.001, alt=2024.05.001
-LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
+CMAKE_VERSION="main"   # main=3.31.7, alt=3.30.5
+OPENMPI_VERSION="main" # main=5.0.10, alt=4.1.8
+ELPA_VERSION="main"    # main=2026.02.001, alt=2024.05.001
+LIBXC_VERSION="main"   # main=7.0.0, alt=6.2.2
 # Optional Libraries
-LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
+LIBTORCH_VERSION="main" # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
 # Note: main(2.1.2) version of LibTorch need glibc > 2.27
 # Note: alt(1.12.1) version of LibTorch cannot support DeePMD-Torch for DPA
 
@@ -84,7 +87,7 @@ LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
 # ============================================================================
 
 # Call the main installation script with configured parameters
-exec ./install_abacus_toolchain_new.sh \
+run_toolchain_with_log compile.log ./install_abacus_toolchain_new.sh \
   --with-amd="$WITH_AMD" \
   --with-gcc="$WITH_GCC" \
   --math-mode="$MATH_MODE" \
@@ -98,7 +101,7 @@ exec ./install_abacus_toolchain_new.sh \
   --with-fftw="$WITH_FFTW" \
   --with-elpa="$WITH_ELPA" \
   --with-cereal="$WITH_CEREAL" \
-  --with-rapidjson="$WITH_RAPIDJSON" \
+  --with-json="$WITH_JSON" \
   --with-libtorch="$WITH_LIBTORCH" \
   --with-nep="$WITH_NEP" \
   --with-libnpy="$WITH_LIBNPY" \
@@ -115,5 +118,4 @@ exec ./install_abacus_toolchain_new.sh \
   ${PACK_RUN_MODE:+$([ "$PACK_RUN_MODE" = "yes" ] && echo "--pack-run")} \
   ${ENABLE_CUDA:+--enable-cuda} \
   ${GPU_VERSION:+--gpu-ver="$GPU_VERSION"} \
-  "$@" \
-  | tee compile.log
+  "$@"

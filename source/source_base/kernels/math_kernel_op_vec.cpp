@@ -1,5 +1,6 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_external/blas_connector.h"
+#include "source_base/parallel_reduce.h"
 
 
 namespace ModuleBase
@@ -34,35 +35,6 @@ struct vector_mul_real_op<T, base_device::DEVICE_CPU>
 };
 
 template <typename T>
-struct vector_mul_vector_op<T, base_device::DEVICE_CPU>
-{
-    using Real = typename GetTypeReal<T>::type;
-    void operator()(const int& dim, T* result, const T* vector1, const Real* vector2, const bool& add)
-    {
-        if (add)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-            for (int i = 0; i < dim; i++)
-            {
-                result[i] += vector1[i] * vector2[i];
-            }
-        }
-        else
-        {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-            for (int i = 0; i < dim; i++)
-            {
-                result[i] = vector1[i] * vector2[i];
-            }
-        }
-    }
-};
-
-template <typename T>
 struct vector_div_constant_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
@@ -74,22 +46,6 @@ struct vector_div_constant_op<T, base_device::DEVICE_CPU>
         for (int i = 0; i < dim; i++)
         {
             result[i] = vector[i] / constant;
-        }
-    }
-};
-
-template <typename T>
-struct vector_div_vector_op<T, base_device::DEVICE_CPU>
-{
-    using Real = typename GetTypeReal<T>::type;
-    void operator()(const int& dim, T* result, const T* vector1, const Real* vector2)
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-        for (int i = 0; i < dim; i++)
-        {
-            result[i] = vector1[i] / vector2[i];
         }
     }
 };
@@ -107,29 +63,6 @@ struct axpy_op<T, base_device::DEVICE_CPU>
         BlasConnector::axpy(dim, *alpha, X, incX, Y, incY);
     }
 };
-
-
-template <typename T>
-struct vector_add_vector_op<T, base_device::DEVICE_CPU>
-{
-    using Real = typename GetTypeReal<T>::type;
-    void operator()(const int& dim,
-                    T* result,
-                    const T* vector1,
-                    const Real constant1,
-                    const T* vector2,
-                    const Real constant2)
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-        for (int i = 0; i < dim; i++)
-        {
-            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
-        }
-    }
-};
-
 
 
 template <typename FPTYPE>
@@ -173,25 +106,34 @@ template struct vector_mul_real_op<std::complex<float>, base_device::DEVICE_CPU>
 template struct vector_mul_real_op<double, base_device::DEVICE_CPU>;
 template struct vector_mul_real_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct vector_mul_vector_op<double, base_device::DEVICE_CPU>;
-template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct vector_mul_vector_op<float, base_device::DEVICE_CPU, float>;
+template struct vector_mul_vector_op<double, base_device::DEVICE_CPU, double>;
+template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_CPU, float>;
+template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU, double>;
+template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_CPU, std::complex<float>>;
+template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU, std::complex<double>>;
 
 template struct vector_div_constant_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct vector_div_constant_op<double, base_device::DEVICE_CPU>;
 template struct vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct vector_div_vector_op<double, base_device::DEVICE_CPU>;
-template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct vector_div_vector_op<float, base_device::DEVICE_CPU, float>;
+template struct vector_div_vector_op<double, base_device::DEVICE_CPU, double>;
+template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_CPU, float>;
+template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU, double>;
+template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_CPU, std::complex<float>>;
+template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU, std::complex<double>>;
 
 template struct axpy_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct axpy_op<double, base_device::DEVICE_CPU>;
 
-template struct vector_add_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct vector_add_vector_op<double, base_device::DEVICE_CPU>;
-template struct vector_add_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct vector_add_vector_op<float, base_device::DEVICE_CPU, float>;
+template struct vector_add_vector_op<double, base_device::DEVICE_CPU, double>;
+template struct vector_add_vector_op<std::complex<float>, base_device::DEVICE_CPU, float>;
+template struct vector_add_vector_op<std::complex<double>, base_device::DEVICE_CPU, double>;
+template struct vector_add_vector_op<std::complex<float>, base_device::DEVICE_CPU, std::complex<float>>;
+template struct vector_add_vector_op<std::complex<double>, base_device::DEVICE_CPU, std::complex<double>>;
 
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;

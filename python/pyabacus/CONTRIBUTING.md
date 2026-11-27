@@ -77,7 +77,9 @@ set(NAO_PATH "${ABACUS_SOURCE_DIR}/source_basis/module_nao")
 set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/source_hsolver")
 set(PSI_PATH "${ABACUS_SOURCE_DIR}/source_psi")
 set(ENABLE_LCAO ON)
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
+list(APPEND CMAKE_MODULE_PATH
+     "${PROJECT_SOURCE_DIR}/../../cmake"
+     "${PROJECT_SOURCE_DIR}/../../cmake/modules")
 ```
 - This section sets various source paths and configuration options. It defines the paths to different modules and appends the custom CMake module path.
 
@@ -94,8 +96,8 @@ if(MKLROOT)
     include_directories(${MPI_CXX_INCLUDE_PATH})
   endif()
 
-  set(USE_OPENMP ON)
-  if(USE_OPENMP)
+  set(ENABLE_OPENMP ON)
+  if(ENABLE_OPENMP)
     find_package(OpenMP REQUIRED)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     add_link_options(${OpenMP_CXX_LIBRARIES})
@@ -105,7 +107,7 @@ if(MKLROOT)
   include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
 
   if(NOT ENABLE_MLALGO)
-    list(APPEND math_libs IntelMKL::MKL)
+    list(APPEND math_libs abacus::mkl)
   endif()
 
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
@@ -373,7 +375,7 @@ To contribute to the `pyabacus` project, follow these steps:
            
        @staticmethod
        def sphbes_zeros(l: int, n: int, zeros: NDArray[np.float64]) -> None: 
-           super().sphbes_zeros(l, n, zeros)
+           _Sphbes.sphbes_zeros(l, n, zeros)
    ```
 
 ## Conclusion

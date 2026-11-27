@@ -6,6 +6,10 @@ OBJ_DIR = $(BUILD_DIR)/obj
 BIN_DIR = $(BUILD_DIR)/bin
 BUILD_INFO_DIR = $(BUILD_DIR)/source_io
 
+# The first rule in this file only generates build_info.h, so make would
+# stop after generating that header unless the default goal is set here.
+.DEFAULT_GOAL := abacus
+
 include $(ABACUS_ROOT)Makefile.vars
 
 #==========================
@@ -88,6 +92,9 @@ else
     FFTW_INCLUDE_DIR = ${FFTW_DIR}/include
     FFTW_LIB_DIR     = ${FFTW_DIR}/lib
     HONG  += -D__FFTW3
+    ifeq ($(OPENMP), ON)
+        LIBS += -L${FFTW_LIB_DIR} -lfftw3_omp
+    endif
     LIBS += -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR}
     INCLUDES += -I${FFTW_INCLUDE_DIR}
     
@@ -137,6 +144,9 @@ endif
 ifdef LIBRI_DIR
     INCLUDES += -I${LIBRI_DIR}/include
     INCLUDES += -I${LIBCOMM_DIR}/include
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_ri
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_rpa
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_rpa/module_librpa_io
     HONG                += -DUSE_LIBRI
     HONG += -D__EXX -DEXX_H_COMM=2 -DEXX_DM=3 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
 endif
@@ -175,6 +185,27 @@ ifdef DeePMD_DIR
     endif
 endif
 
+ifdef DeePMD_DIR
+    # Keep the legacy Make build on the same DeePMD API path as CMake. These
+    # are syntax-only probes, so no temporary executable or extra link step is
+    # required during the normal build.
+    DPMD_PROBE_SOURCE = ${ABACUS_ROOT}../tools/deepmd_input_nlist_probe.cpp
+    DPMD_COMM_NLIST_13 := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_COMM_13 -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    DPMD_COMM_NLIST_12 := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_COMM_12 -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    DPMD_NLIST_MAPPING := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_MAPPING -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    DPMD_PT_MPI := $(shell readelf -d $(DeeP_LIB_DIR)/libdeepmd_op_pt.so 2>/dev/null | grep -E 'NEEDED.*libmpi[.]so' >/dev/null && echo 1)
+    ifeq ($(DPMD_PT_MPI),1)
+        ifeq ($(DPMD_COMM_NLIST_13),1)
+            HONG += -D__DPMD_COMM_NLIST_ARGS=13
+        else ifeq ($(DPMD_COMM_NLIST_12),1)
+            HONG += -D__DPMD_COMM_NLIST_ARGS=12
+        endif
+    endif
+    ifeq ($(DPMD_NLIST_MAPPING),1)
+        HONG += -D__DPMD_HAS_NLIST_MAPPING
+    endif
+endif
+
 ifdef TensorFlow_DIR
     #==========================
     # TensorFlow package
@@ -192,6 +223,15 @@ ifdef PEXSI_DIR
     HONG += -D__PEXSI
 endif
 
+ifdef PLUMED_DIR
+    #==========================
+    # PLUMED (https://www.plumed.org)
+    #==========================
+    INCLUDES += -I${PLUMED_DIR}/include
+    LIBS += -L${PLUMED_DIR}/lib -Wl,--no-as-needed -lplumed -lplumedKernel -Wl,--as-needed -Wl,-rpath=${PLUMED_DIR}/lib
+    HONG += -DUSE_PLUMED
+endif
+
 include $(ABACUS_ROOT)Makefile.Objects
 VPATH := $(patsubst ./%,$(ABACUS_ROOT)%,$(VPATH))
 HEADERS := $(patsubst %,$(ABACUS_ROOT)%,$(HEADERS))
@@ -200,9 +240,6 @@ HEADERS := $(patsubst %,$(ABACUS_ROOT)%,$(HEADERS))
 # Optional HONG
 #==========================
 HONG += -D__SELINV -DMETIS 
-# ifeq ($(MEM_CHECK), ON)
-#     HONG += -D_MCD_CHECK -DWIN32 -DMCD_VERBOSE
-# endif
 
 #==========================
 # OBJECTS NEEDED
@@ -210,7 +247,7 @@ HONG += -D__SELINV -DMETIS
 
 ifeq ($(MPI), ON)
     ifdef LIBRI_DIR
-        OBJS_ABACUS += $(OBJS_MODULE_RI) ${OBJS_SRC_RI}
+        OBJS_ABACUS += $(OBJS_MODULE_RI) $(OBJS_MODULE_RPA) $(OBJS_BSE) ${OBJS_SRC_RI}
     endif
 endif
 
@@ -258,12 +295,11 @@ ${OBJ_DIR}/parse_args.o: $(ABACUS_ROOT)source_io/parse_args.cpp $(BUILD_INFO_DIR
 # MAKING OPTIONS
 #==========================
 abacus:
-	@ if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
-	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	@ $(MAKE) $(BIN_DIR)/${VERSION}.$(suffix)
+	@ mkdir -p $(OBJ_DIR) $(BIN_DIR)
+	@ $(MAKE) -f $(firstword $(MAKEFILE_LIST)) $(BIN_DIR)/${VERSION}.$(suffix)
 
 test:
-	@ $(MAKE) abacus
+	@ $(MAKE) -f $(firstword $(MAKEFILE_LIST)) abacus
 	@ cd $(ABACUS_ROOT)../tests/integrate/;sh Autotest.sh -a $(realpath $(BIN_DIR))/ABACUS.mpi -n $(TESTNP)
 
 pw $(BIN_DIR)/${VERSION}-PW.x:
@@ -280,7 +316,8 @@ $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
 #==========================
 # Note: The specific rule for parse_args.o above is more precise.
 # This generic rule will apply to all other .cpp files.
-${OBJ_DIR}/%.o:$(realpath $(BIN_DIR))%.cpp
+${OBJ_DIR}/%.o:%.cpp
+	@ mkdir -p $(dir $@)
 	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 	
 .PHONY:clean test

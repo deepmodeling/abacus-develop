@@ -1,14 +1,20 @@
 #include "sto_stress_pw.h"
 
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/fs_kin_tools.h"
 #include "source_pw/module_pwdft/fs_nonlocal_tools.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_cell/stru_fac.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 
 template <typename FPTYPE, typename Device>
-void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
+void Sto_Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
+                                               const bool domag,
+                                               const bool domag_z,
+                                               const int gga_grad,
+                                               const bool gamma_only_pw,
+                                               ModuleBase::matrix& sigmatot,
                                                const elecstate::ElecState& elec,
                                                ModulePW::PW_Basis* rho_basis,
                                                ModuleSymmetry::Symmetry* p_symm,
@@ -23,7 +29,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                                UnitCell& ucell_in)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
-    ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
+    ModuleBase::timer::start("Sto_Stress_PW", "cal_stress");
     const ModuleBase::matrix& wg = elec.wg;
     this->ucell = &ucell_in;
     sigmatot.create(3, 3);
@@ -42,20 +48,22 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_har(ucell_in, sigmahar, rho_basis, true, chr);
 
     // ewald contribution
-    this->stress_ewa(ucell_in, sigmaewa, rho_basis, true);
+    this->stress_ewa(ucell_in, sigmaewa, rho_basis, p_sf->strucFac, true);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; ++i)
     {
         sigmaxc(i, i) = -(elec.f_en.etxc - elec.f_en.vtxc) / this->ucell->omega;
     }
-    this->stress_gga(ucell_in, sigmaxc, rho_basis, chr);
+    this->stress_gga(ucell_in, sigmaxc, rho_basis, chr,
+        nspin, domag, domag_z, gga_grad);
 
     // local contribution
     this->stress_loc(ucell_in, sigmaloc, rho_basis, locpp->vloc, p_sf, true, chr);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, ucell_in, p_sf, true, locpp->numeric, chr);
+    this->stress_cc(sigmaxcc, rho_basis, ucell_in, p_sf, true, locpp->numeric, chr,
+        nspin, domag, domag_z, gga_grad, gamma_only_pw);
 
     // nonlocal
     this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, *nlpp, ucell_in, psi_in, stowf);
@@ -76,7 +84,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     bool ry = false;
-    const bool screen = PARAM.inp.test_stress;
+    const bool screen = PARAM.inp.test_stress && PARAM.inp.calculation != "md";
     ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, GlobalV::ofs_running);
 
     if (screen)
@@ -94,7 +102,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, screen, ry, GlobalV::ofs_running);
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
     }
-    ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
+    ModuleBase::timer::end("Sto_Stress_PW", "cal_stress");
     return;
 }
 
@@ -108,7 +116,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
                                                    const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "stress_kin");
-    ModuleBase::timer::tick("Sto_Stress_PW", "stress_kin");
+    ModuleBase::timer::start("Sto_Stress_PW", "stress_kin");
 
     int nksbands = psi.get_nbands();
     if (!PARAM.globalv.ks_run)
@@ -131,7 +139,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
     }
 
     kin_tool.symmetrize_stress(p_symm, sigma);
-    ModuleBase::timer::tick("Sto_Stress_PW", "stress_kin");
+    ModuleBase::timer::end("Sto_Stress_PW", "stress_kin");
 
     return;
 }
@@ -155,7 +163,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
         return;
     }
 
-    ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
+    ModuleBase::timer::start("Sto_Stress_Func", "stres_nl");
 
     int* nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
@@ -230,7 +238,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
         p_symm->symmetrize_mat3(sigma, ucell.lat);
     }
 
-    ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
+    ModuleBase::timer::end("Sto_Stress_Func", "stres_nl");
     return;
 }
 

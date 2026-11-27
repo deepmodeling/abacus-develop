@@ -12,11 +12,13 @@ class PEXSI_Solver
                  const int nb,
                  const int nrow,
                  const int ncol,
+                 const int nlocal,
+                 const double nelec,
                  const double* h,
                  const double* s,
                  double*& DM,
                  double*& EDM);
-    int solve(double mu0);
+    int solve(double mu0, const int world_nproc);
     const double get_totalFreeEnergy() const;
     const double get_totalEnergyH() const;
     const double get_totalEnergyS() const;
@@ -130,6 +132,8 @@ class PEXSI_Solver
     int nb;
     int nrow;
     int ncol;
+    int nlocal;   ///< global dimension of the NAO Hamiltonian
+    double nelec; ///< total number of electrons
     double* h = nullptr;
     double* s = nullptr;
     double* DM = nullptr;

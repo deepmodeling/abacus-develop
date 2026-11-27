@@ -1,0 +1,35 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+This example shows how to perform spin-orbit coupling (SOC) calculations in ABACUS.
+
+01_pw_GaAs: calculates the electronic structure of GaAs with spin-orbit coupling using plane wave basis
+
+## Calculation Steps
+
+### 1. Self-consistent Field (SCF) Calculation
+- **Purpose**: Converge the charge density with spin-orbit coupling enabled
+- **Input files**:
+  - `INPUT-scf`: Contains parameters for SCF calculation, including `lspinorb=1` and `nspin=4` to enable SOC
+  - `KPT-scf`: Uses a 4x4x4 Gamma-point grid for efficient convergence
+- **Output**: Converged charge density stored in `OUT.ABACUS/CHG` and `OUT.ABACUS/CHG.gamma`
+
+### 2. Non-self-consistent Field (NSCF) Calculation
+- **Purpose**: Calculate band structure using the converged charge density from SCF
+- **Input files**:
+  - `INPUT-nscf`: Same SOC settings as SCF calculation
+  - `KPT-nscf`: Uses a line-mode k-point path with 5 high-symmetry points for band structure calculation
+- **Output**: Band structure data in `OUT.ABACUS/BANDS_*.dat`
+
+### 3. Execution
+The `run.sh` script automates the calculation process:
+1. Copies `INPUT-scf` and `KPT-scf` to `INPUT` and `KPT`
+2. Runs SCF calculation
+3. Copies `INPUT-nscf` and `KPT-nscf` to `INPUT` and `KPT`
+4. Runs NSCF calculation
+5. Verifies successful completion of both calculations
+
+Please also note that the provided examples are only shown for the functionality of the spin-orbit coupling method. Further careful convergence of parameters (such as ecut, size of KPT, smearing method, etc.) should be tested before running the provided examples in research.

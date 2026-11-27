@@ -1,11 +1,36 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_PRINT_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_PRINT_H
+
 #include <ATen/tensor.h>
+#include "source_base/constants.h"
+#include <iomanip>
+#include <ostream>
 #include "source_psi/psi.h"
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif
 namespace LR_Util
 {
+    /// Report selected excitation energies without evaluating optical matrix elements.
+    /// Match transition_analysis's energy precision so existing energy regressions apply.
+    inline void print_excitation_energies(std::ostream& log, const double* energies,
+                                         const int nstates, const std::string& channel)
+    {
+        const std::ios_base::fmtflags flags = log.flags();
+        const std::streamsize precision = log.precision();
+        log << " LR excitation energies: " << channel << '\n';
+        log << " State   Excitation Energy (Ry, eV)\n";
+        log << std::defaultfloat << std::setprecision(6);
+        for (int state = 0; state < nstates; ++state)
+        {
+            log << state << ' ' << energies[state] << ' '
+                << energies[state] * ModuleBase::Ry_to_eV << '\n';
+        }
+        log << " End LR excitation energies\n";
+        log.flags(flags);
+        log.precision(precision);
+    }
+
     template<typename T>
     constexpr T filter(const T& v, const double& threshold = 1e-10)
     {
@@ -25,6 +50,10 @@ namespace LR_Util
     int read_value(const std::string& file, T* ptr, const int& size, Args&&... args)
     {
         std::ifstream ifs(file);
+        if (!ifs.is_open()){
+            std::cerr << "Error: Cannot open file " << file << std::endl;
+            return -1;
+        }
         const int res = read_value(ifs, ptr, size, args...);
         ifs.close();
         return res;
@@ -49,6 +78,10 @@ namespace LR_Util
     int write_value(const std::string& file, const int& prec, const T* ptr, const int& size, Args&&... args)
     {
         std::ofstream ofs(file);
+        if (!ofs.is_open()){
+            std::cerr << "Error: Cannot open file " << file << std::endl;
+            return -1;
+        }
         ofs << std::setprecision(prec) << std::scientific;
         const int res = write_value(ofs, ptr, size, args...);
         ofs.close();
@@ -135,14 +168,14 @@ namespace LR_Util
         }
     }
     template<typename T>
-    void print_tensor(const container::Tensor& t, const std::string& label, const Parallel_2D* pmat, const double& threshold = 1e-10)
+    void print_tensor(const container::Tensor& t, const std::string& label, const Parallel_Blkcyclic* pmat, const double& threshold = 1e-10)
     {
         std::cout << label << "\n";
-        for (int j = 0; j < pmat->get_col_size();++j)
+        for (int j = 0; j < pmat->ncloc(); ++j)
         {
-            for (int i = 0;i < pmat->get_row_size();++i)
+            for (int i = 0; i < pmat->nrloc(); ++i)
             {
-                std::cout << filter(t.data<T>()[j * pmat->get_row_size() + i]) << " ";
+                std::cout << filter(t.data<T>()[j * pmat->nrloc() + i]) << " ";
             }
             std::cout << std::endl;
         }
@@ -238,3 +271,5 @@ namespace LR_Util
     }
 #endif
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_PRINT_H

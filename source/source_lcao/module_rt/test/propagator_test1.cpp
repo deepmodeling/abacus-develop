@@ -1,9 +1,7 @@
 #include <gtest/gtest.h>
-#define private public
-#define protected public
+#include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_rt/propagator.h"
-#include "source_io/module_parameter/parameter.h"
 #include "tddft_test.h"
 
 #include <source_base/module_external/scalapack_connector.h>
@@ -19,12 +17,6 @@
  *     - compute propagator of method Crank-Nicolson.
  */
 #define doublethreshold 1e-8
-Parallel_Orbitals::Parallel_Orbitals()
-{
-}
-Parallel_Orbitals::~Parallel_Orbitals()
-{
-}
 
 TEST(PropagatorTest, testPropagatorCN)
 {
@@ -35,16 +27,8 @@ TEST(PropagatorTest, testPropagatorCN)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->nloc = nlocal * nlocal;
-    pv->ncol = nlocal;
-    pv->coord[0] = pv->coord[1] = 0;
-    PARAM.input.mdp.md_dt = 4 * ModuleBase::AU_to_FS;
-
-    // Initialize input matrices
-    int info;
-    int mb = 1, nb = 1, lda = nlocal, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
+    const double md_dt = 4 * ModuleBase::AU_to_FS;
 
     // Initialize data
     U_operator = new std::complex<double>[nlocal * nlocal];
@@ -71,7 +55,7 @@ TEST(PropagatorTest, testPropagatorCN)
 
     // Call the function
     int propagator = 0;
-    module_rt::Propagator prop(propagator, pv, PARAM.mdp.md_dt);
+    module_rt::Propagator prop(propagator, pv->para_2d(), md_dt);
     prop.compute_propagator(nlocal, Stmp, Htmp, nullptr, U_operator, GlobalV::ofs_running, print_matrix);
 
     // Check the results

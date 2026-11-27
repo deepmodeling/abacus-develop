@@ -61,10 +61,6 @@ else
 fi
 export LDFLAGS="${TSANFLAGS}"
 
-# get system arch information using OpenBLAS prebuild
-${SCRIPTDIR}/get_openblas_arch.sh
-load "${BUILDDIR}/openblas_arch"
-
 write_toolchain_env "${INSTALLDIR}"
 
 #EOF

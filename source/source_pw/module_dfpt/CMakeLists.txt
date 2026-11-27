@@ -1,0 +1,62 @@
+set(MODULE_NAME module_dfpt)
+
+set(SOURCES
+    dfpt_pw.cpp
+    dfpt_pw_init.cpp
+    dfpt_pw_run.cpp
+    dfpt_pw_solve.cpp
+    dfpt_pw_q0.cpp
+    dfpt_pw_data.cpp
+    dfpt_pw_data_resp.cpp
+    dfpt_kq_basis.cpp
+    dfpt_pert.cpp
+    dfpt_pert_vkb.cpp
+    dfpt_pert_nl.cpp
+    dfpt_stern.cpp
+    dfpt_rho.cpp
+    dfpt_rho_mix.cpp
+    dfpt_phon.cpp
+    dfpt_phon_asr.cpp
+    dfpt_phon_ewald.cpp
+    dfpt_phon_elec.cpp
+    dfpt_write_dyn.cpp
+    dfpt_q0.cpp
+    dfpt_q0_pos.cpp
+    dfpt_metal.cpp
+    dfpt_hamilt_shift.cpp)
+
+set(HEADERS
+    dfpt_pw.h
+    dfpt_pw_data.h
+    dfpt_kq_basis.h
+    dfpt_pert.h
+    dfpt_stern.h
+    dfpt_rho.h
+    dfpt_phon.h
+    dfpt_q0.h
+    dfpt_metal.h
+    dfpt_hamilt_shift.h
+    dfpt_xc_analytic.h)
+
+add_library(${MODULE_NAME} ${SOURCES} ${HEADERS})
+
+# analytic libxc kernel for the DFPT first-order XC response; the source is
+# an empty translation unit without libxc, so an unconditional build keeps
+# every consumer linkable either way
+if(ENABLE_LIBXC)
+  target_sources(${MODULE_NAME} PRIVATE dfpt_xc_analytic.cpp)
+  target_link_libraries(${MODULE_NAME} PUBLIC Libxc::xc)
+endif()
+
+target_include_directories(${MODULE_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_link_libraries(${MODULE_NAME} PUBLIC base cell psi elecstate
+                                            module_pwdft)
+
+if(BUILD_TESTING)
+  if(ENABLE_MPI)
+    # All targets (serial and MPI) live in unittests/; the serial ones are
+    # built inside ENABLE_MPI so the shared prebuilt test libs stay available
+    add_subdirectory(unittests)
+  endif()
+endif()

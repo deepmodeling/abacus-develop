@@ -40,6 +40,7 @@ TEST(TensorBuffer, resize) {
     // Resize the buffer.
     const size_t new_buffer_size = 200;
     tensor_buffer.resize(new_buffer_size);
+    EXPECT_EQ(tensor_buffer.GetAllocatedBytes(), new_buffer_size);
 
     // Free the memory.
     // auto free by the destructor
@@ -82,4 +83,55 @@ TEST(TensorBuffer, empty_allocator) {
 
     // Free the memory.
     alloc.free(buffer);
+}
+
+TEST(TensorBuffer, OwningPointerConstructor)
+{
+    base::core::Allocator* alloc = new base::core::CPUAllocator();
+    void* data = alloc->allocate(16);
+    container::TensorBuffer buffer(alloc, data);
+
+    EXPECT_EQ(buffer.allocator(), alloc);
+    EXPECT_EQ(buffer.data(), data);
+    EXPECT_TRUE(buffer.OwnsMemory());
+}
+
+TEST(TensorBuffer, MoveConstructor)
+{
+    container::TensorBuffer source(new base::core::CPUAllocator(), 16);
+    void* data = source.data();
+
+    container::TensorBuffer destination(std::move(source));
+
+    EXPECT_EQ(destination.data(), data);
+    EXPECT_EQ(destination.GetAllocatedBytes(), 16);
+    EXPECT_TRUE(destination.OwnsMemory());
+    EXPECT_EQ(source.data(), nullptr);
+    EXPECT_FALSE(source.OwnsMemory());
+}
+
+TEST(TensorBuffer, CopyAssignment)
+{
+    container::TensorBuffer source(new base::core::CPUAllocator(), 16);
+    container::TensorBuffer destination(new base::core::CPUAllocator(), 8);
+
+    destination = source;
+
+    EXPECT_NE(destination.data(), source.data());
+    EXPECT_EQ(destination.GetDeviceType(), container::DeviceType::CpuDevice);
+    EXPECT_TRUE(destination.OwnsMemory());
+}
+
+TEST(TensorBuffer, MoveAssignment)
+{
+    container::TensorBuffer source(new base::core::CPUAllocator(), 16);
+    void* data = source.data();
+    container::TensorBuffer destination(new base::core::CPUAllocator(), 8);
+
+    destination = std::move(source);
+
+    EXPECT_EQ(destination.data(), data);
+    EXPECT_TRUE(destination.OwnsMemory());
+    EXPECT_EQ(source.data(), nullptr);
+    EXPECT_FALSE(source.OwnsMemory());
 }

@@ -9,7 +9,7 @@
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
+#include "source_hamilt/module_hcontainer/atom_pair.h"
 
 /// this subroutine calculates the gradient of projected density matrices
 /// gdmx_m,m = d/dX sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
@@ -26,16 +26,16 @@ void DeePKS_domain::cal_gdmx(const int nks,
                              torch::Tensor& gdmx)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_gdmx");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gdmx");
+    ModuleBase::timer::start("DeePKS_domain", "cal_gdmx");
     // get DS_alpha_mu and S_nu_beta
 
-    int nrow = pv.nrow;
+    int nrow = pv.para_2d().nrloc();
     const int nm = 2 * deepks_param.lmaxd + 1;
     // gdmx: dD/dX
     // \sum_{mu,nu} 2*c_mu*c_nu * <dphi_mu/dx|alpha_m><alpha_m'|phi_nu>
     // size: [3][natom][tot_Inl][2l+1][2l+1]
     gdmx = torch::zeros({3, ucell.nat, deepks_param.inlmax, nm, nm}, torch::dtype(torch::kFloat64));
-    auto accessor = gdmx.accessor<double, 5>();
+    at::TensorAccessor<double, 5> accessor = gdmx.accessor<double, 5>();
 
     DeePKS_domain::iterate_ad2(
         ucell,
@@ -55,8 +55,8 @@ void DeePKS_domain::cal_gdmx(const int nks,
             const int nw2_tot,
             ModuleBase::Vector3<int> dR2)
         {
-            auto row_indexes = pv.get_indexes_row(ibt1);
-            auto col_indexes = pv.get_indexes_col(ibt2);
+            std::vector<int> row_indexes = pv.get_indexes_row(ibt1);
+            std::vector<int> col_indexes = pv.get_indexes_col(ibt2);
             if (row_indexes.size() * col_indexes.size() == 0)
             {
                 return; // to next loop
@@ -136,7 +136,7 @@ void DeePKS_domain::cal_gdmx(const int nks,
 #ifdef __MPI
     Parallel_Reduce::reduce_all(gdmx.data_ptr<double>(), 3 * ucell.nat * deepks_param.inlmax * nm * nm);
 #endif
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gdmx");
+    ModuleBase::timer::end("DeePKS_domain", "cal_gdmx");
     return;
 }
 
@@ -149,10 +149,10 @@ void DeePKS_domain::cal_gvx(const int nat,
                             const int rank)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_gvx");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gvx");
+    ModuleBase::timer::start("DeePKS_domain", "cal_gvx");
     // gdmr : nat(derivative) * 3 * inl(projector) * nm * nm
     std::vector<torch::Tensor> gdmr;
-    auto accessor = gdmx.accessor<double, 5>();
+    at::TensorAccessor<double, 5> accessor = gdmx.accessor<double, 5>();
 
     if (rank == 0)
     {
@@ -190,7 +190,7 @@ void DeePKS_domain::cal_gvx(const int nat,
         assert(gvx.size(2) == nat);
         assert(gvx.size(3) == deepks_param.des_per_atom);
     }
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gvx");
+    ModuleBase::timer::end("DeePKS_domain", "cal_gvx");
     return;
 }
 

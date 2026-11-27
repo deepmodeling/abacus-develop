@@ -4,6 +4,7 @@
 
 #include "deepks_orbital.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/tool_title.h"
 #include "source_base/timer.h"
 
 template <typename TK, typename TH>
@@ -15,7 +16,7 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
                                 const int nspin)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_o_delta");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_o_delta");
+    ModuleBase::timer::start("DeePKS_domain", "cal_o_delta");
 
     for (int ik = 0; ik < nks / nspin; ik++)
     {
@@ -24,8 +25,8 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
         {
             for (int j = 0; j < PARAM.globalv.nlocal; ++j)
             {
-                const int mu = pv.global2local_row(j);
-                const int nu = pv.global2local_col(i);
+                const int mu = pv.para_2d().irloc(j);
+                const int nu = pv.para_2d().icloc(i);
 
                 if (mu >= 0 && nu >= 0)
                 {
@@ -33,11 +34,11 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
                     if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "scalapack_gvx"
                         || PARAM.inp.ks_solver == "pexsi") // save the matrix as column major format
                     {
-                        iic = mu + nu * pv.nrow;
+                        iic = mu + nu * pv.para_2d().nrloc();
                     }
                     else
                     {
-                        iic = mu * pv.ncol + nu;
+                        iic = mu * pv.para_2d().ncloc() + nu;
                     }
                     for (int is = 0; is < nspin; is++)
                     {
@@ -51,7 +52,7 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
         const double* o_delta_ptr = reinterpret_cast<const double*>(&o_delta_tmp);
         o_delta(ik, 0) = o_delta_ptr[0]; // real part in complex case
     }
-    ModuleBase::timer::tick("DeePKS_domain", "cal_o_delta");
+    ModuleBase::timer::end("DeePKS_domain", "cal_o_delta");
     return;
 }
 

@@ -1,5 +1,7 @@
 #include "sto_dos.h"
 
+#include "source_base/parallel_comm.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
@@ -23,7 +25,7 @@ Sto_DOS<FPTYPE, Device>::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
     this->p_elec = p_elec_in;
     this->p_psi = p_psi_in;
     this->p_hamilt = p_hamilt_in;
-    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<std::complex<double>>*>(p_hamilt_in);
+    this->p_hamilt_sto = static_cast<StoHamiltPW<std::complex<double>>*>(p_hamilt_in);
     this->p_stowf = p_stowf_in;
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
@@ -49,7 +51,7 @@ void Sto_DOS<FPTYPE, Device>::decide_param(const int& dos_nche,
         this->nbands_sto,
         this->p_kv,
         reinterpret_cast<Stochastic_WF<std::complex<FPTYPE>, Device>*>(this->p_stowf),
-        reinterpret_cast<hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>*>(this->p_hamilt_sto));
+        reinterpret_cast<StoHamiltPW<std::complex<FPTYPE>, Device>*>(this->p_hamilt_sto));
     if (dos_setemax)
     {
         this->emax = dos_emax_ev;
@@ -79,7 +81,7 @@ template <typename FPTYPE, typename Device>
 void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, const int npart)
 {
     ModuleBase::TITLE("Sto_DOS", "caldos");
-    ModuleBase::timer::tick("Sto_DOS", "caldos");
+    ModuleBase::timer::start("Sto_DOS", "caldos");
     std::cout << "=========================" << std::endl;
     std::cout << "###Calculating Dos....###" << std::endl;
     std::cout << "=========================" << std::endl;
@@ -99,7 +101,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         int nchip_new = ceil((double)this->p_stowf->nchip_max / npart);
         allorderchi.resize(nchip_new * npwx * dos_nche);
     }
-    ModuleBase::timer::tick("Sto_DOS", "Tracepoly");
+    ModuleBase::timer::start("Sto_DOS", "Tracepoly");
     std::cout << "1. TracepolyA:" << std::endl;
     for (int ik = 0; ik < nk; ik++)
     {
@@ -122,7 +124,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
             p_stowf->chi0->fix_k(ik);
             pchi = p_stowf->chi0->get_pointer();
         }
-        auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
+        auto hchi_norm = std::bind(&StoHamiltPW<std::complex<double>>::hPsi_norm,
                                    p_hamilt_sto,
                                    std::placeholders::_1,
                                    std::placeholders::_2,
@@ -168,10 +170,10 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
     std::ofstream ofsdos;
     int ndos = int((emax - emin) / de) + 1;
     this->stofunc.sigma = sigmain / ModuleBase::Ry_to_eV;
-    ModuleBase::timer::tick("Sto_DOS", "Tracepoly");
+    ModuleBase::timer::end("Sto_DOS", "Tracepoly");
 
     std::cout << "2. Dos:" << std::endl;
-    ModuleBase::timer::tick("Sto_DOS", "DOS Loop");
+    ModuleBase::timer::start("Sto_DOS", "DOS Loop");
     int n10 = ndos / 10;
     int percent = 10;
     std::vector<double> sto_dos(ndos);
@@ -245,10 +247,10 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         double maxerror = 0;
         double sum = 0;
 
-		ofsdos << ndos << " # number of points" << std::endl;
-		ofsdos << "#" << std::setw(19) << "energy(eV)"
-			<< std::setw(20) << "dos(eV^-1)" << std::setw(20) << "sum"
-			<< std::setw(20) << "error(eV^-1)" << std::endl;
+        ofsdos << ndos << " # number of points" << std::endl;
+        ofsdos << "#" << std::setw(19) << "energy(eV)"
+            << std::setw(20) << "dos(eV^-1)" << std::setw(20) << "sum"
+            << std::setw(20) << "error(eV^-1)" << std::endl;
         for (int ie = 0; ie < ndos; ++ie)
         {
             double tmperror = 2.0 * std::abs(error[ie]);
@@ -266,8 +268,8 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         std::cout << std::scientific << "DOS max absolute Chebyshev Error: " << maxerror << std::endl;
         ofsdos.close();
     }
-    ModuleBase::timer::tick("Sto_DOS", "DOS Loop");
-    ModuleBase::timer::tick("Sto_DOS", "caldos");
+    ModuleBase::timer::end("Sto_DOS", "DOS Loop");
+    ModuleBase::timer::end("Sto_DOS", "caldos");
     return;
 }
 

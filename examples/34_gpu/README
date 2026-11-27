@@ -1,0 +1,110 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+# GPU Acceleration Examples
+
+This directory contains examples for performing GPU-accelerated calculations in ABACUS. GPU acceleration can significantly speed up electronic structure calculations, particularly for large systems and computationally intensive tasks.
+
+## What is GPU Acceleration?
+
+GPU acceleration is the use of graphics processing units (GPUs) to perform computational tasks that were traditionally handled by central processing units (CPUs). GPUs are particularly well-suited for:
+
+- Parallel computing tasks
+- Matrix operations
+- Electronic structure calculations
+- Large-scale simulations
+
+In ABACUS, GPU acceleration can provide significant speedups for:
+
+- Plane wave basis set calculations
+- LCAO basis set calculations
+- Density matrix operations
+- Self-consistent field (SCF) iterations
+
+## GPU Acceleration in ABACUS
+
+To enable GPU acceleration in ABACUS, set the following parameter in the INPUT file:
+
+```
+INPUT_PARAMETERS
+gpu              1    # Enable GPU acceleration
+```
+
+### Key GPU Parameters:
+
+- `gpu`: Set to 1 to enable GPU acceleration
+- `gpu_device`: Specify which GPU device to use (default: 0)
+- `gpu_stream`: Number of GPU streams to use (default: 4)
+- `gpu_block_size`: Block size for GPU kernels (default: 256)
+
+## Examples Included
+
+### 1. 01_pw_Si16
+- **System**: Silicon supercell with 16 atoms
+- **Basis**: Plane wave (PW)
+- **Purpose**: Demonstrates GPU-accelerated calculation for plane wave basis
+- **Input Files**:
+  - `INPUT`: Contains the GPU acceleration parameters
+  - `KPT`: Defines the k-point sampling
+  - `STRU`: Describes the silicon supercell structure
+
+### 2. 02_lcao_Si16
+- **System**: Silicon supercell with 16 atoms
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates GPU-accelerated calculation for LCAO basis
+- **Input Files**:
+  - `INPUT`: Contains the GPU acceleration parameters
+  - `KPT`: Defines the k-point sampling
+  - `STRU`: Describes the silicon supercell structure
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/34_gpu/01_pw_Si16
+   ```
+
+2. Run ABACUS:
+   ```bash
+   abacus
+   ```
+
+3. Check the output files in the `OUT.ABACUS` directory.
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.ABACUS` directory:
+
+- `running_scf.log`: Log file for the SCF calculation, includes details about GPU setup
+
+## Notes
+
+- GPU acceleration requires a compatible NVIDIA GPU and CUDA installation
+- The performance gain from GPU acceleration depends on the system size and the specific calculation type
+- For small systems, the overhead of data transfer between CPU and GPU may outweigh the performance benefits
+- For large systems, GPU acceleration can provide significant speedups (often 2-10x faster than CPU-only calculations)
+- The examples provided are for demonstration purposes; for production calculations, you should carefully test the performance with different GPU parameters
+
+## Applications
+
+GPU-accelerated calculations in ABACUS can be used to study:
+
+- Large supercells and nanostructures
+- Complex materials with many atoms
+- Molecular dynamics simulations
+- High-throughput screening
+- Systems requiring dense k-point sampling
+- Time-dependent DFT calculations
+
+## Performance Tips
+
+To maximize GPU performance in ABACUS:
+
+- Use larger systems to amortize the CPU-GPU data transfer overhead
+- Choose appropriate GPU parameters based on your hardware
+- For multi-GPU systems, consider using MPI to distribute the workload
+- Monitor GPU memory usage to avoid out-of-memory errors
+- Ensure that your CUDA drivers and ABACUS are properly configured for your GPU hardware

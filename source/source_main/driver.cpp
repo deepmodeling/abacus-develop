@@ -1,17 +1,22 @@
 #include "source_main/driver.h"
-
 #include "source_base/global_file.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
+#include "source_base/parallel_global.h"
 #include "source_base/timer.h"
 #include "source_esolver/esolver.h"
-#include "source_io/module_output/cal_test.h"
-#include "source_io/module_parameter/input_conv.h"
 #include "source_io/module_json/para_json.h"
+#include "source_io/module_output/cal_test.h"
 #include "source_io/module_output/print_info.h"
-#include "source_io/module_parameter/read_input.h"
+#include "source_io/module_output/write_notice.h"
+#include "source_io/module_parameter/input_conv.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/read_input.h"
+#include "source_io/parse_command_line.h"
 #include "source_main/version.h"
-#include "source_base/parallel_global.h"
+#ifdef __DSP
+#include "source_base/module_device/memory_op.h"
+#include "source_base/module_external/blas_connector.h"
+#endif
 
 Driver::Driver()
 {
@@ -21,7 +26,7 @@ Driver::~Driver()
 {
 }
 
-void Driver::init()
+void Driver::init(const ModuleIO::CommandLineArgs& cli)
 {
     // 1) Let's start by printing a title.
     ModuleBase::TITLE("Driver", "ABACUS_begins");
@@ -31,7 +36,7 @@ void Driver::init()
     ModuleBase::timer::start();
 
     // 3) Welcome to the atomic world! Let's do some fancy stuff here.
-    this->atomic_world();
+    this->atomic_world(cli);
 
     // 4) All timers recorders are printed.
     ModuleBase::timer::finish(GlobalV::ofs_running);
@@ -39,16 +44,15 @@ void Driver::init()
     // 5) All memory recorders are printed.
     ModuleBase::Memory::print_all(GlobalV::ofs_running);
 
-    // 6) Print the final time, hopefully it will not cost too long. 
+    // 6) Print the final time, hopefully it will not cost too long.
     time_t time_finish = std::time(nullptr);
     ModuleIO::print_time(time_start, time_finish);
 
     // 7) Clean up: close all of the running logs
-    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.inp.out_alllog,PARAM.inp.calculation);
-
+    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.inp.out_alllog, PARAM.inp.calculation);
 }
 
-void Driver::print_start_info()
+void Driver::print_start_info(const std::string& input_card)
 {
     ModuleBase::TITLE("Driver", "print_start_info");
 #ifdef VERSION
@@ -104,29 +108,50 @@ void Driver::print_start_info()
 
     GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", PARAM.globalv.global_out_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card",  PARAM.globalv.global_in_card);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", input_card);
 }
 
-void Driver::reading()
+void Driver::reading(const ModuleIO::CommandLineArgs& cli)
 {
     ModuleBase::TITLE("Driver", "reading");
-    ModuleBase::timer::tick("Driver", "reading");
+    ModuleBase::timer::start("Driver", "reading");
     // temperarily
     GlobalV::MY_RANK = PARAM.globalv.myrank;
     GlobalV::NPROC = PARAM.globalv.nproc;
 
     // (1) read the input file
     ModuleIO::ReadInput input(PARAM.globalv.myrank);
-    input.read_parameters(PARAM, PARAM.globalv.global_in_card);
+    input.read_parameters(PARAM, cli.input_file);
+
+    ModuleBase::set_quit_out_dir(PARAM.globalv.global_out_dir);
+    ModuleBase::set_quit_calculation(PARAM.inp.calculation);
+
+#if defined(__CUDA) && defined(__USE_NVTX)
+    ModuleBase::timer::set_nvtx_enabled(PARAM.inp.timer_enable_nvtx);
+#endif
+
+#ifdef __DSP
+    if (PARAM.inp.dsp_count <= 0)
+    {
+        ModuleBase::WARNING_QUIT("driver", "dsp_count must be > 0");
+    }
+    base_device::memory::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
+    BlasConnector::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
+#endif
 
     // (2) create the output directory, running_*.log and print info
     input.create_directory(PARAM);
-    this->print_start_info();
+    this->print_start_info(cli.input_file);
 
     // (3) write the input file
     std::stringstream ss1;
-    ss1 << PARAM.globalv.global_out_dir <<  PARAM.globalv.global_in_card << ".info";
+    const std::string input_name = cli.input_file.substr(cli.input_file.find_last_of("/\\") + 1);
+    ss1 << PARAM.globalv.global_out_dir << input_name << ".info";
     input.write_parameters(PARAM, ss1.str());
+    if (GlobalV::MY_RANK == 0)
+    {
+        ModuleIO::write_notice(GlobalV::ofs_running, "Input parameters", ss1.str());
+    }
 
     // (*temp*) copy the variables from INPUT to each class
     Input_Conv::Convert();
@@ -163,19 +188,19 @@ void Driver::reading()
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
 #endif
-    ModuleBase::timer::tick("Driver", "reading");
+    ModuleBase::timer::end("Driver", "reading");
 }
 
-void Driver::atomic_world()
+void Driver::atomic_world(const ModuleIO::CommandLineArgs& cli)
 {
     ModuleBase::TITLE("Driver", "atomic_world");
-    ModuleBase::timer::tick("Driver", "atomic_world");
+    ModuleBase::timer::start("Driver", "atomic_world");
 
-    // reading information 
-    this->reading();
+    // reading information
+    this->reading(cli);
 
     // where the actual stuff is done
     this->driver_run();
 
-    ModuleBase::timer::tick("Driver", "atomic_world");
+    ModuleBase::timer::end("Driver", "atomic_world");
 }

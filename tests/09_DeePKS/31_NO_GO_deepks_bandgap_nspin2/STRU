@@ -1,0 +1,33 @@
+ATOMIC_SPECIES
+C 12.000 C_ONCV_PBE-1.0.upf 	#Element, Mass, Pseudopotential
+H 1.008  H_ONCV_PBE-1.0.upf
+
+NUMERICAL_ORBITAL
+C_gga_8au_100Ry_2s2p1d.orb
+H_gga_8au_100Ry_2s1p.orb
+
+NUMERICAL_DESCRIPTOR
+../Model_ProjOrb/2au_20Ry_jle.orb
+
+LATTICE_CONSTANT
+20   			#Lattice constant
+
+LATTICE_VECTORS
+1 0 0
+0 1 0
+0 0 1
+
+ATOMIC_POSITIONS
+Cartesian 		#Cartesian(Unit is LATTICE_CONSTANT)
+C 			#Name of element	
+0.0			#Magnetic for this element.
+1			#Number of atoms
+0.999619 0.000169648 0.00131031
+
+H
+0.0
+4
+0.998911 6.75673e-05 0.0374835
+0.0418908 0.000157703 0.987531
+0.980183 0.965348 0.9869
+0.98072 0.0340401 0.987153

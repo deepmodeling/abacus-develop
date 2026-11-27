@@ -14,11 +14,9 @@
 
     class K_Vectors;
     class UnitCell;
-    class Structure_Factor;
     namespace elecstate{ class ElecState; }
     namespace ModulePW{ class PW_Basis_K; }
     namespace ModulePW{ class PW_Basis; }
-    namespace ModuleSymmetry{ class Symmetry; }
     namespace psi
     {
     template <typename T, typename Device>
@@ -30,19 +28,17 @@ class Exx_Lip
 {
     using Treal = typename GetTypeReal<T>::type;
 public:
-    Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in);
+    Exx_Lip(const Exx_Info_Lip& info_in);
     ~Exx_Lip();
 
-    const Exx_Info::Exx_Info_Lip& info;
+    const Exx_Info_Lip& info;
 
-    Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
-            const ModuleSymmetry::Symmetry& symm,
+    Exx_Lip(const Exx_Info_Lip& info_in,
             K_Vectors* kv_ptr_in,
             psi::Psi<T, Device>* psi_local_in,
             psi::Psi<T, Device>* kspw_psi_ptr_in,
             const ModulePW::PW_Basis_K* wfc_basis_in,
             const ModulePW::PW_Basis* rho_basis_in,
-            const Structure_Factor& sf,
             const UnitCell* ucell_ptr_in,
             const elecstate::ElecState* pelec_in);
 
@@ -110,9 +106,6 @@ private:
     void b_sum(const int iq, const int ib);
     void sum_all(const int ik);
     void exx_energy_cal();
-    // void read_q_pack(const ModuleSymmetry::Symmetry& symm,
-    //                  const ModulePW::PW_Basis_K* wfc_basis,
-    //                  const Structure_Factor& sf);
 
     //2*pi*i
     const T two_pi_i = Treal(ModuleBase::TWO_PI) * T(0.0, 1.0);

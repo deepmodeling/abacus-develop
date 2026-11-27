@@ -1,21 +1,28 @@
 #include "of_stress_pw.h"
 
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/output_log.h"
 
 // Since the kinetic stress of OFDFT is calculated by kinetic functionals in esolver_of.cpp, here we regard it as an
 // input variable.
-void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
+void OF_Stress_PW::cal_stress(const int nspin,
+                              const bool domag,
+                              const bool domag_z,
+                              const int gga_grad,
+                              const bool gamma_only_pw,
+                              ModuleBase::matrix& sigmatot,
                               ModuleBase::matrix& kinetic_stress,
                               UnitCell& ucell,
+                              const vdw::VdwResult* vdw_result,
                               ModuleSymmetry::Symmetry* p_symm,
                               const pseudopot_cell_vl& locpp,
                               Structure_Factor* p_sf,
                               K_Vectors* p_kv)
 {
     ModuleBase::TITLE("OF_Stress_PW", "cal_stress");
-    ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
+    ModuleBase::timer::start("OF_Stress_PW", "cal_stress");
 
     // total stress
     sigmatot.create(3, 3);
@@ -65,23 +72,32 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     stress_har(ucell,sigmahar, this->rhopw, true, pelec->charge);
 
     // ewald contribution
-    stress_ewa(ucell,sigmaewa, this->rhopw, true);
+    stress_ewa(ucell, sigmaewa, this->rhopw, p_sf->strucFac, true);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)
     {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    stress_gga(ucell,sigmaxc, this->rhopw, pelec->charge);
+    stress_gga(ucell,sigmaxc, this->rhopw, pelec->charge,
+        nspin, domag, domag_z, gga_grad);
 
     // local contribution
     stress_loc(ucell,sigmaloc, this->rhopw, locpp.vloc, p_sf, true, pelec->charge);
 
     // nlcc
-    stress_cc(sigmaxcc, this->rhopw, ucell, p_sf, true, locpp.numeric, pelec->charge);
+    stress_cc(sigmaxcc, this->rhopw, ucell, p_sf, true, locpp.numeric, pelec->charge,
+        nspin, domag, domag_z, gga_grad, gamma_only_pw);
 
-    // vdw term
-    stress_vdw(sigmavdw, ucell);
+    // vdW term prepared before SCF for this ionic configuration.
+    if (vdw_result != nullptr)
+    {
+        if (!vdw_result->has_stress)
+        {
+            ModuleBase::WARNING_QUIT("OF_Stress_PW::cal_stress", "The cached vdW stress is unavailable.");
+        }
+        sigmavdw = vdw_result->stress.to_matrix();
+    }
 
     for (int ipol = 0; ipol < 3; ipol++)
     {
@@ -99,7 +115,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     const bool ry = false;
-    const bool screen = PARAM.inp.test_stress;
+    const bool screen = PARAM.inp.test_stress && PARAM.inp.calculation != "md";
     ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, GlobalV::ofs_running);
 
     if (screen)
@@ -116,16 +132,6 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, screen, ry, GlobalV::ofs_running);
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
     }
-    ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
-    return;
-}
-
-void OF_Stress_PW::stress_vdw(ModuleBase::matrix& sigma, UnitCell& ucell)
-{
-    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp);
-    if (vdw_solver != nullptr)
-    {
-        sigma = vdw_solver->get_stress().to_matrix();
-    }
+    ModuleBase::timer::end("OF_Stress_PW", "cal_stress");
     return;
 }

@@ -1,0 +1,264 @@
+#ifndef ANGMOM_OP_MAT_H
+#define ANGMOM_OP_MAT_H
+
+/**
+ * calculate the <phi_i|Lx/Ly/Lz|phi_j> matrix elements with the ACA (atom-centered
+ * approximation), in which the Lx/Ly/Lz are the angular momentum operators, 
+ * |phi_i> and |phi_j> are the numerical atomic orbitals (NAOs).
+ * 
+ * Note: this module is the most suitable for the case of SOC (spin-orbit coupling) 
+ * calculation. A strict implmentation requires the evaluation on the position operator
+ * and the momentum operator, is beyond the scope of present implementation.
+ * 
+ * Formulation
+ * -----------
+ * 
+ * Calculate the <phi_i|Lx/Ly/Lz|phi_j> with ladder operator L+ and L-.
+ * 
+ * The relation between Lx, Ly and L+, L- are:
+ * 
+ *                                  Lx = (L+ + L-) / 2
+ *                                  Ly = (L+ - L-) / 2i
+ * 
+ * With L+, the COMPLEX spherical harmonic function Ylm (denoted as |l, m> in 
+ * the following) can be raised:
+ * 
+ *                          L+|l, m> = sqrt((l-m)(l+m+1))|l, m+1>
+ * 
+ * Likely, with L-, the spherical harmonic function Ylm can be lowered:
+ * 
+ *                          L-|l, m> = sqrt((l+m)(l-m+1))|l, m-1>
+ * 
+ * Therefore, for the case where there is only one atom, the Lx matrix element 
+ * can be calculated as:
+ * 
+ *                <l, m|Lx|l, m'> =   sqrt((l-m)(l+m+1)) * delta(m, m'+1) / 2
+ *                                  + sqrt((l+m)(l-m+1)) * delta(m, m'-1) / 2
+ * 
+ * Likewise the Ly matrix element can be calculated as:
+ * 
+ *                <l, m|Ly|l, m'> =   sqrt((l-m)(l+m+1)) * delta(m, m'+1) / 2i
+ *                                  - sqrt((l+m)(l-m+1)) * delta(m, m'-1) / 2i
+ * 
+ * and the Lz matrix element can be calculated as:
+ * 
+ *                          <l, m|Lz|l, m'> = m * delta(m, m')
+ * 
+ * ABACUS employs the REAL spherical harmonics, the transformation between the
+ * REAL and COMPLEX spherical harmonics can be found from:
+ * https://abacus.deepmodeling.com/en/latest/advanced/pp_orb.html
+ * 
+ * For the case where there are multiple atoms, present calculation is based on
+ * the Atom-Centered-Approximation (ACA), in which the global angular momentum
+ * operator is decomposed to the sum of the local opeartor that only considers 
+ * one atom. Therefore, the matrix element can be calculated by combining the
+ * ladder operators with the two-center-integral technique:
+ * 
+ *               <phi_i|Lx/Ly/Lz|phi_j> = <phi_i| (Lx/Ly/Lz |phi_j>)
+ * 
+ * the two-center-integral will be performed after the application of the L
+ * operator. For example after the application of Lz, the equation above yields
+ * 
+ *               <phi_i|Lz|phi_j> = mj <phi_i|phi_j>
+ * 
+ * For Lx = 1/2 * (L+ + L-):
+ * 
+ *               <phi_i|Lx|phi_j> = sqrt((lj-mj)(lj+mj+1)) * <phi_i|phi_j' > / 2
+ *                                + sqrt((lj+mj)(lj-mj+1)) * <phi_i|phi_j''> / 2
+ * 
+ * Technical Details
+ * -----------------
+ * 
+ * 0. The calculation of matrix elements involves the two-center-integral calculation,
+ *    this is supported by ABACUS built-in class TwoCenterIntegrator.
+ *    see: source/source_basis/module_nao/two_center_integrator.h.
+ *  
+ * 1. The interface of it is RadialCollection, which is a collection of radial functions. 
+ *    see: source/source_basis/module_nao/radial_collection.h
+ * 
+ * 2. The radial functions are stored in AtomicRadials class,
+ *    see: source/source_basis/module_nao/atomic_radials.h
+ * 
+ * 3. The construction of AtomicRadials involves the filename of orbital, it is stored
+ *    in the UnitCell instance
+ * 
+ * 4. The calculation will run over all supercells in which the two-center-integral
+ *    is not zero. This is done by the class SltkGridDriver, which is a driver for
+ *    searching the neighboring cells.
+ */
+#include <cmath>
+#include <vector>
+#include <map>
+#include <tuple>
+#include <complex>
+#include <fstream>
+#include <memory>
+#include "source_cell/unitcell.h"
+#include "source_basis/module_nao/two_center_integrator.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
+
+class Parallel_Orbitals;
+
+namespace ModuleIO
+{
+    /**
+     * @brief calculate the <phi_i|Lz|phi_j> matrix elements, in which the Lz
+     * are the angular momentum operators, |phi_i> and |phi_j> are the numerical
+     * atomic orbitals (NAOs).
+     * 
+     * @param calculator the std::unique_ptr<TwoCenterIntegrator> instance
+     * @param it atomtype index of the first atom
+     * @param ia atomic index of the first atom within the atomtype
+     * @param il angular momentum index of the first atom
+     * @param iz zeta function index of the first atom
+     * @param mi magnetic quantum number of the first atom
+     * @param jt atomtype index of the second atom
+     * @param ja atomic index of the second atom within the atomtype
+     * @param jl angular momentum index of the second atom
+     * @param jz zeta function index of the second atom
+     * @param mj magnetic quantum number of the second atom
+     * @param vR the vector from the first atom to the second atom
+     * @return std::complex<double> 
+     */
+    std::complex<double> cal_LzijR(
+        const std::unique_ptr<TwoCenterIntegrator>& calculator,
+        const int it, const int ia, const int il, const int iz, const int mi,
+        const int jt, const int ja, const int jl, const int jz, const int mj,
+        const ModuleBase::Vector3<double>& vR);
+
+    /**
+     * @brief calculate the <phi_i|Ly|phi_j> matrix elements, in which the Lz
+     * are the angular momentum operators, |phi_i> and |phi_j> are the numerical
+     * atomic orbitals (NAOs).
+     * 
+     * @param calculator the std::unique_ptr<TwoCenterIntegrator> instance
+     * @param it atomtype index of the first atom
+     * @param ia atomic index of the first atom within the atomtype
+     * @param il angular momentum index of the first atom
+     * @param iz zeta function index of the first atom
+     * @param mi magnetic quantum number of the first atom
+     * @param jt atomtype index of the second atom
+     * @param ja atomic index of the second atom within the atomtype
+     * @param jl angular momentum index of the second atom
+     * @param jz zeta function index of the second atom
+     * @param mj magnetic quantum number of the second atom
+     * @param vR the vector from the first atom to the second atom
+     * @return std::complex<double> 
+     */
+    std::complex<double> cal_LyijR(
+        const std::unique_ptr<TwoCenterIntegrator>& calculator,
+        const int it, const int ia, const int il, const int iz, const int im,
+        const int jt, const int ja, const int jl, const int jz, const int jm,
+        const ModuleBase::Vector3<double>& vR);
+
+    /**
+     * @brief calculate the <phi_i|Lx|phi_j> matrix elements, in which the Lz
+     * are the angular momentum operators, |phi_i> and |phi_j> are the numerical
+     * atomic orbitals (NAOs).
+     * 
+     * @param calculator the std::unique_ptr<TwoCenterIntegrator> instance
+     * @param it atomtype index of the first atom
+     * @param ia atomic index of the first atom within the atomtype
+     * @param il angular momentum index of the first atom
+     * @param iz zeta function index of the first atom
+     * @param mi magnetic quantum number of the first atom
+     * @param jt atomtype index of the second atom
+     * @param ja atomic index of the second atom within the atomtype
+     * @param jl angular momentum index of the second atom
+     * @param jz zeta function index of the second atom
+     * @param mj magnetic quantum number of the second atom
+     * @param vR the vector from the first atom to the second atom
+     * @return std::complex<double> 
+     */
+    std::complex<double> cal_LxijR(
+        const std::unique_ptr<TwoCenterIntegrator>& calculator,
+        const int it, const int ia, const int il, const int iz, const int im,
+        const int jt, const int ja, const int jl, const int jz, const int jm,
+        const ModuleBase::Vector3<double>& vR);
+    
+    // The calculation of <phi_i|Lx/Ly/Lz|phi_j> matrix elements is written to
+    // three real CSR files, lx_nao.csr, ly_nao.csr and lz_nao.csr (or
+    // lxg{istep+1}_nao.csr etc. when out_app_flag = 2). Each R block follows the
+    // same self-describing header and CSR layout as the H(R)/S(R) output, so
+    // the values are indexed by the global NAO orbital index (row) and column
+    // index instead of the (it, ia, il, iz, im ...) tuple. Because the NAO
+    // basis is real, every matrix element is purely imaginary; the files store
+    // only the imaginary part, and the real part is identically zero.
+    class Angmom_op
+    {
+        public:
+            // the default constructor is meaningless
+            Angmom_op() = delete;
+            /**
+             * @brief Construct a new Angular Momentum Expectation Calculator object
+             * 
+             * @param orbital_dir the directory of the orbital file
+             * @param ucell the unit cell object
+             * @param search_radius the search radius for the neighboring atoms
+             * @param tdestructor test flag, for destructor
+             * @param tgrid test flag, for grid
+             * @param tatom test flag, for atom input
+             * @param searchpbc
+             * @param out_level the output verbosity level
+             * @param gamma_only whether the calculation is gamma-only
+             * @param ptr_log pointer to the ofstream object for logging
+             */
+            Angmom_op(
+                const std::string& orbital_dir,
+                const UnitCell& ucell,
+                const double& search_radius,
+                const int tdestructor,
+                const int tgrid,
+                const int tatom,
+                const bool searchpbc,
+                const std::string& out_level,
+                const bool gamma_only,
+                std::ofstream* ptr_log = nullptr,
+                const int rank = 0);
+            ~Angmom_op() = default;
+
+            /**
+             * @brief Calculate and write <phi_i|Lx/Ly/Lz|phi_j> matrix elements.
+             *
+             * @param prefix the suffix of the output files (currently unused;
+             *               filenames are fixed as l{x,y,z}[g{step+1}]_nao.csr)
+             * @param outdir the output directory
+             * @param ucell the unit cell object
+             * @param pv the parallel orbital distribution, used for the global
+             *           basis size of the CSR output
+             * @param precision the precision of the output
+             * @param rank the MPI rank
+             * @param istep the ionic step index; -1 for single-point runs
+             * @param out_app_flag append mode: with 1 the fixed filename
+             *              l{x,y,z}_nao.csr is reused and each step appends;
+             *              with 2 the filename carries `g{istep+1}`
+             *              (e.g., lxg1_nao.csr); with 0 the fixed filename is
+             *              overwritten at every write
+             */
+            void calculate(const std::string& prefix,
+                           const std::string& outdir,
+                           const UnitCell& ucell,
+                           const Parallel_Orbitals& pv,
+                           const int precision,
+                           const int rank,
+                           const int istep,
+                           const int out_app_flag);
+
+        private:
+            std::ofstream fallback_ofs_;
+            // ofsrunning
+            std::ofstream* ofs_ = nullptr;
+            // the two-center-integrator
+            std::unique_ptr<TwoCenterIntegrator> calculator_;
+            // the spherical bessel transformer
+            ModuleBase::SphericalBesselTransformer sbt_;
+            // the radial collection
+            std::unique_ptr<RadialCollection> orb_;
+
+            // neighboring searcher
+            std::unique_ptr<Grid_Driver> neighbor_searcher_;
+    };
+} // namespace ModuleIO
+
+#endif // ANGMOM_OP_MAT_H

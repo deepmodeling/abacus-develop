@@ -8,6 +8,17 @@
 // mohan add 2010-09-09
 namespace ModuleIO
 {
+/** Read spin populations from all bands, without allocating wavefunction matrices.
+ * File occupations are already weighted by their k-point weights.
+ */
+bool read_wfc_nao_spin_populations(const std::string& readin_dir,
+                                  int nkstot,
+                                  int nspin,
+                                  bool gamma_only,
+                                  bool binary,
+                                  int my_rank,
+                                  std::vector<double>& populations);
+
 /**
  * @brief Reads a single data value from an input file stream.
  * 
@@ -34,6 +45,7 @@ void read_wfc_nao_one_data(std::ifstream& ifs, std::complex<double>& data);
  * @param ParaV The parallel orbitals object.
  * @param psid The Psi object to store the wavefunction coefficients.
  * @param pelec Pointer to the ElecState object.
+ * @param binary Whether to read the binary format instead of the text format.
  * @param skip_band From which band to start reading.
  * @return True if the wavefunction coefficients are successfully read, false otherwise.
  */
@@ -42,11 +54,12 @@ bool read_wfc_nao(
     const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<T>& psid,
-	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
+    const bool binary,
     const int skip_band = 0,
     const int istep = -1);
 

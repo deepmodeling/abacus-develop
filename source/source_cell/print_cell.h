@@ -1,44 +1,105 @@
+/**
+ * @file print_cell.h
+ * @brief Functions for printing cell information.
+ */
 #ifndef PRINT_CELL_H
 #define PRINT_CELL_H
 
 #include "atom_spec.h"
+#include "source_cell/strumeta.h"
 #include "source_cell/unitcell.h"
+#include "source_base/matrix.h"
+
+class MDCell;
+
 namespace unitcell
 {
+    /**
+     * @brief Print atom positions (tau).
+     *
+     * @param atoms atom pointer [in]
+     * @param Coordinate coordinate system type [in]
+     * @param ntype number of atom types [in]
+     * @param lat0 lattice constant [in]
+     * @param ofs output file stream [in]
+     */
     void print_tau(Atom* atoms,
                    const std::string& Coordinate,
                    const int ntype,
                    const double lat0,
                    std::ofstream &ofs);
     
-      /**
-     * @brief UnitCell class is too heavy, this function would be moved
-     * elsewhere. Print STRU file respect to given setting
+    /**
+     * @brief Print STRU file according to given settings.
      *
-     * @param ucell reference of unitcell
-     * @param atoms Atom list 
-     * @param latvec lattice const parmater vector 
-     * @param fn STRU file name
-     * @param nspin PARAM.inp.nspin feed in
-     * @param direct true for direct coords, false for cartesian coords
-     * @param vol true for printing velocities
-     * @param magmom true for printing Mulliken population analysis produced
-     * magmom
-     * @param orb true for printing NUMERICAL_ORBITAL section
-     * @param dpks_desc true for printing NUMERICAL_DESCRIPTOR section
-     * @param iproc GlobalV::MY_RANK feed in
+     * @note UnitCell class is too heavy, this function would be moved elsewhere.
+     *
+     * @param ucell reference of unitcell [in]
+     * @param atoms Atom list [in]
+     * @param latvec lattice parameter vector [in]
+     * @param fn STRU file name [in]
+     * @param header comment lines written at the top of the file [in]
+     * @note Positions are always written in Cartesian_angstrom, independent of
+     *       force availability, so that all STRU outputs share one coordinate
+     *       format. has_force only controls the per-atom f fields.
+     *
+     * @param nspin number of spin channels [in]
+     * @param vel true for printing velocities [in]
+     * @param magmom true for printing Mulliken population analysis produced magmom [in]
+     * @param orb true for printing NUMERICAL_ORBITAL section [in]
+     * @param dpks_desc true for printing NUMERICAL_DESCRIPTOR section [in]
+     * @param iproc GlobalV::MY_RANK [in]
+     * @param force atomic forces in Ry/Bohr, used only when has_force is true [in]
+     * @param has_force true to emit per-atom f fields; force matrix must match nat [in]
+     * @param append true to append the structure block to an existing file
+     *        (out_app_flag == 1 multi-step runs); false truncates [in]
      */
     void print_stru_file(const UnitCell& ucell,
                          const Atom*     atoms,
                          const ModuleBase::Matrix3& latvec,
                          const std::string& fn,
-                         const int& nspin = 1,
-                         const bool& direct = false,
-                         const bool& vel = false,
-                         const bool& magmom = false,
-                         const bool& orb = false,
-                         const bool& dpks_desc = false,
-                         const int& iproc = 0);
+                         const std::string& header,
+                         const int& nspin,
+                         const bool& vel,
+                         const bool& magmom,
+                         const bool& orb,
+                         const bool& dpks_desc,
+                         const int& iproc,
+                         const ModuleBase::matrix& force,
+                         const bool& has_force,
+                         const bool  append);
+
+    /**
+     * @brief Print basic unitcell information to output stream.
+     *
+     * @param ucell reference of unitcell [in]
+     * @param ofs output file stream [in]
+     */
+    void print_cell(const UnitCell& ucell, std::ofstream& ofs);
+
+    StruMeta make_stru_meta(const UnitCell& ucell);
+}
+
+namespace mdcell
+{
+/**
+ * @brief Write an MDCell structure file in STRU format.
+ *
+ * @param mdcell distributed MD cell data [in]
+ * @param stru_meta species/orbital metadata used for the header [in]
+ * @param fn output file path [in]
+ * @param frame_comment comment block prepended before the structure header
+ *        (e.g. "# MD step N\n\n"); pass an empty string for no marker [in]
+ * @param append true to append the frame to an existing file
+ *        (out_app_flag == 1 multi-step runs); false truncates [in]
+ * @param include_force true to write forces in eV/Angstrom [in]
+ */
+void print_stru_file(const MDCell& mdcell,
+                     const StruMeta& stru_meta,
+                     const std::string& fn,
+                     const std::string& frame_comment,
+                     const bool append,
+                     const bool include_force);
 }
 
 #endif

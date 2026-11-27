@@ -6,32 +6,39 @@
 #ifndef ELEC_PSI_H
 #define ELEC_PSI_H
 
-#include "source_base/module_container/ATen/core/tensor.h"     // ct::Tensor
-#include "source_base/module_container/ATen/core/tensor_map.h" // TensorMap
-#include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_lcao/hamilt_lcao.h"
-#include "source_lcao/module_rt/evolve_elec.h"
+#include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
+#include "source_hamilt/hamilt.h"
+#include "source_lcao/module_rt/band_energy.h"
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
+
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace module_rt
 {
 void evolve_psi(const int nband,
                 const int nlocal,
-                const Parallel_Orbitals* pv,
+                const Parallel_Blkcyclic& matrix_layout,
+                const Parallel_Blkcyclic& wfc_layout,
+                const Parallel_Blkcyclic& mo_repr_layout,
                 hamilt::Hamilt<std::complex<double>>* p_hamilt,
                 std::complex<double>* psi_k,
                 std::complex<double>* psi_k_laststep,
                 std::complex<double>* H_laststep,
                 std::complex<double>* S_laststep,
+                std::complex<double>* P_k,
+                const bool use_td_moving_gauge,
                 double* ekb,
                 int propagator,
                 std::ofstream& ofs_running,
-                const int print_matrix);
+                const int print_matrix,
+                const EijOutputInfo& output_info);
 
 template <typename Device>
 void evolve_psi_tensor(const int nband,
                        const int nlocal,
-                       const Parallel_Orbitals* pv,
+                       const Parallel_Blkcyclic& matrix_layout,
+                       const Parallel_Blkcyclic& wfc_layout,
+                       const Parallel_Blkcyclic& mo_repr_layout,
                        hamilt::Hamilt<std::complex<double>>* p_hamilt,
                        ct::Tensor& psi_k,
                        ct::Tensor& psi_k_laststep,
@@ -42,7 +49,8 @@ void evolve_psi_tensor(const int nband,
                        std::ofstream& ofs_running,
                        const int print_matrix,
                        const bool use_lapack,
-                       CublasMpResources& cublas_res);
+                       CublasMpResources& cublas_res,
+                       const EijOutputInfo& output_info);
 } // namespace module_rt
 
 #endif

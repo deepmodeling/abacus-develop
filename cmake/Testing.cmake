@@ -1,5 +1,5 @@
 # =============================================================================
-# Setup Testing Environment (GTest, CTest, AddTest function)
+# Setup unit-test dependencies and the AddTest helper
 # ==============================================================================
 
 # include_guard(GLOBAL)
@@ -11,9 +11,30 @@ macro(set_if_higher VARIABLE VALUE)
   endif()
 endmacro()
 
+# Prepare runtime inputs in the test working directory without installation.
+# configure_file tracks content changes; CONFIGURE_DEPENDS tracks directory entries.
+function(abacus_copy_test_files)
+  foreach(path IN LISTS ARGN)
+    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${path}")
+      file(
+        GLOB_RECURSE test_files CONFIGURE_DEPENDS
+        LIST_DIRECTORIES false
+        RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${path}/*")
+      file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${path}")
+    else()
+      set(test_files "${path}")
+    endif()
+    foreach(test_file IN LISTS test_files)
+      configure_file("${test_file}" "${test_file}" COPYONLY)
+    endforeach()
+  endforeach()
+endfunction()
+
 # Add performance test in abacus
-if(ENABLE_GOOGLEBENCH)
-  set(BUILD_TESTING ON)
+# Benchmarks are test targets; do not make them implicitly enable the full
+# unit-test tree for ordinary builds.
+if(BUILD_TESTING AND ENABLE_GOOGLEBENCH)
   find_package(benchmark HINTS ${BENCHMARK_DIR})
   if(NOT ${benchmark_FOUND})
     set(BENCHMARK_USE_BUNDLED_GTEST OFF)
@@ -29,43 +50,49 @@ if(ENABLE_GOOGLEBENCH)
   endif()
 endif()
 
- function(AddTest) # function for UT
-    cmake_parse_arguments(UT "DYN" "TARGET"
-                          "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
-    add_executable(${UT_TARGET} ${UT_SOURCES})
+function(AddTest) # function for UT
+  cmake_parse_arguments(
+    UT "DYN" "TARGET"
+    "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS;KEEP_FEATURE_DEFINITIONS"
+    ${ARGN})
+  add_executable(${UT_TARGET} ${UT_SOURCES})
 
-    if(ENABLE_COVERAGE)
-      add_coverage(${UT_TARGET})
-    endif()
+  # Let this target keep feature definitions (e.g. __MPI) that its source
+  # directory disables via abacus_disable_feature_definitions(). Needed by
+  # tests that genuinely exercise the feature.
+  if(UT_KEEP_FEATURE_DEFINITIONS)
+    set_property(TARGET ${UT_TARGET} PROPERTY ABACUS_KEPT_FEATURE_DEFINITIONS
+                                              ${UT_KEEP_FEATURE_DEFINITIONS})
+  endif()
 
-    # dependencies & link library
-    target_link_libraries(${UT_TARGET} ${UT_LIBS} Threads::Threads
-                          GTest::gtest_main GTest::gmock_main)
-    if(ENABLE_GOOGLEBENCH)
-      target_link_libraries(
-        ${UT_TARGET} benchmark::benchmark)
-    endif()
+  if(ENABLE_COVERAGE)
+    add_coverage(${UT_TARGET})
+  endif()
 
-    if(USE_OPENMP)
-      target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
-    endif()
+  # Dependencies & link library
+  # Share the numerical/MPI/OpenMP runtime closure but not
+  # the optional feature closure of the final binary
+  target_link_libraries(
+    ${UT_TARGET} PRIVATE ${UT_LIBS} GTest::gtest_main GTest::gmock_main
+                         abacus::linalg_libs)
+  if(BUILD_TESTING AND ENABLE_GOOGLEBENCH)
+    target_link_libraries(${UT_TARGET} PRIVATE benchmark::benchmark)
+  endif()
 
-    # Link to build info if needed
-    if("${UT_SOURCES}" MATCHES "parse_args.cpp")
-        target_include_directories(${UT_TARGET} PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
-    endif()
-        
-    install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
-    add_test(
-      NAME ${UT_TARGET}
-      COMMAND ${UT_TARGET}
-      WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
-  endfunction(AddTest)
+  # Link to build info if needed
+  if("${UT_SOURCES}" MATCHES "parse_args.cpp")
+    target_include_directories(${UT_TARGET}
+                               PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
+  endif()
+
+  add_test(
+    NAME ${UT_TARGET}
+    COMMAND ${UT_TARGET}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+endfunction(AddTest)
 
 if(BUILD_TESTING)
   set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital
-  include(CTest)
-  enable_testing()
   find_package(GTest HINTS /usr/local/lib/ ${GTEST_DIR})
   if(NOT ${GTest_FOUND})
     include(FetchContent)
@@ -77,7 +104,6 @@ if(BUILD_TESTING)
       GIT_PROGRESS TRUE)
     FetchContent_MakeAvailable(googletest)
   endif()
-  # TODO: Try the GoogleTest module.
-  # https://cmake.org/cmake/help/latest/module/GoogleTest.html
-  add_subdirectory(tests) # Contains integration tests
+  # Integration tests are registered from source/CMakeLists.txt after the
+  # final executable has been created.
 endif()

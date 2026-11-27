@@ -4,19 +4,95 @@
 /
 /*******************************************************************************/
 
-Here are three examples:
+# DeePKS Examples
 
-1. Generate projectors (a series of bessel functions) for DeePKS. \
-A file named `jle.orb` will be generated which contains the projectors.
+This directory contains examples for performing Deep Learning for Density Functional Theory (DeePKS) calculations in ABACUS.
 
-   - see pw_H2O
+## What is DeePKS?
 
-2. A scf calculation with a trained DeePKS model loaded. A few .npy files will \
-be generated which are for DeePKS training only. The total energy and \
-force will be output in a way as a normal SCF job does. 
+DeePKS is a machine learning approach that combines the accuracy of quantum mechanics calculations with the efficiency of machine learning. It uses deep neural networks to learn the exchange-correlation functional from reference data, providing accurate electronic structure calculations at a fraction of the computational cost of traditional DFT methods.
 
-   - see lcao_H2O
+### Key Features:
+- Combines the accuracy of high-level quantum chemistry methods with the efficiency of DFT
+- Reduces computational cost for large systems
+- Maintains the same input/output interface as traditional DFT calculations
+- Can be applied to both molecular and periodic systems
+- Supports spin-orbit coupling (SOC) calculations
 
-3. A scf calculation with a trained DeePKS model loaded and with SOC effect taken into account. The total energy and bands will be output in a way as a normal SCF+SOC job does. 
+## Examples Included
 
-   - see lcao_CsPbI3
+### 1. 01_pw_H2O
+- **System**: Water molecule (H2O)
+- **Basis**: Plane wave (PW)
+- **Purpose**: Generates projectors (a series of Bessel functions) for DeePKS
+- **Output**: A file named `jle.orb` containing the projectors
+
+### 2. 02_lcao_H2O
+- **System**: Water molecule (H2O)
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Performs SCF calculation with a trained DeePKS model loaded
+- **Output**: Energy, forces, and .npy files for DeePKS training
+
+### 3. 03_lcao_CsPbI3
+- **System**: Cesium lead iodide (CsPbI3)
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Performs SCF calculation with a trained DeePKS model and spin-orbit coupling (SOC) effect
+- **Output**: Energy, forces, and band structure
+
+## Input Files
+
+Each example directory contains the following files:
+
+- `INPUT`: Contains the DeePKS calculation parameters
+- `KPT`: Defines the k-point sampling
+- `STRU`: Describes the atomic structure
+- `run.sh`: Script to run the calculation
+- `jle.orb` (in 02_lcao_H2O and 03_lcao_CsPbI3): Contains the projectors for DeePKS
+- `model.ptg` (in 02_lcao_H2O and 03_lcao_CsPbI3): Trained DeePKS model
+
+## Key Parameters in INPUT
+
+The INPUT files include specific parameters for DeePKS calculations:
+
+- `deepks`: Set to '1' to enable DeePKS calculation
+- `deepks_model`: Path to the trained DeePKS model file
+- `deepks_jle`: Path to the projectors file (`jle.orb`)
+- `deepks_out_descriptor`: Set to '1' to output descriptors for training
+- `lspinorb`: Set to '1' to enable spin-orbit coupling (in 03_lcao_CsPbI3)
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/21_deepks/01_pw_H2O
+   ```
+
+2. Run the calculation using the provided script:
+   ```bash
+   bash run.sh
+   ```
+
+3. For the complete workflow, run all examples in order:
+   - First 01_pw_H2O to generate projectors
+   - Then 02_lcao_H2O or 03_lcao_CsPbI3 to use the trained model
+
+## Output Files
+
+### From 01_pw_H2O:
+- `jle.orb`: Contains the Bessel function projectors for DeePKS
+
+## Training DeePKS Models
+
+To train your own DeePKS model:
+
+1. Generate descriptors using calculations with `deepks_out_descriptor` set to '1'
+2. Use the DeePKS training code to train a model on these descriptors
+3. Use the trained model in subsequent calculations by setting `deepks_model` to the path of the trained model file
+
+## Notes
+
+- The examples use pre-trained models for demonstration purposes
+- For your own systems, you will need to generate projectors and train your own models
+- DeePKS calculations require additional dependencies compared to traditional DFT calculations
+- The accuracy of DeePKS results depends on the quality and quantity of the training data
+- For SOC calculations, ensure that the trained model was trained on data that includes SOC effects

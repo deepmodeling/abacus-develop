@@ -1,8 +1,8 @@
 #ifdef __MPI
 #include "source_base/parallel_reduce.h"
 
-#include "source_base/parallel_global.h"
 #include "mpi.h"
+#include "source_base/parallel_global.h"
 
 #include "gtest/gtest.h"
 #include <assert.h>
@@ -33,13 +33,9 @@
  *       Tests gather_int_all() and reduce_min()
  *   5. GatherDoubleAll:
  *       Tests reduce_min_double() and reduce_max_double()
- *   6. ReduceIntDiag:
- *       Tests reduce_int_diag()
- *   7. ReduceDoubleDiag:
+ *   6. ReduceDoubleDiag:
  *       Tests reduce_double_diag()
- *   8. ReduceIntGrid:
- *       Tests reduce_int_grid()
- *   9. ReduceDoubleGrid:
+ *   8. ReduceDoubleGrid:
  *       Tests reduce_double_grid()
  *   10.ReduceDoublePool:
  *       Tests two variations of reduce_pool()
@@ -221,6 +217,39 @@ TEST_F(ParaReduce, ReduceComplexAll)
     delete[] rand_array;
 }
 
+TEST_F(ParaReduce, ReduceAdditionalTypesAll)
+{
+    const float float_local = static_cast<float>(my_rank + 1);
+    const float float_expected = static_cast<float>(nproc * (nproc + 1) / 2);
+    float float_scalar = float_local;
+    float float_array[2] = {float_local, 2.0F * float_local};
+    Parallel_Reduce::reduce_all(float_scalar);
+    Parallel_Reduce::reduce_all(float_array, 2);
+    EXPECT_FLOAT_EQ(float_scalar, float_expected);
+    EXPECT_FLOAT_EQ(float_array[0], float_expected);
+    EXPECT_FLOAT_EQ(float_array[1], 2.0F * float_expected);
+
+    const std::complex<float> complex_local(float_local, -float_local);
+    const std::complex<float> complex_expected(float_expected, -float_expected);
+    std::complex<float> complex_scalar = complex_local;
+    std::complex<float> complex_array[2] = {complex_local, 2.0F * complex_local};
+    Parallel_Reduce::reduce_all(complex_scalar);
+    Parallel_Reduce::reduce_all(complex_array, 2);
+    EXPECT_EQ(complex_scalar, complex_expected);
+    EXPECT_EQ(complex_array[0], complex_expected);
+    EXPECT_EQ(complex_array[1], 2.0F * complex_expected);
+
+    const long long long_local = static_cast<long long>(my_rank + 1);
+    const long long long_expected = static_cast<long long>(nproc * (nproc + 1) / 2);
+    long long long_scalar = long_local;
+    long long long_array[2] = {long_local, 2 * long_local};
+    Parallel_Reduce::reduce_all(long_scalar);
+    Parallel_Reduce::reduce_all(long_array, 2);
+    EXPECT_EQ(long_scalar, long_expected);
+    EXPECT_EQ(long_array[0], long_expected);
+    EXPECT_EQ(long_array[1], 2 * long_expected);
+}
+
 TEST_F(ParaReduce, GatherIntAll)
 {
     std::default_random_engine e(time(NULL) * (my_rank + 1));
@@ -268,49 +297,13 @@ TEST_F(ParaReduce, GatherDoubleAll)
         ///	my_rank,i,array[i],min_number,max_number);
     }
     delete[] array;
-}
 
-TEST_F(ParaReduce, ReduceIntDiag)
-{
-    /// num_per_process = 2;
-    // NPROC is set to 4 in parallel_global_test.sh
-    if (nproc == 4)
-    {
-        Parallel_Global::split_diag_world(2, nproc, my_rank, mpiContext.drank, mpiContext.dsize, mpiContext.dcolor);
-        // generate a random array
-        int* rand_array = NULL;
-        rand_array = get_rand_array<int>(num_per_process, my_rank);
-
-        // calculate local sum
-        int local_sum = 0;
-        for (int i = 0; i < num_per_process; i++)
-        {
-            local_sum += rand_array[i];
-            /// printf(" pre world_rank %d, drank %d rand_array[%d] = %d\n",
-            ///	my_rank,mpiContext.dsize,i, rand_array[i]);
-        }
-
-        // first way of calculating diag sum
-        int diag_sum_first = local_sum;
-        Parallel_Reduce::reduce_int_diag(diag_sum_first);
-        // second way of calculating global sum
-        int* swap = new int[num_per_process]();
-        MPI_Allreduce(rand_array, swap, num_per_process, MPI_INT, MPI_SUM, DIAG_WORLD);
-        int diag_sum_second = 0;
-        for (int i = 0; i < num_per_process; i++)
-        {
-            diag_sum_second += swap[i];
-            /// printf(" post world_rank %d, drank %d swap[%d] = %d\n",
-            ///	my_rank,mpiContext.dsize,i, swap[i]);
-        }
-        // compare two sums
-        /// printf("world_rank %d, drank %d sum1 = %d, sum2 = %d\n",
-        ///	my_rank,mpiContext.dsize,diag_sum_first, diag_sum_second);
-        EXPECT_EQ(diag_sum_first, diag_sum_second);
-        delete[] rand_array;
-        delete[] swap;
-        MPI_Comm_free(&DIAG_WORLD);
-    }
+    float min_float = static_cast<float>(my_rank);
+    float max_float = min_float;
+    Parallel_Reduce::reduce_min(min_float);
+    Parallel_Reduce::reduce_max(max_float);
+    EXPECT_FLOAT_EQ(min_float, 0.0F);
+    EXPECT_FLOAT_EQ(max_float, static_cast<float>(nproc - 1));
 }
 
 TEST_F(ParaReduce, ReduceDoubleDiag)
@@ -352,48 +345,6 @@ TEST_F(ParaReduce, ReduceDoubleDiag)
         EXPECT_NEAR(diag_sum_first, diag_sum_second, 1e-13);
         delete[] rand_array;
         MPI_Comm_free(&DIAG_WORLD);
-    }
-}
-
-TEST_F(ParaReduce, ReduceIntGrid)
-{
-    /// num_per_process = 2;
-    // NPROC is set to 4 in parallel_global_test.sh
-    if (nproc == 4)
-    {
-        Parallel_Global::split_grid_world(2, nproc, my_rank, mpiContext.grank, mpiContext.gsize);
-        // generate a random array
-        int* rand_array = NULL;
-        rand_array = get_rand_array<int>(num_per_process, my_rank);
-
-        // calculate local sum
-        int local_sum = 0;
-        for (int i = 0; i < num_per_process; i++)
-        {
-            local_sum += rand_array[i];
-            /// printf(" pre world_rank %d, drank %d rand_array[%d] = %d\n",
-            ///	my_rank,mpiContext.dsize,i, rand_array[i]);
-        }
-
-        // first way of calculating diag sum
-        int grid_sum_first = 0;
-        MPI_Allreduce(&local_sum, &grid_sum_first, 1, MPI_INT, MPI_SUM, GRID_WORLD);
-
-        // second way of calculating global sum
-        Parallel_Reduce::reduce_int_grid(rand_array, num_per_process);
-        int grid_sum_second = 0;
-        for (int i = 0; i < num_per_process; i++)
-        {
-            grid_sum_second += rand_array[i];
-            /// printf(" post world_rank %d, drank %d rand_array[%d] = %d\n",
-            ///	my_rank,mpiContext.dsize,i, rand_array[i]);
-        }
-        // compare two sums
-        /// printf("world_rank %d, drank %d sum1 = %d, sum2 = %d\n",
-        ///	my_rank,mpiContext.dsize,grid_sum_first, grid_sum_second);
-        EXPECT_EQ(grid_sum_first, grid_sum_second);
-        delete[] rand_array;
-        MPI_Comm_free(&GRID_WORLD);
     }
 }
 
@@ -497,6 +448,23 @@ TEST_F(ParaReduce, ReduceDoublePool)
         /// printf("global rank %d sum1 = %f, sum2 = %f\n",my_rank,
         ///	global_sum_first, global_sum_second);
         EXPECT_NEAR(global_sum_first, global_sum_second, 1e-14);
+
+        const float float_local = static_cast<float>(mpiContext.rank_in_pool + 1);
+        const float float_expected = static_cast<float>(mpiContext.nproc_in_pool * (mpiContext.nproc_in_pool + 1) / 2);
+        float float_scalar = float_local;
+        Parallel_Reduce::reduce_pool(float_scalar);
+        EXPECT_FLOAT_EQ(float_scalar, float_expected);
+
+        int int_array[2] = {mpiContext.rank_in_pool + 1, 2 * (mpiContext.rank_in_pool + 1)};
+        Parallel_Reduce::reduce_pool(int_array, 2);
+        EXPECT_EQ(int_array[0], static_cast<int>(float_expected));
+        EXPECT_EQ(int_array[1], 2 * static_cast<int>(float_expected));
+
+        std::complex<float> complex_array[2]
+            = {std::complex<float>(float_local, -float_local), std::complex<float>(2.0F * float_local, float_local)};
+        Parallel_Reduce::reduce_pool(complex_array, 2);
+        EXPECT_EQ(complex_array[0], std::complex<float>(float_expected, -float_expected));
+        EXPECT_EQ(complex_array[1], std::complex<float>(2.0F * float_expected, float_expected));
 
         delete[] rand_array;
         MPI_Comm_free(&POOL_WORLD);

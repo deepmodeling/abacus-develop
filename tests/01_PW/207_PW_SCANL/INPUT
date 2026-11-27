@@ -1,0 +1,32 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix            autotest
+calculation       scf
+kpar              2
+init_wfc          random
+
+pseudo_dir        ../../PP_ORB
+
+#Parameters (2.Iteration)
+ecutwfc           50
+scf_thr           1e-9
+
+dft_functional    scanl
+
+#Parameters (3.Basis)
+basis_type        pw
+
+#Parameters (4.Smearing)
+smearing_method   gauss
+smearing_sigma    0.002
+
+#Parameters (5.Mixing)
+mixing_type       broyden
+mixing_beta       0.7
+
+cal_force         1
+cal_stress        1
+
+mixing_tau        1
+
+pw_seed           1

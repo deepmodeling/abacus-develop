@@ -1,0 +1,36 @@
+INPUT_PARAMETERS
+pseudo_dir         ../../../tests/PP_ORB
+orbital_dir        ../../../tests/PP_ORB
+calculation        scf
+ecutwfc            20
+scf_thr            1.0e-5
+scf_nmax           20
+
+smearing_method    gaussian
+smearing_sigma     0.07
+
+mixing_type        pulay
+mixing_ndim        10
+mixing_beta        0.1
+
+ks_solver          cg
+basis_type         pw 
+symmetry           0
+
+noncolin           true
+nspin              4
+lspinorb           true
+cal_force          1
+cal_stress         1
+
+#deltaspin
+sc_mag_switch      1      # switch to control spin-constrained DFT
+decay_grad_switch  1      # switch to control gradient break condition
+sc_thr             1e-7   # Convergence criterion of spin-constrained iteration (RMS) in uB
+nsc                150    # Maximal number of spin-constrained iteration
+nsc_min            2      # Minimum number of spin-constrained iteration 
+sc_scf_nmin        2      # Minimum number of outer scf loop before initializing lambda loop
+alpha_trial        0.01   # Initial trial step size for lambda in eV/uB^2
+sccut              3      # Maximal step size for lambda in eV/uB
+sc_drop_thr        1.0e-2 # Convergence criterion ratio of lambda iteration in Spin-constrained DFT
+sc_scf_thr         1.0e-4 # Density error threshold for inner loop of spin-constrained SCF

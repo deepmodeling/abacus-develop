@@ -1,0 +1,46 @@
+#ifndef FOR_TESTING_KLIST_H
+#define FOR_TESTING_KLIST_H
+
+#include "source_base/parallel_global.h"
+#include "source_basis/module_ao/orb_gaunt_table.h"
+#include "source_cell/atom_pseudo.h"
+#include "source_cell/atom_spec.h"
+#include "source_cell/klist.h"
+#include "source_cell/parallel_kpoints.h"
+#include "source_cell/pseudo.h"
+#include "source_cell/unitcell.h"
+#include "source_cell/magnetism.h"
+#include "source_pw/module_pwdft/vl_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
+#include "source_base/parallel_grid.h"
+
+pseudo::pseudo(){}
+pseudo::~pseudo(){}
+Atom::Atom(){}
+Atom::~Atom(){}
+Atom_pseudo::Atom_pseudo(){}
+Atom_pseudo::~Atom_pseudo(){}
+UnitCell::UnitCell(){}
+UnitCell::~UnitCell(){}
+Magnetism::Magnetism(){}
+Magnetism::~Magnetism(){}
+ORB_gaunt_table::ORB_gaunt_table(){}
+ORB_gaunt_table::~ORB_gaunt_table(){}
+pseudopot_cell_vl::pseudopot_cell_vl(){}
+pseudopot_cell_vl::~pseudopot_cell_vl(){}
+pseudopot_cell_vnl::pseudopot_cell_vnl(){}
+pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
+Soc::~Soc()
+{
+}
+Fcoef::~Fcoef()
+{
+}
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
+
+
+
+#endif

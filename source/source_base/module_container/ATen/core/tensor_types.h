@@ -5,26 +5,23 @@
 #ifndef ATEN_CORE_TENSOR_TYPES_H_
 #define ATEN_CORE_TENSOR_TYPES_H_
 
-#include <regex>
 #include <string>
-#include <vector>
-#include <numeric>
 #include <complex>
-#include <utility>
-#include <iomanip>
 #include <iostream>
 #include <stdexcept>
-#include <algorithm>
-#include <unordered_map>
-#include <initializer_list>
 
 #include "source_base/module_device/types.h"
+#include "ATen/core/tensor_enums.h"
 
-#if defined(__CUDACC__)
-#include <base/macros/cuda.h>
-#elif defined(__HIPCC__)
-#include <base/macros/rocm.h>
-#endif // defined(__CUDACC__) || defined(__HIPCC__)
+// NOTE: Previously this file included <base/macros/cuda.h> or <base/macros/rocm.h>,
+// which transitively provided GetTypeThrust, GetTypeCuda, GetTypeRocm, etc.
+// Now replaced with <thrust/complex.h> which only provides thrust::complex type.
+// If you need GetTypeThrust/GetTypeCuda/GetTypeRocm, include <base/macros/cuda.h>
+// or <base/macros/rocm.h> directly in your .cpp file.
+// mohan add 20260605
+#if defined(__CUDACC__) || defined(__HIPCC__)
+#include <thrust/complex.h>
+#endif
 
 namespace container {
 
@@ -40,41 +37,6 @@ static inline bool element_compare(T& a, T& b) {
         return (a == b);
     }
 }
-
-/**
-@brief Enumeration of data types for tensors.
-The DataType enum lists the supported data types for tensors. Each data type
-is identified by a unique value. The DT_INVALID value is reserved for invalid
-data types.
-*/
-enum class DataType {
-    DT_INVALID = 0, ///< Invalid data type */
-    DT_FLOAT = 1, ///< Single-precision floating point */
-    DT_DOUBLE = 2, ///< Double-precision floating point */
-    DT_INT = 3, ///< 32-bit integer */
-    DT_INT64 = 4, ///< 64-bit integer */
-    DT_COMPLEX = 5, ///< 32-bit complex */
-    DT_COMPLEX_DOUBLE = 6, /**< 64-bit complex */
-// ... other data types
-};
-
-/**
- *@struct DEVICE_CPU, DEVICE_GPU
- *@brief A tag type for identifying CPU and GPU devices.
-*/
-struct DEVICE_CPU;
-struct DEVICE_GPU;
-
-struct DEVICE_CPU {};
-struct DEVICE_GPU {};
-/**
- * @brief The type of memory used by an allocator.
- */
-enum class DeviceType {
-    UnKnown = 0,  ///< Memory type is unknown.
-    CpuDevice = 1,     ///< Memory type is CPU.
-    GpuDevice = 2,     ///< Memory type is GPU(CUDA or ROCm).
-};
 
 /**
  * @brief Template struct to determine the return type based on the input type.
@@ -139,85 +101,6 @@ struct ContainerToPsi<container::DEVICE_CPU> {
 template <>
 struct ContainerToPsi<container::DEVICE_GPU> {
     using type = base_device::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
-};
-
-
-/**
- * @brief Template struct for mapping a Device Type to its corresponding enum value.
- *
- * @param T The DataType to map to its enum value.
- *
- * @return The enumeration value corresponding to the data type.
- *  This method uses template specialization to map each supported data type to its
- *  corresponding enumeration value. If the template argument T is not a supported
- *  data type, this method will cause a compile-time error.
- *  Example usage:
- *      DataTypeToEnum<float>::value; // Returns DataType::DT_FLOAT
- */
-template <typename T>
-struct DeviceTypeToEnum {
-    static constexpr DeviceType value = {};
-};
-// Specializations of DeviceTypeToEnum for supported devices.
-template <>
-struct DeviceTypeToEnum<DEVICE_CPU> {
-    static constexpr DeviceType value = DeviceType::CpuDevice;
-};
-template <>
-struct DeviceTypeToEnum<DEVICE_GPU> {
-    static constexpr DeviceType value = DeviceType::GpuDevice;
-};
-template <>
-struct DeviceTypeToEnum<base_device::DEVICE_CPU>
-{
-    static constexpr DeviceType value = DeviceType::CpuDevice;
-};
-template <>
-struct DeviceTypeToEnum<base_device::DEVICE_GPU>
-{
-    static constexpr DeviceType value = DeviceType::GpuDevice;
-};
-
-/**
- * @brief Template struct for mapping a DataType to its corresponding enum value.
- *
- * @param T The DataType to map to its enum value.
- *
- * @return The enumeration value corresponding to the data type.
- *  This method uses template specialization to map each supported data type to its
- *  corresponding enumeration value. If the template argument T is not a supported
- *  data type, this method will cause a compile-time error.
- *  Example usage:
- *      DataTypeToEnum<float>::value; // Returns DataType::DT_FLOAT
- */
-template <typename T>
-struct DataTypeToEnum {
-    static constexpr DataType value = {};
-};
-// Specializations of DataTypeToEnum for supported types.
-template <>
-struct DataTypeToEnum<int> {
-    static constexpr DataType value = DataType::DT_INT;
-};
-template <>
-struct DataTypeToEnum<float> {
-    static constexpr DataType value = DataType::DT_FLOAT;
-};
-template <>
-struct DataTypeToEnum<double> {
-    static constexpr DataType value = DataType::DT_DOUBLE;
-};
-template <>
-struct DataTypeToEnum<int64_t> {
-    static constexpr DataType value = DataType::DT_INT64;
-};
-template <>
-struct DataTypeToEnum<std::complex<float>> {
-    static constexpr DataType value = DataType::DT_COMPLEX;
-};
-template <>
-struct DataTypeToEnum<std::complex<double>> {
-    static constexpr DataType value = DataType::DT_COMPLEX_DOUBLE;
 };
 
 #if defined(__CUDACC__) || defined(__HIPCC__)

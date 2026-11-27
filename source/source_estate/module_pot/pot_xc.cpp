@@ -1,10 +1,11 @@
 #include "pot_xc.h"
 
 #include "source_base/timer.h"
+#include "source_base/constants.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
-#ifdef USE_LIBXC
-#include "source_hamilt/module_xc/xc_functional_libxc.h"
+#ifdef __LIBXC
+#include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 
 namespace elecstate
@@ -13,8 +14,9 @@ namespace elecstate
 void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("PotXC", "cal_veff");
-    ModuleBase::timer::tick("PotXC", "cal_veff");
+    ModuleBase::timer::start("PotXC", "cal_veff");
     const int nrxx_current = chg->nrxx;
+    const int nspin = chg->nspin;
     
     //----------------------------------------------------------
     //  calculate the exchange-correlation potential
@@ -22,9 +24,16 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
 
     if (XC_Functional::get_ked_flag())
     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
+        const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+        const double hse_omega = XC_Functional::get_hse_omega();
+#else
+        const double hse_omega = 0.0;
+#endif
         const std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), nrxx_current, ucell->omega, ucell->tpiba, chg);
+            = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), nrxx_current, ucell->omega, ucell->tpiba, chg,
+                                             nspin, hybrid_alpha, hse_omega);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);
@@ -35,13 +44,26 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
     }
     else
     {
+        const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+        const double hse_omega = XC_Functional::get_hse_omega();
+#else
+        const double hse_omega = 0.0;
+#endif
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc(nrxx_current, chg, ucell);
+            = XC_Functional::v_xc(nrxx_current, chg, ucell,
+                                  nspin,
+                                  domag_,
+                                  domag_z_,
+                                  gga_grad_,
+                                  hybrid_alpha,
+                                  hse_omega,
+                                  xc_gpu_);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);
     }
-    ModuleBase::timer::tick("PotXC", "cal_veff");
+    ModuleBase::timer::end("PotXC", "cal_veff");
 }
 
 } // namespace elecstate

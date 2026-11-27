@@ -135,7 +135,7 @@ bool TwoCenterTable::is_present(const int itype1,
     return itype1 >= 0 && itype1 < index_map_.shape().dim_size(0) && l1 >= 0 && l1 < index_map_.shape().dim_size(1)
            && izeta1 >= 0 && izeta1 < index_map_.shape().dim_size(2) && itype2 >= 0
            && itype2 < index_map_.shape().dim_size(3) && l2 >= 0 && l2 < index_map_.shape().dim_size(4) && izeta2 >= 0
-           && izeta2 < index_map_.shape().dim_size(5) && l >= 0 && l <= index_map_.shape().dim_size(6)
+           && izeta2 < index_map_.shape().dim_size(5) && l >= 0 && l < index_map_.shape().dim_size(6)
            && index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l) >= 0;
 }
 

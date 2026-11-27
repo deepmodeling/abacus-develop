@@ -28,7 +28,7 @@ of_ml_device      cpu
 #of_ml_chi_qnl     0.1
 #
 #of_ml_tanhxi    1
-#of_ml_tanhxi_nl    1
-#of_ml_tanhp    1
-#of_ml_tanhp_nl    1
-#of_ml_feg      3
+#of_ml_tanhxi_nl 1
+#of_ml_tanhp     1
+#of_ml_tanhp_nl  1
+#of_ml_feg       3

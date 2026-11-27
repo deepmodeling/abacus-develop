@@ -1,9 +1,4 @@
-
-add_library(
-    parameter
-    OBJECT
-    parameter.cpp
-)
+add_library(parameter OBJECT parameter.cpp)
 
 # if(ENABLE_COVERAGE)
 #   add_coverage(parameter)

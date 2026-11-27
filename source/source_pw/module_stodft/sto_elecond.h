@@ -3,21 +3,26 @@
 
 #include "source_hamilt/hamilt.h"
 #include "source_pw/module_pwdft/elecond.h"
+#include "source_pw/module_stodft/sto_hsolver_pw.h"
 #include "source_pw/module_stodft/sto_wf.h"
-#include "source_hsolver/hsolver_pw_sdft.h"
 
-template <typename FPTYPE, typename Device> 
+template <typename FPTYPE, typename Device>
 class Sto_EleCond : protected EleCond<FPTYPE, Device>
 {
   public:
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     using lowTYPE = float; // Here we use float to accelerate the calculation, which is enough for the accuracy
 #else
     using lowTYPE = double;
 #endif
     using lcomplex = std::complex<lowTYPE>;
-    using resmem_lcomplex_op = base_device::memory::resize_memory_op<std::complex<lowTYPE>, Device>; 
+#ifdef __DSP
+    using resmem_lcomplex_op = base_device::memory::resize_memory_op_mt<std::complex<lowTYPE>, Device>;
+    using delmem_lcomplex_op = base_device::memory::delete_memory_op_mt<std::complex<lowTYPE>, Device>;
+#else
+    using resmem_lcomplex_op = base_device::memory::resize_memory_op<std::complex<lowTYPE>, Device>;
     using delmem_lcomplex_op = base_device::memory::delete_memory_op<std::complex<lowTYPE>, Device>;
+#endif
     using cpymem_lcomplex_op = base_device::memory::synchronize_memory_op<std::complex<lowTYPE>, Device, Device>;
     using castmem_lcomplex_op = base_device::memory::cast_memory_op<std::complex<lowTYPE>, std::complex<FPTYPE>, Device, Device>;
     using cpymem_complex_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
@@ -77,8 +82,8 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
     Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf = nullptr;   ///< pointer to the stochastic wavefunctions
     Sto_Func<FPTYPE> stofunc;                                         ///< functions
 
-    hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
-    hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>* hamilt_sto_ = nullptr; ///< pointer to the Hamiltonian for sDFT
+    StoHamiltPW<std::complex<FPTYPE>, Device>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
+    StoHamiltPW<std::complex<lowTYPE>, Device>* hamilt_sto_ = nullptr; ///< pointer to the Hamiltonian for sDFT
     lowTYPE low_emin_ = 0;                                                      ///< Emin of the Hamiltonian for sDFT
     lowTYPE low_emax_ = 0;                                                      ///< Emax of the Hamiltonian for sDFT
   protected:
@@ -86,7 +91,7 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
      * @brief calculate Jmatrix  <leftv|J|rightv>
      *
      */
-    void cal_jmatrix(hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>* hamilt,
+    void cal_jmatrix(StoHamiltPW<std::complex<lowTYPE>, Device>* hamilt,
                      const psi::Psi<std::complex<lowTYPE>, Device>& kspsi_all,
                      const psi::Psi<std::complex<lowTYPE>, Device>& vkspsi,
                      const double* en,
@@ -114,4 +119,4 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
                      const std::complex<lowTYPE>& factor,
                      const int bandinfo[6]);
 };
-#endif // ELECOND_H
+#endif // STOELECOND_H

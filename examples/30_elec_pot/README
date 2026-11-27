@@ -4,12 +4,96 @@
 /
 /*******************************************************************************/
 
-By setting ‘out_pot’ to ‘2’ in the INPUT file, ABACUS will output the electrostatic 
-potential, which consists of Hartree potential and the local pseudopotential. 
+# Electrostatic Potential Examples
 
-After finish the calculation, you will see the following two files in the output directory:
+This directory contains examples for calculating and visualizing electrostatic potential in ABACUS. The electrostatic potential provides valuable insights into the electronic structure and bonding characteristics of materials.
 
-- ElecStaticPot.cube: contains electrostatic potential (unit: Rydberg) in realspace. 
-This file can be visually viewed by the software of VESTA.
- 
+## What is Electrostatic Potential?
 
+The electrostatic potential is the potential energy per unit charge at a given point in space. In the context of electronic structure calculations, it is the potential experienced by an electron due to the nuclei and other electrons in the system. It consists of:
+
+- **Hartree potential**: The potential due to the electron density
+- **Local pseudopotential**: The potential due to the atomic nuclei (approximated by pseudopotentials)
+
+The electrostatic potential is useful for understanding:
+
+- Chemical bonding and reactivity
+- Charge distribution in materials
+- Electron localization
+- Interface properties
+- Catalytic activity
+
+## Electrostatic Potential in ABACUS
+
+To enable the calculation and output of electrostatic potential in ABACUS, set the following parameter in the INPUT file:
+
+```
+INPUT_PARAMETERS
+out_pot        2    # Enable output of electrostatic potential
+```
+
+When `out_pot` is set to 2, ABACUS will output the electrostatic potential in real space in the form of a CUBE file, which can be visualized using software such as VESTA.
+
+## Examples Included
+
+### 1. 01_lcao_Si
+- **System**: Silicon crystal
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates electrostatic potential calculation for a crystalline system
+- **Input Files**:
+  - `INPUT`: Contains the parameters for electrostatic potential calculation
+  - `KPT`: Defines the k-point sampling
+  - `STRU`: Describes the silicon crystal structure
+  - `run.sh`: Script to run the calculation
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/30_elec_pot/01_lcao_Si
+   ```
+
+2. Run the calculation using the provided script:
+   ```bash
+   bash run.sh
+   ```
+
+3. Check the output files in the `OUT.ABACUS` directory.
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.ABACUS` directory:
+
+- `potes.cube`: Contains the electrostatic potential (in Rydberg) in real space. This file can be visualized using VESTA or other visualization software.
+- `running_scf.log`: Log file for the SCF calculation
+
+## Visualizing the Electrostatic Potential
+
+To visualize the electrostatic potential:
+
+1. Open the `potes.cube` file in VESTA
+2. In VESTA, go to "Edit" > "Properties..."
+3. Select "Isosurfaces" tab
+4. Click "New" to create a new isosurface
+5. Adjust the isosurface level to visualize different regions of the potential
+6. Use the color scale to represent the potential values
+
+## Notes
+
+- The electrostatic potential is output in Rydberg units
+- The resolution of the potential depends on the grid used for the calculation
+- For more detailed potential maps, you may need to adjust the grid parameters
+- Electrostatic potential calculations are compatible with both plane wave (PW) and LCAO basis sets
+- The computational cost of electrostatic potential calculations is slightly higher than standard DFT calculations due to the additional grid operations
+- The examples provided are for demonstration purposes; for production calculations, you should carefully test the convergence of results with respect to basis set and k-point sampling
+
+## Applications
+
+Electrostatic potential calculations in ABACUS can be used to study:
+
+- Reactivity of catalytic surfaces
+- Charge transfer at interfaces
+- Polarization effects in materials
+- Electron density distribution in molecules and solids
+- Bonding characteristics in complex materials
+- Electrostatic fields in nanostructures

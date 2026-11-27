@@ -3,8 +3,9 @@
 #include "source_base/vector3.h"
 #include "source_hamilt/matrixblock.h"
 #include "source_hamilt/operator.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/hs_matrix_k.hpp"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/hs_matrix_k.h"
+#include "source_lcao/module_rt/td_info.h"
 
 namespace hamilt {
 
@@ -25,6 +26,9 @@ class OperatorLCAO : public Operator<TK> {
             delete[] this->smatrix_k;
         }
     }
+
+    /** @brief Bind the solver-owned RT state once, after constructing the operator chain. */
+    void bind_td_info(TD_info* info);
 
     /* Function init(k) is used for update HR and HK ,
     data pointers of HR and HK are not passed by this function, but passed by
@@ -55,22 +59,22 @@ class OperatorLCAO : public Operator<TK> {
         this->get_hs_pointers();
 #ifdef __MPI
         hk_in = MatrixBlock<TK>{hmatrix_k,
-                               (size_t)this->hsk->get_pv()->nrow,
-                               (size_t)this->hsk->get_pv()->ncol,
-                               this->hsk->get_pv()->desc};
+                               (size_t)this->hsk->get_pv()->para_2d().nrloc(),
+                               (size_t)this->hsk->get_pv()->para_2d().ncloc(),
+                               this->hsk->get_pv()->para_2d().desc()};
         sk_in = MatrixBlock<TK>{smatrix_k,
-                               (size_t)this->hsk->get_pv()->nrow,
-                               (size_t)this->hsk->get_pv()->ncol,
-                               this->hsk->get_pv()->desc};
+                               (size_t)this->hsk->get_pv()->para_2d().nrloc(),
+                               (size_t)this->hsk->get_pv()->para_2d().ncloc(),
+                               this->hsk->get_pv()->para_2d().desc()};
 #else
         hk_in = MatrixBlock<TK>{hmatrix_k, 
-                                (size_t)this->hsk->get_pv()->nrow, 
-                                (size_t)this->hsk->get_pv()->ncol, 
+                                (size_t)this->hsk->get_pv()->para_2d().nrloc(),
+                                (size_t)this->hsk->get_pv()->para_2d().ncloc(),
                                 nullptr};
         
         sk_in = MatrixBlock<TK>{smatrix_k, 
-                                (size_t)this->hsk->get_pv()->nrow, 
-                                (size_t)this->hsk->get_pv()->ncol, 
+                                (size_t)this->hsk->get_pv()->para_2d().nrloc(),
+                                (size_t)this->hsk->get_pv()->para_2d().ncloc(),
                                 nullptr};
 #endif
     }
@@ -92,10 +96,10 @@ class OperatorLCAO : public Operator<TK> {
      */
     void set_hr_done(bool hr_done_in);
 
-    /**
-     * @brief set current spin index
-     */
-    void set_current_spin(const int current_spin_in);
+     /**
+      * @brief set current spin index
+      */
+    virtual void set_current_spin(const int current_spin_in) { this->current_spin = current_spin_in; }
 
     // protected:
     // Hamiltonian matrices which are calculated in OperatorLCAO
@@ -105,6 +109,8 @@ class OperatorLCAO : public Operator<TK> {
     const std::vector<ModuleBase::Vector3<double>>& kvec_d;
 
   protected:
+    TD_info* td_info_ = nullptr;
+
     bool new_e_iteration = true;
 
     //! Real-space Hamiltonian pointer

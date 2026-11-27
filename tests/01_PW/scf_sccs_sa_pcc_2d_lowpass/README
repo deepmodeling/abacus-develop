@@ -1,0 +1,1 @@
+PW neutral water with SCCS, 2D PCC, lowpass and the solvent-aware cavity (solvent radius 2 bohr, filling threshold 0.3); also checks the filled volume (sccs_debug 2).

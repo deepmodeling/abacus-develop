@@ -24,24 +24,32 @@ To compile and use ABACUS in CUDA mode, you currently need to have an NVIDIA GPU
 
 - Install a driver and toolkit appropriate for your system (SDK is not necessary)
 
+NVIDIA reports that cuSOLVERMp 0.4.2 through 0.8.0 contain an STEDC defect
+affecting non-power-of-two block sizes and certain 2D process grids. Because
+`Syevd` and `Sygvd` use STEDC internally, affected versions may fail or hang
+during distributed diagonalization. ABACUS therefore requires cuSOLVERMp 0.9.0
+or newer when `ENABLE_CUSOLVERMP=ON`. The recommended stack is cuSOLVERMp 0.9.0
+with cuBLASMp 0.9.1. See the
+[cuSOLVERMp 0.9.0 release notes](https://docs.nvidia.com/cuda/cusolvermp/release_notes/index.html#cusolvermp-v0-9-0)
+for the upstream fix details.
 
 ## Building ABACUS with the GPU support:
 
 Check the [Advanced Installation Options](https://abacus-rtd.readthedocs.io/en/latest/advanced/install.html#build-with-cuda-support) for the installation of CUDA version support.
 
-Setting both USE_ELPA and USE_CUDA to ON does not automatically enable ELPA to run on GPUs. ELPA support for GPUs needs to be enabled when ELPA is compiled. [enable GPU support](https://github.com/marekandreas/elpa/blob/master/documentation/INSTALL.md).
+Setting both `ENABLE_ELPA` and `USE_CUDA` to ON does not automatically enable ELPA to run on GPUs. ELPA support for GPUs needs to be enabled when ELPA is compiled. [enable GPU support](https://github.com/marekandreas/elpa/blob/master/documentation/INSTALL.md).
 
 The ABACUS program will automatically determine whether the current ELPA supports GPU based on the elpa/elpa_configured_options.h header file. Users can also check this header file to determine the GPU support of ELPA in their environment. ELPA introduced a new API elpa_setup_gpu in version 2023.11.001. So if you want to enable ELPA GPU in ABACUS, the ELPA version must be greater than or equal to 2023.11.001.
 
 ## Run with the GPU support by editing the INPUT script:
 
 In `INPUT` file we need to set the input parameter [device](../input_files/input-main.md#device) to `gpu`. If this parameter is not set, ABACUS will try to determine if there are available GPUs.
-- Set `ks_solver`: For the PW basis, CG, BPCG and Davidson methods are supported on GPU; set the input parameter [ks_solver](../input_files/input-main.md#ks_solver) to `cg`, `bpcg` or `dav`. For the LCAO basis, `cusolver`, `cusolvermp` and `elpa` is supported on GPU.
+- Set `ks_solver`: For the PW basis, CG, BPCG, Davidson, and Davidson subspace methods are supported on GPU; set the input parameter [ks_solver](../input_files/input-main.md#ks_solver) to `cg`, `bpcg`, `dav`, or `dav_subspace`. For the LCAO basis, `cusolver`, `cusolvermp`, and `elpa` are supported on GPU.
 - **single-card**: ABACUS allows for single-GPU acceleration. You can run ABACUS without any MPI process by command `abacus`, and `ks_solver cusolver` is recommended for the LCAO basis. *note: avoid using `mpirun -n 1 abacus`*.
 - **multi-cards**: ABACUS allows for multi-GPU acceleration. If you have multiple GPU cards, you can run ABACUS with several MPI processes, and each process will utilize one GPU card. For example, the command `mpirun -n 2 abacus` will by default launch two GPUs for computation. If you only have one card, this command will only start one GPU. *note: the number of MPI processes SHOULD be equal to the number of GPU cards, unless you are using MPS in your computer.*
 
 ## Examples
-We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/gpu) of gpu calculations.
+We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/34_gpu) of gpu calculations.
 
 ## Known limitations
 PW basis:
@@ -50,4 +58,5 @@ PW basis:
 
 LCAO basis:
 - Unless there is a specific reason, avoid using multiple GPUs, as it can be slower than using a single GPU. This is because the generalized eigenvalue solution of the LCAO basis set will incur additional communication overhead when calculated on multiple cards. When the memory limit of a GPU card makes it insufficient to complete the task, it is recommended to use multiple cards for calculation.
+- With `ks_solver cusolver` and CUDA 10.1 or later, real Γ-point calculations with at least 4096 basis functions use a partial eigensolve when the requested band count is at most one quarter of the basis size. The solver requests the lowest eigenpairs and can retry with the full eigensolver if the partial solve fails recoverably.
 - When using elpa on GPUs, some ELPA internal logs will be output.

@@ -1,1 +1,9 @@
-Test the energy, force, and stress of `WT + 1.1 * TF + vW`, with of_tf_weight=1.1, symmetry=on
+Test WT with of_tf_weight=1.1 and symmetry enabled, including energy, force, and stress.
+
+The nonlocal WT kernel uses the same TF/vW weights as the local contributions.
+The reference includes the correction for issue #8243: the single-spin TF energy
+must include of_tf_weight, consistently with the potential. The earlier reference
+used an unweighted TF energy and consequently an inconsistent cached TF stress.
+With the corrected energy, this Al case converges to -57.4900280759 eV and
+40.538472 kbar pressure. The stress collector sums absolute tensor components,
+so totalstressref is 121.615416 kbar. Forces remain zero by symmetry.

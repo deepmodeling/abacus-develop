@@ -1,0 +1,2 @@
+Test PW DeltaSpin with nspin=4 and nonparallel xyz constraints of magnitude 2 mu_B on each atom.
+The existing energy, force and stress comparisons include a regression for the onsite stress sign.

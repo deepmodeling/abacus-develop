@@ -1,0 +1,341 @@
+#include "dhs_sparse_writer.h"
+
+#include "hs_sparse_io.h"
+#include "hs_sparse_io_detail.h"
+#include "lat_r_csr.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
+
+#include <cmath>
+#include <complex>
+#include <fstream>
+#include <sstream>
+#include <vector>
+
+namespace
+{
+/**
+ * @brief Return the requested R block, or an empty block when it is absent.
+ * @param matrix Sparse derivative matrix of one component and spin channel.
+ * @param R_coor Bravais lattice vector indexing the block.
+ * @return Const reference to the block, or to a shared empty block.
+ */
+template <typename T>
+const ModuleIO::SparseRBlock<T>& block_or_empty(const ModuleIO::SparseRMatrix<T>& matrix,
+                                                const ModuleIO::RCoordinate& R_coor)
+{
+    typename ModuleIO::SparseRMatrix<T>::const_iterator iter = matrix.find(R_coor);
+    if (iter != matrix.end())
+    {
+        return iter->second;
+    }
+    static const ModuleIO::SparseRBlock<T> empty_block;
+    return empty_block;
+}
+} // namespace
+
+void ModuleIO::save_dH_sparse(const int& istep,
+                              const Parallel_Orbitals& pv,
+                              const UnitCell* ucell,
+                              LCAO_HS_Arrays& HS_Arrays,
+                              const double& sparse_thr,
+                              const bool& binary,
+                              const std::string& fileflag,
+                              const int precision,
+                              const std::string& global_matrix_dir,
+                              const std::string& calculation,
+                              const int out_app_flag,
+                              const int nspin,
+                              const int nlocal,
+                              std::ofstream& ofs_running) {
+    ModuleBase::TITLE("ModuleIO", "save_dH_sparse");
+    ModuleBase::timer::start("ModuleIO", "save_dH_sparse");
+    if (ucell == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::save_dH_sparse", "UnitCell pointer must not be null.");
+    }
+    SparseWriteOptions lat_r_options;
+    lat_r_options.threshold = sparse_thr;
+    lat_r_options.binary = binary;
+    lat_r_options.precision = precision;
+    lat_r_options.reduce = true;
+    lat_r_options.calculation = calculation;
+    lat_r_options.out_app_flag = out_app_flag;
+
+    std::set<Abfs::Vector3_Order<int>>& all_R_coor_ptr = HS_Arrays.all_R_coor;
+    std::set<Abfs::Vector3_Order<int>>& output_R_coor_ptr = HS_Arrays.output_R_coor;
+
+    // The three Cartesian derivative components (x, y, z) share identical
+    // file handling; only the label and the sparse matrices differ.
+    class Component
+    {
+    public:
+        char axis;                                              // 'x' / 'y' / 'z'
+        SparseRMatrix<double>* sparse;                          // nspin != 4 (array of 2)
+        SparseRMatrix<std::complex<double>>* soc_sparse;        // nspin == 4
+        std::vector<long long> nonzero_num[2];
+        std::stringstream fname[2];
+        std::ofstream ofs[2];
+
+        // Default-initialize streams to support explicit default constructors in older standard libraries.
+        Component(const char& axis_in,
+                  SparseRMatrix<double>* sparse_in,
+                  SparseRMatrix<std::complex<double>>* soc_sparse_in)
+            : axis(axis_in), sparse(sparse_in), soc_sparse(soc_sparse_in)
+        {
+        }
+    };
+    Component comps[3] = {{'x', HS_Arrays.dHRx_sparse, &HS_Arrays.dHRx_soc_sparse},
+                          {'y', HS_Arrays.dHRy_sparse, &HS_Arrays.dHRy_soc_sparse},
+                          {'z', HS_Arrays.dHRz_sparse, &HS_Arrays.dHRz_soc_sparse}};
+
+    const int total_R_num = static_cast<int>(all_R_coor_ptr.size());
+    int output_R_number = 0;
+    // Use istep for filename/append decisions; clamp only the header STEP
+    // value, printed one-based per governance rule 22.
+    const int header_step = std::max(istep, 0) + 1;
+
+    // The overlap derivative dS/dR is spin-independent: cal_dS fills only the
+    // spin-0 channel, so a second spin file would be an all-zero matrix.
+    // Only the Hamiltonian derivative dH/dR is spin-dependent.
+    const bool spin_dependent = (fileflag == "h");
+    int spin_loop = 1;
+    if (spin_dependent && nspin == 2)
+    {
+        spin_loop = 2;
+    }
+    // A spin-independent quantity has no spin channel to label in the log or
+    // in the self-describing header.
+    const int header_nspin = spin_dependent ? nspin : 1;
+    const std::string matrix_name = (fileflag == "s") ? "dS/dR" : "dH/dR";
+    const std::string matrix_label = (fileflag == "s") ? "dS" : "dH";
+
+    for (Component& comp: comps)
+    {
+        if (nspin != 4)
+        {
+            for (int ispin = 0; ispin < spin_loop; ++ispin)
+            {
+                comp.nonzero_num[ispin] = detail::count_nonzeros_by_R(comp.sparse[ispin], all_R_coor_ptr, sparse_thr, true);
+            }
+        }
+        else
+        {
+            comp.nonzero_num[0] = detail::count_nonzeros_by_R(*comp.soc_sparse, all_R_coor_ptr, sparse_thr, true);
+        }
+    }
+
+    const auto has_output_R = [&](const int index) {
+        for (const Component& comp: comps)
+        {
+            for (int ispin = 0; ispin < spin_loop; ++ispin)
+            {
+                if (comp.nonzero_num[ispin][index] != 0)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    for (int index = 0; index < total_R_num; ++index)
+    {
+        if (has_output_R(index))
+        {
+            output_R_number++;
+        }
+    }
+
+    // Modes 0 and 1 keep the fixed filename (mode 0 overwrites, mode 1 appends
+    // every written ionic step); only mode 2 embeds the one-based ionic step
+    // before "_nao".
+    const bool include_step = (istep >= 0) && (out_app_flag == 2);
+
+    for (Component& comp: comps)
+    {
+        for (int ispin = 0; ispin < spin_loop; ++ispin)
+        {
+            // dS/dR has no spin channel, so its name carries no spin suffix;
+            // dH/dR keeps the collinear spin index.
+            std::string spin_suffix;
+            if (spin_dependent)
+            {
+                spin_suffix = "s" + std::to_string(ispin + 1);
+            }
+            const std::string axis_token(1, comp.axis);
+            const std::string prefix = "d" + fileflag + "r" + axis_token;
+            const std::string name = ModuleIO::detail::make_sparse_R_filename(prefix,
+                                                                             spin_suffix,
+                                                                             include_step,
+                                                                             istep,
+                                                                             ".csr");
+            comp.fname[ispin].str(global_matrix_dir + name);
+        }
+    }
+
+    if (GlobalV::DRANK == 0)
+    {
+        // The first written ionic step (istep == 0) truncates the shared file;
+        // later steps append one complete record each. Single-point runs pass
+        // istep <= 0 and therefore always start a fresh file.
+        const bool open_in_append = detail::append_ionic_step(out_app_flag, istep);
+        for (Component& comp: comps)
+        {
+            for (int ispin = 0; ispin < spin_loop; ++ispin)
+            {
+                std::ios_base::openmode mode = std::ios::out;
+                if (binary)
+                {
+                    mode |= std::ios::binary;
+                }
+                if (open_in_append)
+                {
+                    mode |= std::ios::app;
+                }
+
+                // Announce every written file, including appended multi-step
+                // records and binary output, so the running log tracks each write.
+                const std::string property = matrix_name + " (" + comp.axis + " component)";
+                ModuleIO::write_matrix_notice(ofs_running, property, ispin, header_nspin,
+                                              comp.fname[ispin].str());
+
+                comp.ofs[ispin].open(comp.fname[ispin].str().c_str(), mode);
+                detail::check_output_file_open(comp.ofs[ispin], comp.fname[ispin].str(), "ModuleIO::save_dH_sparse");
+
+                if (binary)
+                {
+                    ModuleIO::detail::write_csr_binary_header(comp.ofs[ispin],
+                                                              header_step,
+                                                              nlocal,
+                                                              output_R_number);
+                }
+                else
+                {
+                    // Self-describing header matching the H(R)/S(R) CSR layout,
+                    // so readers can recover the cell, basis size and R count
+                    // without extra metadata.
+                    const std::string description = " # print " + matrix_name
+                                                    + " matrix in real space "
+                                                    + matrix_label + comp.axis + "(R)";
+                    const ModuleIO::detail::CsrTextHeader header = {
+                        header_step,
+                        description,
+                        header_nspin,
+                        ispin + 1,
+                        nlocal,
+                        output_R_number,
+                        ucell,
+                        std::string(),
+                        false,
+                        0.0,
+                        true};
+                    ModuleIO::detail::write_csr_text_header(comp.ofs[ispin], header);
+                }
+            }
+        }
+    }
+
+    output_R_coor_ptr.clear();
+
+    int count = 0;
+    for (const Abfs::Vector3_Order<int>& R_coor: all_R_coor_ptr) {
+        int dRx = R_coor.x;
+        int dRy = R_coor.y;
+        int dRz = R_coor.z;
+
+        if (!has_output_R(count))
+        {
+            count++;
+            continue;
+        }
+
+        output_R_coor_ptr.insert(R_coor);
+
+        if (GlobalV::DRANK == 0) {
+            for (Component& comp: comps)
+            {
+                for (int ispin = 0; ispin < spin_loop; ++ispin) {
+                    ModuleIO::detail::write_R_record(comp.ofs[ispin],
+                                                     dRx,
+                                                     dRy,
+                                                     dRz,
+                                                     comp.nonzero_num[ispin][count],
+                                                     binary,
+                                                     false);
+                }
+            }
+        }
+
+        for (int ispin = 0; ispin < spin_loop; ++ispin) {
+            for (Component& comp: comps)
+            {
+                const long long nnz = comp.nonzero_num[ispin][count];
+                if (binary)
+                {
+                    // Binary records keep the compact layout: an empty block
+                    // contributes only its four-integer header.
+                    if (nnz == 0)
+                    {
+                        continue;
+                    }
+                    if (nspin != 4)
+                    {
+                        save_lat_r(comp.ofs[ispin], comp.sparse[ispin][R_coor], pv.para_2d(), lat_r_options);
+                    }
+                    else
+                    {
+                        save_lat_r(comp.ofs[ispin], (*comp.soc_sparse)[R_coor], pv.para_2d(), lat_r_options);
+                    }
+                }
+                else if (nnz == 0)
+                {
+                    // A globally empty component still needs its zero block to
+                    // match the shared R count, but it needs no row-wise
+                    // reductions: print the empty CSR block directly.
+                    if (nspin != 4)
+                    {
+                        ModuleIO::save_lat_r_empty_csr<double>(comp.ofs[ispin],
+                                                               pv.para_2d().nrglb(),
+                                                               lat_r_options);
+                    }
+                    else
+                    {
+                        ModuleIO::save_lat_r_empty_csr<std::complex<double>>(comp.ofs[ispin],
+                                                                             pv.para_2d().nrglb(),
+                                                                             lat_r_options);
+                    }
+                }
+                else if (nspin != 4)
+                {
+                    const SparseRBlock<double>& block = block_or_empty(comp.sparse[ispin], R_coor);
+                    ModuleIO::save_lat_r_csr(comp.ofs[ispin], block, pv.para_2d(), lat_r_options);
+                }
+                else
+                {
+                    const SparseRBlock<std::complex<double>>& block
+                        = block_or_empty(*comp.soc_sparse, R_coor);
+                    ModuleIO::save_lat_r_csr(comp.ofs[ispin], block, pv.para_2d(), lat_r_options);
+                }
+            }
+        }
+
+        count++;
+    }
+
+    if (GlobalV::DRANK == 0) {
+        for (Component& comp: comps)
+        {
+            for (int ispin = 0; ispin < spin_loop; ++ispin) {
+                comp.ofs[ispin].close();
+            }
+        }
+    }
+
+    ModuleBase::timer::end("ModuleIO", "save_dH_sparse");
+    return;
+}

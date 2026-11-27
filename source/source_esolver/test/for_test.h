@@ -22,16 +22,14 @@ UnitCell::UnitCell()
     ntype = 2;
     nat = 2;
 
-    atom_label.resize(ntype);
-    atom_label[0] = "Al";
-    atom_label[1] = "Cu";
-
     atoms = new Atom[ntype];
     set_atom_flag = true;
+    atoms[0].label = "Al";
+    atoms[1].label = "Cu";
 
     for (int it = 0; it < ntype; it++)
     {
-        Atom* atom = &atoms[it];
+        Atom *atom = &atoms[it];
         for (int ia = 0; ia < atom->na; ia++)
         {
             for (int ik = 0; ik < 3; ++ik)
@@ -41,38 +39,22 @@ UnitCell::UnitCell()
         }
     }
 }
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
 Atom::Atom()
 {
     na = 1;
     tau.resize(na);
     mbl.resize(na);
 }
-Atom::~Atom()
-{
-}
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+Atom::~Atom() {}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 #endif

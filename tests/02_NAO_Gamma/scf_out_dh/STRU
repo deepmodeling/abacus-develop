@@ -1,0 +1,22 @@
+ATOMIC_SPECIES
+H 1.00794 H_ONCV_PBE-1.0.upf upf201
+
+NUMERICAL_ORBITAL
+H_gga_6au_60Ry_2s1p.orb
+
+LATTICE_CONSTANT
+1.889726
+
+LATTICE_VECTORS
+20 0 0
+0 20 0
+0 0 20
+
+ATOMIC_POSITIONS
+Cartesian
+
+H #label
+0 #magnetism
+2 #number of atoms
+0 0 0
+0 0 0.74

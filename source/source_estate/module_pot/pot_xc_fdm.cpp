@@ -10,17 +10,35 @@ namespace elecstate
 {
 
 PotXC_FDM::PotXC_FDM(
+    const int nspin,
+          const bool domag,
+          const bool domag_z,
+          const int gga_grad,
+          const bool out_elf,
+          const int test_charge,
 	const ModulePW::PW_Basis* rho_basis_in,
 	const Charge*const chg_0_in,
 	const UnitCell*const ucell)
-	: chg_0(chg_0_in)
+	: chg_0(chg_0_in), nspin_(nspin), domag_(domag), domag_z_(domag_z), gga_grad_(gga_grad), out_elf_(out_elf), test_charge_(test_charge)
 {
 	this->rho_basis_ = rho_basis_in;
 	this->dynamic_mode = true;
 	this->fixed_mode = false;
 
+	const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+	const double hse_omega = XC_Functional::get_hse_omega();
+#else
+	const double hse_omega = 0.0;
+#endif
 	const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v_0
-		= XC_Functional::v_xc(this->chg_0->nrxx, this->chg_0, ucell);
+		= XC_Functional::v_xc(this->chg_0->nrxx, this->chg_0, ucell,
+							  nspin_,
+							  domag_,
+							  domag_z_,
+							  gga_grad_,
+							  hybrid_alpha,
+							  hse_omega);
 	this->v_xc_0 = std::get<2>(etxc_vtxc_v_0);
 }
 
@@ -30,14 +48,15 @@ void PotXC_FDM::cal_v_eff(
 	ModuleBase::matrix& v_eff)
 {
 	ModuleBase::TITLE("PotXC_FDM", "cal_veff");
-	ModuleBase::timer::tick("PotXC_FDM", "cal_veff");
+	ModuleBase::timer::start("PotXC_FDM", "cal_veff");
 
 	assert(this->chg_0->nrxx == chg_1->nrxx);
 	assert(this->chg_0->nspin == chg_1->nspin);
 
 	Charge chg_01;
 	chg_01.set_rhopw(chg_1->rhopw);
-	chg_01.allocate(chg_1->nspin, chg_01.kin_density());
+	chg_01.allocate(chg_1->nspin, XC_Functional::get_ked_flag() || out_elf_,
+	                XC_Functional::get_ked_flag(), test_charge_);
 
 	for(int ir=0; ir<chg_01.nrxx; ++ir)
 	{
@@ -46,14 +65,25 @@ void PotXC_FDM::cal_v_eff(
 		chg_01.rho_core[ir] = chg_0->rho_core[ir] + chg_1->rho_core[ir];
 	}
 
+	const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+	const double hse_omega = XC_Functional::get_hse_omega();
+#else
+	const double hse_omega = 0.0;
+#endif
 	const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v_01
-		= XC_Functional::v_xc(chg_01.nrxx, &chg_01, ucell);
+		= XC_Functional::v_xc(chg_01.nrxx, &chg_01, ucell,
+							  nspin_,
+							  domag_,
+							  domag_z_,
+							  gga_grad_,
+							  hybrid_alpha,
+							  hse_omega);
 	const ModuleBase::matrix &v_xc_01 = std::get<2>(etxc_vtxc_v_01);
 
 	v_eff += v_xc_01 - this->v_xc_0;
 
-	ModuleBase::timer::tick("PotXC_FDM", "cal_veff");
+	ModuleBase::timer::end("PotXC_FDM", "cal_veff");
 }
 
 } // namespace elecstate
-

@@ -1,0 +1,2 @@
+test implicit solvation model correction and force for H2O with out_sol 1
+Same input as scf_sol_H2O plus out_sol; also checks the cavity volume integrated from sol_cavity.cube.

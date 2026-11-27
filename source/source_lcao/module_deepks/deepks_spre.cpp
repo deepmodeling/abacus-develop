@@ -9,7 +9,7 @@
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
+#include "source_hamilt/module_hcontainer/atom_pair.h"
 
 /// this subroutine calculates the gradient of PDM wrt strain tensor:
 /// gdmepsl = d/d\epsilon_{ab} *
@@ -27,15 +27,15 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
                                 torch::Tensor& gdmepsl)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_gdmepsl");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gdmepsl");
+    ModuleBase::timer::start("DeePKS_domain", "cal_gdmepsl");
     // get DS_alpha_mu and S_nu_beta
 
-    int nrow = pv.nrow;
+    int nrow = pv.para_2d().nrloc();
     const int nm = 2 * deepks_param.lmaxd + 1;
     // gdmepsl: dD/d\epsilon_{\alpha\beta}
     // size: [6][tot_Inl][2l+1][2l+1]
     gdmepsl = torch::zeros({6, deepks_param.inlmax, nm, nm}, torch::dtype(torch::kFloat64));
-    auto accessor = gdmepsl.accessor<double, 4>();
+    at::TensorAccessor<double, 4> accessor = gdmepsl.accessor<double, 4>();
 
     DeePKS_domain::iterate_ad2(
         ucell,
@@ -63,8 +63,8 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
             r2[0] = (tau2.x - tau0.x);
             r2[1] = (tau2.y - tau0.y);
             r2[2] = (tau2.z - tau0.z);
-            auto row_indexes = pv.get_indexes_row(ibt1);
-            auto col_indexes = pv.get_indexes_col(ibt2);
+            std::vector<int> row_indexes = pv.get_indexes_row(ibt1);
+            std::vector<int> col_indexes = pv.get_indexes_col(ibt2);
             if (row_indexes.size() * col_indexes.size() == 0)
             {
                 return; // to next loop
@@ -147,7 +147,7 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
 #ifdef __MPI
     Parallel_Reduce::reduce_all(gdmepsl.data_ptr<double>(), 6 * deepks_param.inlmax * nm * nm);
 #endif
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gdmepsl");
+    ModuleBase::timer::end("DeePKS_domain", "cal_gdmepsl");
     return;
 }
 
@@ -161,10 +161,10 @@ void DeePKS_domain::cal_gvepsl(const int nat,
                                const int rank)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_gvepsl");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gvepsl");
+    ModuleBase::timer::start("DeePKS_domain", "cal_gvepsl");
     // dD/d\epsilon_{\alpha\beta}, tensor vector form of gdmepsl
     std::vector<torch::Tensor> gdmepsl_vector;
-    auto accessor = gdmepsl.accessor<double, 4>();
+    at::TensorAccessor<double, 4> accessor = gdmepsl.accessor<double, 4>();
     if (rank == 0)
     {
         // make gdmepsl as tensor
@@ -197,7 +197,7 @@ void DeePKS_domain::cal_gvepsl(const int nat,
         assert(gvepsl.size(2) == deepks_param.des_per_atom);
     }
 
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gvepsl");
+    ModuleBase::timer::end("DeePKS_domain", "cal_gvepsl");
     return;
 }
 

@@ -19,7 +19,6 @@ ocp_set           1*1 1*1 3*0
 td_propagator     2 # ETRS algorithm
 ecutwfc           20
 scf_nmax          50
-ks_solver         scalapack_gvx
 basis_type        lcao
 
 # charge mixing

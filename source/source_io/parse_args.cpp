@@ -1,6 +1,7 @@
 #include "parse_args.h"
 #include "build_info.h"
 #include "input_help.h"
+#include "parse_command_line.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -162,15 +163,18 @@ void print_build_info()
     print_info("NEP Support", ABACUS_NEP_VERSION);
     print_info("TensorFlow Support", ABACUS_TENSORFLOW_VERSION);
 
-    // --- 11. Testing & Other Libraries ---
-    print_section("Testing & Other Libraries");
-    print_info("GTest Support", ABACUS_GTEST_VERSION);
-    print_info("Google Benchmark", ABACUS_GOOGLEBENCH_VERSION);
-    print_info("RapidJSON Support", ABACUS_RAPIDJSON_VERSION);
+    // --- 11. Other Libraries ---
+    print_section("Other Libraries");
+    print_info("DFT-D4 Support", ABACUS_DFTD4_VERSION);
+    print_info("JSON Support", ABACUS_JSON_VERSION);
     print_info("PEXSI Support", ABACUS_PEXSI_VERSION);
     print_info("cnpy Support", ABACUS_CNPY_VERSION);
 
-    std::cout << "----------------------------------------------------" << std::endl;
+    // --- 12. Testing ---
+    print_section("Testing");
+    print_info("GTest Support", ABACUS_GTEST_VERSION);
+    print_info("Google Benchmark", ABACUS_GOOGLEBENCH_VERSION);
+
     std::cout << std::endl;
 }
 
@@ -208,10 +212,10 @@ void parse_args(int argc, char** argv)
                         std::cerr << "Error: Unknown parameter '" << next_arg << "'" << std::endl;
 
                         // Try to find similar parameters (fuzzy matching)
-                        auto suggestions = ParameterHelp::find_similar_parameters(next_arg, 5, 3);
+                        std::vector<std::string> suggestions = ParameterHelp::find_similar_parameters(next_arg, 5, 3);
                         if (!suggestions.empty()) {
                             std::cerr << "\nDid you mean one of these?" << std::endl;
-                            for (const auto& suggestion : suggestions) {
+                            for (const std::string& suggestion : suggestions) {
                                 std::cerr << "  - " << suggestion << std::endl;
                             }
                         }
@@ -239,7 +243,7 @@ void parse_args(int argc, char** argv)
             // Initialize help system
             ParameterHelp::initialize();
 
-            auto results = ParameterHelp::search_parameters(query);
+            std::vector<std::string> results = ParameterHelp::search_parameters(query);
             if (results.empty()) {
                 std::cerr << "No parameters found matching '" << query << "'" << std::endl;
                 std::exit(1);
@@ -247,8 +251,8 @@ void parse_args(int argc, char** argv)
 
             // Display results
             std::cout << "\nFound " << results.size() << " parameter(s) matching '" << query << "':\n\n";
-            for (const auto& param : results) {
-                auto metadata = ParameterHelp::get_metadata(param);
+            for (const std::string& param : results) {
+                ParameterMetadata metadata = ParameterHelp::get_metadata(param);
                 std::cout << "  " << std::left << std::setw(30) << param;
                 if (!metadata.name.empty() && !metadata.description.empty()) {
                     // Format description for brief display
@@ -271,6 +275,13 @@ void parse_args(int argc, char** argv)
         }
         else
         {
+            const int option_size = run_control_option_size(argc, argv, i);
+            if (option_size != 0)
+            {
+                i += option_size - 1;
+                continue;
+            }
+
             // Error message goes to stderr
             std::cerr << "Error: Unknown argument: " << arg << std::endl;
             std::cerr << std::endl;

@@ -1,39 +1,51 @@
 #ifndef DOS_H
 #define DOS_H
 
-#include<vector>
+#include <array>
+#include <vector>
 #include "source_base/matrix.h"
 #include "source_estate/fp_energy.h"
 
 namespace ModuleIO
 {
 
-	void prepare_dos(std::ofstream& ofs_running,
-			const elecstate::Efermi &energy_fermi,
-			const ModuleBase::matrix& ekb,
-			const int nks,
-			const int nbands,
-			const double& dos_edelta_ev,
+    // Per-energy rows in text column order for one spin channel.
+    using DosSpectrum = std::vector<std::array<double, 5>>;
+
+    void prepare_dos(std::ofstream& ofs_running,
+            const elecstate::Efermi &energy_fermi,
+            const ModuleBase::matrix& ekb,
+            const int nks,
+            const int nbands,
+            const double& dos_edelta_ev,
             const double& dos_scale,
-			double &emax,
-            double &emin);
+            double &emax,
+            double &emin,
+            const bool dos_setemax,
+            const double dos_emax_ev,
+            const bool dos_setemin,
+            const double dos_emin_ev,
+            const bool two_fermi);
 
-	bool cal_dos(const int &is,		
-		const std::string &fn,// file address for DOS.
-		const double &de_ev, // delta energy in ev.
-		const double &emax_ev,// maximal energy in ev.
-		const double &emin_ev,// minimal energy in ev.
-		const double &bcoeff,
-		const int &nks, //number of k points
-		const int &nkstot, // total number of k points
-		const std::vector<double> &wk,//weight of k points
-		const std::vector<int> &isk,
-		const int &nbands,// number of bands
-		const ModuleBase::matrix &ekb, //store energy for each k point and each band
-		const ModuleBase::matrix &wg, //weight of (kpoint,bands))
-        const int istep_in); // ionic_step
-
+    bool cal_dos(const int &is,
+        const std::string &fn,// file address for DOS.
+        const double &de_ev, // delta energy in ev.
+        const double &emax_ev,// maximal energy in ev.
+        const double &emin_ev,// minimal energy in ev.
+        const double &bcoeff,
+        const int &nks, //number of k points
+        const int &nkstot, // total number of k points
+        const std::vector<double> &wk,//weight of k points
+        const std::vector<int> &isk,
+        const int &nbands,// number of bands
+        const ModuleBase::matrix &ekb, //store energy for each k point and each band
+        const ModuleBase::matrix &wg, //weight of (kpoint,bands))
+        const int istep_in, // ionic_step
+        const int out_app_flag, // 0: no append, 1: append, 2: subdirectory
+        const int precision, // number of decimal places in the DOS file
+        const int bndpar, // number of band parallel groups
+        DosSpectrum* spectrum); // collect rank-zero rows for NPY output when supplied
 
 }
 
-#endif 
+#endif

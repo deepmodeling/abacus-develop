@@ -1,24 +1,27 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_AO_TO_MO_TRANSFORMER_AO_TO_MO_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_AO_TO_MO_TRANSFORMER_AO_TO_MO_H
+
 #include <ATen/core/tensor.h>
 #include "source_psi/psi.h"
+#include "source_lcao/module_lr/utils/mo_type.h"
 #include <vector>
+#include <cassert>
 #ifdef __MPI
-#include "source_base/parallel_2d.h"
+#include "source_base/parallel_blkcyc.h"
 #endif
 namespace LR
 {
-#ifndef MO_TYPE_H
-#define MO_TYPE_H
-    enum MO_TYPE { OO, VO, VV };
-#endif
+    // type selects occupied/virtual MO blocks; factor scales the transformed matrix.
+    // add_on selects accumulation into mat_mo instead of overwriting it.
     template<typename T>
-    void  ao_to_mo_forloop_serial(
+    void ao_to_mo_forloop_serial(
         const std::vector<container::Tensor>& mat_ao,
         const psi::Psi<T>& coeff,
         const int& nocc,
         const int& nvirt,
         T* const mat_mo,
-        const MO_TYPE type = VO);
+        const LR_Util::MO_TYPE type,
+        const T factor);
     template<typename T>
     void ao_to_mo_blas(
         const std::vector<container::Tensor>& mat_ao,
@@ -26,21 +29,25 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         T* const mat_mo,
-        const bool add_on = true,
-        const MO_TYPE type = VO);
+        const bool add_on,
+        const LR_Util::MO_TYPE type,
+        const T factor);
 #ifdef __MPI
     template<typename T>
     void ao_to_mo_pblas(
         const std::vector<container::Tensor>& mat_ao,
-        const Parallel_2D& pmat_ao,
+        const Parallel_Blkcyclic& pmat_ao,
         const psi::Psi<T>& coeff,
-        const Parallel_2D& pcoeff,
+        const Parallel_Blkcyclic& pcoeff,
         const int& naos,
         const int& nocc,
         const int& nvirt,
-        const Parallel_2D& pmat_mo,
+        const Parallel_Blkcyclic& pmat_mo,
         T* const mat_mo,
-        const bool add_on = true,
-        const MO_TYPE type = VO);
+        const bool add_on,
+        const LR_Util::MO_TYPE type,
+        const T factor);
 #endif
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_AO_TO_MO_TRANSFORMER_AO_TO_MO_H

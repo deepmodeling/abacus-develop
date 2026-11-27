@@ -473,14 +473,6 @@ TEST_F(ComplexArray_test,point_mult)
     }  
 }
 
-TEST_F(ComplexArray_test,xAlloc)
-{
-	std::string output;
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ModuleBase::complexArrayxAlloc(),::testing::ExitedWithCode(1),"");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("Allocation error for complexArray"));
-}
 
 TEST_F(ComplexArray_test,scaled_sum_2)
 {

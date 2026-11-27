@@ -16,10 +16,8 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <cerrno>
-#include <unistd.h>
+#include "source_base/fs_compat.h"
 
 namespace ModuleBase
 {
@@ -68,7 +66,7 @@ void MAKE_DIR(const std::string &fn)
     //	ModuleBase::TITLE("global_function","MAKE_DIR");
     if (GlobalV::MY_RANK == 0)
     {
-        int ret = mkdir(fn.c_str(), 0755);
+        int ret = ModuleBase::make_directory(fn);
         if (ret != 0 && errno != EEXIST)
         {
             ModuleBase::WARNING_QUIT("MAKE_DIR", fn);
@@ -163,15 +161,15 @@ bool SCAN_LINE_BEGIN(std::ifstream &ifs,
         std::istringstream iss(line);
         std::string SearchName;
         while (iss >> SearchName)
-		{
-			if (SearchName == TargetName)
-			{
-				find = true;
-				//std::cout << " search name = " << SearchName << std::endl;
-				return find;
-			}
-		}
-	}
+        {
+            if (SearchName == TargetName)
+            {
+                find = true;
+                //std::cout << " search name = " << SearchName << std::endl;
+                return find;
+            }
+        }
+    }
 
     if (!find && ifwarn)
     {
@@ -227,16 +225,16 @@ void OUT_TIME(const std::string &name, time_t &start, time_t &end)
     double mini = difftime(end, start) / 60.0;
     if (mini > 0.1)
     {
-	if(GlobalV::ofs_warning)
-	{
-        	GlobalV::ofs_warning << std::setprecision(2);
-        	GlobalV::ofs_warning << " -------------------------------------------------------" << std::endl;
-        	GlobalV::ofs_warning << " NAME < " << name << " > = " << std::endl;
-        	GlobalV::ofs_warning << " -> " << ctime(&start) << " -> " << ctime(&end);
-        	GlobalV::ofs_warning << " TIME = " << mini << " [Minutes]" << std::endl;
-        	GlobalV::ofs_warning << " -------------------------------------------------------" << std::endl;
-        	GlobalV::ofs_warning << std::setprecision(6);
-	}
+    if(GlobalV::ofs_warning)
+    {
+            GlobalV::ofs_warning << std::setprecision(2);
+            GlobalV::ofs_warning << " -------------------------------------------------------" << std::endl;
+            GlobalV::ofs_warning << " NAME < " << name << " > = " << std::endl;
+            GlobalV::ofs_warning << " -> " << ctime(&start) << " -> " << ctime(&end);
+            GlobalV::ofs_warning << " TIME = " << mini << " [Minutes]" << std::endl;
+            GlobalV::ofs_warning << " -------------------------------------------------------" << std::endl;
+            GlobalV::ofs_warning << std::setprecision(6);
+    }
     }
 }
 

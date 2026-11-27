@@ -1,6 +1,9 @@
+#include <algorithm>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
+
 #ifdef __MPI
 #include "source_base/parallel_common.h"
 #endif
@@ -78,26 +81,31 @@
 
 #define sync_string(PARAMETER)                                                                                         \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::String, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_string_bcast(PARAMETER);                                                                                   \
     }
 #define sync_int(PARAMETER)                                                                                            \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::Integer, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_int_bcast(PARAMETER);                                                                                      \
     }
 #define sync_double(PARAMETER)                                                                                         \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::Real, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_double_bcast(PARAMETER);                                                                                   \
     }
 #define sync_bool(PARAMETER)                                                                                           \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::Boolean, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_bool_bcast(PARAMETER);                                                                                     \
     }
 #define sync_doublevec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::RealVector, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
@@ -108,6 +116,7 @@
     }
 #define sync_intvec(PARAMETER, N, FILL)                                                                                \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::IntegerVector, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
@@ -118,6 +127,7 @@
     }
 #define sync_stringvec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::StringVector, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
@@ -129,21 +139,25 @@
 
 #define read_sync_string(PARAMETER)                                                                                    \
     {                                                                                                                  \
+        item.domain.scalar();                                                                                          \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = strvalue; };                  \
         sync_string(PARAMETER);                                                                                        \
     }
 #define read_sync_int(PARAMETER)                                                                                       \
     {                                                                                                                  \
+        item.domain.scalar(); \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = intvalue; };                  \
         sync_int(PARAMETER);                                                                                           \
     }
 #define read_sync_double(PARAMETER)                                                                                    \
     {                                                                                                                  \
+        item.domain.scalar(); \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = doublevalue; };               \
         sync_double(PARAMETER);                                                                                        \
     }
 #define read_sync_bool(PARAMETER)                                                                                      \
     {                                                                                                                  \
+        item.domain.scalar(); \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = boolvalue; };                 \
         sync_bool(PARAMETER);                                                                                          \
     }
@@ -170,7 +184,7 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
         return;
     }
 
-    for (const auto& expr: expressions)
+    for (const std::string& expr: expressions)
     {
         size_t first_star_pos = expr.find('*');
         size_t second_star_pos = expr.rfind('*'); // rfind finds the rightmost '*'
@@ -179,7 +193,12 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
         // If no '*' found, convert the whole expression to double/int and add to result
         if (first_star_pos == std::string::npos)
         {
-            T T_value = static_cast<T>(std::stof(expr));
+            std::istringstream value_stream(expr);
+            T T_value{};
+            if (!(value_stream >> T_value) || !value_stream.eof())
+            {
+                throw std::runtime_error("Invalid expression value: " + expr);
+            }
             result.push_back(T_value);
         }
         // e.g. "2*3", "2*3.5"
@@ -189,14 +208,24 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
             std::string int_part = expr.substr(0, first_star_pos);
             std::string T_part = expr.substr(first_star_pos + 1);
 
-            int num = std::stoi(int_part);
-            T T_value = static_cast<T>(std::stof(T_part));
-            for(int i = 0 ; i < num; ++i)
+            std::istringstream count_stream(int_part);
+            int num = 0;
+            if (!(count_stream >> num) || !count_stream.eof() || num < 0)
+            {
+                throw std::runtime_error("Invalid expression count: " + int_part);
+            }
+            std::istringstream value_stream(T_part);
+            T T_value{};
+            if (!(value_stream >> T_value) || !value_stream.eof())
+            {
+                throw std::runtime_error("Invalid expression value: " + T_part);
+            }
+            for (int i = 0; i < num; ++i)
             {
                 result.push_back(T_value);
             }
         }
-        // e.g. "2*3*3" 
+        // e.g. "2*3*3"
         // If more than one '*' found, output an error message
         else
         {
@@ -213,3 +242,72 @@ void reset_vector(std::vector<T>& vec, int size, T default_value)
         vec.resize(size, default_value);
     }
 }
+
+namespace ModuleIO
+{
+
+/**
+ * @brief Whether the DSP kpar/bndpar layout constraint applies.
+ *
+ * esolver_type = dp / nep are machine-learning interatomic-potential
+ * solvers: they never build a PW/LCAO Hamiltonian, never construct
+ * k-point pools or band groups, and never call the mtblas/C_PACK
+ * vendor libraries, so the layout constraint is inapplicable.
+ * Comparison is case-insensitive. See issue #8228.
+ */
+inline bool dsp_layout_check_needed(const std::string& esolver_type)
+{
+    std::string lower = esolver_type;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    return !(lower == "dp" || lower == "nep");
+}
+
+/**
+ * @brief The k-point pool count actually consumed by the current basis.
+ *
+ * After ReadInput::reset_value, exactly one of (kpar, kpar_lcao) carries
+ * the user value and the other is 1. Select explicitly by basis_type
+ * instead of std::max so the invariant is documented and enforced.
+ */
+inline int dsp_effective_kpar(const std::string& basis_type,
+                              const int kpar,
+                              const int kpar_lcao)
+{
+    return (basis_type == "lcao") ? kpar_lcao : kpar;
+}
+
+/**
+ * @brief Check whether a k-point/band parallel layout satisfies the DSP
+ *        vendor library constraint.
+ *
+ * On DSP hardware, the mtblas/C_PACK libraries require exactly one MPI
+ * process per k-point pool: the effective pool count (kpar for PW,
+ * kpar_lcao for LCAO) times bndpar must equal nproc exactly. Non-positive
+ * nproc / pool count / bndpar are invalid layouts. Always returns true
+ * when esolver_type is dp or nep. See issue #8228.
+ */
+inline bool dsp_kpar_layout_valid(const int nproc,
+                                  const std::string& basis_type,
+                                  const int kpar,
+                                  const int kpar_lcao,
+                                  const int bndpar,
+                                  const std::string& esolver_type)
+{
+    if (!dsp_layout_check_needed(esolver_type))
+    {
+        return true;
+    }
+    if (nproc <= 0)
+    {
+        return false;
+    }
+    const int kpar_eff = dsp_effective_kpar(basis_type, kpar, kpar_lcao);
+    if (kpar_eff <= 0 || bndpar <= 0)
+    {
+        return false;
+    }
+    return nproc == kpar_eff * bndpar;
+}
+
+} // namespace ModuleIO

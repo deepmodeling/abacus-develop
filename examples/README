@@ -2,26 +2,108 @@
 / Examples of ABACUS
 /*******************************************************************************/
 
-These examples show how to use ABACUS to run some specify calculations and how to 
-use the interfaces between ABACUS and some extenal softwares.
+These examples show how to use ABACUS to run various types of calculations and how to use the interfaces between ABACUS and external software packages.
 
-The examples interface_XXXX show the using of interface of ABACUS and XXXX
+## Example Categories
 
-Except for interface examples, a bash script `runall.sh` is required for each example
-directory to be accessed by `dflow_run.py`. Each example directory may contains several
-examples for different systems or input settings, where a bash script `run.sh` is
-required to run the specific example. The `SETENV` is read by `run.sh` to get the 
-executable directory of abacus (`ABACUS_PATH`), number of processes (`ABACUS_NPROCS`) and 
-number of threads (`ABACUS_THREADS`).
+The examples are organized into several categories based on their functionality:
 
-How to run dflow_run.py:
+- **01_bravais_lattice**: Examples of different Bravais lattice structures
+- **02_geometry_optimization**: Geometry optimization calculations
+- **03_scf**: Self-consistent field calculations
+- **04_noncollinear**: Noncollinear spin calculations
+- **05_soc**: Spin-orbit coupling calculations
+- **06_smearing**: Different smearing methods for metallic systems
+- **07_charge_mixing**: Different charge mixing methods
+- **12_band**: Band structure calculations
+- **13_dos**: Density of states calculations
+- **20_hybrid**: Hybrid functional calculations
+- **21_deepks**: DeePKS (deep learning based density functional theory) calculations
+- **22_rt-tddft**: Real-time time-dependent DFT calculations
+- **23_sdft**: Stochastic DFT calculations
+- **24_lr-tddft**: Linear response time-dependent DFT calculations
+- **25_vdw**: van der Waals correction calculations
+- **26_berryphase**: Berry phase calculations for polarization
+- **27_imp_sol**: Implicit solvation model calculations
+- **28_efield**: External electric field calculations
+- **29_dipole_corr**: Dipole correction calculations
+- **30_elec_pot**: Electrostatic potential calculations
+- **31_comp_charge**: Compensating charge calculations
+- **32_bsse**: Basis set superposition error correction
+- **33_pexsi**: PEXSI solver calculations for large systems
+- **34_gpu**: GPU-accelerated calculations
 
-- `python3 dflow_run.py --find 1`:
-   find all directories where `runall.sh` has been prepared.
+## Directory Structure
 
-- `python3 dflow_run.py --run 1`:
-   submmit dflow jobs.
+Each example directory typically contains:
 
-- `python3 dflow_run.py --post 1` 
-   checkout the status of jobs.
+- `INPUT`: Input file with calculation parameters
+- `KPT`: k-point sampling file
+- `STRU`: Crystal structure file
+- `run.sh`: Script to run the specific example
+- `runall.sh`: Script to run all examples in the directory (required for `dflow_run.py`)
+- `SETENV`: Environment configuration file with ABACUS executable path and parallelization settings
 
+## How to Run Examples
+
+### Running a Single Example
+
+1. Navigate to the example directory:
+   ```bash
+   cd examples/01_bravais_lattice/01_fcc_Si
+   ```
+
+2. Check and modify the `SETENV` file if necessary to set the ABACUS executable path and parallelization settings:
+   ```bash
+   # Example SETENV file
+   export ABACUS_PATH=/path/to/abacus/executable
+   export ABACUS_NPROCS=4
+   export ABACUS_THREADS=1
+   ```
+
+3. Run the example:
+   ```bash
+   bash run.sh
+   ```
+
+### Running Examples with dflow_run.py
+
+The `dflow_run.py` script is provided to run examples using the DFlow workflow management system:
+
+- `python3 dflow_run.py --find 1`: Find all directories where `runall.sh` has been prepared
+- `python3 dflow_run.py --run 1`: Submit DFlow jobs
+- `python3 dflow_run.py --post 1`: Check the status of jobs
+
+## Input File Format
+
+ABACUS input files (`INPUT`) use a key-value format with parameters organized into sections. For detailed information about input parameters, please refer to the ABACUS user manual.
+
+## Output Files
+
+After running an example, output files will be generated in the `OUT.ABACUS` directory, including:
+
+- `OSZICAR`: Energy and convergence information
+- `running_scf.log`: SCF calculation log
+- `forces.dat`: Atomic forces
+- `STRU_*`: Atomic positions (for MD calculations)
+- Other system-specific output files
+
+## Tips for Using Examples
+
+- **Modify parameters**: Feel free to modify input parameters to explore different settings
+- **Check convergence**: For production calculations, always check convergence with respect to basis set, k-point sampling, and other parameters
+- **Use appropriate parallelization**: Adjust the number of processes and threads in `SETENV` based on your hardware
+- **Refer to documentation**: For detailed information about specific features, refer to the ABACUS user manual
+
+## Troubleshooting
+
+- **Calculation not starting**: Check that ABACUS is properly installed and the `ABACUS_PATH` in `SETENV` is correct
+- **Convergence issues**: Try increasing the number of SCF iterations (`scf_nmax`) or adjusting the mixing parameter (`mixing_beta`)
+- **Memory errors**: Reduce the system size or adjust parallelization settings
+- **Output files not generated**: Check the log files for error messages
+
+## References
+
+- **ABACUS User Manual**: For detailed information about ABACUS features and input parameters
+- **ABACUS GitHub Repository**: [https://github.com/deepmodeling/abacus-develop](https://github.com/deepmodeling/abacus-develop)
+- **DPFlow Documentation**: For information about using the DFlow workflow system

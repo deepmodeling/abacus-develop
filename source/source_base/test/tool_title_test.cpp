@@ -22,7 +22,7 @@ class ToolTitleTest : public testing::Test
     const std::string cfname="ComplexMatrix::scaled_sum()";
   void SetUp()
         {
-        
+
         }
   void TearDown()
 	    {
@@ -45,7 +45,7 @@ TEST_F(ToolTitleTest, TITLE2)
 
 TEST_F(ToolTitleTest, TITLE3)
 {
-    std::ofstream oofs;  
+    std::ofstream oofs;
     std::string output3a;
     std::string output3b;
     oofs.open("TITLEtest3.log");

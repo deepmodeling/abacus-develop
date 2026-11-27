@@ -1,7 +1,3 @@
-/*******************************************
- * ESCP:Electro-Structure Calculate Package.
- ********************************************/
-
 #ifndef INTARRAY_H
 #define INTARRAY_H
 
@@ -9,6 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <stdexcept>
 
 namespace ModuleBase
 {
@@ -32,6 +29,10 @@ class IntArray
     IntArray(const int d1, const int d2, const int d3, const int d4);
     IntArray(const int d1, const int d2, const int d3, const int d4, const int d5);
     IntArray(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6);
+    // Copy constructor
+    IntArray(const IntArray& other);
+    // Move constructor
+    IntArray(IntArray&& other) noexcept;
 
     ~IntArray();
 
@@ -66,12 +67,28 @@ class IntArray
             bound4 = other.bound4;
             bound5 = other.bound5;
             bound6 = other.bound6;
-            ptr = new int[size];
-            for (int i = 0;i < size;i++)
-            { ptr[i] = other.ptr[i]; }
+            try 
+            {
+                ptr = new int[size];
+                for (int i = 0;i < size;i++)
+                {
+                    ptr[i] = other.ptr[i];
+                }
+            }
+            catch (const std::bad_alloc& e)
+            {
+                std::cerr << "Allocation error in IntArray copy assignment: " << e.what() << std::endl;
+                ptr = nullptr;
+                size = 0;
+                throw;
+            }
         }
         return *this;
     }
+    
+    // Move assignment operator
+    IntArray& operator=(IntArray&& other) noexcept;
+
 
     /**
      * @brief Equal all elements of an IntArray to an
@@ -82,7 +99,12 @@ class IntArray
      */
     const IntArray &operator=(const int &right)
     {
-        for (int i = 0;i < size;i++) ptr[i] = right;
+        if (ptr != nullptr && size > 0) {
+            for (int i = 0;i < size;i++) 
+            {
+                ptr[i] = right;
+            }
+        }
         return *this;// enables x = y = z;
     }
 
@@ -95,42 +117,42 @@ class IntArray
      */
     int &operator()(const int d1, const int d2)
     {
-        assert( d1 < bound1 );
-        assert( d2 < bound2 );
+        assert( d1 >= 0 && d1 < bound1 );
+        assert( d2 >= 0 && d2 < bound2 );
         return ptr[ d1 * bound2 + d2 ];
     }
     int &operator()(const int d1, const int d2, const int d3)
     {
-        assert( d1 < bound1 );
-        assert( d2 < bound2 );
-        assert( d3 < bound3 );
+        assert( d1 >= 0 && d1 < bound1 );
+        assert( d2 >= 0 && d2 < bound2 );
+        assert( d3 >= 0 && d3 < bound3 );
         return ptr[ (d1 * bound2 + d2) * bound3 + d3 ];
     }
     int &operator()(const int d1, const int d2, const int d3, const int d4)
     {
-        assert( d1 < bound1 );
-        assert( d2 < bound2 );
-        assert( d3 < bound3 );
-        assert( d4 < bound4 );
+        assert( d1 >= 0 && d1 < bound1 );
+        assert( d2 >= 0 && d2 < bound2 );
+        assert( d3 >= 0 && d3 < bound3 );
+        assert( d4 >= 0 && d4 < bound4 );
         return ptr[ ((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4 ];
     }
     int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5)
     {
-        assert( d1 < bound1 );
-        assert( d2 < bound2 );
-        assert( d3 < bound3 );
-        assert( d4 < bound4 );
-        assert( d5 < bound5 );
+        assert( d1 >= 0 && d1 < bound1 );
+        assert( d2 >= 0 && d2 < bound2 );
+        assert( d3 >= 0 && d3 < bound3 );
+        assert( d4 >= 0 && d4 < bound4 );
+        assert( d5 >= 0 && d5 < bound5 );
         return ptr[ (((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5 ];
     }
     int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6)
     {
-        assert( d1 < bound1 );
-        assert( d2 < bound2 );
-        assert( d3 < bound3 );
-        assert( d4 < bound4 );
-        assert( d5 < bound5 );
-        assert( d6 < bound6 );
+        assert( d1 >= 0 && d1 < bound1 );
+        assert( d2 >= 0 && d2 < bound2 );
+        assert( d3 >= 0 && d3 < bound3 );
+        assert( d4 >= 0 && d4 < bound4 );
+        assert( d5 >= 0 && d5 < bound5 );
+        assert( d6 >= 0 && d6 < bound6 );
         return ptr[ ((((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5) * bound6 + d6 ];
     }
 
@@ -144,42 +166,42 @@ class IntArray
      */
     const int &operator()(const int d1, const int d2) const
     {
-        assert( d1 < bound1 );
-        assert( d2 < bound2 );
+        assert( d1 >= 0 && d1 < bound1 );
+        assert( d2 >= 0 && d2 < bound2 );
         return ptr[ d1 * bound2 + d2 ];
     }
     const int &operator()(const int d1, const int d2, const int d3) const
     {
-        assert( d1 < bound1 );
-        assert( d2 < bound2 );
-        assert( d3 < bound3 );
+        assert( d1 >= 0 && d1 < bound1 );
+        assert( d2 >= 0 && d2 < bound2 );
+        assert( d3 >= 0 && d3 < bound3 );
         return ptr[ (d1 * bound2 + d2) * bound3 + d3 ];
     }
     const int &operator()(const int d1, const int d2, const int d3, const int d4) const
     {
-        assert( d1 < bound1 );
-        assert( d2 < bound2 );
-        assert( d3 < bound3 );
-        assert( d4 < bound4 );
+        assert( d1 >= 0 && d1 < bound1 );
+        assert( d2 >= 0 && d2 < bound2 );
+        assert( d3 >= 0 && d3 < bound3 );
+        assert( d4 >= 0 && d4 < bound4 );
         return ptr[ ((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4 ];
     }
     const int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5) const
     {
-        assert( d1 < bound1 );
-        assert( d2 < bound2 );
-        assert( d3 < bound3 );
-        assert( d4 < bound4 );
-        assert( d5 < bound5 );
+        assert( d1 >= 0 && d1 < bound1 );
+        assert( d2 >= 0 && d2 < bound2 );
+        assert( d3 >= 0 && d3 < bound3 );
+        assert( d4 >= 0 && d4 < bound4 );
+        assert( d5 >= 0 && d5 < bound5 );
         return ptr[ (((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5 ];
     }
     const int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6) const
     {
-        assert( d1 < bound1 );
-        assert( d2 < bound2 );
-        assert( d3 < bound3 );
-        assert( d4 < bound4 );
-        assert( d5 < bound5 );
-        assert( d6 < bound6 );
+        assert( d1 >= 0 && d1 < bound1 );
+        assert( d2 >= 0 && d2 < bound2 );
+        assert( d3 >= 0 && d3 < bound3 );
+        assert( d4 >= 0 && d4 < bound4 );
+        assert( d5 >= 0 && d5 < bound5 );
+        assert( d6 >= 0 && d6 < bound6 );
         return ptr[ ((((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5) * bound6 + d6 ];
     }
 

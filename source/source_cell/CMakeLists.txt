@@ -1,43 +1,74 @@
 add_subdirectory(module_symmetry)
 add_subdirectory(module_neighbor)
+add_subdirectory(module_neighlist)
 
 add_library(
-    cell
-    OBJECT
-    atom_pseudo.cpp
-    atom_spec.cpp
-    pseudo.cpp
-    read_pp.cpp
-    read_pp_complete.cpp
-    read_pp_upf100.cpp
-    read_pp_upf201.cpp
-    read_pp_blps.cpp
-    read_pp_vwr.cpp
-    unitcell.cpp
-    read_atoms.cpp
-    read_atoms_helper.cpp
-    setup_nonlocal.cpp
-    klist.cpp
-    parallel_kpoints.cpp
-    cell_index.cpp
-    check_atomic_stru.cpp
-    update_cell.cpp
-    bcast_cell.cpp
-    read_stru.cpp
-    print_cell.cpp
-    read_atom_species.cpp
-    k_vector_utils.cpp
-    sep.cpp
-    sep_cell.cpp
-)
+  domain_decomposition OBJECT dom_core.cpp dom_ghost.cpp dom_migrate.cpp
+                              dom_force.cpp mdcell_adapter.cpp)
+
+add_library(
+  cell OBJECT
+  basecell.cpp
+  atom_pseudo.cpp
+  atom_spec.cpp
+  pseudo.cpp
+  read_pp.cpp
+  read_pp_complete.cpp
+  read_pp_upf100.cpp
+  read_pp_upf201.cpp
+  read_pp_blps.cpp
+  read_pp_vwr.cpp
+  mdcell_reader.cpp
+  mdcell.cpp
+  mdcell_cif_io.cpp
+  unitcell.cpp
+  unitcell_index.cpp
+  unitcell_stats.cpp
+  unitcell_setup.cpp
+  read_atoms.cpp
+  read_atoms_helper.cpp
+  read_orb.cpp
+  klist.cpp
+  klist_io.cpp
+  reciprocal_grid.cpp
+  parallel_kpoints.cpp
+  cell_index.cpp
+  cell_tools.cpp
+  cell_geometry.cpp
+  record_adj.cpp
+  check_atomic_stru.cpp
+  update_cell.cpp
+  magnetism.cpp
+  bcast_cell.cpp
+  read_stru.cpp
+  stru_frame_io.cpp
+  print_cell.cpp
+  read_atom_species.cpp
+  sep.cpp
+  sep_cell.cpp
+  qlist.cpp
+  qlist.h
+  cal_nelec_nband.cpp
+  read_pp_ucell.cpp
+  cal_wfc.cpp
+  cal_ux.cpp
+  cif_io.cpp
+  soc.cpp
+  ucell_io.cpp)
+
+# Kept out of `cell` because it needs the plane-wave basis (planewave), which
+# the cell-only unit tests do not link.
+add_library(structure_factor OBJECT stru_fac.cpp stru_fac_k.cpp)
 
 if(ENABLE_COVERAGE)
   add_coverage(cell)
+  add_coverage(structure_factor)
 endif()
 
 if(BUILD_TESTING)
+  add_subdirectory(unittests)
+  add_subdirectory(test)
   if(ENABLE_MPI)
-    add_subdirectory(test)
     add_subdirectory(test_pw)
   endif()
 endif()

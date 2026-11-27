@@ -113,7 +113,7 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
 
         nppstr = mp_x + 1;
     }
-    else if (direction == 2) // 计算y方向
+    else if (direction == 2) /// compute the y direction
     {
         const int num_string = mp_x * mp_z;
 
@@ -163,7 +163,7 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
 
         nppstr = mp_y + 1;
     }
-    else if (direction == 3) // 计算z方向
+    else if (direction == 3) /// compute the z direction
     {
         const int num_string = mp_x * mp_y;
 
@@ -519,12 +519,12 @@ void berryphase::Macroscopic_polarization(const UnitCell& ucell,
 
     // calculate Macroscopic polarization modulus because berry phase
     int modulus = 0;
-	if ((!lodd) && (PARAM.inp.nspin == 1)) 
-	{
-		modulus = 2;
-	} else {
-		modulus = 1;
-	}
+    if ((!lodd) && (PARAM.inp.nspin == 1)) 
+    {
+        modulus = 2;
+    } else {
+        modulus = 1;
+    }
 
     // test by jingan
     // GlobalV::ofs_running << "ion polarization end" << std::endl;
@@ -678,7 +678,7 @@ void berryphase::Macroscopic_polarization(const UnitCell& ucell,
 
 std::string berryphase::outFormat(const double polarization,
                                   const double modulus,
-                                  const ModuleBase::Vector3<double> project)
+                                  const ModuleBase::Vector3<double> project) const
 {
     std::stringstream outStr;
     outStr << std::setw(12) << std::fixed << std::setprecision(7) << polarization << "  (mod ";

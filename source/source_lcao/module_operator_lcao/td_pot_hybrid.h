@@ -1,16 +1,13 @@
 #ifndef TD_POT_HYBRID_H
 #define TD_POT_HYBRID_H
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include <vector>
-#include "source_io/module_hs/cal_r_overlap_R.h"
-#include "source_lcao/module_rt/td_info.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_io/module_hs/pos_op_mat.h"
 
 namespace hamilt
 {
@@ -50,7 +47,8 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       const UnitCell* ucell_in,
                                       const std::vector<double>& orb_cutoff,
                                       const Grid_Driver* GridD_in,
-                                      const TwoCenterIntegrator* intor);
+                                      const TwoCenterIntegrator* intor,
+                                      TD_info& td_info);
 
     /**
      * @brief Destroy the TD_pot_hybrid object
@@ -68,6 +66,9 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     virtual void set_HR_fixed(void*) override;
 
+    void cal_force_stress(const bool cal_force,
+                          const HContainer<TR>* dmR,
+                          ModuleBase::matrix& force);
 
   private:
     const UnitCell* ucell = nullptr;
@@ -84,7 +85,7 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     bool HR_fixed_done = false;
     //tddft part
-    cal_r_overlap_R* r_calculator;
+    Position_op* r_calculator;
     //ETD
     //std::vector<std::complex<double>> hk_hybrid;
     //ETD
@@ -114,13 +115,23 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_HR_IJR(const int& iat1,
                     const int& iat2,
-                    const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
+                    const ModuleBase::Vector3<double>& dR,
                     TR* hr_mat_p,
                     TR* sr_p);
 
     /// @brief exact the nearest neighbor atoms from all adjacent atoms
     std::vector<AdjacentAtomInfo> adjs_all;
+
+    void cal_force_IJR(const int& iat1,
+                    const int& iat2,
+                    const ModuleBase::Vector3<double>& dtau,     
+                    const ModuleBase::Vector3<double>& dR,                  
+                    TR* dmR_pointer,
+                    double* force1,
+                    double* force2);
+
+    const Grid_Driver* gridD = nullptr;
 };
 
 } // namespace hamilt

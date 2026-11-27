@@ -1,0 +1,110 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+# BSSE (Basis Set Superposition Error) Correction Examples
+
+This directory contains examples for performing calculations with Basis Set Superposition Error (BSSE) correction in ABACUS. BSSE is a systematic error that arises in quantum chemical calculations when using finite basis sets, particularly in calculations of molecular interactions.
+
+## What is BSSE?
+
+Basis Set Superposition Error (BSSE) is an error that occurs in quantum chemical calculations when the basis sets of different fragments overlap. It arises because:
+
+- Each fragment "borrows" basis functions from neighboring fragments
+- This artificial enhancement of the basis set leads to an overestimation of binding energies
+- The error becomes more significant with smaller basis sets
+
+BSSE is particularly important in calculations of:
+
+- Molecular binding energies
+- Hydrogen bonding
+- Van der Waals interactions
+- Reaction energies
+
+## BSSE Correction in ABACUS
+
+ABACUS supports BSSE correction using the Counterpoise Method, which was introduced by Boys and Bernardi. The method involves:
+
+1. Calculating the energy of the whole system (E_AB)
+2. Calculating the energy of each fragment in the presence of the other fragment's basis set (E_A(B) and E_B(A))
+3. Calculating the energy of each fragment in its own basis set (E_A and E_B)
+4. Applying the correction: E_corrected = E_AB - (E_A(B) + E_B(A) - E_A - E_B)
+
+## Examples Included
+
+### 1. 01_water
+- **System**: Water molecule (H₂O)
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates BSSE correction for calculating the binding energy of water molecule
+- **Input Files**:
+  - `INPUT`: Contains the calculation parameters
+  - `KPT`: Defines the k-point sampling
+  - `STRU_0`: Water molecule (whole system)
+  - `STRU_1`: Oxygen atom (fragment 1)
+  - `STRU_2`: First hydrogen atom (fragment 2)
+  - `STRU_3`: Second hydrogen atom (fragment 3)
+  - `run.sh`: Script to run the calculation and apply BSSE correction
+  - `README`: Additional information about the example
+  - `result.ref`: Reference results for comparison
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/32_bsse/01_water
+   ```
+
+2. Run the calculation using the provided script:
+   ```bash
+   bash run.sh
+   ```
+
+3. The script will automatically:
+   - Calculate the energy of the whole water molecule (E_H2O)
+   - Calculate the energy of each atom with the basis sets of all other atoms
+   - Calculate the energy of each atom in its own basis set
+   - Apply the BSSE correction to obtain the corrected binding energy
+
+4. Check the output files in the `OUT` directory and the final result in the terminal output.
+
+## Output Files
+
+After running the calculation, you will find the following key output files:
+
+- `OUT/`: Directory containing output files for each calculation
+- `result.ref`: Reference results for comparison
+- Terminal output: Displays the BSSE-corrected binding energy
+
+## Calculating Binding Energy with BSSE Correction
+
+The binding energy of water is calculated as:
+
+ΔE_H2O = E_H2O - E_O - E_H1 - E_H2
+
+Where:
+- E_H2O is the energy of the water molecule
+- E_O is the energy of the oxygen atom
+- E_H1 and E_H2 are the energies of the hydrogen atoms
+
+The BSSE-corrected binding energy accounts for the artificial basis set overlap between fragments.
+
+## Notes
+
+- BSSE correction is essential for accurate calculation of binding energies, especially with small basis sets
+- The Counterpoise Method is the most widely used approach for BSSE correction
+- BSSE becomes less significant with larger, more complete basis sets
+- The computational cost of BSSE correction is higher than standard calculations because it requires multiple separate calculations
+- The examples provided are for demonstration purposes; for production calculations, you should carefully test the convergence of results with respect to basis set and other parameters
+
+## Applications
+
+BSSE correction calculations in ABACUS can be used to study:
+
+- Molecular binding energies
+- Hydrogen bonding interactions
+- van der Waals complexes
+- Reaction energies and barriers
+- Adsorption energies at surfaces
+- Cluster formation energies

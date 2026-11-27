@@ -4,14 +4,14 @@
 
 #include "deepks_vdrpre.h"
 
-#include "LCAO_deepks_io.h" // mohan add 2024-07-22
+#include "lcao_deepks_io.h" // mohan add 2024-07-22
 #include "deepks_iterate.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
+#include "source_hamilt/module_hcontainer/atom_pair.h"
 
 void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
                                             const int R_size,
@@ -19,12 +19,13 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
                                             const std::vector<hamilt::HContainer<double>*> phialpha,
                                             const UnitCell& ucell,
                                             const LCAO_Orbitals& orb,
+                                            const Parallel_Orbitals& pv,
                                             const Grid_Driver& GridD,
                                             torch::Tensor& overlap,
                                             torch::Tensor& iRmat)
 {
     ModuleBase::TITLE("DeePKS_domain", "prepare_phialpha_iRmat");
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha_iRmat");
+    ModuleBase::timer::start("DeePKS_domain", "prepare_phialpha_iRmat");
     constexpr torch::Dtype dtype = torch::kFloat64;
 
     // get the maximum nnmax
@@ -53,8 +54,8 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
     int nnmax = *std::max_element(nnmax_vec.begin(), nnmax_vec.end());
     overlap = torch::zeros({ucell.nat, nnmax, nlocal, deepks_param.des_per_atom}, dtype);
     torch::Tensor dRmat_tmp = torch::zeros({ucell.nat, nnmax, 3}, torch::kInt32);
-    auto overlap_accessor = overlap.accessor<double, 4>();
-    auto dRmat_accessor = dRmat_tmp.accessor<int, 3>();
+    at::TensorAccessor<double, 4> overlap_accessor = overlap.accessor<double, 4>();
+    at::TensorAccessor<int, 3> dRmat_accessor = dRmat_tmp.accessor<int, 3>();
 
     std::fill(nnmax_vec.begin(), nnmax_vec.end(), 0);
     DeePKS_domain::iterate_ad1(
@@ -81,6 +82,10 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
 
             for (int ix = 0; ix < nw_tot; ix++)
             {
+                if (pv.para_2d().irloc(start + ix) < 0 || pv.para_2d().icloc(start + ix) < 0)
+                {
+                    continue;
+                }
                 for (int iy = 0; iy < deepks_param.des_per_atom; iy++)
                 {
                     overlap_accessor[iat][nnmax_vec[iat]][start + ix][iy] = overlap_mat->get_value(ix, iy);
@@ -89,8 +94,11 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
             nnmax_vec[iat]++;
         }
     );
+#ifdef __MPI
+    Parallel_Reduce::reduce_all(overlap.data_ptr<double>(), overlap.numel());
+#endif
     iRmat = mapping_R(dRmat_tmp.unsqueeze(1) - dRmat_tmp.unsqueeze(2));
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha_iRmat");
+    ModuleBase::timer::end("DeePKS_domain", "prepare_phialpha_iRmat");
     return;
 }
 
@@ -109,7 +117,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
                                     torch::Tensor& vdr_precalc)
 {
     ModuleBase::TITLE("DeePKS_domain", "calc_vdr_precalc");
-    ModuleBase::timer::tick("DeePKS_domain", "calc_vdr_precalc");
+    ModuleBase::timer::start("DeePKS_domain", "calc_vdr_precalc");
 
     torch::Tensor vdr_pdm = torch::zeros({R_size,
                                           R_size,
@@ -120,7 +128,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
                                           (2 * deepks_param.lmaxd + 1),
                                           (2 * deepks_param.lmaxd + 1)},
                                          torch::TensorOptions().dtype(torch::kFloat64));
-    auto accessor = vdr_pdm.accessor<double, 8>();
+    at::TensorAccessor<double, 8> accessor = vdr_pdm.accessor<double, 8>();
 
     DeePKS_domain::iterate_ad2(ucell,
                                GridD,
@@ -162,7 +170,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
                                    for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
                                    {
                                        const int iw1_all = start1 + iw1; // this is \mu
-                                       const int iw1_local = pv.global2local_row(iw1_all);
+                                       const int iw1_local = pv.para_2d().irloc(iw1_all);
                                        if (iw1_local < 0)
                                        {
                                            continue;
@@ -170,7 +178,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
                                        for (int iw2 = 0; iw2 < nw2_tot; ++iw2)
                                        {
                                            const int iw2_all = start2 + iw2; // this is \nu
-                                           const int iw2_local = pv.global2local_col(iw2_all);
+                                           const int iw2_local = pv.para_2d().icloc(iw2_all);
                                            if (iw2_local < 0)
                                            {
                                                continue;
@@ -230,7 +238,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
 
     vdr_precalc = torch::cat(vdr_vector, -1);
 
-    ModuleBase::timer::tick("DeePKS_domain", "calc_vdr_precalc");
+    ModuleBase::timer::end("DeePKS_domain", "calc_vdr_precalc");
     return;
 }
 
@@ -254,10 +262,10 @@ int DeePKS_domain::mapping_R(int R)
 
 torch::Tensor DeePKS_domain::mapping_R(const torch::Tensor& R_tensor)
 {
-    auto R = R_tensor.to(torch::kInt32);
-    auto pos = R > 0;
-    auto twoR_minus1 = R * 2 - 1;
-    auto neg_minus2R = -2 * R;
+    at::Tensor R = R_tensor.to(torch::kInt32);
+    at::Tensor pos = R > 0;
+    at::Tensor twoR_minus1 = R * 2 - 1;
+    at::Tensor neg_minus2R = -2 * R;
     return at::where(pos, twoR_minus1, neg_minus2R);
 }
 

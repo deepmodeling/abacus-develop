@@ -1,11 +1,15 @@
 #include "output_log.h"
 
+#include "source_estate/fp_energy.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/constants.h"
 #include "source_base/formatter.h"
+#include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/parallel_comm.h"
+#include <cmath>
+#include <iomanip>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -50,13 +54,23 @@ void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_run
     }
 }
 
-void output_efermi(const bool &convergence, double& efermi, std::ofstream& ofs_running)
+void output_efermi(const bool &convergence, const elecstate::Efermi& eferm, std::ofstream& ofs_running)
 {
     if (convergence && PARAM.inp.out_level != "m")
     {
-// mohan comment out 2025-06-22
-//        ofs_running << std::setprecision(16);
-//        ofs_running << " EFERMI = " << std::setprecision(11) << efermi * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        if (eferm.two_efermi)
+        {
+            ofs_running << " #FERMI ENERGY# "
+                        << std::setprecision(11) << eferm.ef_up * ModuleBase::Ry_to_eV
+                        << " " << eferm.ef_dw * ModuleBase::Ry_to_eV
+                        << " eV    # two fermi energies (up, down)" << std::endl;
+        }
+        else
+        {
+            ofs_running << " #FERMI ENERGY# "
+                        << std::setprecision(11) << eferm.ef * ModuleBase::Ry_to_eV
+                        << " eV" << std::endl;
+        }
     }
 }
 
@@ -219,6 +233,12 @@ void print_force(std::ofstream& ofs_running,
                  const ModuleBase::matrix& force,
                  bool ry)
 {
+    const auto& input = PARAM.inp;
+    // MD writes forces with its STRU frames, independently of solver type.
+    if (input.calculation == "md")
+    {
+        return;
+    }
     // this is a magic number, mohan note 2025-06-22
     const double output_acc = 1.0e-8;
     double fac = 1.0;
@@ -258,22 +278,45 @@ void print_force(std::ofstream& ofs_running,
                  /*nrows=*/atom_label.size(), 
                  /*formats=*/{"%8s", "%20.10f", "%20.10f", "%20.10f"}, 
                  /*indent*/1,
-			     {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+                 {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
 
 
-	fmt << atom_label << force_x << force_y << force_z;
-	table = fmt.str();
+    fmt << atom_label << force_x << force_y << force_z;
+    table = fmt.str();
     ofs_running << table; 
 
-	if (PARAM.inp.test_force) 
-	{ 
-		std::cout << table;
-	}
+    if (input.test_force)
+    { 
+        std::cout << table;
+    }
+}
+
+void print_net_force(std::ofstream& ofs, const ModuleBase::Vector3<double>& net_force)
+{
+    const double fac = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    const double net_x = net_force.x * fac;
+    const double net_y = net_force.y * fac;
+    const double net_z = net_force.z * fac;
+    const double drift = std::sqrt(net_x * net_x + net_y * net_y + net_z * net_z);
+
+    // keep the scientific format local to this diagnostic
+    const std::ios::fmtflags old_flags = ofs.flags();
+    const std::streamsize old_precision = ofs.precision();
+    ofs << std::scientific << std::setprecision(4);
+    ModuleBase::GlobalFunc::OUT(ofs, "Net force vector (eV/Ang)", net_x, net_y, net_z);
+    ModuleBase::GlobalFunc::OUT(ofs, "Total drift (ev/Ang)", drift);
+    ofs.flags(old_flags);
+    ofs.precision(old_precision);
 }
 
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, 
   const bool screen, const bool ry, std::ofstream &ofs)
 {
+    // MD prints virial and total stress on the thermodynamic cadence.
+    if (PARAM.inp.calculation == "md")
+    {
+        return;
+    }
     const double output_acc = 1.0e-8;
     double unit_transform = 1;
     std::string title = name;
@@ -319,7 +362,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
     fmt << stress_x << stress_y << stress_z;
     table = fmt.str();
     ofs << table;
-    if (name == "TOTAL-STRESS" && PARAM.inp.calculation != "md")
+    if (name == "TOTAL-STRESS")
     {
         ofs << " #TOTAL-PRESSURE# (EXCLUDE KINETIC PART OF IONS): " << std::fixed 
                              << std::setprecision(6) << pressure << unit

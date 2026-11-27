@@ -20,6 +20,9 @@ struct ParameterMetadata {
     std::string category;
     std::string unit;         // Empty string if no unit
     std::string availability; // Empty string if always available
+    std::string value_rule;
+    std::string requirements;
+    std::string allowed_values; // Rendered from the runtime domain; empty if not declared
     std::string name_lowercase; // Pre-computed lowercase for fast fuzzy matching
 };
 
@@ -100,7 +103,7 @@ public:
      * @brief Find similar parameter names for fuzzy matching
      *
      * Uses a multi-tier matching strategy to find relevant parameters:
-     * 1. Prefix matches (e.g., "relax" matches "relax_new") - highest priority
+     * 1. Prefix matches (e.g., "relax" matches "relax_method") - highest priority
      * 2. Substring matches (e.g., "cut" matches "ecutwfc") - medium priority
      * 3. Levenshtein distance for typos - lowest priority
      *

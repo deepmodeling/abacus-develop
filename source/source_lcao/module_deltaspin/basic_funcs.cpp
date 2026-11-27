@@ -1,13 +1,13 @@
 #include "basic_funcs.h"
 
 #include <iostream>
-#include "source_base/formatter.h"
 #include "source_base/constants.h"
+#include "source_base/formatter.h"
 
 double maxval_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array)
 {
     double max = 0;
-    for (const auto& value: array)
+    for (const ModuleBase::Vector3<double>& value: array)
     {
             max = std::max(max, std::abs(value.x));
             max = std::max(max, std::abs(value.y));
@@ -40,7 +40,7 @@ template <typename T>
 T sum_2d(const std::vector<ModuleBase::Vector3<T>>& array)
 {
     ModuleBase::Vector3<T> sum;
-    for (const auto& element: array)
+    for (const ModuleBase::Vector3<T>& element: array)
     {
             sum += element;
     }
@@ -57,7 +57,7 @@ void scalar_multiply_2d(const std::vector<ModuleBase::Vector3<double>>& array,
                         std::vector<ModuleBase::Vector3<double>>& result)
 {
     int size = array.size();
-    result.reserve(size);
+    result.resize(size);
     for (int i = 0; i < size; i++)
     {
         result[i] = scalar * array[i];
@@ -70,7 +70,7 @@ void add_scalar_multiply_2d(const std::vector<ModuleBase::Vector3<double>>& arra
                             std::vector<ModuleBase::Vector3<double>>& result)
 {
     int size = array_1.size();
-    result.reserve(size);
+    result.resize(size);
     for (int i = 0; i < size; i++)
     {
         result[i] = array_1[i] + scalar * array_2[i];
@@ -82,7 +82,7 @@ void subtract_2d(const std::vector<ModuleBase::Vector3<double>>& array_1,
                  std::vector<ModuleBase::Vector3<double>>& result)
 {
     int size = array_1.size();
-    result.reserve(size);
+    result.resize(size);
     for (int i = 0; i < size; i++)
     {
             result[i] = array_1[i] - array_2[i];
@@ -91,7 +91,7 @@ void subtract_2d(const std::vector<ModuleBase::Vector3<double>>& array_1,
 
 void fill_scalar_2d(double scalar, std::vector<ModuleBase::Vector3<double>>& result)
 {
-    for (auto& row: result)
+    for (ModuleBase::Vector3<double>& row: result)
     {
         row.x = scalar;
         row.y = scalar;
@@ -139,11 +139,16 @@ void print_2d(const std::string info, const std::vector<ModuleBase::Vector3<doub
 {
     ofs << info << std::endl;
     int iat = 0;
-    for (const auto &row : array)
+    for (const ModuleBase::Vector3<double>& row : array)
     {
         iat += 1;
-        if (nspin == 2) { ofs << FmtCore::format("ATOM %6d %20.10f\n", iat, row.z*unit_convert);
-        } else if (nspin == 4) { ofs << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n", iat, row.x*unit_convert, row.y*unit_convert, row.z*unit_convert);
-}
+        if (nspin == 2)
+        {
+            ofs << FmtCore::format(" ATOM %6d %20.10f\n", iat, row.z*unit_convert);
+        }
+        else if (nspin == 4)
+        {
+            ofs << FmtCore::format(" ATOM %6d %20.10f %20.10f %20.10f\n", iat, row.x*unit_convert, row.y*unit_convert, row.z*unit_convert);
+        }
     }
 }

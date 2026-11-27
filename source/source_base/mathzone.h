@@ -2,7 +2,9 @@
 #define MATHZONE_H
 
 #include "global_function.h"
+#include "matrix.h"
 #include "matrix3.h"
+#include "tool_quit.h"
 #include "vector3.h"
 #include "realarray.h"
 
@@ -171,8 +173,61 @@ class Mathzone
         proj.y = std::abs( latvec[1] * (latvec[2] ^ latvec[0]).normalize() );
         proj.z = std::abs( latvec[2] * (latvec[0] ^ latvec[1]).normalize() );
         return proj;
-    } 
+    }
 };
+
+/**
+ * @brief Sum the per-atom Cartesian forces into the net force vector.
+ *
+ * This is a pure matrix operation, independent of symmetry and of any
+ * external-field terms already contained in the input. Its norm is the
+ * quantity reported as the force drift.
+ *
+ * @param[in] nat number of atoms
+ * @param[in] force per-atom Cartesian forces, nat x 3
+ * @return net force vector, in the same unit as the input
+ */
+inline Vector3<double> net_force_vector(const int nat, const ModuleBase::matrix& force)
+{
+    if (nat <= 0 || force.nr < nat || force.nc < 3)
+    {
+        ModuleBase::WARNING_QUIT("net_force_vector",
+                                 "nat must be positive and force must have at least nat x 3 elements");
+    }
+    Vector3<double> net_force = Vector3<double>(0.0, 0.0, 0.0);
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        net_force.x += force(iat, 0);
+        net_force.y += force(iat, 1);
+        net_force.z += force(iat, 2);
+    }
+    return net_force;
+}
+
+/**
+ * @brief Remove the uniform net-force component in place (Newton's 3rd law).
+ *
+ * Subtract the per-component mean force so the total force sums to zero. This
+ * is a pure matrix operation, independent of symmetry. Shared by the PW and
+ * LCAO force paths. Not applied when an external field (gate/efield) is present.
+ *
+ * @param[in] nat number of atoms
+ * @param[in,out] force per-atom Cartesian forces, nat x 3, modified in place
+ */
+inline void remove_net_force(const int nat, ModuleBase::matrix& force)
+{
+    const Vector3<double> net_force = net_force_vector(nat, force);
+    const double compen_x = net_force.x / nat;
+    const double compen_y = net_force.y / nat;
+    const double compen_z = net_force.z / nat;
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        force(iat, 0) -= compen_x;
+        force(iat, 1) -= compen_y;
+        force(iat, 2) -= compen_z;
+    }
+    return;
+}
 
 } // namespace ModuleBase
 

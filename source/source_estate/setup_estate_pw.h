@@ -1,13 +1,15 @@
 #ifndef SETUP_ESTATE_PW_H
 #define SETUP_ESTATE_PW_H
 
-#include "source_base/module_device/device.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_cell/stru_fac.h"
+#include "source_basis/module_pw/pw_basis_sup.h"
 #include "source_estate/elecstate.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
+
+class pseudopot_cell_vnl;
 
 namespace elecstate
 {

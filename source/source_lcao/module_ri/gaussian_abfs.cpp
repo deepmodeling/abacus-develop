@@ -11,11 +11,12 @@
 #include <algorithm>
 // #include <chrono>
 
-#include "LRI_CV_Tools.h"
+#include "lri_cv_tools.h"
 #include "source_base/global_variable.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#include "source_io/module_parameter/parameter.h"
 //#include "source_pw/hamilt_pwdft/global.h"
 
 #include <RI/global/Global_Func-1.h>
@@ -27,7 +28,7 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
                          const double& lambda)
 {
     ModuleBase::TITLE("Gaussian_Abfs", "init");
-    ModuleBase::timer::tick("Gaussian_Abfs", "init");
+    ModuleBase::timer::start("Gaussian_Abfs", "init");
 
     this->kvec_c = kvec_c;
     const int nks0 = kvec_c.size();
@@ -95,7 +96,7 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
         }
     }
 
-    ModuleBase::timer::tick("Gaussian_Abfs", "init");
+    ModuleBase::timer::end("Gaussian_Abfs", "init");
 }
 
 auto Gaussian_Abfs::get_Vq(const int& lp_max,
@@ -106,7 +107,7 @@ auto Gaussian_Abfs::get_Vq(const int& lp_max,
                            const ModuleBase::realArray& gaunt) -> RI::Tensor<std::complex<double>>
 {
     ModuleBase::TITLE("Gaussian_Abfs", "get_Vq");
-    ModuleBase::timer::tick("Gaussian_Abfs", "get_Vq");
+    ModuleBase::timer::start("Gaussian_Abfs", "get_Vq");
 
     const T_func_DPcal_lattice_sum<std::complex<double>> func_DPcal_lattice_sum
         = std::bind(&Gaussian_Abfs::get_lattice_sum,
@@ -118,7 +119,7 @@ auto Gaussian_Abfs::get_Vq(const int& lp_max,
                     std::placeholders::_3,
                     std::placeholders::_4,
                     tau);
-    auto res = this->DPcal_Vq_dVq<RI::Tensor<std::complex<double>>>(this->omega,
+    RI::Tensor<std::complex<double>> res = this->DPcal_Vq_dVq<RI::Tensor<std::complex<double>>>(this->omega,
                                                                     lp_max,
                                                                     lq_max,
                                                                     ik,
@@ -127,7 +128,7 @@ auto Gaussian_Abfs::get_Vq(const int& lp_max,
                                                                     gaunt,
                                                                     func_DPcal_lattice_sum);
 
-    ModuleBase::timer::tick("Gaussian_Abfs", "get_Vq");
+    ModuleBase::timer::end("Gaussian_Abfs", "get_Vq");
     return res;
 }
 
@@ -139,7 +140,7 @@ auto Gaussian_Abfs::get_dVq(const int& lp_max,
                             const ModuleBase::realArray& gaunt) -> std::array<RI::Tensor<std::complex<double>>, 3>
 {
     ModuleBase::TITLE("Gaussian_Abfs", "get_dVq");
-    ModuleBase::timer::tick("Gaussian_Abfs", "get_dVq");
+    ModuleBase::timer::start("Gaussian_Abfs", "get_dVq");
 
     const T_func_DPcal_lattice_sum<std::array<std::complex<double>, 3>> func_DPcal_d_lattice_sum
         = std::bind(&Gaussian_Abfs::get_d_lattice_sum,
@@ -151,7 +152,7 @@ auto Gaussian_Abfs::get_dVq(const int& lp_max,
                     std::placeholders::_3,
                     std::placeholders::_4,
                     tau);
-    auto res = this->DPcal_Vq_dVq<std::array<RI::Tensor<std::complex<double>>, 3>>(this->omega,
+    std::array<RI::Tensor<std::complex<double>>, 3> res = this->DPcal_Vq_dVq<std::array<RI::Tensor<std::complex<double>>, 3>>(this->omega,
                                                                                    lp_max,
                                                                                    lq_max,
                                                                                    ik,
@@ -160,7 +161,7 @@ auto Gaussian_Abfs::get_dVq(const int& lp_max,
                                                                                    gaunt,
                                                                                    func_DPcal_d_lattice_sum);
 
-    ModuleBase::timer::tick("Gaussian_Abfs", "get_Vq");
+    ModuleBase::timer::end("Gaussian_Abfs", "get_dVq");
     return res;
 }
 

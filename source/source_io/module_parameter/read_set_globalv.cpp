@@ -1,8 +1,102 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 #include "source_base/global_variable.h"
+#include "source_base/fs_compat.h"
 #include "source_base/tool_quit.h"
+#include "source_cell/stru_frame_io.h"
 #include "source_io/module_parameter/parameter.h"
+
+#include <iostream>
+#include <sstream>
+#include <string>
+
+namespace
+{
+void log_read_file(const std::string& filename)
+{
+    const std::string full_path = ModuleBase::absolute_path_for_log(filename);
+    const std::string confirmation = "Read file: " + full_path;
+    std::cout << confirmation << std::endl;
+}
+
+bool has_md_velocities(const std::string& filename)
+{
+    std::ifstream file(filename.c_str());
+    std::string line;
+    while (std::getline(file, line))
+    {
+        std::istringstream record(line);
+        double x = 0.0;
+        double y = 0.0;
+        double z = 0.0;
+        if (!(record >> x >> y >> z))
+        {
+            continue;
+        }
+        std::string field;
+        while (record >> field)
+        {
+            if (field == "v" || field == "vel" || field == "velocity")
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/// @brief Find a legacy structure file for restarting a molecular dynamics run.
+/// @param stru_dir directory where the previous run wrote its structure files
+/// @param istep number of completed ionic steps recorded in Restart_md.txt
+/// @return path of the first existing structure file, empty if none exists
+/// @details New runs use STRU_restart. Three older naming schemes are
+/// accepted as fallbacks, in order:
+/// - "STRU": fixed-name cumulative file written in out_app_flag == 1 mode.
+///   Unlike an earlier implementation that blindly took the last frame (and thus
+///   risked mixing geometry from a later step with Restart_md.txt metadata from
+///   {istep}), this helper now walks the cumulative file and locates the frame
+///   whose "# MD step N" marker matches istep + 1 exactly. When found, the
+///   frame is extracted to "STRU_restart_frame" and that path is returned so
+///   the restart readers see a single-frame file;
+/// - "STRU{istep + 1}": written by run_md since the ionic-step numbering
+///   was unified with relax (1-based);
+/// - "STRU_MD_{istep}": written by older ABACUS versions.
+/// None of these schemes is allowed to silently fall back to an unrelated
+/// frame. The caller turns an empty return value into a hard error with a
+/// message pointing to the output cadences that produced the gap.
+std::string find_md_restart_stru(const std::string& stru_dir, const int istep)
+{
+    // Prefer the fixed-name cumulative STRU when its marker exactly matches
+    // the step this legacy restart resumes from. New runs use STRU_restart;
+    // old output may contain a matching cumulative frame.
+    const std::string stru_cumulative = stru_dir + "STRU";
+    std::ifstream file_cumulative(stru_cumulative.c_str());
+    if (file_cumulative.good())
+    {
+        file_cumulative.close();
+        const std::string frame_path = stru_dir + "STRU_restart_frame";
+        if (stru_frame_io::extract_frame_by_step(stru_cumulative, istep + 1, frame_path)
+            && has_md_velocities(frame_path))
+        {
+            return frame_path;
+        }
+    }
+    const std::string stru_new = stru_dir + "STRU" + std::to_string(istep + 1);
+    std::ifstream file_new(stru_new.c_str());
+    if (file_new.good() && has_md_velocities(stru_new))
+    {
+        return stru_new;
+    }
+    const std::string stru_old = stru_dir + "STRU_MD_" + std::to_string(istep);
+    std::ifstream file_old(stru_old.c_str());
+    if (file_old.good() && has_md_velocities(stru_old))
+    {
+        return stru_old;
+    }
+    return "";
+}
+} // namespace
+
 namespace ModuleIO
 {
 /// @note Here para.inp has been synchronized of all ranks.
@@ -66,7 +160,7 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
         sys.all_ks_run = false;
     }
     // set the has_double_data and has_float_data
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     bool float_cond = inp.cal_cond && inp.esolver_type == "sdft";
 #else
     bool float_cond = false;
@@ -85,17 +179,40 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     sys.global_out_dir = prefix + inp.suffix + "/";
     sys.global_out_dir = to_dir(sys.global_out_dir);
 
-    /// get the global output directory
-    sys.global_stru_dir = sys.global_out_dir + "STRU/";
-    sys.global_stru_dir = to_dir(sys.global_stru_dir);
+    /// Set subdirectories based on out_app_flag
+    /// out_app_flag == 2: use unified uppercase subdirectories
+    /// otherwise: keep backward-compatible behavior (all point to global_out_dir)
+    /// The structure subdirectory is named STRUC (not STRU) so it cannot be
+    /// confused with the STRU input file.
+    if (inp.out_app_flag == 2)
+    {
+        sys.global_stru_dir = sys.global_out_dir + "STRUC/";
+        sys.global_psi_dir = sys.global_out_dir + "PSI/";
+        sys.global_chg_dir = sys.global_out_dir + "CHG/";
+        sys.global_pot_dir = sys.global_out_dir + "POT/";
+        sys.global_elf_dir = sys.global_out_dir + "ELF/";
+        sys.global_dos_dir = sys.global_out_dir + "DOS/";
+        sys.global_dip_dir = sys.global_out_dir + "DIP/";
+        sys.global_mat_dir = sys.global_out_dir + "MAT/";
+        sys.global_band_dir = sys.global_out_dir + "BANDS/";
+    }
+    else
+    {
+        sys.global_stru_dir = sys.global_out_dir;
+        sys.global_psi_dir = sys.global_out_dir;
+        sys.global_chg_dir = sys.global_out_dir;
+        sys.global_pot_dir = sys.global_out_dir;
+        sys.global_elf_dir = sys.global_out_dir;
+        sys.global_dos_dir = sys.global_out_dir;
+        sys.global_dip_dir = sys.global_out_dir;
+        sys.global_mat_dir = sys.global_out_dir;
+        sys.global_band_dir = sys.global_out_dir;
+    }
 
-    /// get the global output directory
-    sys.global_matrix_dir = sys.global_out_dir + "matrix/";
-    sys.global_matrix_dir = to_dir(sys.global_matrix_dir);
-
-    /// get the global output directory
-    sys.global_wfc_dir = sys.global_out_dir + "WFC/";
-    sys.global_wfc_dir = to_dir(sys.global_wfc_dir);
+    /// Map legacy directory names to new unified names
+    /// WFC -> PSI, matrix -> MAT
+    sys.global_wfc_dir = sys.global_psi_dir;
+    sys.global_matrix_dir = sys.global_mat_dir;
 
     /// get the global ML KEDF descriptor directory
     sys.global_mlkedf_descriptor_dir = sys.global_out_dir + "MLKEDF_Descriptors/";
@@ -112,16 +229,61 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     /// get the stru file for md restart case
     if (inp.calculation == "md" && inp.mdp.md_restart)
     {
-        int istep = current_md_step(sys.global_readin_dir);
-
-        if (inp.read_file_dir == to_dir("OUT." + inp.suffix))
+        const int istep = current_md_step(sys.global_readin_dir);
+        const std::string checkpoint = sys.global_readin_dir + "STRU_restart";
+        std::ifstream checkpoint_file(checkpoint.c_str());
+        if (checkpoint_file.good())
         {
-            sys.global_in_stru = sys.global_stru_dir + "STRU_MD_" + std::to_string(istep);
+            checkpoint_file.close();
+            const int checkpoint_step = stru_frame_io::last_frame_step(checkpoint);
+            if (checkpoint_step != istep + 1)
+            {
+                const std::string message = "STRU_restart step " + std::to_string(checkpoint_step)
+                                            + " does not match Restart_md.txt step " + std::to_string(istep + 1);
+                ModuleBase::WARNING_QUIT("ReadInput::set_global_dir", message);
+            }
+            if (!has_md_velocities(checkpoint))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput::set_global_dir", "STRU_restart lacks atomic velocities");
+            }
+            sys.global_in_stru = checkpoint;
+        }
+        else if (inp.read_file_dir == to_dir("OUT." + inp.suffix))
+        {
+            // Restart from the default output directory: search the current
+            // STRU output directory, which follows out_app_flag.
+            const std::string stru_dir = sys.global_stru_dir;
+            sys.global_in_stru = find_md_restart_stru(stru_dir, istep);
+            if (sys.global_in_stru.empty())
+            {
+                // Releases before the out_app_flag rework always wrote
+                // STRU_MD_{istep} into a fixed STRU/ subdirectory of the
+                // output directory (the mode-2 directory has since been
+                // renamed to STRUC/); keep those outputs restartable.
+                const std::string legacy_dir = sys.global_out_dir + "STRU/";
+                sys.global_in_stru = find_md_restart_stru(legacy_dir, istep);
+            }
         }
         else
         {
-            sys.global_in_stru = inp.read_file_dir + "STRU_MD_" + std::to_string(istep);
+            // Restart from a user-provided directory: the previous run may
+            // have written either naming scheme there.
+            const std::string stru_dir = inp.read_file_dir;
+            sys.global_in_stru = find_md_restart_stru(stru_dir, istep);
         }
+
+        if (sys.global_in_stru.empty())
+        {
+            const std::string message = "no STRU file found for MD restart in " + sys.global_readin_dir
+                                        + "; Restart_md.txt reports step "
+                                        + std::to_string(istep)
+                                        + " but no matching structure frame is present. "
+                                          "the directory is missing STRU_restart and any matching legacy "
+                                          "STRU{step+1}, STRU_MD_{step}, or cumulative STRU frame "
+                                          "containing atomic velocities.";
+            ModuleBase::WARNING_QUIT("ReadInput::set_global_dir", message);
+        }
+        log_read_file(sys.global_in_stru);
     }
     else
     {
@@ -154,6 +316,14 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     Parallel_Common::bcast_string(sys.global_stru_dir);
     Parallel_Common::bcast_string(sys.global_matrix_dir);
     Parallel_Common::bcast_string(sys.global_wfc_dir);
+    Parallel_Common::bcast_string(sys.global_psi_dir);
+    Parallel_Common::bcast_string(sys.global_chg_dir);
+    Parallel_Common::bcast_string(sys.global_pot_dir);
+    Parallel_Common::bcast_string(sys.global_elf_dir);
+    Parallel_Common::bcast_string(sys.global_dos_dir);
+    Parallel_Common::bcast_string(sys.global_dip_dir);
+    Parallel_Common::bcast_string(sys.global_mat_dir);
+    Parallel_Common::bcast_string(sys.global_band_dir);
     Parallel_Common::bcast_string(sys.global_in_stru);
 #endif
 }

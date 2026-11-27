@@ -1,17 +1,26 @@
 #ifndef POTENTIALNEW_H
 #define POTENTIALNEW_H
 
-#include "source_base/complexmatrix.h"
-#include "source_hamilt/module_surchem/surchem.h"
-#include "source_pw/module_pwdft/vnl_pw.h"
-#include "source_pw/module_pwdft/vsep_pw.h"
-#include "source_pw/module_pwdft/structure_factor.h"
 #include "pot_base.h"
+#include "source_base/complexmatrix.h"
+#include "source_cell/stru_fac.h"
+#include "source_hamilt/module_surchem/surchem.h"
+#include "source_pw/module_pwdft/vsep_pw.h"
 
+#include <iosfwd>
+#include <memory>
 #include <vector>
+
+struct Input_para;
 
 namespace elecstate
 {
+class PotPcc;
+class PotSccs;
+struct SolventGridField;
+struct SccsResume;
+class TDFieldManager;
+
 /**
  * Potential is the main class of potentials module, it contains:
  * 1. Constructors and deconstructor
@@ -49,7 +58,7 @@ class Potential : public PotBase
 {
   public:
     // default constructor for UT
-    Potential(){};
+    Potential() {};
     // In constructor, size of every potential components should be allocated
     // rho_basis_in is the dense grids, rho_basis_smooth_in is the smooth grids in USPP
     // charge density and potential are defined on dense grids,
@@ -67,15 +76,47 @@ class Potential : public PotBase
     ~Potential();
 
     // initialize potential when SCF begin
-    void init_pot(const Charge*const chg);
+    void init_pot(const Charge* const chg);
     // initialize potential components before SCF
     void pot_register(const std::vector<std::string>& components_list);
+    void pot_register(const std::vector<std::string>& components_list, const Input_para& input);
     // update potential from current charge
-    void update_from_charge(const Charge*const chg, const UnitCell*const ucell);
+    void update_from_charge(const Charge* const chg, const UnitCell* const ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 
-    PotBase* get_pot_type(const std::string& pot_type);
+    // resume is the SCCS state of the previous ionic step, used by "sccs" only.
+    PotBase* get_pot_type(const std::string& pot_type, const Input_para& input, const SccsResume& resume);
+
+    /// True while a component waits to change its model during the SCF (the
+    /// SCCS delayed start); the state is the same on every rank.
+    bool model_pending() const;
+    /// Called before SCF mixing with the pool-consistent density residual.
+    /// True only in the iteration in which a component changes its model;
+    /// log, when not null, receives a one-line notice.
+    bool update_model(int electronic_iteration, double density_residual, std::ostream* log);
+    /// sccs_debug output of the SCCS correction.
+    void write_corr_iter(std::ostream& output, int level, double residual) const;
+    // Solvation terms of the registered components; not PotBase overrides, so
+    // modules that stub Potential need not know about solvation.
+    void sum_sol_energy(double& electrostatic, double& non_electrostatic) const;
+    void sum_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const;
+    const std::vector<double>* find_sol_pot() const;
+    /// Implicit-solvent fields of the registered components, for out_sol.
+    std::vector<SolventGridField> sol_out_fields() const;
+
+    /// @brief Read the shared RT-TDDFT field state.
+    const TDFieldManager* td_field_manager() const { return td_field_manager_.get(); }
+
+    /**
+     * @brief Inject the shared RT-TDDFT field state before potential setup.
+     *
+     * @param field_manager Manager shared with the RT-TDDFT ESolver.
+     */
+    void set_td_field_manager(const std::shared_ptr<TDFieldManager>& field_manager)
+    {
+        this->td_field_manager_ = field_manager;
+    }
 
     // interfaces to get values
     ModuleBase::matrix& get_eff_v()
@@ -172,13 +213,21 @@ class Potential : public PotBase
     {
         return this->v_eff_fixed.data();
     }
-    const ModulePW::PW_Basis *get_rho_basis() const
+    const ModulePW::PW_Basis* get_rho_basis() const
     {
         return this->rho_basis_;
     }
+    const UnitCell* get_ucell() const
+    {
+        return this->ucell_;
+    }
+    // get the local pseudopotential vloc(it, G) table; used by the dH module (out_mat_dh_vl)
+    const ModuleBase::matrix* get_vloc() const
+    {
+        return this->vloc_;
+    }
     // What about adding a function to get the wfc?
     // This is useful for the calculation of the exx energy
-
 
     /// @brief get the value of vloc at G=0;
     /// @return vl(0)
@@ -191,13 +240,28 @@ class Potential : public PotBase
     /// @return E_ML-EXX
     double get_ml_exx_energy() const;
 
+    /// Results of the registered point-counter-charge (PCC) component, used by
+    /// the energy, force and output stages; neutral values when PCC is off.
+    double pcc_energy_rydberg() const;
+    const std::vector<double>* pcc_electron_potential() const;
+    void add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) const;
+
   private:
-    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;
+    void cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;
     // interpolate potential on the smooth mesh if necessary
     void interpolate_vrs();
 
     void allocate();
+
+    // the registered PCC component, or nullptr when PCC is off
+    const PotPcc* pcc_component() const;
+    const PotSccs* sccs_component() const;
+    PotSccs* sccs_component();
+    // The SCCS activation and warm start of an earlier ionic step are passed
+    // to the rebuilt component.
+    PotBase* make_sccs_pot(const Input_para& input, const SccsResume& resume);
+    SccsResume get_resume() const;
 
     std::vector<double> v_eff_fixed;
     ModuleBase::matrix v_eff;
@@ -207,10 +271,10 @@ class Potential : public PotBase
 
     ModuleBase::matrix v_xc; // if PAW is used, vxc must be stored separately
 
-    float *s_veff_smooth = nullptr;
-    float *s_vofk_smooth = nullptr;
-    double *d_veff_smooth = nullptr;
-    double *d_vofk_smooth = nullptr;
+    float* s_veff_smooth = nullptr;
+    float* s_vofk_smooth = nullptr;
+    double* d_veff_smooth = nullptr;
+    double* d_vofk_smooth = nullptr;
 
     ModuleBase::matrix vofk_eff;
 
@@ -230,6 +294,7 @@ class Potential : public PotBase
     surchem* solvent_ = nullptr;
     VSep* vsep_cell = nullptr;
     bool use_gpu_ = false;
+    std::shared_ptr<TDFieldManager> td_field_manager_;
 };
 
 } // namespace elecstate

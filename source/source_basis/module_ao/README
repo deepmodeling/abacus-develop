@@ -20,18 +20,18 @@ Let me briefly describe the files contained in this 'ORB' module.
 --------------------------------------------------------------------
 ABACUS-ORB.x: the .exe file of the module
 main.cpp: main program file
-ORB_atomic.cpp: information for all of the atomic orbitals
-ORB_atomic.h
-ORB_atomic_lm.cpp: store each atomic orbitals
-ORB_atomic_lm.h
-ORB_gaunt_table.cpp: compute Gaunt tables
-ORB_gaunt_table.h
-ORB_nonlocal.cpp: information for all of the non-local projectors
-ORB_nonlocal.h
-ORB_nonlocal_lm.cpp: store each non-local projector
-ORB_nonlocal_lm.h
-ORB_read.cpp: read-in basis sets/non-local projectors/descriptors
-ORB_read.h
+orb_atomic.cpp: information for all of the atomic orbitals
+orb_atomic.h
+orb_atomic_lm.cpp: store each atomic orbitals
+orb_atomic_lm.h
+orb_gaunt_table.cpp: compute Gaunt tables
+orb_gaunt_table.h
+orb_nonlocal.cpp: information for all of the non-local projectors
+orb_nonlocal.h
+orb_nonlocal_lm.cpp: store each non-local projector
+orb_nonlocal_lm.h
+orb_read.cpp: read-in basis sets/non-local projectors/descriptors
+orb_read.h
 --------------------------------------------------------------------
 
 There are some other files in the 'OBJS_BASE' group (mainly math functions), 

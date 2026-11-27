@@ -1,17 +1,24 @@
 ### Reminder
-- [ ] Have you linked an issue with this pull request?
-- [ ] Have you added adequate unit tests and/or case tests for your pull request?
-- [ ] Have you noticed possible changes of behavior below or in the linked issue?
-- [ ] Have you explained the changes of codes in core modules of ESolver, HSolver, ElecState, Hamilt, Operator or Psi? (ignore if not applicable)
+- [ ] I have read `AGENTS.md` and `docs/developers_guide/agent_governance.md`.
+- [ ] I have linked an issue or explained why this PR does not need one.
+- [ ] I have added adequate unit tests and/or case tests, or explained why not.
+- [ ] I have listed the exact verification commands run and their results.
+- [ ] I have described user-visible behavior changes, including INPUT parameter changes.
+- [ ] I have explained core-module impact for ESolver, HSolver, ElecState, Hamilt, Operator, Psi, or other `source/` changes.
+- [ ] I have requested any needed governance exception below.
 
 ### Linked Issue
-Fix #...
+Fix #
 
 ### Unit Tests and/or Case Tests for my changes
-- A unit test is added for each new feature or bug fix.
+- Commands run:
+- Result summary:
+- Checks not run, with reason:
 
 ### What's changed?
-- Example: My changes might affect the performance of the application under certain conditions, and I have tested the impact on various scenarios...
+- Example: brief summary of the user-visible or developer-facing change.
 
-### Any changes of core modules? (ignore if not applicable)
-- Example: I have added a new virtual function in the esolver base class in order to ...
+### Governance Notes
+- INPUT/docs changes:
+- Core module impact:
+- Exceptions requested:

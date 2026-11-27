@@ -1,28 +1,46 @@
-#ifndef HAMILT_LCAO_H 
-#define HAMILT_LCAO_H 
+#ifndef HAMILT_LCAO_H
+#define HAMILT_LCAO_H
 
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
-#include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_estate/module_dm/density_matrix.h"
-#include "source_estate/module_pot/potential_new.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/hamilt.h"
-#include "source_lcao/hs_matrix_k.hpp"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_lcao/module_rt/td_info.h"
+#include "source_hamilt/hs_matrix_k.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 
+#include <memory>
 #include <vector>
 
-#include "source_lcao/setup_deepks.h" // mohan add 20251008
+// elecstate::Potential forward declaration, full definition in potential_new.h (moved to .cpp)
+namespace elecstate { class Potential; }
 
-#ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI.h"
-#endif
+// module_dm::DensityMatrix forward declaration, full definition in density_matrix.h (moved to .cpp)
+namespace module_dm { template <typename TK, typename TR> class DensityMatrix; }
 
-#include "source_lcao/setup_exx.h" // for exx, mohan add 20251022
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-05
+// Setup_DeePKS forward declaration, full definition in setup_deepks.h (moved to .cpp)
+template <typename TK> class Setup_DeePKS;
+// Plus_U_Base forward declaration, full definition in source_pw/module_pwdft/dftu_base.h
+class Plus_U_Base;
+
+// Exx_NAO forward declaration, full definition in setup_exx.h (moved to .cpp)
+template <typename TK> class Exx_NAO;
+
+/// Exx_Info forward declaration, full definition in exx_info.h
+struct Exx_Info;
+
+// Input_para forward declaration, full definition in input_parameter.h
+struct Input_para;
+
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 
 namespace hamilt
 {
+
+// OperatorLCAO forward declaration, full definition in
+// module_operator_lcao/operator_lcao.h (moved to .cpp)
+template <typename TK, typename TR> class OperatorLCAO;
 
 // template first for type of k space H matrix elements
 // template second for type of temporary matrix, 
@@ -33,26 +51,28 @@ class HamiltLCAO : public Hamilt<TK>
 {
   public:
 
-
-    using TAC = std::pair<int, std::array<int, 3>>;
-
-
     /**
      * @brief Constructor of Hamiltonian for LCAO base
      * HR and SR will be allocated with Operators
      */
     HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
-			   const Parallel_Orbitals* paraV,
-			   elecstate::Potential* pot_in,
-			   const K_Vectors& kv_in,
-			   const TwoCenterBundle& two_center_bundle,
+               const Parallel_Orbitals* paraV,
+               const BasisFlattenedIndexing& basis,
+               const Parallel_Blkcyclic& layout,
+               elecstate::Potential* pot_in,
+               const K_Vectors& kv_in,
+               const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
-			   elecstate::DensityMatrix<TK, double>* DM_in,
-			   Plus_U* p_dftu, // mohan add 2025-11-05
-			   Setup_DeePKS<TK> &deepks,
-			   const int istep, 
-			   Exx_NAO<TK> &exx_nao);
+               module_dm::DensityMatrix<TK, double>* DM_in,
+               Plus_U_Base* p_dftu, // mohan add 2025-11-05
+               Setup_DeePKS<TK> &deepks,
+               const int istep,
+               Exx_NAO<TK> &exx_nao,
+               const Exx_Info& exx_info,
+               const Input_para& inp,
+               const bool load_exx_flag,
+               TD_info* td_info);
 
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
@@ -60,19 +80,15 @@ class HamiltLCAO : public Hamilt<TK>
     HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
+               const BasisFlattenedIndexing& basis,
+               const Parallel_Blkcyclic& layout,
                const K_Vectors& kv_in,
                const TwoCenterIntegrator& intor_overlap_orb,
                const std::vector<double>& orb_cutoff);
 
     ~HamiltLCAO()
     {
-        if (this->ops != nullptr)
-        {
-            delete this->ops;
-        }
-        delete this->hR;
-        delete this->sR;
-        delete this->hsk;
+        delete this->ops;
     }
 
     /// get pointer of Operator<TK> ops
@@ -90,29 +106,34 @@ class HamiltLCAO : public Hamilt<TK>
         return this->hsk->get_sk();
     }
 
-    int get_size_hsk() const
-    {
-        return this->hsk->get_size();
-    }
-
     /// get HR pointer of *this->hR, which is a HContainer<TR> and contains H(R)
-    HContainer<TR>*& getHR()
+    HContainer<TR>* getHR()
     {
-        return this->hR;
+        return this->hR.get();
     }
     const HContainer<TR>* getHR() const
     {
-        return this->hR;
+        return this->hR.get();
     }
 
     /// get SR pointer of *this->sR, which is a HContainer<TR> and contains S(R)
-    HContainer<TR>*& getSR()
+    HContainer<TR>* getSR()
     {
-        return this->sR;
+        return this->sR.get();
     }
     const HContainer<TR>* getSR() const
     {
-        return this->sR;
+        return this->sR.get();
+    }
+
+    const BasisFlattenedIndexing& basis() const
+    {
+        return basis_;
+    }
+
+    const Parallel_Blkcyclic& layout() const
+    {
+        return layout_;
     }
 
 #ifdef __MLALGO
@@ -126,11 +147,16 @@ class HamiltLCAO : public Hamilt<TK>
     /// get hRS2 buffer for NSPIN=2 case (spin-up in first half, spin-down in second half)
     std::vector<TR>& getHRS2() { return this->hRS2; }
 
+    /// Get HR as a vector of HContainer pointers (one per spin).
+    /// For nspin=2, vl_in_h=0 shares the active H(R), matching updateHk.
+    /// Returned pointers are owned by this class; caller must NOT delete them.
+    std::vector<HContainer<TR>*> getHR_vector();
+
     /// refresh the status of HR
     void refresh(bool yes) override;
 
     // for target K point, update consequence of hPsi() and matrix()
-    virtual void updateHk(const int ik) override;
+    void updateHk(const int ik) override;
 
     /**
      * @brief special for LCAO, update SK only
@@ -140,7 +166,7 @@ class HamiltLCAO : public Hamilt<TK>
      * @param hk_type 0: SK is row-major, 1: SK is collumn-major
      * @return void
      */
-	void updateSk(const int ik, const int hk_type = 0);
+    void updateSk(const int ik, const int hk_type);
 
     // core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     // not used in PW base
@@ -148,24 +174,35 @@ class HamiltLCAO : public Hamilt<TK>
 
   private:
 
+    const BasisFlattenedIndexing& basis_;
+    const Parallel_Blkcyclic& layout_;
+
     const K_Vectors* kv = nullptr;
 
     //! Real space Hamiltonian H(R), where R is the Bravis lattice vector
-    HContainer<TR>* hR = nullptr;
+    std::unique_ptr<HContainer<TR>> hR;
 
     //! Real space overlap matrix S(R), where R is the Bravis lattice vector
-    HContainer<TR>* sR = nullptr;
+    std::unique_ptr<HContainer<TR>> sR;
 
 #ifdef __MLALGO
     HContainer<TR>* V_delta_R = nullptr;
 #endif
 
     //! Hamiltonian and overlap matrices for a specific k point
-    HS_Matrix_K<TK>* hsk = nullptr;
+    std::unique_ptr<HS_Matrix_K<TK>> hsk;
 
     // special case for NSPIN=2 , data of HR should be separated into two parts
     // save them in this->hRS2;
     std::vector<TR> hRS2;
+
+    /// Per-spin HContainer wrappers for nspin=2 (owned by this class).
+    /// Preserve the layout of hRS2 until an operator's HR growth is synchronized.
+    std::unique_ptr<HContainer<TR>> hr_spin_up_;
+    std::unique_ptr<HContainer<TR>> hr_spin_dn_;
+
+    /// Keep both spin channels aligned with dynamically added H(R) blocks.
+    void synchronize_spin_storage();
 
     int refresh_times = 1;
 
@@ -174,7 +211,18 @@ class HamiltLCAO : public Hamilt<TK>
     //! 1: Hamiltonian for spin down
     int current_spin = 0;
 
-    const int istep = 0;
+    //! snapshot of inp.nspin taken at construction; avoids PARAM dependency
+    int nspin = 1;
+
+    //! snapshot of inp.vl_in_h taken at construction; avoids PARAM dependency
+    bool vl_in_h = true;
+
+    //! cached downcast of this->ops to OperatorLCAO, filled on first use
+    //! to avoid repeating dynamic_cast in updateHk/refresh
+    OperatorLCAO<TK, TR>* ops_lcao_ = nullptr;
+
+    /// get this->ops downcast to OperatorLCAO<TK, TR>*, cached in ops_lcao_
+    OperatorLCAO<TK, TR>* getOperatorLCAO();
 };
 
 } // namespace hamilt

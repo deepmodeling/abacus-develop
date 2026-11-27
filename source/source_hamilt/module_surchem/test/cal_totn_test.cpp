@@ -49,8 +49,6 @@ TEST_F(cal_totn_test, cal_totn)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -68,11 +66,11 @@ TEST_F(cal_totn_test, cal_totn)
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
-    std::complex<double>* N = new std::complex<double>[npw];
+    std::complex<double> *N = new std::complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(N, npw);
-    std::complex<double>* TOTN = new std::complex<double>[npw];
-    std::complex<double>* Porter_g = new std::complex<double>[npw];
-    double* vloc = new double[nrxx];
+    std::complex<double> *TOTN = new std::complex<double>[npw];
+    std::complex<double> *Porter_g = new std::complex<double>[npw];
+    double *vloc = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(Porter_g, npw);
 
     for (int i = 0; i < npw; i++)
@@ -104,7 +102,7 @@ TEST_F(cal_totn_test, induced_charge)
     precision_flag = "double";
     device_flag = "cpu";
     Setcell::setupcell(ucell);
-    
+
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
@@ -118,8 +116,6 @@ TEST_F(cal_totn_test, induced_charge)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -145,12 +141,10 @@ TEST_F(cal_totn_test, induced_charge)
     EXPECT_NEAR(induced_charge.imag(), -1.4135417993e-06, 1e-9);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

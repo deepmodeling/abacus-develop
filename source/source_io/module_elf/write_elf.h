@@ -5,13 +5,11 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_estate/module_charge/charge.h"
 
+#include <fstream>
+
 namespace ModuleIO
 {
 void write_elf(
-#ifdef __MPI
-    const int& bz,
-    const int& nbz,
-#endif
     const std::string& out_dir,
     const int& istep_in,
     const int& nspin,
@@ -20,7 +18,11 @@ void write_elf(
     ModulePW::PW_Basis* rho_basis,
     const Parallel_Grid& pgrid,
     const UnitCell* ucell_,
-    const int& precision);
+    const int& precision,
+    const std::string& geom_block,
+    const bool two_fermi,
+    const bool append,
+    std::ofstream& ofs_running);
 }
 
 #endif

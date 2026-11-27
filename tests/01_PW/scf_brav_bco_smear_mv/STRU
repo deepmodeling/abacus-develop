@@ -1,0 +1,19 @@
+#This is the atom file containing all the information
+#about the lattice structure.
+
+ATOMIC_SPECIES
+Be 9.012182   Be_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+4.30
+
+LATTICE_PARAMETERS
+1.5 2.0
+
+ATOMIC_POSITIONS
+Direct
+Be
+0.0
+2
+0.00 0.00 0.00 1 1 1
+0.50 0.50 0.00 1 1 1

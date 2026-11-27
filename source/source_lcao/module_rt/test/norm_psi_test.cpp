@@ -19,12 +19,6 @@
  */
 
 #define doublethreshold 1e-8
-Parallel_Orbitals::Parallel_Orbitals()
-{
-}
-Parallel_Orbitals::~Parallel_Orbitals()
-{
-}
 
 TEST(NormPsiTest, testNormPsi)
 {
@@ -35,29 +29,10 @@ TEST(NormPsiTest, testNormPsi)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->nloc = nlocal * nlocal;
+    ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv->nloc_wfc = nlocal * nband;
-    pv->ncol = nlocal;
-    pv->nrow = nlocal;
     pv->ncol_bands = nband;
-    pv->dim0 = 1;
-    pv->dim1 = 1;
-    pv->nb = 1;
-    pv->blacs_ctxt = 0;
-    pv->coord[0] = pv->coord[1] = 0;
-
-    int dim[2];
-    dim[0] = nprow;
-    dim[1] = npcol;
-
-    // Initialize input matrices
-    int info;
-    int mb = 1, nb = 1, lda = nband, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow),
-        lld1 = numroc_(&nband, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
-    descinit_(pv->desc_wfc, &nlocal, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
-    descinit_(pv->desc_Eij, &nband, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    pv->set_wfc_and_mo_layouts(nlocal, nband);
 
     // Initialize data
     Stmp = new std::complex<double>[nlocal * nlocal];
@@ -90,7 +65,15 @@ TEST(NormPsiTest, testNormPsi)
     psi_k[11] = 1.0;
 
     // Call the function
-    module_rt::norm_psi(pv, nband, nlocal, Stmp, psi_k, GlobalV::ofs_running, print_matrix);
+    module_rt::norm_psi(pv->para_2d(),
+                        pv->wfc_layout(),
+                        pv->mo_repr_layout(),
+                        nband,
+                        nlocal,
+                        Stmp,
+                        psi_k,
+                        GlobalV::ofs_running,
+                        print_matrix);
 
     // Check the results
     EXPECT_NEAR(psi_k[0].real(), 0.577350269189626, doublethreshold);
@@ -120,4 +103,46 @@ TEST(NormPsiTest, testNormPsi)
 
     delete[] psi_k;
     delete[] Stmp;
+}
+
+// A wavefunction arriving at t+dt must be normalized with S(t+dt).
+// Here the averaged overlap gives a unit norm in the wrong time layer.
+TEST(NormPsiTest, EndpointMetricDiffersFromPropagationMetric)
+{
+    Parallel_Orbitals pv;
+    const int nlocal = 2;
+    const int nband = 1;
+    ASSERT_EQ(pv.para_2d().set(nlocal, nlocal, 1, ictxt), 0);
+    pv.nloc_wfc = 2;
+    pv.ncol_bands = 1;
+    pv.set_wfc_and_mo_layouts(nlocal, nband);
+    std::complex<double> endpoint[4] = {2.0, {0.0, -0.4}, {0.0, 0.4}, 1.0};
+    std::complex<double> midpoint[4] = {1.5, {0.0, -0.2}, {0.0, 0.2}, 1.0};
+    std::complex<double> right[2] = {1.0, {0.0, 0.5}};
+    std::complex<double> wrong[2] = {right[0], right[1]};
+    auto norm = [&](const std::complex<double>* psi) {
+        return (std::conj(psi[0]) * (endpoint[0]*psi[0] + endpoint[2]*psi[1])
+              + std::conj(psi[1]) * (endpoint[1]*psi[0] + endpoint[3]*psi[1])).real();
+    };
+    std::ofstream log;
+    module_rt::norm_psi(pv.para_2d(),
+                        pv.wfc_layout(),
+                        pv.mo_repr_layout(),
+                        nband,
+                        nlocal,
+                        endpoint,
+                        right,
+                        log,
+                        0);
+    module_rt::norm_psi(pv.para_2d(),
+                        pv.wfc_layout(),
+                        pv.mo_repr_layout(),
+                        nband,
+                        nlocal,
+                        midpoint,
+                        wrong,
+                        log,
+                        0);
+    EXPECT_NEAR(norm(right), 1.0, 1e-12);
+    EXPECT_GT(std::abs(norm(wrong)-1.0), 0.1);
 }

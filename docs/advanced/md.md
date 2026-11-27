@@ -18,6 +18,7 @@ When [md_type](./input_files/input-main.md#md_type) is set to nvt, [md_thermosta
   - berendsen: Berendsen thermostat
   - rescaling: velocity Rescaling method 1
   - rescale_v: velocity Rescaling method 2
+  - csvr: Canonical Sampling through Velocity Rescaling (CSVR) thermostat
 
 When [md_type](./input_files/input-main.md#md_type) is set to npt, [md_pmode](./input_files/input-main.md#md_pmode) is used to specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
 
@@ -27,9 +28,17 @@ When [md_type](./input_files/input-main.md#md_type) is set to npt, [md_pmode](./
 
 Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.md#molecular-dynamics) to control relevant parmeters used in MD simulations.
 
-The MD output information will be written into the file `MD_dump`， in which the atomic forces, atomic velocities, and lattice virial are controlled by keyword [dump_force](./input_files/input-main.md#dump_force), [dump_vel](./input_files/input-main.md#dump_vel), and [dump_virial](./input_files/input-main.md#dump_virial), respectively.
+MD structure output is controlled by [`out_stru`](./input_files/input-main.md#out_stru), [`out_freq_ion`](./input_files/input-main.md#out_freq_ion), and [`out_app_flag`](./input_files/input-main.md#out_app_flag). Set `out_stru 1`, `out_freq_ion 1`, and `out_app_flag 1` to keep every MD step in the appended `STRU` trajectory. With `out_freq_ion 0`, only `STRU_FINAL` is written. Mode 0 overwrites the periodic `STRU`; mode 2 writes numbered files and `STRU_FINAL` under `STRUC/`. Set `out_stru 2` for CIF geometry: periodic output overwrites `STRU.cif` in modes 0 and 1 or writes numbered `STRU{step}.cif` files in mode 2, and the final geometry is `STRU_FINAL.cif`. CIF omits atomic forces and velocities; the separate `STRU_restart` checkpoint retains velocities for restarting MD.
 
-[Examples](../../examples/md/lcao_gammaonly_Si8/) of MD simulations are also provided.
+Use `out_thermo_freq` to set the output interval for MD step, energy, temperature, and pressure information in `running_md.log` and on screen. The default is 1; set it to 0 to disable this thermodynamic output. The interval counts MD steps from 0, so a value of 10 selects steps 0, 10, 20, and so on, including after a restart.
+
+For MDCell simulations, per-atom forces are in ordinary STRU frames rather than `running_md.log`. The `md_out_force`, `md_dumpfreq`, `dump_force`, `dump_vel`, and `dump_virial` INPUT keywords have been removed; an INPUT file using them will fail to parse.
+
+MDCell structure output (`STRU`, `STRU_FINAL`, and `STRU_restart`) lists atoms by element and then by their original index within that element. This order remains stable when atoms migrate between MPI processes. In an appended `STRU` trajectory, the same row within each element therefore refers to the same atom in every frame.
+
+Ordinary MD structure frames include per-atom `f` forces in eV/Angstrom and `v` velocities in atomic units; `STRU_restart` retains `v` for restarting and omits `f`. When `cal_stress=1`, the thermodynamic block in `running_md.log` includes the complete 3-by-3 virial and total stress tensors in kbar at the `out_thermo_freq` cadence. This frequency affects MD only; SCF and relaxation output are unchanged.
+
+[Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/18_md/01_LCAO_NVE_Si8) of MD simulations are also provided.
 There are eight INPUT files corresponding to eight different MD evolution methods in the directory.
 For examlpe, `INPUT_0` shows how to employ the NVE simulation.
 
@@ -80,6 +89,10 @@ Reset the temperature of a group of atoms by explicitly rescaling their velociti
 
 Reset the temperature of a group of atoms by explicitly rescaling their velocities. Every [md_nraise](./input_files/input-main.md#md_nraise) steps the current temperature is rescaled to target temperature.
 
+## CSVR
+
+The CSVR (Canonical Sampling through Velocity Rescaling) thermostat is a stochastic velocity rescaling approach proposed by [Bussi, Donadio, and Parrinello](https://doi.org/10.1063/1.2408420). It rescales the velocities by a factor that is drawn from the appropriate distribution to ensure a canonical ensemble, combining the simplicity of Berendsen-like rescaling with the correct canonical sampling of the Nosé-Hoover chain. The coupling strength is controlled by [md_csvr_tau](./input_files/input-main.md#md_csvr_tau).
+
 ## MSST
 ABACUS performs the [Multi-Scale Shock Technique (MSST) integration](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.90.235503) to update positions and velocities each timestep to mimic a compressive shock wave passing over the system. The MSST varies the cell volume and temperature in such a way as to restrain the system to the shock Hugoniot and the Rayleigh line. These restraints correspond to the macroscopic conservation laws dictated by a shock front.
 
@@ -89,6 +102,42 @@ Compiling ABACUS with [DeePMD-kit](https://github.com/deepmodeling/deepmd-kit), 
 To employ DPMD calculations, [esolver_type](./input_files/input-main.md#esolver_type) should be set to `dp`.
 And the filename of DP model is specified by keyword [pot_file](./input_files/input-main.md#pot_file).
 
+DP calculations, including `relax` and `cell-relax`, use a domain-decomposed
+MDCell for model inference. Each MPI rank evaluates its owned atoms and nearby
+ghost atoms; ABACUS combines the resulting forces for geometry optimization.
+Multi-rank PyTorch model runs require a DeePMD-kit build with communication-capable
+neighbor lists and an MPI-enabled `libdeepmd_op_pt.so` linked against the same
+MPI runtime as ABACUS. ABACUS checks the operator's direct `libmpi.so` dependency
+at build time and rejects distributed PyTorch inference when it cannot verify
+this capability. Ordinary TensorFlow `.pb` models can use the multi-rank MDCell
+path without the PyTorch operator.
+For models with atomic parameters, `dp_aparam` accepts either one set of
+`dim_aparam` values for every atom or `nat * dim_aparam` values in global
+species-block atom order, after `cell_replica` expansion when applicable.
+
+To reduce GPU memory per rank, assign ranks to separate GPUs. Multiple ranks
+sharing one GPU also share its memory, and each rank loads its own model copy.
+
 ## NEP
 
 If ABACUS is compiled with the Neuroevolution Potential ([NEP](https://gpumd.org/potentials/nep.html)), MD simulations using  NEP models are enabled. To use this feature, set [esolver_type](./input_files/input-main.md#esolver_type) to `nep` and specify the potential file path with the [pot_file](./input_files/input-main.md#pot_file) keyword in your INPUT file.
+
+## SNAP
+
+CPU SNAP calculations use `esolver_type snap`, with the coefficient file in
+`pot_file` and the LAMMPS-style parameter file in `snap_param_file`. The
+implementation supports linear and quadratic coefficients, chemical channels,
+outer cutoff switching, and `switchinnerflag` with `sinner` and `dinner`.
+
+For `chemflag 1`, the chemical-channel axes of each flattened coefficient vector
+follow the element order in the STRU file. Coefficient blocks are matched by
+element name, so their order within `pot_file` is not significant. Reordering
+the elements in STRU without reordering the chemical-channel coefficients can
+change the potential. The values in `sinner` and `dinner` also follow STRU
+element order. This corresponds to the first-appearance order of elements in
+LAMMPS `pair_coeff` mappings.
+
+Unknown SNAP parameter keywords are rejected. Each element-pair cutoff must
+exceed `rmin0`; a contributing neighbor at or below `rmin0` causes an error.
+The radial mapping parameter `rfac0` must
+satisfy `0 < rfac0 <= 1` so that its angle does not cross pi inside a pair cutoff.

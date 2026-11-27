@@ -2,19 +2,19 @@
 
 #ifdef __MLALGO
 
-double ML_Base::potGammaTerm(int ir)
+double ML_Base::pot_gamma_term(int ir)
 {
     return (this->ml_gamma) ? 1./3. * gamma[ir] * this->gradient_cpu_ptr[ir * this->ninput + this->descriptor2index["gamma"][0]] : 0.;
 }
-double ML_Base::potPTerm1(int ir)
+double ML_Base::pot_p_term_1(int ir)
 {
     return (this->ml_p) ? - 8./3. * p[ir] * this->gradient_cpu_ptr[ir * this->ninput + this->descriptor2index["p"][0]] : 0.;
 }
-double ML_Base::potQTerm1(int ir)
+double ML_Base::pot_q_term_1(int ir)
 {
     return (this->ml_q) ? - 5./3. * q[ir] * this->gradient_cpu_ptr[ir * this->ninput + this->descriptor2index["q"][0]] : 0.;
 }
-double ML_Base::potXiTerm1(int ir)
+double ML_Base::pot_xi_term_1(int ir)
 {
     double result = 0.;
     for (int ik = 0; ik < this->descriptor2kernel["xi"].size(); ++ik)
@@ -25,7 +25,7 @@ double ML_Base::potXiTerm1(int ir)
     }
     return result;
 }
-double ML_Base::potTanhxiTerm1(int ir)
+double ML_Base::pot_tanhxi_term_1(int ir)
 {
     double result = 0.;
     for (int ik = 0; ik < this->descriptor2kernel["tanhxi"].size(); ++ik)
@@ -37,19 +37,19 @@ double ML_Base::potTanhxiTerm1(int ir)
     }
     return result;
 }
-double ML_Base::potTanhpTerm1(int ir)
+double ML_Base::pot_tanhp_term_1(int ir)
 {
     return (this->ml_tanhp) ? - 8./3. * p[ir] * this->cal_tool->dtanh(this->tanhp[ir], this->chi_p)
                                  * this->gradient_cpu_ptr[ir * this->ninput + this->descriptor2index["tanhp"][0]] : 0.;
 }
-double ML_Base::potTanhqTerm1(int ir)
+double ML_Base::pot_tanhq_term_1(int ir)
 {
     return (this->ml_tanhq) ? - 5./3. * q[ir] * this->cal_tool->dtanh(this->tanhq[ir], this->chi_q)
                                  * this->gradient_cpu_ptr[ir * this->ninput + this->descriptor2index["tanhq"][0]] : 0.;
 }
 
 // Implementations of nl terms using energy_prefactor/exponent logic
-void ML_Base::potGammanlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rGammanlTerm)
+void ML_Base::pot_gammanl_term(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rGammanlTerm)
 {
     double *dFdgammanl = new double[this->nx];
     for (int ik = 0; ik < this->descriptor2kernel["gammanl"].size(); ++ik)
@@ -69,7 +69,7 @@ void ML_Base::potGammanlTerm(const double * const *prho, const std::vector<doubl
     delete[] dFdgammanl;
 }
 
-void ML_Base::potXinlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rXinlTerm)
+void ML_Base::pot_xi_nl_term(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rXinlTerm)
 {
     double *dFdxi = new double[this->nx];
     for (int ik = 0; ik < this->descriptor2kernel["xi"].size(); ++ik)
@@ -89,7 +89,7 @@ void ML_Base::potXinlTerm(const double * const *prho, const std::vector<double> 
     delete[] dFdxi;
 }
 
-void ML_Base::potTanhxinlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhxinlTerm)
+void ML_Base::pot_tanhxi_nl_term(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhxinlTerm)
 {
     double *dFdtanhxi = new double[this->nx];
     for (int ik = 0; ik < this->descriptor2kernel["tanhxi"].size(); ++ik)
@@ -110,7 +110,7 @@ void ML_Base::potTanhxinlTerm(const double * const *prho, const std::vector<doub
     delete[] dFdtanhxi;
 }
 
-void ML_Base::potTanhxi_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhxi_nlTerm)
+void ML_Base::pot_tanhxi_nl_nl_term(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhxi_nlTerm)
 {
     double *dFdtanhxi_nl = new double[this->nx];
     double *dFdtanhxi_nl_nl = new double[this->nx];
@@ -143,7 +143,7 @@ void ML_Base::potTanhxi_nlTerm(const double * const *prho, const std::vector<dou
 }
 
 // get contribution of p and pnl
-void ML_Base::potPPnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rPPnlTerm)
+void ML_Base::pot_p_pnl_term(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rPPnlTerm)
 {
     double *dFdpnl = new double[this->nx];
     std::vector<double> dFdpnl_tot(this->nx, 0.);
@@ -201,7 +201,7 @@ void ML_Base::potPPnlTerm(const double * const *prho, const std::vector<double> 
 }
 
 
-void ML_Base::potQQnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rQQnlTerm)
+void ML_Base::pot_q_qnl_term(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rQQnlTerm)
 {
     double *dFdqnl = new double[this->nx];
     std::vector<double> dFdqnl_tot(this->nx, 0.);
@@ -249,7 +249,7 @@ void ML_Base::potQQnlTerm(const double * const *prho, const std::vector<double> 
 }
 
 
-void ML_Base::potTanhpTanh_pnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanh_pnlTerm)
+void ML_Base::pot_tanhp_tanh_pnl_term(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanh_pnlTerm)
 {
     // Note we assume that tanhp_nl and tanh_pnl will NOT be used together.
     double *dFdpnl = new double[this->nx];
@@ -308,7 +308,7 @@ void ML_Base::potTanhpTanh_pnlTerm(const double * const *prho, const std::vector
     delete[] tempP;
 }
 
-void ML_Base::potTanhqTanh_qnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanh_qnlTerm)
+void ML_Base::pot_tanhq_tanh_qnl_term(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanh_qnlTerm)
 {
     // Note we assume that tanhq_nl and tanh_qnl will NOT be used together.
     double *dFdqnl = new double[this->nx];
@@ -359,7 +359,7 @@ void ML_Base::potTanhqTanh_qnlTerm(const double * const *prho, const std::vector
 }
 
 // Note we assume that tanhp_nl and tanh_pnl will NOT be used together.
-void ML_Base::potTanhpTanhp_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanhp_nlTerm)
+void ML_Base::pot_tanhp_tanhp_nl_term(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanhp_nlTerm)
 {
     double *dFdpnl = new double[this->nx];
     std::vector<double> dFdpnl_tot(this->nx, 0.);
@@ -417,7 +417,7 @@ void ML_Base::potTanhpTanhp_nlTerm(const double * const *prho, const std::vector
     delete[] tempP;
 }
 
-void ML_Base::potTanhqTanhq_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanhq_nlTerm)
+void ML_Base::pot_tanhq_tanhq_nl_term(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanhq_nlTerm)
 {
     double *dFdqnl = new double[this->nx];
     std::vector<double> dFdqnl_tot(this->nx, 0.);

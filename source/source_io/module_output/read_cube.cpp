@@ -1,35 +1,39 @@
 #include "source_io/module_output/cube_io.h"
+#include <cstdint>
 #include <limits>
-#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_base/parallel_grid.h"
+#include "source_io/module_parameter/parameter.h"
 #include <cstring>  // use std::memcpy
 
 bool ModuleIO::read_vdata_palgrid(
     const Parallel_Grid& pgrid,
     const int my_rank,
-    std::ofstream& ofs_running,
+    std::ostream& ofs_running,
     const std::string& fn,
     double* const data,
     const int natom)
 {
     ModuleBase::TITLE("ModuleIO", "read_vdata_palgrid");
 
-    // check if the file exists
+    // Only the root rank parses the file. On failure it must abort the whole
+    // run instead of returning: the other ranks enter pgrid.bcast() below and
+    // would block in MPI_Recv waiting for data that never comes.
     std::ifstream ifs(fn.c_str());
-    if (!ifs)
+    if (my_rank == 0)
     {
-        std::string tmp_warning_info = "!!! Couldn't find the file: " + fn;
-        ofs_running << tmp_warning_info << std::endl;
-        return false;
-    }
-    else
-    {
+        if (!ifs)
+        {
+            ofs_running << " !!! Couldn't find the file: " << fn << std::endl;
+            ModuleBase::WARNING_QUIT("ModuleIO::read_vdata_palgrid",
+                                     "couldn't find the cube file: " + fn);
+        }
         ofs_running << " Find the file " << fn << " , try to read it." << std::endl;
     }
 
     // read the full grid data
-    const int& nx = pgrid.nx;
-    const int& ny = pgrid.ny;
-    const int& nz = pgrid.nz;
+    const int nx = pgrid.get_nx();
+    const int ny = pgrid.get_ny();
+    const int nz = pgrid.get_nz();
     const int& nxyz = nx * ny * nz;
     std::vector<double> data_xyz_full(nxyz, 0.0);
     if (my_rank == 0)
@@ -50,9 +54,14 @@ bool ModuleIO::read_vdata_palgrid(
         std::vector<std::vector<double>> atom_pos;
         std::vector<double> data_read;
 
-        // we've already checked the file existence, so we don't need the returned value here
-        ModuleIO::read_cube(fn, comment, natom, origin, nx_read, ny_read, nz_read, 
-			dx, dy, dz, atom_type, atom_charge, atom_pos, data_read);
+        // validate the cube content before copying or interpolating the data
+        if (!ModuleIO::read_cube(fn, comment, natom, origin, nx_read, ny_read, nz_read,
+                                 dx, dy, dz, atom_type, atom_charge, atom_pos, data_read))
+        {
+            ofs_running << " !!! Failed to parse the cube file: " << fn << std::endl;
+            ModuleBase::WARNING_QUIT("ModuleIO::read_vdata_palgrid",
+                                     "failed to parse the cube file: " + fn);
+        }
 
         // if mismatch, trilinear interpolate
         if (nx == nx_read && ny == ny_read && nz == nz_read)
@@ -67,7 +76,7 @@ bool ModuleIO::read_vdata_palgrid(
 
     // distribute
 #ifdef __MPI 
-    pgrid.bcast(data_xyz_full.data(), data, my_rank);
+    pgrid.bcast(data_xyz_full.data(), data, my_rank, PARAM.inp.esolver_type == "sdft");
 #else
     std::memcpy(data, data_xyz_full.data(), nxyz * sizeof(double));
 #endif
@@ -102,24 +111,22 @@ void ModuleIO::trilinear_interpolate(
         }
     }
 
+    // Cube values lie on lattice nodes: the first value is at the origin.
     for (int ix = 0; ix < nx; ix++)
     {
-        double fracx = 0.5 * (static_cast<double>(nx_read) / nx * (1.0 + 2.0 * ix) - 1.0);
-        fracx = std::fmod(fracx, nx_read);
+        const double fracx = static_cast<double>(ix) * nx_read / nx;
         int lowx = static_cast<int>(fracx);
         double dx = fracx - lowx;
         int highx = (lowx == nx_read - 1) ? 0 : lowx + 1; // the point nz_read is the same as 0
         for (int iy = 0; iy < ny; iy++)
         {
-            double fracy = 0.5 * (static_cast<double>(ny_read) / ny * (1.0 + 2.0 * iy) - 1.0);
-            fracy = std::fmod(fracy, ny_read);
+            const double fracy = static_cast<double>(iy) * ny_read / ny;
             int lowy = static_cast<int>(fracy);
             double dy = fracy - lowy;
             int highy = (lowy == ny_read - 1) ? 0 : lowy + 1;
             for (int iz = 0; iz < nz; iz++)
             {
-                double fracz = 0.5 * (static_cast<double>(nz_read) / nz * (1.0 + 2.0 * iz) - 1.0);
-                fracz = std::fmod(fracz, nz_read);
+                const double fracz = static_cast<double>(iz) * nz_read / nz;
                 int lowz = static_cast<int>(fracz);
                 double dz = fracz - lowz;
                 int highz = (lowz == nz_read - 1) ? 0 : lowz + 1;
@@ -164,21 +171,29 @@ bool ModuleIO::read_cube(const std::string& file,
 
     if (!ifs) 
     { 
-	    return false; 
+        return false; 
     }
 
     comment.resize(2);
-    for (auto& c : comment) 
+    for (std::string& c : comment)
     { 
-	    std::getline(ifs, c); 
+        std::getline(ifs, c); 
     }
 
     ifs >> natom;
+    if (ifs.fail() || natom < 0)
+    {
+        return false;
+    }
 
     origin.resize(3);
-    for (auto& cp : origin) 
-    { 
-	    ifs >> cp; 
+    for (double& cp : origin)
+    {
+        ifs >> cp;
+    }
+    if (ifs.fail())
+    {
+        return false;
     }
 
     dx.resize(3);
@@ -187,20 +202,38 @@ bool ModuleIO::read_cube(const std::string& file,
     ifs >> nx >> dx[0] >> dx[1] >> dx[2];
     ifs >> ny >> dy[0] >> dy[1] >> dy[2];
     ifs >> nz >> dz[0] >> dz[1] >> dz[2];
+    if (ifs.fail() || nx <= 0 || ny <= 0 || nz <= 0)
+    {
+        return false;
+    }
 
     atom_type.resize(natom);
     atom_charge.resize(natom);
     atom_pos.resize(natom, std::vector<double>(3));
-    for (int i = 0;i < natom;++i)
+    for (int i = 0; i < natom; ++i)
     {
         ifs >> atom_type[i] >> atom_charge[i] >> atom_pos[i][0] >> atom_pos[i][1] >> atom_pos[i][2];
     }
+    if (ifs.fail())
+    {
+        return false;
+    }
 
-    const int nxyz = nx * ny * nz;
+    // guard against int overflow before allocating the data buffer
+    const std::int64_t nxyz_64 = static_cast<std::int64_t>(nx) * ny * nz;
+    if (nxyz_64 > std::numeric_limits<int>::max())
+    {
+        return false;
+    }
+    const int nxyz = static_cast<int>(nxyz_64);
     data.resize(nxyz);
-    for (int i = 0;i < nxyz;++i) 
-    { 
-	    ifs >> data[i]; 
+    for (int i = 0; i < nxyz; ++i)
+    {
+        ifs >> data[i];
+    }
+    if (ifs.fail())
+    {
+        return false;
     }
 
     ifs.close();

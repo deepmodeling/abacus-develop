@@ -1,0 +1,15 @@
+#This is the atom file containing all the information
+#about the lattice structure.
+
+ATOMIC_SPECIES
+Fe 55.845   Fe_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+3.6
+
+ATOMIC_POSITIONS
+Direct
+Fe
+2.0
+1
+0.00 0.00 0.00 1 1 1

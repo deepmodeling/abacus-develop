@@ -1,9 +1,8 @@
 #ifndef HSOLVER_H
 #define HSOLVER_H
 
-#include "source_estate/elecstate.h"
-#include "source_hamilt/hamilt.h"
-
+#include <fstream>
+#include <string>
 
 namespace hsolver
 {
@@ -18,7 +17,8 @@ double set_diagethr_ks(const std::string basis_type,
                        const double drho,
                        const double pw_diag_thr_init,
                        const double diag_ethr_in,
-                       const double nelec_in);
+                       const double nelec_in,
+                       const double scf_thr_in);
 
 double set_diagethr_sdft(const std::string basis_type,
                          const std::string esolver_type,
@@ -30,7 +30,9 @@ double set_diagethr_sdft(const std::string basis_type,
                          const double pw_diag_thr_init,
                          const double diag_ethr_in,
                          const int nband_in,
-                         const double stoiter_ks_ne_in);
+                         const double stoiter_ks_ne_in,
+                         const double nelec_in,
+                         const double scf_thr_in);
 
 
 // reset diagethr according to drho and hsolver_error

@@ -8,6 +8,11 @@
 #include "source_psi/psi.h"
 #include "module_pot/potential_new.h"
 
+namespace ModulePW
+{
+class PW_Basis_Big;
+}
+
 namespace elecstate
 {
 
@@ -42,7 +47,14 @@ class ElecState
 
     // calculate electronic charge density on grid points or density matrix in real space
     // the consequence charge density rho saved into rho_out, preparing for charge mixing.
+    // NOTE: all overloads are intentionally provided (with empty bodies) so that
+    // template derived classes (e.g. ElecStatePW<T, Device>) can safely mark their
+    // psiToRho/cal_tau as 'override' regardless of which (T, Device) combo is instantiated.
     virtual void psiToRho(const psi::Psi<std::complex<double>>& psi)
+    {
+        return;
+    }
+    virtual void psiToRho(const psi::Psi<std::complex<double>, base_device::DEVICE_GPU>& psi)
     {
         return;
     }
@@ -50,7 +62,23 @@ class ElecState
     {
         return;
     }
+    virtual void psiToRho(const psi::Psi<double, base_device::DEVICE_GPU>& psi)
+    {
+        return;
+    }
+    virtual void psiToRho(const psi::Psi<std::complex<float>>& psi)
+    {
+        return;
+    }
+    virtual void psiToRho(const psi::Psi<std::complex<float>, base_device::DEVICE_GPU>& psi)
+    {
+        return;
+    }
     virtual void cal_tau(const psi::Psi<std::complex<double>>& psi)
+    {
+        return;
+    }
+    virtual void cal_tau(const psi::Psi<std::complex<double>, base_device::DEVICE_GPU>& psi)
     {
         return;
     }
@@ -58,7 +86,15 @@ class ElecState
     {
         return;
     }
+    virtual void cal_tau(const psi::Psi<double, base_device::DEVICE_GPU>& psi)
+    {
+        return;
+    }
     virtual void cal_tau(const psi::Psi<std::complex<float>>& psi)
+    {
+        return;
+    }
+    virtual void cal_tau(const psi::Psi<std::complex<float>, base_device::DEVICE_GPU>& psi)
     {
         return;
     }
@@ -94,20 +130,8 @@ class ElecState
         return;
     }
 
-    /**
-     * @brief Init rho_core, init rho, renormalize rho, init pot
-     *
-     * @param ucell unit cell
-     * @param strucfac structure factor
-     * @param symm symmetry
-     * @param wfcpw PW basis for wave function if needed
-     */
-    void init_scf(const UnitCell& ucell,
-                  const Parallel_Grid& pgrid,
-                  const ModuleBase::ComplexMatrix& strucfac,
-                  const bool* numeric,
-                  ModuleSymmetry::Symmetry& symm,
-                  const void* wfcpw = nullptr);
+
+
     std::string classname = "elecstate";
 
     int iter = 0;                                  ///< scf iteration
@@ -126,9 +150,19 @@ class ElecState
     ModuleBase::matrix vnew;
     bool vnew_exist = false;
     void cal_converged();
-    void cal_energies(const int type);
-    void set_exx(const double& Eexx);
-    void set_exx(const std::complex<double>& Eexx);
+    /// @brief assemble the total energy from its contributions
+    /// @param type 1 means Harris-Foulkes functional, 2 means Kohn-Sham
+    /// @param imp_sol whether the implicit solvation correction contributes
+    /// @param sc_mag_switch whether the spin-constraint energy contributes
+    /// @param dft_plus_u 0 disables the DFT+U energy term
+    /// @param assume_isolated "makov-payne" adds the isolated-system correction
+    void cal_energies(const int type,
+                      const int imp_sol,
+                      const bool sc_mag_switch,
+                      const int dft_plus_u,
+                      const std::string& assume_isolated);
+    void set_exx(const double& Eexx, const bool cal_exx, const double hybrid_alpha);
+    void set_exx(const std::complex<double>& Eexx, const bool cal_exx, const double hybrid_alpha);
 
     double get_hartree_energy();
     double get_etot_efield();
@@ -137,12 +171,14 @@ class ElecState
     double get_solvent_model_Ael();
     double get_solvent_model_Acav();
 
-    virtual double get_spin_constrain_energy()
+    /// Constraint energy (Ry), supplied after updating the atomic magnetic moments.
+    void set_spin_constrain_energy(const double energy)
     {
-        return 0.0;
+        this->f_en.escon = energy;
     }
 
     double get_dftu_energy();
+    void set_dftu_energy(double e) { dftu_energy_ = e; }
     double get_local_pp_energy();
 
     fenergy f_en; ///< energies contribute to the total free energy
@@ -160,7 +196,31 @@ class ElecState
   public:
 
     bool skip_weights = false;
+
+  private:
+    double dftu_energy_ = 0.0; ///< DFT+U energy, set by ESolver via set_dftu_energy()
 };
+
+/**
+ * @brief Init rho_core, init rho, renormalize rho, init pot
+ *
+ * @param ucell unit cell
+ * @param pgrid parallel grid
+ * @param strucfac structure factor
+ * @param numeric numeric flag
+ * @param istep ionic step index
+ * @param out_dir output directory
+ * @param inp input parameters
+ * @param pelec pointer to ElecState
+ */
+void init_scf(const UnitCell& ucell,
+              const Parallel_Grid& pgrid,
+              const ModuleBase::ComplexMatrix& strucfac,
+              const bool* numeric,
+              const int istep,
+              const std::string& out_dir,
+              const Input_para& inp,
+              ElecState* pelec);
 
 } // namespace elecstate
 #endif

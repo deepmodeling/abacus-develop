@@ -1,9 +1,11 @@
 #include "elpa_new.h"
 
+#include "elpa_runtime_check.h"
+
 #include "elpa_solver.h"
 extern "C"
 {
-#include "Cblacs.h"
+#include "cblacs.h"
 }
 #include "utils.h"
 #include <cfloat>
@@ -94,6 +96,10 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "mpi_comm_parent", MPI_Comm_c2f(comm), &error);
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "process_row", myprow, &error);
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "process_col", mypcol, &error);
+    // blacs_context is required by ELPA for internal MPI operations
+    // (e.g. MPI_Bcast in complex Cholesky/invert_triangular);
+    // previously missing in this constructor but present in the otherParameter one
+    elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "blacs_context", cblacs_ctxt, &error);
 
     error = elpa_setup(NEW_ELPA_HANDLE_POOL[handle_id]);
     // cout<<"elpa handle is setup\n";
@@ -208,7 +214,10 @@ void ELPA_Solver::setKernel(bool isReal, int kernel)
     if (isReal)
         elpa_set(NEW_ELPA_HANDLE_POOL[handle_id], "real_kernel", kernel, &error);
     else
+    {
         elpa_set(NEW_ELPA_HANDLE_POOL[handle_id], "complex_kernel", kernel, &error);
+        validate_elpa_complex_kernel(kernel, error, comm);
+    }
 }
 
 void ELPA_Solver::setQR(int useQR)

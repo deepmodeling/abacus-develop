@@ -23,8 +23,10 @@ struct line_minimize_with_block_op
     /// T : dot product result
     void operator()(T* grad_out,
                     T* hgrad_out,
+                    T* sgrad_out,
                     T* psi_out,
                     T* hpsi_out,
+                    T* spsi_out,
                     const int& n_basis,
                     const int& n_basis_max,
                     const int& n_band);
@@ -52,6 +54,7 @@ struct calc_grad_with_block_op
                     Real* beta_out,
                     T* psi_out,
                     T* hpsi_out,
+                    T* spsi_out,
                     T* grad_out,
                     T* grad_old_out,
                     const int& n_basis,
@@ -121,7 +124,8 @@ template <typename T, typename Device> struct refresh_hcc_scc_vcc_op {
 template <typename T>
 struct line_minimize_with_block_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  void operator()(T *grad_out, T *hgrad_out, T *psi_out, T *hpsi_out,
+  void operator()(T *grad_out, T *hgrad_out, T *sgrad_out,
+                  T *psi_out, T *hpsi_out, T *spsi_out,
                   const int &n_basis, const int &n_basis_max,
                   const int &n_band);
 };
@@ -130,7 +134,8 @@ template <typename T>
 struct calc_grad_with_block_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
   void operator()(const Real *prec_in, Real *err_out, Real *beta_out,
-                  T *psi_out, T *hpsi_out, T *grad_out, T *grad_old_out,
+                  T *psi_out, T *hpsi_out, T *spsi_out,
+                  T *grad_out, T *grad_old_out,
                   const int &n_basis, const int &n_basis_max,
                   const int &n_band);
 };

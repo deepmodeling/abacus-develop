@@ -120,21 +120,6 @@ struct delete_memory_op
     void operator()(FPTYPE* arr);
 };
 
-template <typename FPTYPE>
-void resize_memory(FPTYPE* arr, const size_t size, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
-
-template <typename FPTYPE>
-void set_memory(FPTYPE* arr, const int var, const size_t size, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
-
-template <typename FPTYPE>
-void synchronize_memory(FPTYPE* arr_out, const FPTYPE* arr_in, const size_t size, base_device::AbacusDevice_t device_type_out, base_device::AbacusDevice_t device_type_in);
-
-template <typename FPTYPE_out, typename FPTYPE_in>
-void cast_memory(FPTYPE_out* arr_out, const FPTYPE_in* arr_in, const size_t size, base_device::AbacusDevice_t device_type_out, base_device::AbacusDevice_t device_type_in);
-
-template <typename FPTYPE>
-void delete_memory(FPTYPE* arr, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
-
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 // Partially specialize operator for base_device::GpuDevice.
 template <typename FPTYPE>
@@ -220,6 +205,14 @@ struct delete_memory_op<FPTYPE, base_device::DEVICE_GPU>
 
 #ifdef __DSP
 
+/// @brief Inject the DSP cluster id used by mt-allocator (mtfunc::malloc_ht).
+/// Caller-injected (typically once after input parameters are read).
+/// Defaults to 0 if never set.
+void set_dsp_cluster_id(int id);
+
+/// @brief Read back the injected DSP cluster id. Returns 0 if never set.
+int get_dsp_cluster_id();
+
 template <typename FPTYPE, typename Device>
 struct resize_memory_op_mt
 {
@@ -232,6 +225,20 @@ struct resize_memory_op_mt
     /// Output Parameters
     /// \param arr : allocated array
     void operator()(FPTYPE*& arr, const size_t size, const char* record_in = nullptr);
+};
+
+template <typename FPTYPE, typename Device>
+struct set_memory_op_mt
+{
+    /// @brief memset for DSP memory allocated by mt allocator.
+    ///
+    /// Input Parameters
+    /// \param var : the specified constant byte value
+    /// \param size : array size
+    ///
+    /// Output Parameters
+    /// \param arr : output array initialized by the input value
+    void operator()(FPTYPE* arr, const int var, const size_t size);
 };
 
 template <typename FPTYPE, typename Device>

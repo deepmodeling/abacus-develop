@@ -2,7 +2,7 @@
 
 #include "force_stress_arrays.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/lcao_domain.h"
 #include "spar_dh.h"
 #include "spar_hsr.h"
 
@@ -139,8 +139,8 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff[T1] + ucell.infoNL->get_rcut_max(T0);
+                        double rcut2 = orb_cutoff[T2] + ucell.infoNL->get_rcut_max(T0);
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
@@ -159,7 +159,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                     for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++)
                     {
                         const int iw1_all = start + ii;
-                        const int mu = pv.global2local_row(iw1_all);
+                        const int mu = pv.para_2d().irloc(iw1_all);
 
                         if (mu < 0)
                         {
@@ -169,7 +169,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                         for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = pv.global2local_col(iw2_all);
+                            const int nu = pv.para_2d().icloc(iw2_all);
 
                             if (nu < 0)
                             {

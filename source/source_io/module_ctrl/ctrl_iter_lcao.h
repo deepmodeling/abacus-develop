@@ -6,11 +6,10 @@
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecStateLCAO<TK> 
 #include "source_psi/psi.h" // use Psi<TK>
 #include "source_estate/module_charge/charge.h" // use charge
-#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_estate/module_charge/chg_mix.h" // use charge mixing
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_lcao/setup_exx.h" // mohan add 20251008
 #include "source_lcao/setup_deepks.h" // mohan add 20251010
-#include "source_io/module_restart/restart.h"
 
 namespace ModuleIO
 {
@@ -20,7 +19,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
 		elecstate::ElecState* pelec, // electronic info * 
-        elecstate::DensityMatrix<TK, double>& dm, // density matrix, mohan add 2025-11-03
+        module_dm::DensityMatrix<TK, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<TK>* psi, // wave functions *
@@ -30,6 +29,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 		LCAO_Orbitals &orb, // orbital info *
         Setup_DeePKS<TK> &deepks,
         Exx_NAO<TK> &exx_nao,
+        const Exx_Info& exx_info,
         int &iter,
         const int istep,
         bool &conv_esolver,

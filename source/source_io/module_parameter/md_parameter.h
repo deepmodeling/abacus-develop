@@ -14,11 +14,12 @@ struct MD_para
     bool md_restart = false;           ///< 1: restart MD, 0: no restart MD
     std::string md_type = "nvt";       ///< fire, nve, nvt, npt, langevin, msst
     std::string md_thermostat = "nhc"; ///< specify the thermostat: nhc, anderson, berendsen,
-                                       ///< rescaling, rescale_v
+                                       ///< rescaling, rescale_v, csvr
     double md_dt = 1.0;                ///< Time increment (hbar/E_hartree)
     double md_tfirst = -1.0;           ///< Temperature (in Hartree, 1 Hartree ~ 3E5 K)
     double md_tlast = -1.0;            ///< Target temperature
-    int md_dumpfreq = 1;               ///< The period to dump MD information
+    int out_thermo_freq = 1;           ///< The period to output MD thermodynamic information
+    double md_neighbor_skin = 0.0;     ///< Extra neighbor-list radius in Angstrom for MDCell solvers
     int md_restartfreq = 5;            ///< The period to output MD restart information
     int md_seed = -1;                  ///< random seed for MD
     int md_prec_level = 0;             ///< precision level for vc-md
@@ -29,6 +30,7 @@ struct MD_para
     std::vector<double> lj_epsilon = {}; ///< the value of epsilon for LJ potential (eV)
     std::vector<double> lj_sigma = {};   ///< the value of sigma for LJ potential (\AA)
     std::string pot_file = "graph.pb";   ///< the filename of potential files for CMD such as DP
+    std::string snap_param_file = "snap.param"; ///< SNAP parameter file
     double dp_rescaling = 1.0;           ///< rescaling factor for DP model. Energy, force and stress will be multiplied by this factor.
     std::vector<double> dp_fparam
         = {}; ///< The frame parameter for dp potential. The array can be of size :
@@ -58,15 +60,15 @@ struct MD_para
 
     double md_damp = 1.0; ///< Langevin damping parameter (time units)
 
+    double md_csvr_tau = 100.0; ///< CSVR thermostat characteristic time scale (in MD time units)
+
     double md_tolerance = 100.0; ///< tolerance for velocity rescaling (K)
     int md_nraise = 1;           ///< parameters used when md_type=nvt
 
-    bool dump_force = true;  ///< output atomic forces into the file MD_dump or
-                             ///< not. liuyu 2023-03-01
-    bool dump_vel = true;    ///< output atomic velocities into the file MD_dump or
-                             ///< not. liuyu 2023-03-01
-    bool dump_virial = true; ///< output lattice virial into the file MD_dump or
-                             ///< not. liuyu 2023-03-01
+    bool plumed = false;          ///< use PLUMED for collective variables and enhanced
+                                  ///< sampling (requires ABACUS compiled with PLUMED)
+    std::string plumed_file = "plumed.dat"; ///< input file of PLUMED
+
 };
 
 #endif // MD_PARA_H

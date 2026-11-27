@@ -186,6 +186,27 @@ class TestCell(unittest.TestCase):
         cell.add_atom("Fe", [1, 1, 1])
         self.assertFalse(cell._built)
 
+    def test_save_stru_repeated_species(self):
+        """Regression test: saving a cell with multiple atoms of the same species
+        must keep all atoms and report a consistent natom."""
+        # Start from an existing STRU so lattice_constant and pp info exist
+        cell = Cell.from_file(self.stru_file)
+        n_orig = len(cell.atoms)
+        # Add two more atoms of an already-present species
+        existing_species = cell.species[0]
+        cell.add_atom(existing_species, [0.10, 0.10, 0.10])
+        cell.add_atom(existing_species, [0.20, 0.20, 0.20])
+
+        out = os.path.join(self.temp_dir, 'STRU')
+        cell.to_file(out, 'stru')
+
+        reloaded = Cell.from_file(out)
+        self.assertEqual(len(reloaded.atoms), n_orig + 2)
+        self.assertEqual(
+            reloaded.species.count(existing_species),
+            cell.species.count(existing_species),
+        )
+
     def test_k_points(self):
         """Test k-points generation."""
         cell = Cell()

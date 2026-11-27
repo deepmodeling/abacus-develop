@@ -16,7 +16,7 @@ For non-spin-polarized calculations, the default choices usually achieve converg
 
 For magnetic calculations, `mixing_beta_mag` and `mixing_gg0_mag` are activated. Considering collinear calculations, you can rely on the default value for most cases. If convergence issue arises, you can try to reduce `mixing_beta` and `mixing_beta_mag` together. For non-collinear calculations, tradtional broyden usually works, especially for a given magnetic configuration. If one is not interested in the energies of a given magnetic configuration but wants to determine the ground state by relaxing the magnetic moments’ directions, the standard Broyden mixing algorithm sometimes fails to find the correct magnetic configuration. If so, we can set [mixing_angle=1.0](../input_files/input-main.md#mixing_angle), which is a promising mixing method proposed by J. Phys. Soc. Jpn. 82 (2013) 114706.
 
-An example showcasing different charge mixing methods can be found in our [repository](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/charge_mixing/pw_Al). Four INPUT files are provided, with description given in README.
+An example showcasing different charge mixing methods can be found in our [repository](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/07_charge_mixing/01_pw_Al). Four INPUT files are provided, with description given in README.
 
 As for DFT+U calculations, where the hamiltonian is not only dependent on charge density, but also dependent on density matrix. You can try `mixing_restart>0` and `mixing_dmr=1` to improve convergence. For case extremely hard to converge, you can use so-called U-Ramping method by setting a finite positive `uramping` with `mixing_restart>0` and `mixing_dmr=1`.
 
@@ -28,4 +28,4 @@ In ABACUS, we provide a few smearing methods, which can be controlled using the 
 
 > Note : The two keywords `smearing_sigma` and `smearing_sigma_temp` should not be used concurrently.
 
-We provide an example showing the importance of smearing in our [repository](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/smearing/lcao_fe). Two INPUT fiels rae provided, with description given in README.
+We provide an example showing the importance of smearing in our [repository](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/06_smearing/01_lcao_Fe). Two INPUT fiels rae provided, with description given in README.

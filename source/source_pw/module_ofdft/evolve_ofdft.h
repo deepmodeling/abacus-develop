@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis.h"
@@ -36,7 +35,7 @@ class Evolve_OFDFT
                        std::vector<std::complex<double>>& pphi_, 
                        ModulePW::PW_Basis* pw_rho);
 
-    void renormalize_psi(Charge& chr, ModulePW::PW_Basis* pw_rho, std::vector<std::complex<double>>& pphi_);
+    void renormalize_psi(Charge& chr, ModulePW::PW_Basis* pw_rho, std::vector<std::complex<double>>& pphi_, const double omega);
 
   private:
     const double c_tf_

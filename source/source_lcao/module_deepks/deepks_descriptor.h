@@ -4,8 +4,6 @@
 #ifdef __MLALGO
 
 #include "deepks_param.h"
-#include "source_base/intarray.h"
-#include "source_base/timer.h"
 #include "source_cell/unitcell.h"
 
 #include <torch/script.h>

@@ -28,7 +28,7 @@ void FFTW<double>::execute_fftw()
     fftw_execute(this->coef_plan);
 }
 
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
 FFTW<float>::FFTW(const int norder2_in)
 {
     ccoef = (fftwf_complex*)fftw_malloc(sizeof(fftwf_complex) * norder2_in);
@@ -762,12 +762,12 @@ bool Chebyshev<REAL, Device>::checkconverge(
 
 // we only have two examples: double and float.
 template class Chebyshev<double>;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
 template class Chebyshev<float>;
 #endif
 #if ((defined __CUDA) || (defined __ROCM))
 template class Chebyshev<double, base_device::DEVICE_GPU>;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
 template class Chebyshev<float, base_device::DEVICE_GPU>;
 #endif
 #endif

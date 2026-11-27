@@ -1,12 +1,15 @@
 #include "td_nonlocal_lcao.h"
 
+#include "source_base/atom_basis_view.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_lcao/lcao_nonlocal_info.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_rt/snap_psibeta_half_tddft.h"
+#include "source_lcao/module_rt/td_info.h"
+#include "source_lcao/module_rt/snap_psb_half_tddft.h"
 #ifdef __CUDA
 #include "source_base/module_device/device.h"
 #include "source_lcao/module_rt/kernels/snap_psibeta_gpu.h"
@@ -23,9 +26,11 @@ hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::TDNonlocal(HS_Matrix_K<TK>* hs
                                                              hamilt::HContainer<TR>* hR_in,
                                                              const UnitCell* ucell_in,
                                                              const LCAO_Orbitals& orb,
-                                                             const Grid_Driver* GridD_in)
+                                                             const Grid_Driver* GridD_in,
+                                                             TD_info& td_info)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_(orb)
 {
+    this->td_info_ = &td_info;
     this->cal_type = calculation_type::lcao_tddft_periodic;
     this->ucell = ucell_in;
     this->Grid = GridD_in;
@@ -49,24 +54,24 @@ template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::update_td()
 {
     // calculate At in cartesian coorinates.
-    this->cart_At = TD_info::cart_At;
+    this->cart_At = this->td_info_->endpoint_A();
 }
 // initialize_HR()
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
-    if (elecstate::H_TDDFT_pw::stype != 1)
+    if (this->td_info_->field().gauge() != 1)
     {
         return;
     }
     ModuleBase::TITLE("TDNonlocal", "initialize_HR");
-    ModuleBase::timer::tick("TDNonlocal", "initialize_HR");
+    ModuleBase::timer::start("TDNonlocal", "initialize_HR");
 
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
     {
-        auto tau0 = ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
         AdjacentAtomInfo adjs;
@@ -84,7 +89,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb_.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < orb_.Phi[T1].getRcut() + this->ucell->infoNL->get_rcut_max(T0))
             {
                 is_adj[ad1] = true;
             }
@@ -93,19 +98,19 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_
         this->adjs_all.push_back(adjs);
     }
 
-    ModuleBase::timer::tick("TDNonlocal", "initialize_HR");
+    ModuleBase::timer::end("TDNonlocal", "initialize_HR");
 }
 
 // initialize_HR_tmp()
 template <typename TK, typename TR>
-void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR_tmp(const Parallel_Orbitals* paraV)
+void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR_tmp()
 {
-    if (elecstate::H_TDDFT_pw::stype != 1)
+    if (this->td_info_->field().gauge() != 1)
     {
         return;
     }
     ModuleBase::TITLE("TDNonlocal", "initialize_HR_tmp");
-    ModuleBase::timer::tick("TDNonlocal", "initialize_HR_tmp");
+    ModuleBase::timer::start("TDNonlocal", "initialize_HR_tmp");
 
     for (int i = 0; i < this->hR->size_atom_pairs(); ++i)
     {
@@ -116,20 +121,19 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR_tmp(const P
             const int iat1 = tmp.get_atom_i();
             const int iat2 = tmp.get_atom_j();
 
-            hamilt::AtomPair<std::complex<double>> tmp1(iat1, iat2, R_index, paraV);
-            this->hR_tmp->insert_pair(tmp1);
+            this->hR_tmp->insert_pair(iat1, iat2, R_index);
         }
     }
     this->hR_tmp->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("TDNonlocal", "initialize_HR_tmp");
+    ModuleBase::timer::end("TDNonlocal", "initialize_HR_tmp");
 }
 
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 {
     ModuleBase::TITLE("TDNonlocal", "calculate_HR");
-    ModuleBase::timer::tick("TDNonlocal", "calculate_HR");
+    ModuleBase::timer::start("TDNonlocal", "calculate_HR");
 
     // Determine whether to use GPU path:
     // GPU is only used when both __CUDA is defined AND device is set to "gpu"
@@ -149,14 +153,13 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 #endif
     }
 
-    const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
     const int nlm_dim = TD_info::out_current==1 ? 4 : 1;
     // 1. calculate <psi|beta> for each pair of atoms
 
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
-        const auto tau0 = ucell->get_tau(iat0);
+        const ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
         const AdjacentAtomInfo& adjs = this->adjs_all[iat0];
@@ -169,26 +172,27 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
         if (use_gpu)
         {
-            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
+            ModuleBase::timer::start("TD_Efficiency", "snap_psibeta");
 #ifdef __CUDA
             // GPU path: Atom-level GPU batch processing
             module_rt::gpu::snap_psibeta_atom_batch_gpu(orb_,
-                                                        this->ucell->infoNL,
+                                                        static_cast<const LCAONonlocalInfo*>(this->ucell->infoNL.get())->get_nonlocal(),
                                                         T0,
                                                         tau0 * this->ucell->lat0,
                                                         cart_At,
                                                         adjs,
                                                         this->ucell,
-                                                        paraV,
+                                                        this->td_info_->basis(),
+                                                        this->td_info_->layout(),
                                                         npol,
                                                         nlm_dim,
                                                         nlm_tot);
 #endif
-            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
+            ModuleBase::timer::end("TD_Efficiency", "snap_psibeta");
         }
         else
         {
-            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
+            ModuleBase::timer::start("TD_Efficiency", "snap_psibeta");
             // CPU path: OpenMP parallel over neighbors to compute nlm_tot
 #pragma omp parallel for schedule(dynamic)
             for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
@@ -198,19 +202,50 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 const int iat1 = ucell->itia2iat(T1, I1);
                 const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
                 const Atom* atom1 = &ucell->atoms[T1];
-                auto all_indexes = paraV->get_indexes_row(iat1);
-                auto col_indexes = paraV->get_indexes_col(iat1);
-                all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
-                std::sort(all_indexes.begin(), all_indexes.end());
-                all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
-
+                const AtomBasisView rows = this->td_info_->row_basis(iat1);
+                const AtomBasisView cols = this->td_info_->col_basis(iat1);
+                // Both views enumerate strictly increasing atom-local basis entries,
+                // npol consecutive ones per spatial orbital. <psi|beta> is needed for
+                // the union of the row and the column axis of this atom, and every
+                // npol-th entry of that sorted union is one spatial orbital, so the
+                // two streams are merged on the fly with index cursors instead of
+                // being materialized into one vector.
+                int irow = 0;
+                int icol = 0;
+                int iunion = 0;
                 // CPU path: loop over orbitals
-                for (size_t iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
+                while (irow < rows.nloc() || icol < cols.nloc())
                 {
-                    const int iw1 = all_indexes[iw1l] / npol;
+                    int entry = 0;
+                    if (icol >= cols.nloc() || (irow < rows.nloc() && rows[irow] < cols[icol]))
+                    {
+                        entry = rows[irow];
+                        ++irow;
+                    }
+                    else
+                    {
+                        entry = cols[icol];
+                        ++icol;
+                    }
+                    if (irow < rows.nloc() && rows[irow] == entry)
+                    {
+                        ++irow;
+                    }
+                    if (icol < cols.nloc() && cols[icol] == entry)
+                    {
+                        ++icol;
+                    }
+                    const bool sampled = (iunion % npol == 0);
+                    ++iunion;
+                    if (!sampled)
+                    {
+                        continue;
+                    }
+                    const int iw1 = entry / npol;
                     std::vector<std::vector<std::complex<double>>> nlm;
+                    LCAONonlocalInfo* lcao_nl = static_cast<LCAONonlocalInfo*>(this->ucell->infoNL.get());
                     module_rt::snap_psibeta_half_tddft(orb_,
-                                                       this->ucell->infoNL,
+                                                       lcao_nl->get_nonlocal(),
                                                        nlm,
                                                        tau1 * this->ucell->lat0,
                                                        T1,
@@ -223,11 +258,11 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                                        TD_info::out_current==1);
                     for (int dir = 0; dir < nlm_dim; dir++)
                     {
-                        nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
+                        nlm_tot[ad][dir].insert({entry, nlm[dir]});
                     }
                 }
             }
-            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
+            ModuleBase::timer::end("TD_Efficiency", "snap_psibeta");
         }
 
         // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
@@ -250,7 +285,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             const int thread_id = omp_get_thread_num();
             std::set<int> ad_atom_set_thread;
             int i = 0;
-            for (const auto iat1: ad_atom_set)
+            for (const int iat1: ad_atom_set)
             {
                 if (i % num_threads == thread_id)
                 {
@@ -293,14 +328,13 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                             std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                             for (int ii = 0; ii < 3; ii++)
                             {
-                                tmp_c[ii] = TD_info::td_vel_op->get_current_term_pointer(ii)
+                                tmp_c[ii] = this->td_info_->get_current_term_pointer(ii)
                                                 ->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])
                                                 ->get_pointer();
                             }
                             this->cal_HR_IJR(iat1,
                                              iat2,
                                              T0,
-                                             paraV,
                                              nlm_tot[ad1],
                                              nlm_tot[ad2],
                                              tmp->get_pointer(),
@@ -311,7 +345,6 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                             this->cal_HR_IJR(iat1,
                                              iat2,
                                              T0,
-                                             paraV,
                                              nlm_tot[ad1],
                                              nlm_tot[ad2],
                                              tmp->get_pointer(),
@@ -322,7 +355,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         } // end omp parallel for matrix assembly
     }     // end for iat0
-    ModuleBase::timer::tick("TDNonlocal", "calculate_HR");
+    ModuleBase::timer::end("TDNonlocal", "calculate_HR");
 }
 
 // cal_HR_IJR()
@@ -332,7 +365,6 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     const int& iat1,
     const int& iat2,
     const int& T0,
-    const Parallel_Orbitals* paraV,
     const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm1_all,
     const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm2_all,
     std::complex<double>* data_pointer,
@@ -347,34 +379,34 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
     double olm[3] = {0, 0, 0};
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    const AtomBasisView rows = this->td_info_->row_basis(iat1);
+    const AtomBasisView cols = this->td_info_->col_basis(iat2);
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol * npol, 0);
     for (int is = 0; is < npol; is++)
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            step_trace[is * npol + is2] = col_indexes.size() * is + is2;
+            step_trace[is * npol + is2] = cols.nloc() * is + is2;
         }
     }
     // calculate the local matrix
     const std::complex<double>* tmp_d = nullptr;
-    for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
+    for (int iw1l = 0; iw1l < rows.nloc(); iw1l += npol)
     {
-        // const std::vector<std::complex<double>>* nlm1 = &(nlm1_all[0].find(row_indexes[iw1l])->second);
+        // const std::vector<std::complex<double>>* nlm1 = &(nlm1_all[0].find(rows[iw1l])->second);
         std::vector<const std::vector<std::complex<double>>*> nlm1;
         for (int dir = 0; dir < nlm_dim; dir++)
         {
-            nlm1.push_back(&(nlm1_all[dir].find(row_indexes[iw1l])->second));
+            nlm1.push_back(&(nlm1_all[dir].find(rows[iw1l])->second));
         }
 
-        for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
+        for (int iw2l = 0; iw2l < cols.nloc(); iw2l += npol)
         {
             std::vector<const std::vector<std::complex<double>>*> nlm2;
             for (int dir = 0; dir < nlm_dim; dir++)
             {
-                nlm2.push_back(&(nlm2_all[dir].find(col_indexes[iw2l])->second));
+                nlm2.push_back(&(nlm2_all[dir].find(cols[iw2l])->second));
             }
 #ifdef __DEBUG
             assert(nlm1.size() == nlm2.size());
@@ -421,12 +453,12 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
                 }
             }
         }
-        data_pointer += (npol - 1) * col_indexes.size();
+        data_pointer += (npol - 1) * cols.nloc();
         if (data_pointer_c != nullptr)
         {
             for (int dir = 0; dir < 3; dir++)
             {
-                data_pointer_c[dir] += (npol - 1) * col_indexes.size();
+                data_pointer_c[dir] += (npol - 1) * cols.nloc();
             }
         }
     }
@@ -446,20 +478,23 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("TDNonlocal", "contributeHR");
 
-    if (elecstate::H_TDDFT_pw::stype != 1)
+    if (this->td_info_->field().gauge() != 1)
     {
         return;
     }
 
-    ModuleBase::timer::tick("TDNonlocal", "contributeHR");
+    ModuleBase::timer::start("TDNonlocal", "contributeHR");
 
     if (!this->hR_tmp_done || TD_info::evolve_once)
     {
         if (this->hR_tmp == nullptr)
         {
-            this->hR_tmp = new hamilt::HContainer<std::complex<double>>(this->hsk->get_pv());
+            this->hR_tmp = new hamilt::HContainer<std::complex<double>>(
+                this->td_info_->basis(),
+                this->td_info_->layout(),
+                static_cast<std::complex<double>*>(nullptr));
             // allocate memory for hR_tmp use the same memory as hR
-            this->initialize_HR_tmp(this->hsk->get_pv());
+            this->initialize_HR_tmp();
             this->allocated = true;
         }
         if (this->next_sub_op != nullptr)
@@ -475,7 +510,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         TD_info::evolve_once = false;
     }
 
-    ModuleBase::timer::tick("TDNonlocal", "contributeHR");
+    ModuleBase::timer::end("TDNonlocal", "contributeHR");
     return;
 }
 

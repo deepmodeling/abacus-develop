@@ -1,15 +1,16 @@
 #ifndef KEDF_MANAGER_H
 #define KEDF_MANAGER_H
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_basis/module_pw/pw_basis.h"
-#include "source_estate/elecstate.h"
 #include "kedf_lkt.h"
 #include "kedf_tf.h"
 #include "kedf_vw.h"
 #include "kedf_wt.h"
+#include "kedf_extwt.h"
 #include "kedf_xwm.h"
 #include "kedf_ml.h"
+
+struct Input_para;
 
 class KEDF_Manager
 {
@@ -22,6 +23,8 @@ class KEDF_Manager
         delete this->tf_;
         delete this->vw_;
         delete this->wt_;
+        delete this->extwt_;
+        delete this->xwm_;
 #ifdef __MLALGO
         delete this->ml_;
 #endif
@@ -41,7 +44,7 @@ class KEDF_Manager
         ModuleBase::matrix& rpot
     );
 
-    double get_energy();
+    double get_energy() const;
 
     void get_energy_density(
         const double* const* prho,
@@ -70,11 +73,21 @@ class KEDF_Manager
     );
 
 private:
+    void init_tf(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV);
+    void init_vw(const Input_para& inp, double dV);
+    void init_wt(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
+    void init_extwt(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
+    void init_xwm(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
+    void init_lkt(const Input_para& inp, double dV);
+#ifdef __MLALGO
+    void init_ml(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
+#endif
 
     KEDF_LKT* lkt_ = nullptr; // Luo-Karasiev-Trickey KEDF
     KEDF_TF* tf_ = nullptr;   // Thomas-Fermi KEDF
     KEDF_vW* vw_ = nullptr;   // von Weizsäcker KEDF
     KEDF_WT* wt_ = nullptr;   // Wang-Teter KEDF
+    KEDF_ExtWT* extwt_ = nullptr; // Extended Wang-Teter KEDF
     KEDF_XWM* xwm_ = nullptr; // Xu-Wang-Ma KEDF
 #ifdef __MLALGO
     KEDF_ML* ml_ = nullptr;   // Machine Learning KEDF

@@ -31,7 +31,7 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
     ifs.ignore(300, '\n');
 
     atom_in ai;
-    for (auto each_type:  ModuleBase::element_name)
+    for (std::string each_type:  ModuleBase::element_name)
     {
         if (zatom == ai.atom_Z[each_type])
         {
@@ -44,10 +44,10 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
     ifs >> pspcod >> pspxc >> pp.lmax >> lloc >> pp.mesh >> r2well;
     this->mesh_changed = false;
     if (pp.mesh%2 == 0)
-	{
-		pp.mesh -= 1;
+    {
+        pp.mesh -= 1;
         this->mesh_changed = true;
-	}
+    }
 
     if (pspxc == 2)
     {

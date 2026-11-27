@@ -30,7 +30,7 @@ test = ["contourpy","cycler","exceptiongroup","fonttools","importlib-metadata","
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
-cmake.verbose = true
+build.verbose = true
 logging.level = "INFO"
 
 [tool.scikit-build.cmake.define]

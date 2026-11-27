@@ -4,8 +4,7 @@
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/module_rt/td_info.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "operator_lcao.h"
 #include <vector>
 
@@ -41,7 +40,8 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
                                      const UnitCell* ucell_in,
                                      const std::vector<double>& orb_cutoff,
                                      const Grid_Driver* GridD_in,
-                                     const TwoCenterIntegrator* intor);
+                                     const TwoCenterIntegrator* intor,
+                                     TD_info& td_info);
     ~TDEkinetic();
 
     virtual void contributeHR() override;
@@ -69,7 +69,6 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_HR_IJR(const int& iat1,
                     const int& iat2,
-                    const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
                     std::complex<double>* hr_mat_p,
                     std::complex<double>** current_mat_p);

@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include <ATen/core/tensor.h>
 #include <ATen/kernels/lapack.h>
 #include <base/utils/gtest.h>
@@ -56,12 +58,9 @@ TYPED_TEST(LapackTest, Trtri) {
 }
 
 TYPED_TEST(LapackTest, Potrf) {
-
-    return;
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
-    blas_gemm<Type, Device> gemmCalculator;
     lapack_potrf<Type, Device> potrfCalculator;
     set_matrix<Type, Device> setMatrixCalculator;
 
@@ -71,25 +70,51 @@ TYPED_TEST(LapackTest, Potrf) {
                                  static_cast<Type>(2.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
 
     Tensor B = A;
-    Tensor C = B;
-    C.zero();
-
-    const char transa = 'N';
-    const char transb = 'C';
-    const int m = 3;
-    const int n = 3;
-    const int k = 3;
-    const Type alpha = static_cast<Type>(1.0);
-    const Type beta  = static_cast<Type>(0.0);
     // Note all blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
     potrfCalculator('L', dim, B.data<Type>(), dim);
-    // Keep the upper triangle of B
-    setMatrixCalculator('U', B.data<Type>(), dim);
-    // A = U**T * U
-    gemmCalculator(transa, transb, m, n, k, &alpha, B.to_device<DEVICE_CPU>().data<Type>(), k, B.to_device<DEVICE_CPU>().data<Type>(), n, &beta, C.to_device<DEVICE_CPU>().data<Type>(), n);
+    // B may live on an accelerator, so pull it back before inspecting elements on the host.
+    const Tensor factorized = B.to_device<DEVICE_CPU>();
+    EXPECT_GT(std::abs(factorized.data<Type>()[0]), 0.0);
+    EXPECT_GT(std::abs(factorized.data<Type>()[4]), 0.0);
+    EXPECT_GT(std::abs(factorized.data<Type>()[8]), 0.0);
 
-    EXPECT_EQ(A, C);
+    setMatrixCalculator('L', B.data<Type>(), dim);
+    const Tensor masked = B.to_device<DEVICE_CPU>();
+    EXPECT_EQ(masked.data<Type>()[1], static_cast<Type>(0.0));
+    EXPECT_EQ(masked.data<Type>()[2], static_cast<Type>(0.0));
+    EXPECT_EQ(masked.data<Type>()[5], static_cast<Type>(0.0));
+}
+
+TYPED_TEST(LapackTest, GetrfGetriGetrs) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    // This test drives the wrappers with host stack buffers, so it is pinned to the CPU
+    // backend; handing these pointers to the cuSolver path would be an invalid device pointer.
+    using Device = DEVICE_CPU;
+
+    const int dim = 2;
+    const int rhs_count = 1;
+    const int workspace_size = 8;
+    Type matrix[4] = {static_cast<Type>(4.0),
+                      static_cast<Type>(2.0),
+                      static_cast<Type>(1.0),
+                      static_cast<Type>(3.0)};
+    int pivots[dim] = {0};
+
+    lapack_getrf<Type, Device>()(dim, dim, matrix, dim, pivots);
+
+    Type factorized[4] = {matrix[0], matrix[1], matrix[2], matrix[3]};
+    Type rhs[2] = {static_cast<Type>(1.0), static_cast<Type>(1.0)};
+    lapack_getrs<Type, Device>()('N', dim, rhs_count, factorized, dim, pivots, rhs, dim);
+    EXPECT_NEAR(std::abs(rhs[0] - static_cast<Type>(0.2)), 0.0, 1.0e-6);
+    EXPECT_NEAR(std::abs(rhs[1] - static_cast<Type>(0.2)), 0.0, 1.0e-6);
+
+    Type workspace[workspace_size];
+    lapack_getri<Type, Device>()(dim, matrix, dim, pivots, workspace, workspace_size);
+    EXPECT_NEAR(std::abs(matrix[0] - static_cast<Type>(0.3)), 0.0, 1.0e-6);
+    EXPECT_NEAR(std::abs(matrix[1] - static_cast<Type>(-0.2)), 0.0, 1.0e-6);
+    EXPECT_NEAR(std::abs(matrix[2] - static_cast<Type>(-0.1)), 0.0, 1.0e-6);
+    EXPECT_NEAR(std::abs(matrix[3] - static_cast<Type>(0.4)), 0.0, 1.0e-6);
 }
 
 // lapack_geqrf_inplace,
@@ -111,9 +136,10 @@ TYPED_TEST(LapackTest, GeqrfInPlace) {
     }).to_device<Device>());
 
     Tensor A = A_input; // will be overwritten as Q
+    std::vector<Type> rdiag(n);
 
-    // do geqrf -> get orthogonal Q
-    geqrfCalculator(m, n, A.data<Type>(), lda);
+    // do geqrf -> get orthogonal Q and the diagonal of R
+    geqrfCalculator(m, n, A.data<Type>(), lda, rdiag.data());
 
     // check on CPU
     Tensor Q = A.to_device<DEVICE_CPU>();
@@ -166,6 +192,26 @@ TYPED_TEST(LapackTest, GeqrfInPlace) {
             EXPECT_NEAR(std::abs(QtQ.data<Type>()[i + j * n]), std::abs(expected), 1e-5)
                 << "Q^T * Q not identity at (" << i << "," << j << ")";
         }
+    }
+
+    // R = Q^H * A_original; its diagonal must match the values captured
+    // before geqrf overwrote A with Q.
+    Tensor R = std::move(Tensor({
+        static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+        static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+        static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0)
+    }).to_device<DEVICE_CPU>());
+    Tensor A_cpu = A_input.to_device<DEVICE_CPU>();
+    gemm('C', 'N',
+         n, n, m,
+         &alpha,
+         Q_data, lda,
+         A_cpu.data<Type>(), lda,
+         &beta,
+         R.data<Type>(), n);
+    for (int j = 0; j < n; ++j) {
+        EXPECT_NEAR(std::abs(R.data<Type>()[j + j * n]), std::abs(rdiag[j]), 1e-5)
+            << "R diagonal mismatch at " << j;
     }
 }
 

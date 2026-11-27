@@ -17,7 +17,12 @@ class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
     ~Sto_Stress_PW(){};
 
     // calculate the stress in PW basis
-    void cal_stress(ModuleBase::matrix& sigmatot,
+    void cal_stress(const int nspin,
+                    const bool domag,
+                    const bool domag_z,
+                    const int gga_grad,
+                    const bool gamma_only_pw,
+                    ModuleBase::matrix& sigmatot,
                     const elecstate::ElecState& elec,
                     ModulePW::PW_Basis* rho_basis,
                     ModuleSymmetry::Symmetry* p_symm,
@@ -52,9 +57,16 @@ class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
                        const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
 
   private:
+#ifdef __DSP
+    using resmem_var_op = base_device::memory::resize_memory_op_mt<FPTYPE, Device>;
+    using setmem_var_op = base_device::memory::set_memory_op_mt<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op_mt<FPTYPE, Device>;
+
+#else
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
     using setmem_var_op = base_device::memory::set_memory_op<FPTYPE, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
+#endif
     using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, Device>;
 };
 #endif

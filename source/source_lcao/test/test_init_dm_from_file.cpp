@@ -5,13 +5,11 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_estate/module_dm/density_matrix.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/module_hcontainer/read_hcontainer.h"
-#include "source_lcao/setup_dm.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/read_hcontainer.h"
+#include "source_lcao/allocate_dm.h"
 #include "source_cell/klist.h"
-#undef private
 #include "source_io/module_dm/write_dmr.h"
 
 /************************************************
@@ -41,8 +39,8 @@ class InitDMFileTest : public testing::Test
         ucell.ntype = 1;
         ucell.nat = test_size;
         ucell.atoms = new Atom[ucell.ntype];
-        ucell.iat2it = new int[ucell.nat];
-        ucell.iat2ia = new int[ucell.nat];
+        ucell.iat2it.resize(ucell.nat);
+        ucell.iat2ia.resize(ucell.nat);
         ucell.atoms[0].tau.resize(ucell.nat);
         ucell.atoms[0].taud.resize(ucell.nat);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
@@ -69,7 +67,7 @@ class InitDMFileTest : public testing::Test
 
         // set up parallel orbitals (serial mode)
         paraV = new Parallel_Orbitals();
-        paraV->set_serial(nlocal, nlocal);
+        paraV->para_2d().set_serial(nlocal, nlocal);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, nlocal);
     }
 
@@ -100,19 +98,21 @@ class InitDMFileTest : public testing::Test
             if (ap)
             {
                 int nw = ucell.atoms[0].nw;
+                const int r_index = 0;  // R=(0,0,0)
                 for (int k = 0; k < nw; k++)
                 {
-                    ap->get_pointer()[k * nw + k] = scale * (k + 1) * 0.1;
+                    ap->get_pointer(r_index)[k * nw + k] = scale * (k + 1) * 0.1;
                 }
             }
         }
 
         std::string fname = filename;
-        ModuleIO::write_dmr_csr(fname, &ucell, 8, &hc, 0, ispin, nspin);
+        const bool append = false;
+        ModuleIO::write_dmr_csr(fname, &ucell, 8, &hc, 0, ispin, nspin, append);
     }
 
     /// Create DensityMatrix with given nspin and initialize DMR from an HContainer template
-    elecstate::DensityMatrix<double, double>* create_dm(int nspin)
+    module_dm::DensityMatrix<double, double>* create_dm(int nspin)
     {
         K_Vectors kv;
         int nks = (nspin == 2) ? 2 : 1;
@@ -120,7 +120,7 @@ class InitDMFileTest : public testing::Test
         kv.kvec_d.resize(kv.get_nks());
 
         int nspin_dm = (nspin == 2) ? 2 : 1;
-        auto* dm = new elecstate::DensityMatrix<double, double>(
+        auto* dm = new module_dm::DensityMatrix<double, double>(
             paraV, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
 
         // Create a template HContainer and init DMR from it
@@ -134,7 +134,7 @@ class InitDMFileTest : public testing::Test
             }
         }
         tmp_HR.allocate(nullptr, true);
-        dm->init_DMR(tmp_HR);
+        dm->init_dmr(tmp_HR);
         return dm;
     }
 };
@@ -145,10 +145,10 @@ TEST_F(InitDMFileTest, Nspin1_ReadSingleFile)
     write_test_csr("./test_dm_dir/dmrs1_nao.csr", 1.0, 0, 1);
 
     auto* dm = create_dm(1);
-    ASSERT_EQ(dm->_DMR.size(), 1);
+    ASSERT_EQ(dm->get_dmr_vec().size(), 1);
 
-    hamilt::HContainer<double>* dmr0 = dm->get_DMR_vector()[0];
-    hamilt::Read_HContainer<double> reader(dmr0, "./test_dm_dir/dmrs1_nao.csr", nlocal, &ucell);
+    hamilt::HContainer<double>* dmr0 = dm->get_dmr_vec()[0];
+    hamilt::Read_HContainer<double> reader(dmr0, "./test_dm_dir/dmrs1_nao.csr", nlocal, &ucell, 0);
     reader.read();
 
     EXPECT_GT(dmr0->size_atom_pairs(), 0);
@@ -157,9 +157,10 @@ TEST_F(InitDMFileTest, Nspin1_ReadSingleFile)
     auto* ap = dmr0->find_pair(0, 0);
     ASSERT_NE(ap, nullptr);
     bool has_nonzero = false;
+    const int r_index = 0;  // R=(0,0,0)
     for (int i = 0; i < ap->get_size(); i++)
     {
-        if (std::abs(ap->get_pointer()[i]) > 1e-15)
+        if (std::abs(ap->get_pointer(r_index)[i]) > 1e-15)
         {
             has_nonzero = true;
             break;
@@ -177,16 +178,16 @@ TEST_F(InitDMFileTest, Nspin2_ReadTwoFiles)
     write_test_csr("./test_dm_dir/dmrs2_nao.csr", 0.5, 1, 2);  // spin-down
 
     auto* dm = create_dm(2);
-    ASSERT_EQ(dm->_DMR.size(), 2);
+    ASSERT_EQ(dm->get_dmr_vec().size(), 2);
 
     // Read spin-up
-    hamilt::HContainer<double>* dmr0 = dm->get_DMR_vector()[0];
-    hamilt::Read_HContainer<double> reader0(dmr0, "./test_dm_dir/dmrs1_nao.csr", nlocal, &ucell);
+    hamilt::HContainer<double>* dmr0 = dm->get_dmr_vec()[0];
+    hamilt::Read_HContainer<double> reader0(dmr0, "./test_dm_dir/dmrs1_nao.csr", nlocal, &ucell, 0);
     reader0.read();
 
     // Read spin-down
-    hamilt::HContainer<double>* dmr1 = dm->get_DMR_vector()[1];
-    hamilt::Read_HContainer<double> reader1(dmr1, "./test_dm_dir/dmrs2_nao.csr", nlocal, &ucell);
+    hamilt::HContainer<double>* dmr1 = dm->get_dmr_vec()[1];
+    hamilt::Read_HContainer<double> reader1(dmr1, "./test_dm_dir/dmrs2_nao.csr", nlocal, &ucell, 0);
     reader1.read();
 
     EXPECT_GT(dmr0->size_atom_pairs(), 0);
@@ -200,10 +201,11 @@ TEST_F(InitDMFileTest, Nspin2_ReadTwoFiles)
 
     bool values_differ = false;
     int check_size = std::min(ap0->get_size(), ap1->get_size());
+    const int r_index = 0;  // R=(0,0,0)
     for (int i = 0; i < check_size; i++)
     {
-        double v0 = ap0->get_pointer()[i];
-        double v1 = ap1->get_pointer()[i];
+        double v0 = ap0->get_pointer(r_index)[i];
+        double v1 = ap1->get_pointer(r_index)[i];
         if (std::abs(v0) > 1e-15 && std::abs(v0 - v1) > 1e-15)
         {
             values_differ = true;
@@ -219,17 +221,17 @@ TEST_F(InitDMFileTest, Nspin2_ReadTwoFiles)
 TEST_F(InitDMFileTest, Nspin2_DMRVectorSize)
 {
     auto* dm = create_dm(2);
-    EXPECT_EQ(dm->_DMR.size(), 2);
-    EXPECT_NE(dm->_DMR[0], nullptr);
-    EXPECT_NE(dm->_DMR[1], nullptr);
+    EXPECT_EQ(dm->get_dmr_vec().size(), 2);
+    EXPECT_NE(dm->get_dmr_vec()[0], nullptr);
+    EXPECT_NE(dm->get_dmr_vec()[1], nullptr);
     delete dm;
 }
 
 TEST_F(InitDMFileTest, Nspin1_DMRVectorSize)
 {
     auto* dm = create_dm(1);
-    EXPECT_EQ(dm->_DMR.size(), 1);
-    EXPECT_NE(dm->_DMR[0], nullptr);
+    EXPECT_EQ(dm->get_dmr_vec().size(), 1);
+    EXPECT_NE(dm->get_dmr_vec()[0], nullptr);
     delete dm;
 }
 
@@ -261,7 +263,7 @@ TEST_F(InitDMFileTest, HR_Nspin1_ReadSingleFile)
 
     // Read HR from file (same as init_hr_from_file does internally)
     hR.set_zero();
-    hamilt::Read_HContainer<double> reader(&hR, "./test_hr_dir/hrs1_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader(&hR, "./test_hr_dir/hrs1_nao.csr", nlocal, &ucell, 0);
     reader.read();
 
     // Verify data was loaded
@@ -271,10 +273,11 @@ TEST_F(InitDMFileTest, HR_Nspin1_ReadSingleFile)
 
     // Check diagonal has expected values (scale=2.0, value = 2.0*(k+1)*0.1)
     int nw = ucell.atoms[0].nw;
+    const int r_index = 0;  // R=(0,0,0)
     for (int k = 0; k < nw; k++)
     {
         double expected = 2.0 * (k + 1) * 0.1;
-        EXPECT_NEAR(ap->get_pointer()[k * nw + k], expected, 1e-6);
+        EXPECT_NEAR(ap->get_pointer(r_index)[k * nw + k], expected, 1e-6);
     }
 }
 
@@ -304,13 +307,13 @@ TEST_F(InitDMFileTest, HR_Nspin2_ReadTwoFiles)
     // Read spin-up
     auto* hR_up = create_hcontainer();
     hR_up->set_zero();
-    hamilt::Read_HContainer<double> reader_up(hR_up, "./test_hr_dir/hrs1_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader_up(hR_up, "./test_hr_dir/hrs1_nao.csr", nlocal, &ucell, 0);
     reader_up.read();
 
     // Read spin-down
     auto* hR_down = create_hcontainer();
     hR_down->set_zero();
-    hamilt::Read_HContainer<double> reader_down(hR_down, "./test_hr_dir/hrs2_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader_down(hR_down, "./test_hr_dir/hrs2_nao.csr", nlocal, &ucell, 0);
     reader_down.read();
 
     // Verify both have data
@@ -321,10 +324,11 @@ TEST_F(InitDMFileTest, HR_Nspin2_ReadTwoFiles)
     auto* ap_up = hR_up->find_pair(0, 0);
     ASSERT_NE(ap_up, nullptr);
     int nw = ucell.atoms[0].nw;
+    const int r_index = 0;  // R=(0,0,0)
     for (int k = 0; k < nw; k++)
     {
         double expected_up = 1.0 * (k + 1) * 0.1;
-        EXPECT_NEAR(ap_up->get_pointer()[k * nw + k], expected_up, 1e-6);
+        EXPECT_NEAR(ap_up->get_pointer(r_index)[k * nw + k], expected_up, 1e-6);
     }
 
     // Verify spin-down values (scale=3.0)
@@ -333,12 +337,12 @@ TEST_F(InitDMFileTest, HR_Nspin2_ReadTwoFiles)
     for (int k = 0; k < nw; k++)
     {
         double expected_down = 3.0 * (k + 1) * 0.1;
-        EXPECT_NEAR(ap_down->get_pointer()[k * nw + k], expected_down, 1e-6);
+        EXPECT_NEAR(ap_down->get_pointer(r_index)[k * nw + k], expected_down, 1e-6);
     }
 
     // Verify the two are independent (different values)
-    double val_up = ap_up->get_pointer()[0];
-    double val_down = ap_down->get_pointer()[0];
+    double val_up = ap_up->get_pointer(r_index)[0];
+    double val_down = ap_down->get_pointer(r_index)[0];
     EXPECT_GT(std::abs(val_up), 1e-15);
     EXPECT_NEAR(val_down / val_up, 3.0, 1e-6);
 

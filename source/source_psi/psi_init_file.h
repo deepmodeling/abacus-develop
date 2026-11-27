@@ -1,37 +1,50 @@
 #ifndef PSI_INIT_FILE_H
 #define PSI_INIT_FILE_H
 
-#include "source_pw/module_pwdft/vnl_pw.h"
-#include "psi_initializer.h"
+#include "psi_base.h"
+
+#include <string>
+#include <vector>
 
 /*
 Psi (planewave based wavefunction) initializer: random method
 */
 template <typename T>
-class psi_init_file : public psi_initializer<T>
+class psi_init_file : public psi_base<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+    int nspin_ = 1;
+    std::string global_readin_dir_;
+    int rank_in_pool_ = 0;
+    int nproc_in_pool_ = 1;
+    int nkstot_ = 0;
 
   public:
     psi_init_file()
     {
         this->method_ = "file";
     };
-    ~psi_init_file(){};
+    ~psi_init_file() {};
 
-    /// @brief initialize the psi_initializer with external data and methods
-    virtual void initialize(const Structure_Factor*,             //< structure factor
-                            const ModulePW::PW_Basis_K*,         //< planewave basis
-                            const UnitCell*,                     //< unit cell
-                            const K_Vectors*,                    //< kpoints
-                            const int& = 1,                      //< random seed
-                            const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0) override;            //< MPI rank
+    virtual void initialize(const Structure_Factor* sf,         //< structure factor
+                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
+                            const UnitCell* p_ucell,            //< unit cell
+                            const std::vector<int>& ik2iktot,   //< ik2iktot: local->global k-point mapping
+                            const int& random_seed,             //< random seed
+                            const int& rank,                    //< MPI rank
+                            const int& npol,                    //< npol
+                            const int& nbands) override;        //< nbands
 
     /// @brief calculate and output planewave wavefunction
     /// @param ik kpoint index
     /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
     virtual void init_psig(T* psig, const int& ik) override;
+
+    void prepare_params(const int& nspin,
+                        const std::string& global_read_in_dir,
+                        const int& rank_in_pool,
+                        const int& nproc_in_pool,
+                        const int& nkstot);
 };
 #endif

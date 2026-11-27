@@ -1,0 +1,214 @@
+#include "write_dh.h"
+
+#include "source_base/fs_compat.h"
+#include "source_base/global_function.h"
+#include "source_base/timer.h"
+#include "source_io/module_hs/hs_dense_io.h"
+#include "source_io/module_hs/hsr_writer.h"
+#include "source_io/module_output/spin_tag.h"
+#include "source_io/module_output/write_notice.h"
+#include "source_cell/ucell_io.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h"
+#endif
+
+#include <algorithm>
+#include <complex>
+#include <fstream>
+#include <iomanip>
+#include <string>
+
+namespace ModuleIO
+{
+
+void write_dh_perI(WriteDHParams& params,
+    int ispin,
+    const std::string& rprefix,
+    const std::string& kprefix,
+    const std::string& label,
+    const std::string& term_name,
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& g,
+    const std::vector<int>& atom_filter)
+{
+    const UnitCell& ucell = *params.ucell;
+    const Parallel_Orbitals& pv = *params.pv;
+    const int nat = params.nat;
+    const int nspin = params.nspin;
+    const int nbasis = g[0][0]->get_nbasis();
+
+    const char dirc[3] = { 'x', 'y', 'z' };
+
+    // k-space (dense, folded like H(k)) parameters
+    const int nspin_k = (nspin == 2 ? 2 : 1);
+    const int nks = params.kv->get_nks() / nspin_k;
+    const int nlocal = PARAM.globalv.nlocal;
+    // All dH component outputs (CSR dH/dR, dense dH/dk) belong to the unified
+    // matrix directory: global_mat_dir is set to OUT.root in modes 0/1 and to
+    // OUT.root/MAT/ in mode 2 by ReadInput::set_global_dir, so no caller-side
+    // calculation or out_app_flag branching is needed here.
+    const std::string mat_dir = PARAM.globalv.global_mat_dir;
+    // The mode-2 MAT/ subdirectory is created lazily here at write time; in
+    // modes 0/1 this is a no-op because mat_dir is the existing output dir.
+    ModuleBase::ensure_directory(mat_dir);
+    const int out_app_flag = PARAM.inp.out_app_flag;
+    // Mode 1 appends one frame per ionic step; the first step (istep == 0)
+    // truncates the fixed file so a rerun does not keep stale records. Only
+    // mode 2 embeds the step in the name.
+    const bool append = (out_app_flag == 1) && (params.istep > 0);
+    const bool numbered = (out_app_flag == 2);
+
+#ifdef __MPI
+    Parallel_Orbitals serialV;
+    serialV.para_2d().set_serial(nbasis, nbasis);
+    serialV.set_atomic_trace(params.iat2iwt, nat, nbasis);
+#endif
+
+    const bool filter_atoms = !atom_filter.empty();
+    if (filter_atoms)
+        for (int idx : atom_filter)
+            if (idx < 0 || idx >= nat)
+                ModuleBase::WARNING("write_dh_perI",
+                    "atom index " + std::to_string(idx + 1) + " (1-based) is out of range [1, "
+                    + std::to_string(nat) + "] and will be skipped");
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        if (filter_atoms && std::find(atom_filter.begin(), atom_filter.end(), iat) == atom_filter.end())
+            continue;
+        for (int d = 0; d < 3; ++d)
+        {
+            hamilt::HContainer<double>* hR = g[d][iat];
+            const std::string tag = std::string(1, dirc[d]) + "_ia" + std::to_string(iat + 1);
+
+            // ---- real space dH(R), CSR (only when also_dhR; dH(k) below is always written) ----
+            if (params.also_dhR)
+            {
+#ifdef __MPI
+            hamilt::HContainer<double> hR_s(&serialV);
+            hamilt::gatherParallels(*hR, &hR_s, 0);
+            if (GlobalV::MY_RANK == 0)
+#endif
+            {
+                std::string fr = mat_dir + ModuleIO::dhr_gen_fname(rprefix + tag, ispin, numbered, params.istep);
+                // dH/dR is not a Hamiltonian: no Fermi energy annotation in the header
+                const double no_efermi = 0.0;
+#ifdef __MPI
+                ModuleIO::write_hcontainer_csr(
+                    fr, &ucell, 8, &hR_s, params.istep, append, ispin, nspin, label, "", no_efermi, false);
+#else
+                ModuleIO::write_hcontainer_csr(
+                    fr, &ucell, 8, hR, params.istep, append, ispin, nspin, label, "", no_efermi, false);
+#endif
+                if (params.ofs_running != nullptr)
+                {
+                    const std::string property = "dH/dR (" + term_name + " term)";
+                    ModuleIO::write_matrix_notice(*params.ofs_running, property, ispin, nspin, fr);
+                }
+            }
+            }
+
+            // ---- k space dH(k), dense (folded like H(k), comparable to *_nao.txt) ----
+            // build the filename directly (filename_output only accepts a fixed property set)
+#ifdef __MPI
+            const bool col_major = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver);
+            const size_t hk_size = static_cast<size_t>(pv.para_2d().nrloc()) * pv.para_2d().ncloc();
+#else
+            const size_t hk_size = static_cast<size_t>(nlocal) * nlocal;
+#endif
+            for (int ik = 0; ik < nks; ++ik)
+            {
+                std::vector<std::complex<double>> hk(hk_size, 0);
+#ifdef __MPI
+                if (col_major)
+                    hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], pv.para_2d().nrloc(), 1);
+                else
+                    hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], pv.para_2d().ncloc(), 0);
+#else
+                hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], nlocal, 0);
+#endif
+                std::string fk = kprefix + std::to_string(params.kv->ik2iktot[ik] + 1) + tag;
+                // Spin-polarized runs write one file per spin channel, and mode 2
+                // numbers the file per ionic step, matching the other MAT outputs.
+                fk = mat_dir + ModuleIO::dhk_gen_fname(fk, ispin, nspin, numbered, params.istep);
+                ModuleIO::save_mat(params.istep,
+                                   hk.data(),
+                                   nlocal,
+                                   false,
+                                   8,
+                                   false,
+                                   append,
+                                   fk,
+                                   pv.para_2d(),
+                                   GlobalV::DRANK,
+                                   PARAM.inp.ks_solver);
+            }
+        }
+    }
+}
+
+void write_dH_components(WriteDHParams& params, const Exx_Info& exx_info)
+{
+    ModuleBase::TITLE("ModuleIO", "write_dH_components");
+    ModuleBase::timer::start("ModuleIO", "write_dH_components");
+
+    // nspin=4 (noncollinear) is not supported: needs complex spinor blocks (HContainer<std::complex<double>>)
+    // plus noncollinear Gint kernels that do not exist for the dvlocal/drho paths.
+    if (PARAM.inp.nspin == 4)
+    {
+        ModuleBase::WARNING_QUIT("write_dH_components",
+                                 "dH/dR component output (out_mat_dh_*) is not supported for "
+                                 "nspin=4 (noncollinear) yet; only nspin=1 and nspin=2.");
+    }
+
+#ifdef __EXX
+    // dV^EXX/dR cannot be computed in this branch (it requires the LibRI cal_dHs/dHs_HF
+    // APIs from the unmerged LibRI PR#10), so the dH sum would silently omit the EXX term
+    // at any k-point setting, gamma-only included. Quit whenever EXX is on and the sum is
+    // requested; the individual non-EXX terms remain available.
+    if (exx_info.info_global.cal_exx && PARAM.inp.out_mat_dh[0])
+    {
+        ModuleBase::WARNING_QUIT("write_dH_components",
+                                 "out_mat_dh (the dH sum) is not supported with EXX because dV^EXX/dR is "
+                                 "unavailable; request the individual non-EXX terms (out_mat_dh_t, "
+                                 "out_mat_dh_vnl, out_mat_dh_vl, out_mat_dh_vh, out_mat_dh_vxc) instead.");
+    }
+#endif
+
+    if (PARAM.inp.out_mat_dh[0])
+    {
+        write_dH_sum(params);
+    }
+
+    if (PARAM.inp.out_mat_dh_t[0])
+    {
+        write_dH_t(params);
+    }
+
+    if (PARAM.inp.out_mat_dh_vnl[0])
+    {
+        write_dH_vnl(params);
+    }
+
+    if (PARAM.inp.out_mat_dh_vl[0])
+    {
+        write_dH_vl(params);
+    }
+
+    if (PARAM.inp.out_mat_dh_vh[0])
+    {
+        write_dH_vh(params);
+        write_dH_vh_pulay(params);
+    }
+
+    if (PARAM.inp.out_mat_dh_vxc[0])
+    {
+        write_dH_vxc(params);
+        write_dH_vxc_pulay(params);
+    }
+
+    ModuleBase::timer::end("ModuleIO", "write_dH_components");
+}
+
+} // namespace ModuleIO

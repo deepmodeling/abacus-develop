@@ -9,16 +9,17 @@
 #ifndef PYABACUS_ESOLVER_I_HAMILTONIAN_BUILDER_HPP
 #define PYABACUS_ESOLVER_I_HAMILTONIAN_BUILDER_HPP
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-
 #include <complex>
 #include <functional>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 
-namespace pyabacus {
-namespace esolver {
+namespace pyabacus
+{
+namespace esolver
+{
 
 /**
  * @brief Abstract interface for Hamiltonian builder
@@ -32,7 +33,7 @@ namespace esolver {
 template <typename TK, typename TR = double>
 class IHamiltonianBuilder
 {
-public:
+  public:
     virtual ~IHamiltonianBuilder() = default;
 
     // ==================== Build/Update ====================

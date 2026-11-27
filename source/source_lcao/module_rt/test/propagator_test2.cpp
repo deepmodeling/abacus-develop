@@ -1,9 +1,7 @@
 #include <gtest/gtest.h>
-#define private public
-#define protected public
+#include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_rt/propagator.h"
-#include "source_io/module_parameter/parameter.h"
 #include "tddft_test.h"
 
 #include <source_base/module_external/scalapack_connector.h>
@@ -30,26 +28,9 @@ TEST(PropagatorTest, testPropagatorTaylor)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->nloc = nlocal * nlocal;
-    pv->ncol = nlocal;
-    pv->nrow = nlocal;
-    pv->dim0 = 1;
-    pv->dim1 = 1;
-    pv->nb = 1;
-    pv->blacs_ctxt = 0;
-    pv->coord[0] = pv->coord[1] = 0;
+    ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
 
-    int dim[2];
-    dim[0] = nprow;
-    dim[1] = npcol;
-
-    PARAM.input.mdp.md_dt = 4 * ModuleBase::AU_to_FS;
-
-    // Initialize input matrices
-    int info;
-    int mb = 1, nb = 1, lda = nlocal, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    const double md_dt = 4 * ModuleBase::AU_to_FS;
 
     // Initialize data
     U_operator = new std::complex<double>[nlocal * nlocal];
@@ -76,7 +57,7 @@ TEST(PropagatorTest, testPropagatorTaylor)
 
     // Call the function
     int propagator = 1;
-    module_rt::Propagator prop(propagator, pv, PARAM.mdp.md_dt);
+    module_rt::Propagator prop(propagator, pv->para_2d(), md_dt);
     prop.compute_propagator(nlocal, Stmp, Htmp, nullptr, U_operator, GlobalV::ofs_running, print_matrix);
 
     // Check the results

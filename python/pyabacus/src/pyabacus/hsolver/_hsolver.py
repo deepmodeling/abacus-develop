@@ -136,7 +136,6 @@ def davidson(
     tol: float = 1e-2,
     max_iter: int = 1000,
     diag_ethr: Union[List[float], None] = None,
-    use_paw: bool = False,
     # scf_type: bool = False
 ) -> Tuple[NDArray[np.float64], NDArray[np.complex128]]:
     """ A function to diagonalize a matrix using the Davidson-Subspace method.
@@ -163,8 +162,6 @@ def davidson(
         The maximum number of iterations, by default 1000.
     diag_ethr : List[float] | None, optional
         The list of thresholds of bands, by default None.    
-    use_paw : bool, optional
-        Whether to use projector augmented wave (PAW) method, by default False.
     
     Returns
     -------
@@ -195,7 +192,6 @@ def davidson(
         tol,
         diag_ethr,
         max_iter,
-        use_paw,
         comm_info
     )
     

@@ -11,17 +11,16 @@ bool Symmetry::pricell_loop = true;
 void Symmetry::set_atom_map(const Atom* atoms)
 {
     ModuleBase::TITLE("Symmetry", "set_atom_map");
-    if (this->isym_rotiat_.size() == this->nrotk) {
-        return;
-    }
+    // A new analysis can reorder operations without changing their number.
+    // Rebuild their atom mappings from the current geometry every time.
     this->isym_rotiat_.resize(this->nrotk);
     for (int i = 0; i < this->nrotk; ++i) {
-        this->isym_rotiat_[i].resize(this->nat, -1);
+        this->isym_rotiat_[i].assign(this->nat, -1);
     }
 
-    double* pos = this->newpos;
-    double* rotpos = this->rotpos;
-    ModuleBase::GlobalFunc::ZEROS(pos, this->nat * 3);
+    std::fill(this->newpos.begin(), this->newpos.end(), 0.0);
+    double* pos = this->newpos.data();
+    double* rotpos = this->rotpos.data();
     int iat = 0;
     for (int it = 0; it < this->ntype; it++)
     {
@@ -42,21 +41,21 @@ void Symmetry::set_atom_map(const Atom* atoms)
     {
         for (int ia = istart[it]; ia < istart[it] + na[it]; ++ia)
         {
-			const int xx = ia * 3; 
-			const int yy = ia * 3 + 1; 
-			const int zz = ia * 3 + 2;
+            const int xx = ia * 3; 
+            const int yy = ia * 3 + 1; 
+            const int zz = ia * 3 + 2;
 
-			for (int k = 0;k < this->nrotk;++k)
+            for (int k = 0;k < this->nrotk;++k)
             {
-				rotpos[xx] = pos[xx] * gmatrix[k].e11 
-					+ pos[yy] * gmatrix[k].e21 
-					+ pos[zz] * gmatrix[k].e31 + gtrans[k].x;
-				rotpos[yy] = pos[xx] * gmatrix[k].e12 
-					+ pos[yy] * gmatrix[k].e22 
-					+ pos[zz] * gmatrix[k].e32 + gtrans[k].y;
-				rotpos[zz] = pos[xx] * gmatrix[k].e13 
-					+ pos[yy] * gmatrix[k].e23 
-					+ pos[zz] * gmatrix[k].e33 + gtrans[k].z;
+                rotpos[xx] = pos[xx] * gmatrix[k].e11 
+                    + pos[yy] * gmatrix[k].e21 
+                    + pos[zz] * gmatrix[k].e31 + gtrans[k].x;
+                rotpos[yy] = pos[xx] * gmatrix[k].e12 
+                    + pos[yy] * gmatrix[k].e22 
+                    + pos[zz] * gmatrix[k].e32 + gtrans[k].y;
+                rotpos[zz] = pos[xx] * gmatrix[k].e13 
+                    + pos[yy] * gmatrix[k].e23 
+                    + pos[zz] * gmatrix[k].e33 + gtrans[k].z;
 
                 check_translation(rotpos[xx], -floor(rotpos[xx]));
                 check_boundary(rotpos[xx]);
@@ -104,7 +103,7 @@ void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
             vtot[l*3+2] = vtot[l*3+2] + v[jx] * gmatrix[k].e13 + v[jy] * gmatrix[k].e23 + v[jz] * gmatrix[k].e33;
             n[l]++;
         }
-	}
+    }
     for (int j = 0;j < nat; ++j)
     {
         v[j * 3] = vtot[j * 3] / n[j];
@@ -113,7 +112,47 @@ void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
     }
     delete[] vtot;
     delete[] n;
-	return;
+    return;
+}
+
+void symmetrize_force_cartesian(Symmetry* symm,
+                                const int nat,
+                                const ModuleBase::Vector3<double>& a1,
+                                const ModuleBase::Vector3<double>& a2,
+                                const ModuleBase::Vector3<double>& a3,
+                                ModuleBase::matrix& force)
+{
+    ModuleBase::TITLE("Symmetry", "symmetrize_force_cartesian");
+    if (symm == nullptr || nat <= 0 || force.nr < nat || force.nc < 3)
+    {
+        ModuleBase::WARNING_QUIT("symmetrize_force_cartesian",
+                                 "symm must be non-null and force must have at least nat x 3 elements");
+    }
+    double d1;
+    double d2;
+    double d3;
+    for (int iat = 0; iat < nat; iat++)
+    {
+        ModuleBase::Mathzone::Cartesian_to_Direct(force(iat, 0), force(iat, 1), force(iat, 2),
+          a1.x, a1.y, a1.z, a2.x, a2.y, a2.z,
+          a3.x, a3.y, a3.z, d1, d2, d3);
+
+        force(iat, 0) = d1;
+        force(iat, 1) = d2;
+        force(iat, 2) = d3;
+    }
+    symm->symmetrize_vec3_nat(force.c);
+    for (int iat = 0; iat < nat; iat++)
+    {
+        ModuleBase::Mathzone::Direct_to_Cartesian(force(iat, 0), force(iat, 1), force(iat, 2),
+          a1.x, a1.y, a1.z, a2.x, a2.y, a2.z,
+          a3.x, a3.y, a3.z, d1, d2, d3);
+
+        force(iat, 0) = d1;
+        force(iat, 1) = d2;
+        force(iat, 2) = d3;
+    }
+    return;
 }
 
 void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const   //zhengdy added 2017
@@ -129,7 +168,7 @@ void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)con
                      * gmatrix[k].Transpose().to_matrix() * invAT;
     }
     sigma = tot_sigma * static_cast<double>(1.0 / nrotk);
-	return;
+    return;
 }
 
 void Symmetry::gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
@@ -248,7 +287,7 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
 void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
         ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
         ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
-        int& real_brav, double* cel_const, double* tmp_const) const
+        int& real_brav, double* cel_const, double* tmp_const, const double symmetry_prec) const
 {
     ModuleBase::Vector3<double> r1, r2, r3;
     double cos1 = 1;
@@ -282,15 +321,15 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
                                             r1.y = n11 * v1.y + n12 * v2.y + n13 * v3.y;
                                             r1.z = n11 * v1.z + n12 * v2.z + n13 * v3.z;
                                      
-									        r2.x = n21 * v1.x + n22 * v2.x + n23 * v3.x;
+                                            r2.x = n21 * v1.x + n22 * v2.x + n23 * v3.x;
                                             r2.y = n21 * v1.y + n22 * v2.y + n23 * v3.y;
                                             r2.z = n21 * v1.z + n22 * v2.z + n23 * v3.z;
                                      
-									        r3.x = n31 * v1.x + n32 * v2.x + n33 * v3.x;
+                                            r3.x = n31 * v1.x + n32 * v2.x + n33 * v3.x;
                                             r3.y = n31 * v1.y + n32 * v2.y + n33 * v3.y;
                                             r3.z = n31 * v1.z + n32 * v2.z + n33 * v3.z;
-											
-                                            ibrav = standard_lat(r1, r2, r3, cel_const);
+                                            
+                                            ibrav = standard_lat(r1, r2, r3, cel_const, symmetry_prec);
 
                                             if ( ibrav < real_brav || ( ibrav == real_brav
                                                     && ( fabs(cel_const[3]) < (cos1-1.0e-9) )
@@ -299,7 +338,7 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
                                                )
                                             {
                                                 real_brav = ibrav;
-												
+                                                
                                                 cos1 = fabs(cel_const[3]);
                                                 cos2 = fabs(cel_const[4]);
                                                 cos3 = fabs(cel_const[5]);
@@ -325,13 +364,14 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
     return;
 }
 
-bool Symmetry::is_all_movable(const Atom* atoms, const Statistics& st)const
+bool Symmetry::is_all_movable(const Atom* atoms, const std::vector<int>& iat2it,
+                              const std::vector<int>& iat2ia) const
 {
     bool all_mbl = true;
-    for (int iat = 0;iat < st.nat;++iat)
+    for (int iat = 0;iat < this->nat;++iat)
     {
-        int it = st.iat2it[iat];
-        int ia = st.iat2ia[iat];
+        int it = iat2it[iat];
+        int ia = iat2ia[iat];
         if (!atoms[it].mbl[ia].x || !atoms[it].mbl[ia].y || !atoms[it].mbl[ia].z)
         {
             all_mbl = false;

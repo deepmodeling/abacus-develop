@@ -17,9 +17,10 @@
 #ifndef SNAP_PSIBETA_KERNEL_CUH
 #define SNAP_PSIBETA_KERNEL_CUH
 
-#include "source_base/tool_quit.h"
+#include "source_lcao/module_rt/radial_interpolation.h"
 #include "source_base/kernels/cuda/sph_harm_gpu.cuh"
 #include "source_base/module_device/device_check.h"
+#include "source_base/tool_quit.h"
 
 #include <cstdio>
 #include <cuComplex.h>
@@ -102,46 +103,6 @@ __device__ __forceinline__ cuDoubleComplex cu_mul_real(cuDoubleComplex a, double
 }
 
 //=============================================================================
-// Device Helper Functions - Radial Interpolation
-//=============================================================================
-
-/**
- * @brief Cubic spline interpolation for radial functions
- *
- * Implements cubic polynomial interpolation using 4 consecutive grid points.
- * This is the GPU equivalent of CPU-side PolyInt::Polynomial_Interpolation.
- *
- * @param psi     Radial function values on uniform grid
- * @param mesh    Number of grid points
- * @param inv_dk  Inverse of grid spacing (1/dk)
- * @param distance Radial distance r at which to interpolate
- * @return Interpolated function value
- */
-__device__ __forceinline__ double interpolate_radial_gpu(const double* __restrict__ psi,
-                                                         int mesh,
-                                                         double inv_dk,
-                                                         double distance)
-{
-    double position = distance * inv_dk;
-    int iq = __double2int_rd(position); // floor(position)
-
-    // Boundary checks
-    if (iq > mesh - 4 || iq < 0)
-    {
-        return 0.0;
-    }
-
-    // Lagrange interpolation weights
-    double x0 = position - static_cast<double>(iq);
-    double x1 = 1.0 - x0;
-    double x2 = 2.0 - x0;
-    double x3 = 3.0 - x0;
-
-    // 4-point Lagrange interpolation formula
-    return x1 * x2 * (psi[iq] * x3 + psi[iq + 3] * x0) / 6.0 + x0 * x3 * (psi[iq + 1] * x2 - psi[iq + 2] * x1) / 2.0;
-}
-
-//=============================================================================
 // Device Helper Functions - Spherical Harmonics
 //=============================================================================
 
@@ -157,13 +118,12 @@ __device__ __forceinline__ double interpolate_radial_gpu(const double* __restric
  */
 struct ProjectorData
 {
-    int L0;           ///< Angular momentum quantum number
-    int beta_offset;  ///< Offset into flattened beta radial array
-    int beta_mesh;    ///< Number of radial mesh points
-    double beta_dk;   ///< Radial grid spacing
-    double beta_rcut; ///< Cutoff radius for projector
-    double r_min;     ///< Minimum radial grid value (integration start)
-    double r_max;     ///< Maximum radial grid value (integration end)
+    int L0;                    ///< Angular momentum quantum number
+    int beta_offset;           ///< Offset into flattened beta value array
+    int beta_grid_offset;      ///< Offset into flattened beta coordinate array
+    int beta_mesh;             ///< Number of radial mesh points
+    double beta_rcut;          ///< Cutoff radius for projector
+    RadialGridInfo grid_info;  ///< Validated radial grid metadata
 };
 
 /**
@@ -183,10 +143,11 @@ struct NeighborOrbitalData
     int m1;          ///< Magnetic quantum number of orbital
     int N1;          ///< Radial quantum number of orbital
     int iw_index;    ///< Global orbital index for output mapping
-    int psi_offset;  ///< Offset into flattened psi radial array
-    int psi_mesh;    ///< Number of radial mesh points for orbital
-    double psi_dk;   ///< Radial grid spacing for orbital
-    double psi_rcut; ///< Cutoff radius for orbital
+    int psi_offset;           ///< Offset into flattened psi value array
+    int psi_grid_offset;      ///< Offset into flattened psi coordinate array
+    int psi_mesh;             ///< Number of radial mesh points for orbital
+    double psi_rcut;          ///< Cutoff radius for orbital
+    RadialGridInfo grid_info; ///< Validated radial grid metadata
 };
 
 //=============================================================================
@@ -217,7 +178,9 @@ struct NeighborOrbitalData
  * @param neighbor_orbitals     Array of neighbor-orbital data [total_neighbor_orbitals]
  * @param projectors            Array of projector data [nproj]
  * @param psi_radial            Flattened array of orbital radial functions
+ * @param psi_radial_grid       Flattened array of orbital radial coordinates
  * @param beta_radial           Flattened array of projector radial functions
+ * @param beta_radial_grid      Flattened array of projector radial coordinates
  * @param proj_m0_offset        Starting index of each projector's m=0 component in output
  * @param total_neighbor_orbitals Total number of (neighbor, orbital) pairs
  * @param nproj                 Number of projectors on center atom
@@ -230,7 +193,9 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                                                const NeighborOrbitalData* __restrict__ neighbor_orbitals,
                                                const ProjectorData* __restrict__ projectors,
                                                const double* __restrict__ psi_radial,
+                                               const double* __restrict__ psi_radial_grid,
                                                const double* __restrict__ beta_radial,
+                                               const double* __restrict__ beta_radial_grid,
                                                const int* __restrict__ proj_m0_offset,
                                                int total_neighbor_orbitals,
                                                int nproj,

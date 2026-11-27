@@ -11,5 +11,4 @@ lj_epsilon        0.01 0.02
 lj_sigma          3.4 3.5
 
 #Parameters (relax)
-relax_new         1
 relax_nmax        0

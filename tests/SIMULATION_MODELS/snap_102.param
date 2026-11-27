@@ -1,0 +1,10 @@
+# ABACUS-generated SNAP regression fixture
+# This deterministic parameter set is created for software testing only.
+# It is not a transferable or physically validated material potential.
+
+rcutfac 4.9
+twojmax 8
+rfac0 0.99363
+rmin0 0
+quadraticflag 0
+bzeroflag 0

@@ -8,10 +8,10 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
 
     for (int it = 0; it < ntype; it++)
     {
-		//------------------------------------
+        //------------------------------------
         // impose periodic boundary condition
-		// 0.5 -> -0.5
-		//------------------------------------
+        // 0.5 -> -0.5
+        //------------------------------------
         for (int j = istart[it]; j < istart[it] + na[it]; ++j)
         {
             this->check_boundary(pos[j*3+0]);
@@ -20,7 +20,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
         }
 
         //order original atomic positions for current species
-        this->atom_ordering_new(pos + istart[it] * 3, na[it], index + istart[it]);
+        this->atom_ordering_new(pos + istart[it] * 3, na[it], index.data() + istart[it]);
         //copy pos to rotpos
         for (int j = istart[it]; j < istart[it] + na[it]; ++j)
         {
@@ -36,7 +36,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     ModuleBase::Vector3<double> diff;
     double tmp_ptrans[3];
 
-	//---------------------------------------------------------
+    //---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
     //---------------------------------------------------------
     // (s)tart (p)osition of atom (t)ype which has (min)inal number.
@@ -63,7 +63,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
                 this->check_boundary( rotpos[ia*3+2] );
             }
             //order translated atomic positions for current species
-            this->atom_ordering_new(rotpos + istart[it] * 3, na[it], index + istart[it]);
+            this->atom_ordering_new(rotpos.data() + istart[it] * 3, na[it], index.data() + istart[it]);
         }
 
         no_diff = true;
@@ -130,7 +130,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
         ptrans_array[i*3+1]=ptrans[i].y;
         ptrans_array[i*3+2]=ptrans[i].z;
     }
-    this->atom_ordering_new(ptrans_array, ntrans, index);
+    this->atom_ordering_new(ptrans_array, ntrans, index.data());
     // std::cout<<"final ptrans:"<<std::endl;
     for(int i=0;i<ntrans;++i)
     {
@@ -243,7 +243,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     for (int i = 0; i < 6; ++i) {
         pcel_pre_const[i] = pcel_const[i];
     }
-    this->lattice_type(p1, p2, p3, p01, p02, p03, pcel_const, pcel_pre_const, pbrav, pbravname, atoms, false, nullptr);
+    this->lattice_type(p1, p2, p3, p01, p02, p03, pcel_const, pcel_pre_const, pbrav, pbravname, atoms, false, nullptr, 1e-6);
 
     this->plat.e11=p1.x;
     this->plat.e12=p1.y;

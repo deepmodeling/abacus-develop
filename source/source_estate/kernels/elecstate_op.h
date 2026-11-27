@@ -1,6 +1,5 @@
 // TODO: This is a temperary location for these functions.
 // And will be moved to a global module(module base) later.
-#include "source_io/module_parameter/parameter.h"
 #ifndef source_estate_ELECSTATE_MULTI_DEVICE_H
 #define source_estate_ELECSTATE_MULTI_DEVICE_H
 #include <complex>
@@ -15,7 +14,8 @@ struct elecstate_pw_op {
   /// Input Parameters
   /// @param ctx - which device this function runs on
   /// @param spin - current spin
-  /// @param nrxx - number of planewaves
+  /// @param nrxx - number of real-space grid points on this process (basis/wfc grid)
+  /// @param nrxx_dense - nrxx of the dense (charge) grid, used as the stride between spin components of rho
   /// @param weight - input constant
   /// @param wfcr - input array, psi in real space
   ///
@@ -25,6 +25,7 @@ struct elecstate_pw_op {
       const Device* ctx,
       const int& spin,
       const int& nrxx,
+      const int& nrxx_dense,
       const FPTYPE& weight,
       FPTYPE** rho,
       const std::complex<FPTYPE>* wfcr);
@@ -35,7 +36,8 @@ struct elecstate_pw_op {
   /// @param ctx - which device this function runs on
   /// @param DOMAG - PARAM.globalv.domag
   /// @param DOMAG_Z - PARAM.globalv.domag_z
-  /// @param nrxx - number of planewaves
+  /// @param nrxx - number of real-space grid points on this process (basis/wfc grid)
+  /// @param nrxx_dense - nrxx of the dense (charge) grid, used as the stride between spin components of rho
   /// @param weight - input constant
   /// @param wfcr - input array, psi in real space
   /// @param wfcr_another_spin - input array, psi in real space
@@ -47,6 +49,7 @@ struct elecstate_pw_op {
       const bool& DOMAG,
       const bool& DOMAG_Z,
       const int& nrxx,
+      const int& nrxx_dense,
       const FPTYPE& weight,
       FPTYPE** rho,
       const std::complex<FPTYPE>* wfcr,
@@ -60,6 +63,7 @@ struct elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int& spin,
                     const int& nrxx,
+                    const int& nrxx_dense,
                     const FPTYPE& w1,
                     FPTYPE** rho,
                     const std::complex<FPTYPE>* wfcr);
@@ -68,6 +72,7 @@ struct elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>
                     const bool& DOMAG,
                     const bool& DOMAG_Z,
                     const int& nrxx,
+                    const int& nrxx_dense,
                     const FPTYPE& w1,
                     FPTYPE** rho,
                     const std::complex<FPTYPE>* wfcr,

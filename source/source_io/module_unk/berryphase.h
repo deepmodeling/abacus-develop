@@ -78,7 +78,7 @@ class berryphase
                                   const ModulePW::PW_Basis_K* wfcpw,
                                   const K_Vectors& kv);
 
-    std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project);
+    std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project) const;
 };
 
 #endif

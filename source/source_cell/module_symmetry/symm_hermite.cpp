@@ -2,8 +2,8 @@
 using namespace ModuleSymmetry;
 
 void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, 
-		ModuleBase::Matrix3 &h3, 
-		ModuleBase::Matrix3 &b3) const
+        ModuleBase::Matrix3 &h3, 
+        ModuleBase::Matrix3 &b3) const
 {
     ModuleBase::TITLE("Symmetry","hermite_normal_form");
     // check the non-singularity and integer elements of s
@@ -11,17 +11,17 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3,
     assert(!equal(s3.Det(), 0.0));
 #endif
 
-	auto near_equal = [this](double x, double y) 
-	{
-		return fabs(x - y) < 10 * epsilon;
-	};
+    auto near_equal = [this](double x, double y) 
+    {
+        return fabs(x - y) < 10 * epsilon;
+    };
 
     ModuleBase::matrix s = s3.to_matrix();
 
-	for (int i = 0; i < 3; ++i) 
-	{
-		for (int j = 0;j < 3;++j)
-		{
+    for (int i = 0; i < 3; ++i) 
+    {
+        for (int j = 0;j < 3;++j)
+        {
             double sij_round = std::round(s(i, j));
 #ifdef __DEBUG
             assert(near_equal(s(i, j), sij_round));
@@ -54,15 +54,15 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3,
         imax=0; imin=2;
         max_min_index(0, imid, imin);
         max_min_index(0, imax, imid);
-		max_min_index(0, imid, imin);
-		if (equal(h(0, imin), 0)) 
-		{
-			imin = imid;
-		} 
-		else if (equal(h(0, imax), 0)) 
-		{
-			imax = imid;
-		}
+        max_min_index(0, imid, imin);
+        if (equal(h(0, imin), 0)) 
+        {
+            imin = imid;
+        } 
+        else if (equal(h(0, imax), 0)) 
+        {
+            imax = imid;
+        }
         return;
     };
 
@@ -89,36 +89,36 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3,
     {
         max_min_index_row1(imax, imin);
         double f = floor((fabs(h(0, imax) )+ epsilon)/fabs(h(0, imin)));
-		if (h(0, imax) * h(0, imin) < -epsilon) 
-		{
-			f *= -1;
-		}
-		for(int r=0;r<3;++r) 
-		{
-			h(r, imax) -= f*h(r, imin); 
-			b(r, imax) -= f*b(r, imin); 
-		}
+        if (h(0, imax) * h(0, imin) < -epsilon) 
+        {
+            f *= -1;
+        }
+        for(int r=0;r<3;++r) 
+        {
+            h(r, imax) -= f*h(r, imin); 
+            b(r, imax) -= f*b(r, imin); 
+        }
     }
 
-	if (equal(h(0, 0), 0)) 
-	{
-		equal(h(0, 1), 0) ? swap_col(0, 2) : swap_col(0, 1);
-	}
+    if (equal(h(0, 0), 0)) 
+    {
+        equal(h(0, 1), 0) ? swap_col(0, 2) : swap_col(0, 1);
+    }
 
-	if (h(0, 0) < -epsilon) 
-	{
-		for (int r = 0; r < 3; ++r) 
-		{
-			h(r, 0) *= -1;
+    if (h(0, 0) < -epsilon) 
+    {
+        for (int r = 0; r < 3; ++r) 
+        {
+            h(r, 0) *= -1;
             b(r, 0) *= -1;
         }
     }
 
     //row 2
-	if (equal(h(1, 1), 0)) 
-	{
-		swap_col(1, 2);
-	}
+    if (equal(h(1, 1), 0)) 
+    {
+        swap_col(1, 2);
+    }
 
     while(!equal(h(1, 2), 0))
     {
@@ -126,26 +126,26 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3,
         max_min_index(1, imax, imin);
         double f = floor((fabs(h(1, imax) )+ epsilon)/fabs(h(1, imin)));
 
-		if (h(1, imax) * h(1, imin) < -epsilon) 
-		{
-			f *= -1;
-		}
+        if (h(1, imax) * h(1, imin) < -epsilon) 
+        {
+            f *= -1;
+        }
 
-		for(int r=0;r<3;++r) 
-		{
-			h(r, imax) -= f*h(r, imin); 
-			b(r, imax) -= f*b(r, imin); 
-		}
+        for(int r=0;r<3;++r) 
+        {
+            h(r, imax) -= f*h(r, imin); 
+            b(r, imax) -= f*b(r, imin); 
+        }
 
-		if (equal(h(1, 1), 0)) 
-		{
-			swap_col(1, 2);
-		}
+        if (equal(h(1, 1), 0)) 
+        {
+            swap_col(1, 2);
+        }
     }
-	if (h(1, 1) < -epsilon) 
-	{
-		for (int r = 0; r < 3; ++r) 
-		{
+    if (h(1, 1) < -epsilon) 
+    {
+        for (int r = 0; r < 3; ++r) 
+        {
             h(r, 1) *= -1;
             b(r, 1) *= -1;
         }
@@ -153,48 +153,48 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3,
 
     //row3
     if (h(2, 2) < -epsilon) 
-	{
-		for (int r = 0; r < 3; ++r) 
-		{
-			h(r, 2) *= -1;
+    {
+        for (int r = 0; r < 3; ++r) 
+        {
+            h(r, 2) *= -1;
             b(r, 2) *= -1;
         }
     }
 
     // deal with off-diagonal elements
-	while (h(1, 0) > h(1, 1) - epsilon) 
-	{
-		for(int r=0;r<3;++r) 
-		{
-			h(r, 0) -= h(r, 1); 
-			b(r, 0) -= b(r, 1);
-		}
-	}
-	while (h(1, 0) < -epsilon) 
-	{
-		for(int r=0;r<3;++r) 
-		{
-			h(r, 0) += h(r, 1); 
-			b(r, 0) += b(r, 1);
-		}
-	}
+    while (h(1, 0) > h(1, 1) - epsilon) 
+    {
+        for(int r=0;r<3;++r) 
+        {
+            h(r, 0) -= h(r, 1); 
+            b(r, 0) -= b(r, 1);
+        }
+    }
+    while (h(1, 0) < -epsilon) 
+    {
+        for(int r=0;r<3;++r) 
+        {
+            h(r, 0) += h(r, 1); 
+            b(r, 0) += b(r, 1);
+        }
+    }
     for(int j=0;j<2;++j)
     {
-		while (h(2, j) > h(2, 2) - epsilon) 
-		{
-			for(int r=0;r<3;++r) 
-			{
-				h(r, j) -= h(r, 2); 
-				b(r, j) -= b(r, 2);
-			}
+        while (h(2, j) > h(2, 2) - epsilon) 
+        {
+            for(int r=0;r<3;++r) 
+            {
+                h(r, j) -= h(r, 2); 
+                b(r, j) -= b(r, 2);
+            }
         }
-		while (h(2, j) < -epsilon) 
-		{
-			for(int r=0;r<3;++r) 
-			{
-				h(r, j) += h(r, 2); 
-				b(r, j) += b(r, 2);
-			}
+        while (h(2, j) < -epsilon) 
+        {
+            for(int r=0;r<3;++r) 
+            {
+                h(r, j) += h(r, 2); 
+                b(r, j) += b(r, 2);
+            }
         }
     }
 
@@ -209,13 +209,13 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3,
     //check s*b=h
     ModuleBase::matrix check_zeros = s3.to_matrix() * b - h;
 #ifdef __DEBUG
-	for (int i = 0;i < 3;++i)
-	{
-		for(int j=0;j<3;++j)
-		{
-			assert(near_equal(check_zeros(i, j), 0));
-		}
-	}
+    for (int i = 0;i < 3;++i)
+    {
+        for(int j=0;j<3;++j)
+        {
+            assert(near_equal(check_zeros(i, j), 0));
+        }
+    }
 #endif
     return;
 }

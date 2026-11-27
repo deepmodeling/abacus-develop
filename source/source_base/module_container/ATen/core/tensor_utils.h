@@ -1,6 +1,8 @@
 #ifndef ATEN_CORE_TENSOR_UTILS_H_
 #define ATEN_CORE_TENSOR_UTILS_H_
 
+#include <iomanip>
+
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_shape.h>
 

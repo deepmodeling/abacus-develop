@@ -1,0 +1,20 @@
+INPUT_PARAMETERS
+suffix autotest
+calculation scf
+basis_type pw
+ks_solver cg
+pseudo_dir ../../PP_ORB
+ntype 2
+nbands 8
+ecutwfc 20
+scf_thr 1e-12
+scf_nmax 200
+mixing_type pulay
+mixing_beta 0.2
+smearing_method fixed
+symmetry 0
+cal_force 1
+init_wfc atomic
+assume_isolated pcc_2d
+nelec_delta -1
+pcc_2d_axis 2

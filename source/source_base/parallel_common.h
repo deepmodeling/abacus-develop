@@ -1,14 +1,25 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASE_PARALLEL_COMMON_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASE_PARALLEL_COMMON_H
+#ifndef PARALLEL_COMMON_H
+#define PARALLEL_COMMON_H
 
 #ifdef __MPI
 #include "mpi.h"
 #endif
+
 #include <complex>
 #include <string>
 
 namespace Parallel_Common
 {
+
+#ifdef __MPI
+inline int comm_size(const MPI_Comm comm)
+{
+    int size = 0;
+    MPI_Comm_size(comm, &size);
+    return size;
+}
+#endif
+
 //(1) bcast array
 void bcast_complex_double(std::complex<double>* object, const int n);
 void bcast_string(std::string* object, const int n);
@@ -22,6 +33,12 @@ void bcast_string(std::string& object);
 void bcast_double(double& object);
 void bcast_int(int& object);
 void bcast_bool(bool& object);
+
+#ifdef __MPI
+//(3) bcast single on an explicit communicator, from the communicator's rank 0
+void bcast_bool(bool& object, const MPI_Comm& comm);
+void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm);
+#endif
 
 } // namespace Parallel_Common
 

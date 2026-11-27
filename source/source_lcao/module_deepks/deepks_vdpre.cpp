@@ -8,14 +8,14 @@
 
 #include "deepks_vdpre.h"
 
-#include "LCAO_deepks_io.h" // mohan add 2024-07-22
+#include "lcao_deepks_io.h" // mohan add 2024-07-22
 #include "deepks_iterate.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
+#include "source_hamilt/module_hcontainer/atom_pair.h"
 
 // calculates v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gevdm * v_delta_pdm;
 // v_delta_pdm[nks,nlocal,nlocal,Inl,nm,nm] = overlap * overlap;
@@ -35,7 +35,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                         torch::Tensor& v_delta_precalc)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_v_delta_precalc");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_v_delta_precalc");
+    ModuleBase::timer::start("DeePKS_domain", "cal_v_delta_precalc");
     // timeval t_start;
     // gettimeofday(&t_start,NULL);
 
@@ -46,7 +46,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
     torch::Tensor v_delta_pdm = torch::zeros(
         {nks, nlocal, nlocal, deepks_param.inlmax, (2 * deepks_param.lmaxd + 1), (2 * deepks_param.lmaxd + 1)},
         torch::dtype(dtype));
-    auto accessor = v_delta_pdm.accessor<TK_tensor, 6>();
+    at::TensorAccessor<TK_tensor, 6> accessor = v_delta_pdm.accessor<TK_tensor, 6>();
 
     DeePKS_domain::iterate_ad2(
         ucell,
@@ -77,7 +77,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
             for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
             {
                 const int iw1_all = start1 + iw1; // this is \mu
-                const int iw1_local = pv.global2local_row(iw1_all);
+                const int iw1_local = pv.para_2d().irloc(iw1_all);
                 if (iw1_local < 0)
                 {
                     continue;
@@ -85,7 +85,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                 for (int iw2 = 0; iw2 < nw2_tot; ++iw2)
                 {
                     const int iw2_all = start2 + iw2; // this is \nu
-                    const int iw2_local = pv.global2local_col(iw2_all);
+                    const int iw2_local = pv.para_2d().icloc(iw2_all);
                     if (iw2_local < 0)
                     {
                         continue;
@@ -165,7 +165,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
     //  std::cout<<"calculate v_delta_precalc time:\t"<<(double)(t_end.tv_sec-t_start.tv_sec) +
     //  (double)(t_end.tv_usec-t_start.tv_usec)/1000000.0<<std::endl;
 
-    ModuleBase::timer::tick("DeePKS_domain", "cal_v_delta_precalc");
+    ModuleBase::timer::end("DeePKS_domain", "cal_v_delta_precalc");
     return;
 }
 
@@ -184,14 +184,14 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
                                      torch::Tensor& phialpha_out)
 {
     ModuleBase::TITLE("DeePKS_domain", "prepare_phialpha");
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha");
+    ModuleBase::timer::start("DeePKS_domain", "prepare_phialpha");
     constexpr torch::Dtype dtype = std::is_same<TK, double>::value ? torch::kFloat64 : torch::kComplexDouble;
     using TK_tensor =
         typename std::conditional<std::is_same<TK, std::complex<double>>::value, c10::complex<double>, TK>::type;
     int nlmax = deepks_param.inlmax / nat;
     int mmax = 2 * deepks_param.lmaxd + 1;
     phialpha_out = torch::zeros({nat, nlmax, nks, nlocal, mmax}, dtype);
-    auto accessor = phialpha_out.accessor<TK_tensor, 5>();
+    at::TensorAccessor<TK_tensor, 5> accessor = phialpha_out.accessor<TK_tensor, 5>();
 
     DeePKS_domain::iterate_ad1(
         ucell,
@@ -215,8 +215,8 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
             for (int iw1 = 0; iw1 < nw_tot; ++iw1)
             {
                 const int iw1_all = start + iw1;
-                const int iw1_local = pv.global2local_row(iw1_all);
-                const int iw2_local = pv.global2local_col(iw1_all);
+                const int iw1_local = pv.para_2d().irloc(iw1_all);
+                const int iw2_local = pv.para_2d().icloc(iw1_all);
                 if (iw1_local < 0 || iw2_local < 0)
                 {
                     continue;
@@ -261,7 +261,7 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
 
 #endif
 
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha");
+    ModuleBase::timer::end("DeePKS_domain", "prepare_phialpha");
     return;
 }
 
@@ -272,7 +272,7 @@ void DeePKS_domain::prepare_gevdm(const int nat,
                                   torch::Tensor& gevdm_out)
 {
     ModuleBase::TITLE("DeePKS_domain", "prepare_gevdm");
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_gevdm");
+    ModuleBase::timer::start("DeePKS_domain", "prepare_gevdm");
     int nlmax = deepks_param.inlmax / nat;
     int mmax = 2 * deepks_param.lmaxd + 1;
     gevdm_out = torch::zeros({nat, nlmax, mmax, mmax, mmax}, torch::TensorOptions().dtype(torch::kFloat64));
@@ -287,7 +287,7 @@ void DeePKS_domain::prepare_gevdm(const int nat,
     }
     gevdm_out = torch::stack(gevdm_out_vector, 1);
 
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_gevdm");
+    ModuleBase::timer::end("DeePKS_domain", "prepare_gevdm");
     return;
 }
 

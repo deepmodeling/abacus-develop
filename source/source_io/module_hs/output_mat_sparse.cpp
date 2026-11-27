@@ -1,16 +1,14 @@
 #include "output_mat_sparse.h"
 
-#include "cal_r_overlap_R.h"
-#include "source_io/module_hs/write_HS_R.h"
+#include "pos_op_mat.h"
+#include "source_base/fs_compat.h"
+#include "source_io/module_hs/hsr_legacy.h"
+#include "source_io/module_parameter/parameter.h"
 
 namespace ModuleIO
 {
 template <typename T>
-void output_mat_sparse(const bool& out_mat_hsR,
-                       const bool& out_mat_dh,
-                       const bool& out_mat_ds,
-                       const bool& out_mat_t,
-                       const bool& out_mat_r,
+void output_mat_sparse(const MatSparseOutputOptions& options,
                        const int& istep,
                        const ModuleBase::matrix& v_eff,
                        const Parallel_Orbitals& pv,
@@ -20,71 +18,113 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham,
-                       Plus_U* p_dftu)
+                       Plus_U_Base* p_dftu,
+                       const std::string& global_out_dir,
+                       const std::string& global_matrix_dir,
+                       const std::string& calculation,
+                       const int out_app_flag,
+                       const int nspin,
+                       const bool gamma_only_local,
+                       const int npol,
+                       const int nlocal,
+                       const bool cal_force,
+                       std::ofstream& ofs_running)
 {
-    LCAO_HS_Arrays HS_Arrays; // store sparse arrays
-
-    //! generate a file containing the Hamiltonian and S(overlap) matrices
-    if (out_mat_hsR)
+    // Mode-2 MAT/ subdirectory is created lazily at write time, only when at
+    // least one matrix output is actually requested.
+    if (options.out_mat_t || options.out_mat_dh || options.out_mat_ds || options.out_mat_r)
     {
-        output_HSR(ucell, istep, pv, HS_Arrays, grid, kv, *p_dftu, p_ham);
+        ModuleBase::ensure_directory(global_matrix_dir);
     }
 
+    LCAO_HS_Arrays HS_Arrays; // store sparse arrays
+
+    MatROutputOptions mat_R_options;
+    mat_R_options.binary = options.binary;
+    mat_R_options.sparse_threshold = options.sparse_threshold;
+    mat_R_options.global_out_dir = global_out_dir;
+    mat_R_options.global_matrix_dir = global_matrix_dir;
+    mat_R_options.calculation = calculation;
+    mat_R_options.out_app_flag = out_app_flag;
+    mat_R_options.nspin = nspin;
+
     //! generate a file containing the kinetic energy matrix
-    if (out_mat_t)
+    if (options.out_mat_t)
     {
-        output_TR(istep, ucell, pv, HS_Arrays, grid, two_center_bundle, orb);
+        const std::string tr_filename = "tr_nao.csr";
+        mat_R_options.precision = options.t_precision;
+        output_TR(istep,
+                  ucell,
+                  pv,
+                  HS_Arrays,
+                  grid,
+                  two_center_bundle,
+                  orb,
+                  tr_filename,
+                  mat_R_options,
+                  ofs_running);
     }
 
     //! generate a file containing the derivatives of the Hamiltonian matrix (in Ry/Bohr)
-    if (out_mat_dh)
+    if (options.out_mat_dh)
     {
+        mat_R_options.precision = options.dh_precision;
         output_dHR(istep,
                    v_eff,
                    ucell,
                    pv,
                    HS_Arrays,
-                   grid, // mohan add 2024-04-06
+                   grid,
                    two_center_bundle,
                    orb,
-                   kv); // LiuXh add 2019-07-15
+                   mat_R_options,
+                   gamma_only_local,
+                   npol,
+                   nlocal,
+                   ofs_running);
     }
-    //! generate a file containing the derivatives of the overlap matrix (in Ry/Bohr)
-    if (out_mat_ds)
+    //! generate a file containing the derivatives of the overlap matrix (in 1/Bohr)
+    if (options.out_mat_ds)
     {
+        mat_R_options.precision = options.ds_precision;
         output_dSR(istep,
                    ucell,
                    pv,
                    HS_Arrays,
-                   grid, // mohan add 2024-04-06
+                   grid,
                    two_center_bundle,
                    orb,
-                   kv);
+                   mat_R_options,
+                   gamma_only_local,
+                   npol,
+                   nlocal,
+                   ofs_running);
     }
 
     // add by jingan for out r_R matrix 2019.8.14
-    if (out_mat_r)
+    if (options.out_mat_r)
     {
-        cal_r_overlap_R r_matrix;
-        r_matrix.init(ucell, pv, orb);
-        if (out_mat_hsR)
-        {
-            r_matrix.out_rR_other(ucell, istep, HS_Arrays.output_R_coor);
-        }
-        else
-        {
-            r_matrix.out_rR(ucell, grid, istep);
-        }
+        Position_op r_matrix;
+        r_matrix.binary = options.binary;
+        r_matrix.sparse_threshold = options.sparse_threshold;
+        r_matrix.init(ucell, pv.para_2d(), orb, cal_force, nlocal);
+        r_matrix.out_rR(ucell,
+                        grid,
+                        istep,
+                        options.r_precision,
+                        global_out_dir,
+                        global_matrix_dir,
+                        calculation,
+                        out_app_flag,
+                        nlocal,
+                        npol,
+                        ofs_running);
     }
 
     return;
 }
 
-template void output_mat_sparse<double>(const bool& out_mat_hsR,
-                                        const bool& out_mat_dh,
-                                        const bool& out_mat_ds,
-                                        const bool& out_mat_t,
-                                        const bool& out_mat_r,
+template void output_mat_sparse<double>(const MatSparseOutputOptions& options,
                                         const int& istep,
                                         const ModuleBase::matrix& v_eff,
                                         const Parallel_Orbitals& pv,
@@ -93,14 +133,20 @@ template void output_mat_sparse<double>(const bool& out_mat_hsR,
                                         UnitCell& ucell,
                                         const Grid_Driver& grid,
                                         const K_Vectors& kv,
-										hamilt::Hamilt<double>* p_ham,
-										Plus_U* p_dftu);
+                                        hamilt::Hamilt<double>* p_ham,
+                                        Plus_U_Base* p_dftu,
+                                        const std::string& global_out_dir,
+                                        const std::string& global_matrix_dir,
+                                        const std::string& calculation,
+                                        const int out_app_flag,
+                                        const int nspin,
+                                        const bool gamma_only_local,
+                                        const int npol,
+                                        const int nlocal,
+                                        const bool cal_force,
+                                        std::ofstream& ofs_running);
 
-template void output_mat_sparse<std::complex<double>>(const bool& out_mat_hsR,
-                                                      const bool& out_mat_dh,
-                                                      const bool& out_mat_ds,
-                                                      const bool& out_mat_t,
-                                                      const bool& out_mat_r,
+template void output_mat_sparse<std::complex<double>>(const MatSparseOutputOptions& options,
                                                       const int& istep,
                                                       const ModuleBase::matrix& v_eff,
                                                       const Parallel_Orbitals& pv,
@@ -109,7 +155,17 @@ template void output_mat_sparse<std::complex<double>>(const bool& out_mat_hsR,
                                                       UnitCell& ucell,
                                                       const Grid_Driver& grid,
                                                       const K_Vectors& kv,
-													  hamilt::Hamilt<std::complex<double>>* p_ham,
-													  Plus_U* p_dftu);
+                                                      hamilt::Hamilt<std::complex<double>>* p_ham,
+                                                      Plus_U_Base* p_dftu,
+                                                      const std::string& global_out_dir,
+                                                      const std::string& global_matrix_dir,
+                                                      const std::string& calculation,
+                                                      const int out_app_flag,
+                                                      const int nspin,
+                                                      const bool gamma_only_local,
+                                                      const int npol,
+                                                      const int nlocal,
+                                                      const bool cal_force,
+                                                      std::ofstream& ofs_running);
 
 } // namespace ModuleIO

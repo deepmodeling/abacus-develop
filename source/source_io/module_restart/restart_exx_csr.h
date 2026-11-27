@@ -1,38 +1,44 @@
-#pragma once
-#include "source_base/abfs-vector3_order.h"
+#ifndef ABACUS_SOURCE_IO_MODULE_RESTART_RESTART_EXX_CSR_H
+#define ABACUS_SOURCE_IO_MODULE_RESTART_RESTART_EXX_CSR_H
+
 #include "source_cell/unitcell.h"
-#include "source_lcao/module_ri/serialization_cereal.h"
+#include "source_lcao/module_ri/ri_util.h"
+#include "source_lcao/module_ri/abfs_vector3_order.h"
+
 #include <RI/global/Tensor.h>
 #include <map>
 
 namespace ModuleIO
 {
-    using TC = std::array<int, 3>;
-    using TAC = std::pair<int, TC>;
+using TC = std::array<int, 3>;
+using TAC = std::pair<int, TC>;
 
-    /// read Hexxs in CSR format
-    template<typename Tdata>
-    void read_Hexxs_csr(const std::string& file_name, const UnitCell& ucell,
-        const int nspin, const int nbasis,
-        std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs);
+/// read Hexxs in CSR format
+template <typename Tdata>
+void read_Hexxs_csr(const std::string& file_name,
+                    const UnitCell& ucell,
+                    const int nspin,
+                    const int nbasis,
+                    std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs);
 
-    /// read Hexxs in cereal format
-    template<typename Tdata>
-    void read_Hexxs_cereal(const std::string& file_name,
-        std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs);
+/// read Hexxs in cereal format
+template <typename Tdata>
+void read_Hexxs_cereal(const std::string& file_name,
+                       std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs);
 
-    /// write Hexxs in CSR format
-    template<typename Tdata>
-    void write_Hexxs_csr(const std::string& file_name, const UnitCell& ucell,
-        const std::map<int, std::map<TAC, RI::Tensor<Tdata>>>& Hexxs);
+/// write Hexxs in CSR format
+template <typename Tdata>
+void write_Hexxs_csr(const std::string& file_name,
+                     const UnitCell& ucell,
+                     const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs);
 
-    /// calculate CSR sparse matrix from the global matrix stored with RI::Tensor
-    /// the return type is same as SR_sparse,  HR_sparse, etc.
-    template<typename Tdata>
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>>
-        calculate_RI_Tensor_sparse(const double& sparse_threshold,
-            const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
-            const UnitCell& ucell);
-}
+/// calculate CSR sparse matrix from the global matrix stored with RI::Tensor
+/// the return type is same as SR_sparse,  HR_sparse, etc.
+template <typename Tdata>
+std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>> calculate_RI_Tensor_sparse(
+    const double& sparse_threshold,
+    const std::map<int, std::map<TAC, RI::Tensor<Tdata>>>& Hexxs,
+    const UnitCell& ucell);
+} // namespace ModuleIO
 
-#include "restart_exx_csr.hpp"
+#endif // ABACUS_SOURCE_IO_MODULE_RESTART_RESTART_EXX_CSR_H

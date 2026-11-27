@@ -1,19 +1,24 @@
 #include "relax_sync.h"
 
-
+#include "relax_history.h"
 #include "source_base/matrix3.h"
 #include "source_base/parallel_common.h"
 #include "source_base/tool_title.h"
-#include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_cell/update_cell.h"
+#include "source_io/module_parameter/input_parameter.h"
 #include "source_relax/ions_move_basic.h"
 
 #include <cmath>
 
-void Relax::init_relax(const int nat_in)
+void Relax::init_relax(const int nat_in, const Input_para &inp)
 {
     ModuleBase::TITLE("Relax", "init_relax");
+
+    inp_ = &inp;
+
+    max_force_history_.clear();
+    max_stress_history_.clear();
 
     // set some initial conditions / constants
     nat = nat_in;
@@ -25,9 +30,10 @@ void Relax::init_relax(const int nat_in)
     srp_srp = 100000;
     etot = 0;
     etot_p = 0;
+    omega_p = 0.0;
 
-    force_thr_eva = PARAM.inp.force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; // convert to eV/Angstrom
-    fac_force = PARAM.inp.relax_scale_force * 0.1;
+    force_thr_eva = inp_->force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; // convert to eV/Angstrom
+    fac_force = inp_->relax_scale_force * 0.1;
     fac_stress = fac_force / nat;
 
     // allocate some data structures
@@ -48,26 +54,32 @@ void Relax::init_relax(const int nat_in)
 
     // set if we are allowing lattice vectors to move
     if_cell_moves = false;
-    if (PARAM.inp.calculation == "cell-relax")
+    if (inp_->calculation == "cell-relax")
     {
         if_cell_moves = true;
     }
 }
 
-bool Relax::relax_step(UnitCell& ucell,
-                       const ModuleBase::matrix& force,
-                       const ModuleBase::matrix& stress,
-                       const double etot_in)
+bool Relax::relax_step(
+    UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    const ModuleBase::matrix &stress,
+    const double etot_in,
+    std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax", "relax_step");
+
+    ucell.ionic_position_updated = false;
+    ucell.cell_parameter_updated = false;
 
     etot = etot_in * ModuleBase::Ry_to_eV; // convert to eV
     if (istep == 0)
     {
         etot_p = etot;
+        omega_p = ucell.omega * pow(ModuleBase::BOHR_TO_A, 3);
     }
 
-    bool relax_done = this->setup_gradient(ucell, force, stress);
+    bool relax_done = this->setup_gradient(ucell, force, stress, ofs_running);
     if (relax_done)
     {
         return relax_done;
@@ -79,13 +91,13 @@ bool Relax::relax_step(UnitCell& ucell,
 
     if (ls_done)
     {
-        this->new_direction();
-        this->move_cell_ions(ucell, true);
+        this->new_direction(ofs_running);
+        this->move_cell_ions(ucell, true, ofs_running);
     }
     else
     {
-        this->perform_line_search();
-        this->move_cell_ions(ucell, false);
+        this->perform_line_search(ofs_running);
+        this->move_cell_ions(ucell, false, ofs_running);
         dmovel = dmove;
     }
 
@@ -94,34 +106,59 @@ bool Relax::relax_step(UnitCell& ucell,
     return relax_done;
 }
 
-bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress)
+bool Relax::setup_gradient(
+    const UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    const ModuleBase::matrix &stress,
+    std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax", "setup_gradient");
 
     // if not relax, then return converged
-    if (!(PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"))
+    if (!(inp_->calculation == "relax" || inp_->calculation == "cell-relax"))
     {
         return true;
     }
 
     // indicating whether force & stress are converged
     bool force_converged = true;
-    double max_grad = 0.0;
 
     //=========================================
     // set gradient for ions degrees of freedom
     //=========================================
 
+    const double max_grad = setup_ion_gradient(ucell, force, force_converged, ofs_running);
+
+    //=========================================
+    // set gradient for cell degrees of freedom
+    //=========================================
+
+    if (if_cell_moves)
+    {
+        setup_cell_gradient(ucell, stress, force_converged, ofs_running);
+    }
+
+    print_gradient_summary(force_converged, ofs_running);
+
+    return force_converged;
+}
+
+double Relax::setup_ion_gradient(
+    const UnitCell &ucell,
+    const ModuleBase::matrix &force,
+    bool &force_converged,
+    std::ofstream &ofs_running)
+{
     grad_ion.zero_out();
     ModuleBase::matrix force_eva = force * (ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A); // convert to eV/Angstrom
 
+    double max_grad = 0.0;
     int iat = 0;
     for (int it = 0; it < ucell.ntype; it++)
     {
-        Atom* atom = &ucell.atoms[it];
+        Atom *atom = &ucell.atoms[it];
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            double force2 = 0.0;
             if (atom->mbl[ia].x == 1)
             {
                 grad_ion(iat, 0) = force_eva(iat, 0);
@@ -155,132 +192,137 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
     {
         force_converged = false;
     }
-    if (PARAM.inp.out_level == "ie")
+    if (inp_->out_level == "ie")
     {
+        if (if_cell_moves)
+        {
+            const double omega_ang = ucell.omega * pow(ModuleBase::BOHR_TO_A, 3);
+            const double omega_diff = omega_ang - omega_p;
+            const double omega_ratio = (std::abs(omega_p) > 0.0) ? omega_diff / omega_p * 100.0 : 0.0;
+            std::cout << " CELL VOLUME (Angstroms^3)   : " << omega_ang << std::endl;
+            std::cout << " VOLUME DIFF (Angstroms^3)   : " << omega_diff << std::endl;
+            std::cout << " VOLUME RATIO (%)            : " << omega_ratio << std::endl;
+            omega_p = omega_ang;
+        }
         std::cout << " ETOT DIFF (eV)              : " << etot - etot_p << std::endl;
         std::cout << " LARGEST GRAD (eV/Angstrom)  : " << max_grad << std::endl;
         etot_p = etot;
     }
 
+    max_force_history_.push_back(max_grad);
+    ofs_running << "\n Largest force is " << max_grad << " eV/Angstrom while threshold is " << inp_->force_thr_ev
+                << " eV/Angstrom" << std::endl;
+    return max_grad;
+}
 
-    GlobalV::ofs_running << "\n Largest force is " << max_grad << 
-             " eV/Angstrom while threshold is " << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
-    //=========================================
-    // set gradient for cell degrees of freedom
-    //=========================================
+void Relax::setup_cell_gradient(
+    const UnitCell &ucell,
+    const ModuleBase::matrix &stress,
+    bool &force_converged,
+    std::ofstream &ofs_running)
+{
+    grad_cell.zero_out();
+    ModuleBase::matrix stress_ev = stress * (ucell.omega * ModuleBase::Ry_to_eV);
 
-    if (if_cell_moves)
+    if (inp_->fixed_axes == "shape")
     {
-        grad_cell.zero_out();
-        ModuleBase::matrix stress_ev = stress * (ucell.omega * ModuleBase::Ry_to_eV);
+        double pressure = (stress_ev(0, 0) + stress_ev(1, 1) + stress_ev(2, 2)) / 3.0;
+        stress_ev.zero_out();
+        stress_ev(0, 0) = pressure; // apply constraints
+        stress_ev(1, 1) = pressure;
+        stress_ev(2, 2) = pressure;
+    }
+    else if (inp_->fixed_axes == "volume")
+    {
+        double pressure = (stress_ev(0, 0) + stress_ev(1, 1) + stress_ev(2, 2)) / 3.0;
+        stress_ev(0, 0) -= pressure;
+        stress_ev(1, 1) -= pressure;
+        stress_ev(2, 2) -= pressure;
+    }
+    else if (inp_->fixed_axes != "None")
+    {
+        // Note stress is given in the directions of lattice vectors
+        // So we need to first convert to Cartesian and then apply the constraint
+        ModuleBase::matrix stress_cart = ucell.latvec.to_matrix() * stress_ev;
 
-        if (PARAM.inp.fixed_axes == "shape")
+        if (ucell.lat_axis_free[0] == 0)
         {
-            double pressure = (stress_ev(0, 0) + stress_ev(1, 1) + stress_ev(2, 2)) / 3.0;
-            stress_ev.zero_out();
-            stress_ev(0, 0) = pressure; // apply constraints
-            stress_ev(1, 1) = pressure;
-            stress_ev(2, 2) = pressure;
+            stress_cart(0, 0) = 0;
+            stress_cart(0, 1) = 0;
+            stress_cart(0, 2) = 0;
         }
-        else if (PARAM.inp.fixed_axes == "volume")
+        if (ucell.lat_axis_free[1] == 0)
         {
-            double pressure = (stress_ev(0, 0) + stress_ev(1, 1) + stress_ev(2, 2)) / 3.0;
-            stress_ev(0, 0) -= pressure;
-            stress_ev(1, 1) -= pressure;
-            stress_ev(2, 2) -= pressure;
+            stress_cart(1, 0) = 0;
+            stress_cart(1, 1) = 0;
+            stress_cart(1, 2) = 0;
         }
-        else if (PARAM.inp.fixed_axes != "None")
+        if (ucell.lat_axis_free[2] == 0)
         {
-            // Note stress is given in the directions of lattice vectors
-            // So we need to first convert to Cartesian and then apply the constraint
-            ModuleBase::Matrix3 stress_cart;
-            stress_cart.e11 = stress_ev(0, 0);
-            stress_cart.e12 = stress_ev(0, 1);
-            stress_cart.e13 = stress_ev(0, 2);
-            stress_cart.e21 = stress_ev(1, 0);
-            stress_cart.e22 = stress_ev(1, 1);
-            stress_cart.e23 = stress_ev(1, 2);
-            stress_cart.e31 = stress_ev(2, 0);
-            stress_cart.e32 = stress_ev(2, 1);
-            stress_cart.e33 = stress_ev(2, 2);
-
-            stress_cart = ucell.latvec * stress_cart;
-
-            if (ucell.lc[0] == 0)
-            {
-                stress_cart.e11 = 0;
-                stress_cart.e12 = 0;
-                stress_cart.e13 = 0;
-            }
-            if (ucell.lc[1] == 0)
-            {
-                stress_cart.e21 = 0;
-                stress_cart.e22 = 0;
-                stress_cart.e23 = 0;
-            }
-            if (ucell.lc[2] == 0)
-            {
-                stress_cart.e31 = 0;
-                stress_cart.e32 = 0;
-                stress_cart.e33 = 0;
-            }
-
-            stress_cart = ucell.GT * stress_cart;
-            stress_ev(0, 0) = stress_cart.e11;
-            stress_ev(0, 1) = stress_cart.e12;
-            stress_ev(0, 2) = stress_cart.e13;
-            stress_ev(1, 0) = stress_cart.e21;
-            stress_ev(1, 1) = stress_cart.e22;
-            stress_ev(1, 2) = stress_cart.e23;
-            stress_ev(2, 0) = stress_cart.e31;
-            stress_ev(2, 1) = stress_cart.e32;
-            stress_ev(2, 2) = stress_cart.e33;
+            stress_cart(2, 0) = 0;
+            stress_cart(2, 1) = 0;
+            stress_cart(2, 2) = 0;
         }
 
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 3; j++)
-            {
-                grad_cell(i, j) = stress_ev(i, j); // apply constraints
-            }
-        }
-
-        double largest_grad = 0.0;
-        double stress_ii_max = 0.0;
-
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 3; j++)
-            {
-                double grad = grad_cell(i, j) / (ucell.omega * ModuleBase::Ry_to_eV);
-                if (largest_grad < std::abs(grad))
-                {
-                    largest_grad = std::abs(grad);
-                }
-            }
-        }
-
-        double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-        largest_grad = largest_grad * unit_transform;
-
-        if (largest_grad > PARAM.inp.stress_thr)
-        {
-            force_converged = false;
-        }
-
-        GlobalV::ofs_running << " Largest stress is " << largest_grad << " kbar while threshold is "                                                    << PARAM.inp.stress_thr << " kbar" << std::endl;
+        stress_ev = ucell.GT.to_matrix() * stress_cart;
     }
 
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            grad_cell(i, j) = stress_ev(i, j); // apply constraints
+        }
+    }
+
+    double largest_grad = 0.0;
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            double grad = grad_cell(i, j) / (ucell.omega * ModuleBase::Ry_to_eV);
+            if (largest_grad < std::abs(grad))
+            {
+                largest_grad = std::abs(grad);
+            }
+        }
+    }
+
+    double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+    largest_grad = largest_grad * unit_transform;
+
+    if (largest_grad > inp_->stress_thr)
+    {
+        force_converged = false;
+    }
+
+    max_stress_history_.push_back(largest_grad);
+    ofs_running << " Largest stress is " << largest_grad << " kbar while threshold is " << inp_->stress_thr << " kbar"
+                << std::endl;
+}
+
+void Relax::print_gradient_summary(bool force_converged, std::ofstream &ofs_running)
+{
     if (force_converged)
     {
-        GlobalV::ofs_running << "\n Relaxation is converged!" << std::endl;
+        // setup_gradient runs before istep is incremented at the end of
+        // relax_step, so the step that just converged is istep + 1.
+        const int converged_step = istep + 1;
+        const std::string method = inp_->relax_method.empty() ? "unknown" : inp_->relax_method;
+        ofs_running << " Relaxation method: " << method << std::endl;
+        ofs_running << " Relaxation converged in " << converged_step << " step(s)." << std::endl;
+        ofs_running << " Largest force per step (eV/Angstrom):" << format_relax_history(max_force_history_);
+        if (if_cell_moves)
+        {
+            ofs_running << " Largest stress per step (kbar):" << format_relax_history(max_stress_history_);
+        }
+        ofs_running << "\n Relaxation is converged!" << std::endl;
     }
     else
     {
-        GlobalV::ofs_running << "\n Relaxation is not converged yet!" << std::endl;
+        ofs_running << "\n Relaxation is not converged yet!" << std::endl;
     }
-
-    return force_converged;
 }
 
 void Relax::calculate_gamma()
@@ -347,8 +389,8 @@ bool Relax::check_line_search()
         return false;
     }
 
-    if (std::abs(gr_sr) * std::max(gamma, 1.0) > std::abs(gr_gr) / 5.0
-        && !brent_done) // last brent line search not finished
+    if (std::abs(gr_sr) * std::max(gamma, 1.0) > std::abs(gr_gr) / 5.0 &&
+        !brent_done) // last brent line search not finished
     {
         return false;
     }
@@ -356,7 +398,7 @@ bool Relax::check_line_search()
     return true;
 }
 
-void Relax::perform_line_search()
+void Relax::perform_line_search(std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax", "line_search");
 
@@ -385,13 +427,13 @@ void Relax::perform_line_search()
     double x = dmovel, y = etot;
     double xnew = 0.0, yd = 0.0;
 
-    brent_done = this->ls.line_search(restart_brent, x, y, f, xnew, force_thr_eva);
+    brent_done = this->ls.line_search(restart_brent, x, y, f, xnew, force_thr_eva, ofs_running);
     dmove = xnew;
 
     return;
 }
 
-void Relax::new_direction()
+void Relax::new_direction(std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax", "new_direction");
     if (cg_step != 0)
@@ -472,7 +514,7 @@ void Relax::new_direction()
     // TODO: add a certain threshold for the progress.
     double xnew, yd = 1e-8;
 
-    this->ls.line_search(restart, x, y, f, xnew, yd);
+    this->ls.line_search(restart, x, y, f, xnew, yd, ofs_running);
 
     dmovel = 1.0;
     ltrial = true;
@@ -481,7 +523,7 @@ void Relax::new_direction()
     return;
 }
 
-void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
+void Relax::move_cell_ions(UnitCell &ucell, const bool is_new_dir, std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("Relax", "move_cell_ions");
 
@@ -522,77 +564,104 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
 
     if (if_cell_moves)
     {
-        // imo matrix3 class is not a very clever way to store 3*3 matrix ...
-        ModuleBase::Matrix3 sr_dr_cell;
-        auto cp_mat_to_mat3 = [&sr_dr_cell, this]() -> void {
-            sr_dr_cell.e11 = search_dr_cell(0, 0);
-            sr_dr_cell.e12 = search_dr_cell(0, 1);
-            sr_dr_cell.e13 = search_dr_cell(0, 2);
-            sr_dr_cell.e21 = search_dr_cell(1, 0);
-            sr_dr_cell.e22 = search_dr_cell(1, 1);
-            sr_dr_cell.e23 = search_dr_cell(1, 2);
-            sr_dr_cell.e31 = search_dr_cell(2, 0);
-            sr_dr_cell.e32 = search_dr_cell(2, 1);
-            sr_dr_cell.e33 = search_dr_cell(2, 2);
-        };
-        cp_mat_to_mat3();
-
-        if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
-        {
-            search_dr_cell = sr_dr_cell.Transpose().to_matrix();
-            ucell.symm.symmetrize_mat3(search_dr_cell, ucell.lat);
-            cp_mat_to_mat3();
-            sr_dr_cell = sr_dr_cell.Transpose();
-        }
-
-        // The logic here is as follows: a line search is a continuation
-        // in the new direction; but ucell.latvec now is already
-        // different from when the current CG step starts;
-        // as a result, we need to save latvec at the beginning of
-        // each CG step
-        if (is_new_dir)
-        {
-            latvec_save = ucell.latvec;
-        }
-
-        ModuleBase::Matrix3 move_cell = latvec_save * sr_dr_cell;
-
-        // should be close to 0, but set again to avoid numerical issues
-        if (ucell.lc[0] == 0)
-        {
-            move_cell.e11 = 0;
-            move_cell.e12 = 0;
-            move_cell.e13 = 0;
-        }
-        if (ucell.lc[1] == 0)
-        {
-            move_cell.e21 = 0;
-            move_cell.e22 = 0;
-            move_cell.e23 = 0;
-        }
-        if (ucell.lc[2] == 0)
-        {
-            move_cell.e31 = 0;
-            move_cell.e32 = 0;
-            move_cell.e33 = 0;
-        }
-        ucell.latvec += move_cell * (step_size * fac * fac_stress);
-
-        if (PARAM.inp.fixed_axes == "volume")
-        {
-            double omega_new = std::abs(ucell.latvec.Det()) * pow(ucell.lat0, 3);
-            ucell.latvec *= pow(ucell.omega / omega_new, 1.0 / 3.0);
-        }
-        if (PARAM.inp.fixed_ibrav)
-        {
-            unitcell::remake_cell(ucell.lat);
-        }
+        update_lattice(ucell, fac, is_new_dir);
     }
 
     // =================================================================
     // Step 2 & 3 : update direct & Cartesian atomic positions
     // =================================================================
 
+    update_ion_positions(ucell, fac, ofs_running);
+
+    // =================================================================
+    // Step 4 : update G,GT and other stuff
+    // =================================================================
+
+    // =================================================================
+    // Step 6 : prepare something for next SCF
+    // =================================================================
+    // I have a strong feeling that this part should be
+    // at the beginning of the next step (namely 'beforescf'),
+    // but before we have a better organized Esolver
+    // I do not want to change it
+    if (if_cell_moves)
+    {
+        update_reciprocal_cell(ucell, ofs_running);
+    }
+}
+
+void Relax::update_lattice(UnitCell &ucell, double fac, bool is_new_dir)
+{
+    // imo matrix3 class is not a very clever way to store 3*3 matrix ...
+    ModuleBase::Matrix3 sr_dr_cell;
+    auto cp_mat_to_mat3 = [&sr_dr_cell, this]() -> void
+    {
+        sr_dr_cell.e11 = search_dr_cell(0, 0);
+        sr_dr_cell.e12 = search_dr_cell(0, 1);
+        sr_dr_cell.e13 = search_dr_cell(0, 2);
+        sr_dr_cell.e21 = search_dr_cell(1, 0);
+        sr_dr_cell.e22 = search_dr_cell(1, 1);
+        sr_dr_cell.e23 = search_dr_cell(1, 2);
+        sr_dr_cell.e31 = search_dr_cell(2, 0);
+        sr_dr_cell.e32 = search_dr_cell(2, 1);
+        sr_dr_cell.e33 = search_dr_cell(2, 2);
+    };
+    cp_mat_to_mat3();
+
+    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
+    {
+        search_dr_cell = sr_dr_cell.Transpose().to_matrix();
+        ucell.symm.symmetrize_mat3(search_dr_cell, ucell.lat);
+        cp_mat_to_mat3();
+        sr_dr_cell = sr_dr_cell.Transpose();
+    }
+
+    // The logic here is as follows: a line search is a continuation
+    // in the new direction; but ucell.latvec now is already
+    // different from when the current CG step starts;
+    // as a result, we need to save latvec at the beginning of
+    // each CG step
+    if (is_new_dir)
+    {
+        latvec_save = ucell.latvec;
+    }
+
+    ModuleBase::Matrix3 move_cell = latvec_save * sr_dr_cell;
+
+    // should be close to 0, but set again to avoid numerical issues
+    if (ucell.lat_axis_free[0] == 0)
+    {
+        move_cell.e11 = 0;
+        move_cell.e12 = 0;
+        move_cell.e13 = 0;
+    }
+    if (ucell.lat_axis_free[1] == 0)
+    {
+        move_cell.e21 = 0;
+        move_cell.e22 = 0;
+        move_cell.e23 = 0;
+    }
+    if (ucell.lat_axis_free[2] == 0)
+    {
+        move_cell.e31 = 0;
+        move_cell.e32 = 0;
+        move_cell.e33 = 0;
+    }
+    ucell.latvec += move_cell * (step_size * fac * fac_stress);
+
+    if (inp_->fixed_axes == "volume")
+    {
+        double omega_new = std::abs(ucell.latvec.Det()) * pow(ucell.lat0, 3);
+        ucell.latvec *= pow(ucell.omega / omega_new, 1.0 / 3.0);
+    }
+    if (inp_->fixed_ibrav)
+    {
+        unitcell::remake_cell(ucell.lat);
+    }
+}
+
+void Relax::update_ion_positions(UnitCell &ucell, double fac, std::ofstream &ofs_running)
+{
     // Calculating displacement in Cartesian coordinate (in Angstrom)
     std::vector<double> move_ion(nat * 3, 0.0);
 
@@ -611,7 +680,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
 
         int it = ucell.iat2it[iat];
         int ia = ucell.iat2ia[iat];
-        Atom* atom = &ucell.atoms[it];
+        Atom *atom = &ucell.atoms[it];
 
         if (atom->mbl[ia].x == 1)
         {
@@ -632,69 +701,56 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
         ucell.symm.symmetrize_vec3_nat(move_ion.data());
     }
 
-    unitcell::update_pos_taud(ucell.lat,move_ion.data(),ucell.ntype,ucell.nat,ucell.atoms);
+    unitcell::update_pos_taud(ucell.lat, move_ion.data(), ucell.ntype, ucell.nat, ucell.atoms);
 
     // Print the structure file.
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
+    unitcell::print_tau(ucell.atoms, ucell.Coordinate, ucell.ntype, ucell.lat0, ofs_running);
+}
 
-    // =================================================================
-    // Step 4 : update G,GT and other stuff
-    // =================================================================
-
-    if (if_cell_moves)
-    {
-        ucell.a1.x = ucell.latvec.e11;
-        ucell.a1.y = ucell.latvec.e12;
-        ucell.a1.z = ucell.latvec.e13;
-        ucell.a2.x = ucell.latvec.e21;
-        ucell.a2.y = ucell.latvec.e22;
-        ucell.a2.z = ucell.latvec.e23;
-        ucell.a3.x = ucell.latvec.e31;
-        ucell.a3.y = ucell.latvec.e32;
-        ucell.a3.z = ucell.latvec.e33;
+void Relax::update_reciprocal_cell(UnitCell &ucell, std::ofstream &ofs_running)
+{
+    ucell.a1.x = ucell.latvec.e11;
+    ucell.a1.y = ucell.latvec.e12;
+    ucell.a1.z = ucell.latvec.e13;
+    ucell.a2.x = ucell.latvec.e21;
+    ucell.a2.y = ucell.latvec.e22;
+    ucell.a2.z = ucell.latvec.e23;
+    ucell.a3.x = ucell.latvec.e31;
+    ucell.a3.y = ucell.latvec.e32;
+    ucell.a3.z = ucell.latvec.e33;
 
 #ifdef __MPI
-        // distribute lattice vectors.
-        Parallel_Common::bcast_double(ucell.latvec.e11);
-        Parallel_Common::bcast_double(ucell.latvec.e12);
-        Parallel_Common::bcast_double(ucell.latvec.e13);
-        Parallel_Common::bcast_double(ucell.latvec.e21);
-        Parallel_Common::bcast_double(ucell.latvec.e22);
-        Parallel_Common::bcast_double(ucell.latvec.e23);
-        Parallel_Common::bcast_double(ucell.latvec.e31);
-        Parallel_Common::bcast_double(ucell.latvec.e32);
-        Parallel_Common::bcast_double(ucell.latvec.e33);
+    // distribute lattice vectors.
+    Parallel_Common::bcast_double(ucell.latvec.e11);
+    Parallel_Common::bcast_double(ucell.latvec.e12);
+    Parallel_Common::bcast_double(ucell.latvec.e13);
+    Parallel_Common::bcast_double(ucell.latvec.e21);
+    Parallel_Common::bcast_double(ucell.latvec.e22);
+    Parallel_Common::bcast_double(ucell.latvec.e23);
+    Parallel_Common::bcast_double(ucell.latvec.e31);
+    Parallel_Common::bcast_double(ucell.latvec.e32);
+    Parallel_Common::bcast_double(ucell.latvec.e33);
 
-        // distribute lattice vectors.
-        Parallel_Common::bcast_double(ucell.a1.x);
-        Parallel_Common::bcast_double(ucell.a1.y);
-        Parallel_Common::bcast_double(ucell.a1.z);
-        Parallel_Common::bcast_double(ucell.a2.x);
-        Parallel_Common::bcast_double(ucell.a2.y);
-        Parallel_Common::bcast_double(ucell.a2.z);
-        Parallel_Common::bcast_double(ucell.a3.x);
-        Parallel_Common::bcast_double(ucell.a3.y);
-        Parallel_Common::bcast_double(ucell.a3.z);
+    // distribute lattice vectors.
+    Parallel_Common::bcast_double(ucell.a1.x);
+    Parallel_Common::bcast_double(ucell.a1.y);
+    Parallel_Common::bcast_double(ucell.a1.z);
+    Parallel_Common::bcast_double(ucell.a2.x);
+    Parallel_Common::bcast_double(ucell.a2.y);
+    Parallel_Common::bcast_double(ucell.a2.z);
+    Parallel_Common::bcast_double(ucell.a3.x);
+    Parallel_Common::bcast_double(ucell.a3.y);
+    Parallel_Common::bcast_double(ucell.a3.z);
 #endif
 
-        ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+    ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
 
-        ucell.GT = ucell.latvec.Inverse();
-        ucell.G = ucell.GT.Transpose();
-        ucell.GGT = ucell.G * ucell.GT;
-        ucell.invGGT = ucell.GGT.Inverse();
-    }
+    ucell.GT = ucell.latvec.Inverse();
+    ucell.G = ucell.GT.Transpose();
+    ucell.GGT = ucell.G * ucell.GT;
+    ucell.invGGT = ucell.GGT.Inverse();
 
-    // =================================================================
-    // Step 6 : prepare something for next SCF
-    // =================================================================
-    // I have a strong feeling that this part should be
-    // at the beginning of the next step (namely 'beforescf'),
-    // but before we have a better organized Esolver
-    // I do not want to change it
-    if (if_cell_moves)
-    {
-        unitcell::setup_cell_after_vc(ucell,GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
-    }
+    // prepare something for next SCF
+    unitcell::setup_cell_after_vc(ucell, ofs_running, inp_->nspin);
+    ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
 }

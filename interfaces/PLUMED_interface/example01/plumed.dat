@@ -1,0 +1,16 @@
+# Ethane (C2H6) H-C-C-H torsion metadynamics for ABACUS + PLUMED.
+# The dihedral angle involves the atoms H3-C1-C2-H7 (1-based indices as in
+# STRU); the initial structure is staggered (t = pi).
+#
+# ABACUS runs in atomic units, so the units of the configuration passed to
+# PLUMED are declared below with UNITS.
+UNITS LENGTH=A TIME=fs
+
+# Collective variable: the H-C-C-H dihedral angle
+t: TORSION ATOMS=3,1,2,7
+
+# Well-tempered metadynamics at 600 K (same temperature as the NVT run)
+metad: METAD ARG=t PACE=50 HEIGHT=2.0 SIGMA=0.15 FILE=HILLS BIASFACTOR=20 TEMP=600
+
+# Write the collective variable and the bias at every MD step
+PRINT ARG=t,metad.bias FILE=COLVAR STRIDE=1

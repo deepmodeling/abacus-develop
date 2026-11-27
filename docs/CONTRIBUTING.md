@@ -9,6 +9,7 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Got a question?](#got-a-question)
 - [Structure of the package](#structure-of-the-package)
 - [Submitting an Issue](#submitting-an-issue)
+- [Agent governance and automated review](#agent-governance-and-automated-review)
 - [Comment style for documentation](#comment-style-for-documentation)
 - [Documenting INPUT parameters](#documenting-input-parameters)
 - [Code formatting style](#code-formatting-style)
@@ -53,7 +54,6 @@ For those who are interested in the source code, the following figure shows the 
 |   `-- module_pw               Data structures and relevant methods for planewave involved calculations
 |-- source_cell                 The module for defining the unit cell and its operations, and reading pseudopotentials.
 |   |-- module_neighbor         The module for finding the neighbors of each atom in the unit cell.
-|   |-- module_paw              The module for performing PAW calculations.
 |   |-- module_symmetry         The module for finding the symmetry operations of the unit cell.
 |-- source_estate               The module for defining the electronic state and its operations.
 |   |-- module_charge           The module for calculating the charge density, charge mixing
@@ -91,6 +91,19 @@ For those who are interested in the source code, the following figure shows the 
 
 Before you submit an issue, please search the issue tracker, and maybe your problem has been discussed and fixed. You can [submit new issues](https://github.com/deepmodeling/abacus-develop/issues/new/choose) by filling our issue forms.
 To help us reproduce and confirm a bug, please provide a test case and building environment in your issue.
+
+## Agent governance and automated review
+
+Before coding or requesting review, read the repository governance entry point
+[`AGENTS.md`](https://github.com/deepmodeling/abacus-develop/blob/develop/AGENTS.md) and the full
+[ABACUS Agent Governance](./developers_guide/agent_governance.md) guide.
+These rules apply to human contributors, AI agents, GitHub CI, and CodeRabbit.
+
+Pull requests must complete the governance checklist in the PR template,
+including issue linkage, test evidence, behavior-change notes, INPUT parameter
+metadata changes, core-module impact, and any requested exceptions. Local
+pre-commit checks cover deterministic rules such as LF line endings and staged
+diff checks; CI repeats the governance check against the PR diff and PR body.
 
 ## Comment style for documentation
 
@@ -159,39 +172,21 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
 
 ## Documenting INPUT Parameters
 
-ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). Parameter metadata is defined inline in the C++ source files (`source/source_io/module_parameter/read_input_item_*.cpp`) using `Input_Item` registrations.
+ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). Parameter metadata is defined inline in the C++ source files under `source/source_io/module_parameter/` using `Input_Item` registrations.
 
-A checked-in file `docs/parameters.yaml` contains a YAML dump of all parameter metadata, generated from the binary itself. This file is used by Sphinx to produce the online documentation page `input-main.md`.
+The C++ `Input_Item` registrations are the source of truth for parameter metadata. `docs/parameters.yaml` and `docs/advanced/input_files/input-main.md` are generated during the documentation build and are not tracked in the repository. Do not edit or commit either generated file.
 
-### When to Update `docs/parameters.yaml`
+Availability expressions follow the grammar and invariants in
+[`developers_guide/input_availability.md`](developers_guide/input_availability.md).
 
-You **must** regenerate `docs/parameters.yaml` whenever you:
+When adding, removing, or changing an INPUT parameter, update its `Input_Item`
+metadata together with the implementation. This includes the description, type,
+default value, unit, category, and availability. The generated YAML and Markdown
+will be refreshed automatically when the documentation is built.
 
-- Add a new INPUT parameter
-- Remove an existing INPUT parameter
-- Change a parameter's description, type, default value, unit, category, or availability
-
-### How to Regenerate
-
-After building and installing ABACUS, run:
-
-```bash
-abacus --generate-parameters-yaml > docs/parameters.yaml
-```
-
-Then verify the YAML is valid:
-
-```bash
-python3 -c "import yaml; d=yaml.safe_load(open('docs/parameters.yaml')); print(len(d['parameters']), 'parameters')"
-```
-
-You can also regenerate the markdown documentation locally:
-
-```bash
-python3 docs/generate_input_main.py docs/parameters.yaml --output docs/advanced/input_files/input-main.md
-```
-
-**Important:** Include the updated `docs/parameters.yaml` and `input-main.md` in your commit when submitting a PR that modifies INPUT parameters. Reviewers should verify the YAML changes match the C++ source changes and the `input-main.md` is updated.
+To preview the generated INPUT reference locally, follow the documentation build
+instructions in
+[`README.md`](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/README.md).
 
 ### Parameter Documentation Format
 
@@ -205,7 +200,7 @@ When adding or modifying INPUT parameters in C++ source, set the following field
     item.description = "Description of what this parameter does.";
     item.default_value = "0";
     item.unit = "Ry";          // Optional, empty string if no unit
-    item.availability = "";    // Optional, empty string if always available
+    item.set_availability("basis_type==pw"); // Optional; omit if always available
     // ... read_value, reset_value, check_value functions ...
     this->add_item(item);
 }
@@ -369,24 +364,24 @@ To add a unit test:
 ## Adding an integrate test
 The integrate test is a test suite for testing the whole ABACUS package. The examples are located in the `tests/integrate` directory. Before adding a new test, please firstly read `README.md` in `tests/integrate` to understand the structure of the integrate test. To add an integrate test:
 1. Add a new directory under `tests/integrate` for the new test.
-2. Prepare the input files for the new test. 
+2. Prepare the input files for the new test.
     - The input files should be placed in the new directory. Pseudopotential files and orbital files should be placed in `tests/PP_ORB`. You should define the correct `pseudo_dir` and `orb_dir`(if need orbital files) in INPUT with the relative path to the `tests/PP_ORB` directory, and be sure the new test can be run successfully.
     - The running time of the new test should not exceed 20 seconds. You can try to reduce the time by below methods (on the premise of ensuring the effectiveness of the test):
         - Reduce the number of atoms in the unit cell (1~2 atoms).
         - Reduce the number of k-points (`1 1 1` or `2 2 2`).
         - Reduce ecutwfc (20~50 Ry).
-        - Reduce the number of steps for relax or md job (2~3 steps). 
+        - Reduce the number of steps for relax or md job (2~3 steps).
         - Reduce the basis set for LCAO calculations (DZP orbital and 6 a.u. cutoff).
     - For PW calculations, should set `pw_seed 1` in INPUT file to ensure the reproducibility of the test.
 3. Generate the reference results for the new test.
     - Run the new test with GNU compiler and 4 MPI processes 2 OpenMP threads. The command is `OMP_NUM_THREADS=2 mpirun -np 4 abacus > log.txt`.
-    - Execute tests/integrate/tools/catch_properties.sh script to generate the reference results. At the new test directory, run `bash ../tools/catch_properties.sh result.ref`.
+    - Execute tests/integrate/validation_tools/catch_properties.sh script to generate the reference results. At the new test directory, run `bash ../../integrate/validation_tools/catch_properties.sh result.ref`.
       A `result.ref` file may be like:
         ```text
          etotref -3439.007931317310
          etotperatomref -3439.0079313173
          totaltimeref 2.78
-        ``` 
+        ```
     - If you want to test the correctness of some output files, you need to do extra below steps:
         1. add the corresponding comparison method in `catch_properties.sh`. For example, to verify whether the output of the BANDS_1.dat file is correct, you need to add the following code in `catch_properties.sh`:
             ```bash
@@ -394,7 +389,7 @@ The integrate test is a test suite for testing the whole ABACUS package. The exa
             if ! test -z "$has_band"  && [  $has_band == 1 ]; then      # if band is outputed, then check if the band is correct
 	            bandref=refBANDS_1.dat                                  # this file should be prepared in new test directory
 	            bandcal=OUT.autotest/BANDS_1.dat                        # this file is generated by each run of test
-                python3 ../tools/CompareFile.py $bandref $bandcal 8     # compare the new band file with the reference file
+                python3 ../../integrate/validation_tools/CompareFile.py $bandref $bandcal 8     # compare the new band file with the reference file
 	            echo "CompareBand_pass $?" >>$1                         # record the comparison result, $? is the return value of last command
             fi
             ```

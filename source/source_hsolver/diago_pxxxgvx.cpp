@@ -502,8 +502,8 @@ void pxxxgvx_diag(const int* const desc,
         int lrwork = -1;
         int liwork = -1;
         int info = 0;
-        const typename GetTypeReal<T>::type abstol = 0;
-        const typename GetTypeReal<T>::type orfac = -1;
+        const typename GetTypeReal<T>::type abstol = SCALAPACK_ABSTOL;
+        const typename GetTypeReal<T>::type orfac = SCALAPACK_ORFAC;
         const typename GetTypeReal<T>::type vl = 0;
         const typename GetTypeReal<T>::type vu = 0;
         std::vector<T> work(1, 0);

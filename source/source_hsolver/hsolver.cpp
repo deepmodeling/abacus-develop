@@ -1,6 +1,9 @@
 #include "hsolver.h"
 
-#include "source_io/module_parameter/parameter.h"
+#include "source_base/global_function.h"
+
+#include <algorithm>
+#include <cmath>
 
 namespace hsolver
 {
@@ -15,7 +18,8 @@ double set_diagethr_ks(const std::string basis_type,
                        const double drho,
                        const double pw_diag_thr_init,
                        const double diag_ethr_in,
-                       const double nelec_in)
+                       const double nelec_in,
+                       const double scf_thr_in)
 {
     double res_diag_ethr = diag_ethr_in;
 
@@ -26,7 +30,7 @@ double set_diagethr_ks(const std::string basis_type,
         {
             if (res_diag_ethr - 1e-2 > -1e-5)
             {
-                res_diag_ethr = std::max(1e-13, 0.1 * std::min(1e-2, PARAM.inp.scf_thr / PARAM.inp.nelec));
+                res_diag_ethr = std::max(1e-13, 0.1 * std::min(1e-2, scf_thr_in / nelec_in));
             }
         }
         else if (iter == 1)
@@ -65,13 +69,11 @@ double set_diagethr_ks(const std::string basis_type,
                 res_diag_ethr = 1.e-2;
             }
             res_diag_ethr = std::min(res_diag_ethr,
-                                     static_cast<double>(0.1) * drho
-                                         / std::max(static_cast<double>(1.0), static_cast<double>(nelec_in)));
+                                     static_cast<double>(0.1) * drho / std::max(static_cast<double>(1.0), static_cast<double>(nelec_in)));
         }
 
-        // It is essential for single precision implementation to keep the diag ethr
-        // value less or equal to the single-precision limit of convergence(0.5e-4).
-        // modified by denghuilu at 2023-05-15
+        // Keep the single-precision diagonalization threshold at or above the floor
+        // to avoid excessively strict convergence requirements.
         if (precision_flag_in == "single")
         {
             res_diag_ethr = std::max(res_diag_ethr, static_cast<double>(0.5e-4));
@@ -85,7 +87,6 @@ double set_diagethr_ks(const std::string basis_type,
     return res_diag_ethr;
 }
 
-
 double set_diagethr_sdft(const std::string basis_type,
                          const std::string esolver_type,
                          const std::string calculation_in,
@@ -96,7 +97,9 @@ double set_diagethr_sdft(const std::string basis_type,
                          const double pw_diag_thr_init,
                          const double diag_ethr_in,
                          const int nband_in,
-                         const double stoiter_ks_ne_in)
+                         const double stoiter_ks_ne_in,
+                         const double nelec_in,
+                         const double scf_thr_in)
 {
     double res_diag_ethr = diag_ethr_in;
 
@@ -104,7 +107,7 @@ double set_diagethr_sdft(const std::string basis_type,
     {
         if (calculation_in == "nscf")
         {
-            res_diag_ethr = std::max(std::min(1e-5, 0.1 * PARAM.inp.scf_thr / std::max(1.0, PARAM.inp.nelec)), 1e-12);
+            res_diag_ethr = std::max(std::min(1e-5, 0.1 * scf_thr_in / std::max(1.0, nelec_in)), 1e-12);
         }
         else if (iter == 1)
         {
@@ -123,7 +126,7 @@ double set_diagethr_sdft(const std::string basis_type,
         }
         else
         {
-            if (nband_in > 0 && stoiter_ks_ne_in > 1e-6) //PARAM.inp.nbands > 0 && this->stoiter.KS_ne > 1e-6
+            if (nband_in > 0 && stoiter_ks_ne_in > 1e-6)
             {
                 res_diag_ethr = std::min(res_diag_ethr, 0.1 * drho / std::max(1.0, stoiter_ks_ne_in));
             }
@@ -140,7 +143,6 @@ double set_diagethr_sdft(const std::string basis_type,
 
     return res_diag_ethr;
 }
-
 
 double reset_diag_ethr(std::ofstream& ofs_running,
                        const std::string basis_type,
@@ -165,9 +167,8 @@ double reset_diag_ethr(std::ofstream& ofs_running,
 
         new_diag_ethr = 0.1 * drho_in / nelec_in;
 
-        // It is essential for single precision implementation to keep the diag ethr
-        // value less or equal to the single-precision limit of convergence(0.5e-4).
-        // modified by denghuilu at 2023-05-15
+        // Keep the single-precision diagonalization threshold at or above the floor
+        // to avoid excessively strict convergence requirements.
         if (precision_flag_in == "single")
         {
             new_diag_ethr = std::max(new_diag_ethr, static_cast<double>(0.5e-4));
@@ -182,10 +183,7 @@ double reset_diag_ethr(std::ofstream& ofs_running,
     return new_diag_ethr;
 };
 
-double cal_hsolve_error(const std::string basis_type,
-                        const std::string esolver_type,
-                        const double diag_ethr_in,
-                        const double nelec_in)
+double cal_hsolve_error(const std::string basis_type, const std::string esolver_type, const double diag_ethr_in, const double nelec_in)
 {
     if (basis_type == "pw" && esolver_type == "ksdft")
     {

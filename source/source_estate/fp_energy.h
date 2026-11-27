@@ -34,6 +34,7 @@ struct fenergy
     double efield = 0.0;    ///< dipole potential in surface calculations
     double gatefield = 0.0; ///< correction energy for gatefield
     double evdw = 0.0;      ///< the vdw energy
+    double correction_el = 0.0; ///< electrostatic isolated-cell correction
 
     double etot_harris = 0.0;   ///< total energy of harris functional
     double deband_harris = 0.0; ///< correction for harris energy

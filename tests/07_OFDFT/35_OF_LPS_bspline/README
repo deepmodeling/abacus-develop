@@ -1,0 +1,1 @@
+Test the energy, force, and stress of OFDFT with Cardinal B-spline interpolation for the structure factor (nbspline = 2), using the Wang-Teter (WT) kinetic energy functional with LPS, symmetry=on; of_full_pw = 1 and of_full_pw_dim = 1 are set to keep the FFT dimensions odd, as required by the interpolation.

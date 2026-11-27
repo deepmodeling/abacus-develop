@@ -1,4 +1,8 @@
 #include "read_input.h"
+#include "availability_validator.h"
+#ifdef __MPI
+#include "source_base/parallel_common.h"
+#endif
 
 
 #include <algorithm>
@@ -9,8 +13,12 @@
 #include <array>
 #include <vector>
 #include <cassert>
+#include <cctype>
+#include <limits.h>
 #include <limits>
+#include <stdexcept>
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h"
 #include "source_base/global_file.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
@@ -19,7 +27,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <cerrno>
 
 namespace ModuleIO
 {
@@ -29,12 +36,42 @@ std::string longstring(const std::vector<std::string>& words)
     return FmtCore::join(" ", words);
 }
 
+namespace
+{
+const std::array<std::string, 7> true_literals = {"true", "1", "t", "yes", "y", "on", ".true."};
+const std::array<std::string, 7> false_literals = {"false", "0", "f", "no", "n", "off", ".false."};
+
+// A scalar token is only valid when it is consumed completely: std::stoi alone
+// accepts numeric prefixes such as "1junk" and throws std::out_of_range on an
+// overflowing value.
+bool is_integer_token(const std::string& token)
+{
+    size_t consumed = 0;
+    try
+    {
+        std::stoi(token, &consumed);
+    }
+    catch (const std::exception&)
+    {
+        return false;
+    }
+    return consumed == token.size();
+}
+
+bool is_boolean_token(const std::string& token)
+{
+    const std::string lower = FmtCore::lower(token);
+    return std::find(true_literals.begin(), true_literals.end(), lower) != true_literals.end()
+           || std::find(false_literals.begin(), false_literals.end(), lower) != false_literals.end();
+}
+} // namespace
+
 bool assume_as_boolean(const std::string& val)
 {
     const std::string val_ = FmtCore::lower(val);
 
-    const std::array<std::string, 7> t_ = {"true", "1", "t", "yes", "y", "on", ".true."};
-    const std::array<std::string, 7> f_ = {"false", "0", "f", "no", "n", "off", ".false."};
+    const std::array<std::string, 7>& t_ = true_literals;
+    const std::array<std::string, 7>& f_ = false_literals;
     // This will work because std::array<T, N>::size() is a constexpr function
     // Ouch it is of C++17 standard...
     // static_assert(t_.size() == f_.size(), "t_ and f_ must have the same lengths");
@@ -83,7 +120,7 @@ void read_information(std::stringstream& ifs, std::vector<std::string>& output, 
     std::string word;
     while (iss >> word)
     {
-        if (delimiters.find(word[0]) != std::string::npos)
+        if (delimiters.find(word[0]) != std::string::npos || (word == "//" && !output.empty()))
         {
             break;
         }
@@ -96,40 +133,40 @@ bool ReadInput::check_mode = false;
 bool filter_nonascii_and_comment(std::ifstream& ifs,
                        std::stringstream& out_ascii_stream)
 {
-	if (!ifs.is_open()) 
-	{
-		if (!ifs) return false;
+    if (!ifs.is_open()) 
+    {
+        if (!ifs) return false;
     }
 
     std::streampos old_pos = ifs.tellg();
     ifs.clear();
     ifs.seekg(0, std::ios::beg);
 
-	char c = '\0';
-	while (ifs.get(c)) 
-	{
-		// If comment start, skip until end of line (but keep the newline)
-		if (c == '#') 
-		{
-			char d = '\0';
-			bool newline_found = false;
-			while (ifs.get(d)) 
-			{
-				if (d == '\n' || d == '\r') 
-				{
-					// preserve line break in output
-					out_ascii_stream.put('\n');
-					// If CRLF, consume the LF after CR (already wrote a single '\n')
-					if (d == '\r' && ifs.peek() == '\n') 
-					{
-						ifs.get(d); // consume '\n'
-					}
-					newline_found = true;
-					break;
-				}
+    char c = '\0';
+    while (ifs.get(c)) 
+    {
+        // If comment start, skip until end of line (but keep the newline)
+        if (c == '#') 
+        {
+            char d = '\0';
+            bool newline_found = false;
+            while (ifs.get(d)) 
+            {
+                if (d == '\n' || d == '\r') 
+                {
+                    // preserve line break in output
+                    out_ascii_stream.put('\n');
+                    // If CRLF, consume the LF after CR (already wrote a single '\n')
+                    if (d == '\r' && ifs.peek() == '\n') 
+                    {
+                        ifs.get(d); // consume '\n'
+                    }
+                    newline_found = true;
+                    break;
+                }
             }
-			if (!newline_found) 
-			{
+            if (!newline_found) 
+            {
                 // reached EOF while skipping comment
                 break;
             }
@@ -137,15 +174,15 @@ bool filter_nonascii_and_comment(std::ifstream& ifs,
         }
 
         unsigned char uc = static_cast<unsigned char>(c);
-		if (uc <= 0x7F) 
-		{
-			// ASCII character
+        if (uc <= 0x7F) 
+        {
+            // ASCII character
             out_ascii_stream.put(c);
         }
-		else 
-		{
-			// replace non-ASCII with space character
-			out_ascii_stream.put(' ');
+        else 
+        {
+            // replace non-ASCII with space character
+            out_ascii_stream.put(' ');
         }
     }
 
@@ -172,12 +209,37 @@ ReadInput::ReadInput(const int& rank)
     this->item_rt_tddft();
     this->item_tdofdft();
     this->item_lr_tddft();
+    this->item_bse();
+    this->item_dfpt();
     this->item_output();
     this->item_postprocess();
     this->item_model();
     this->item_exx();
     this->item_dftu();
     this->item_others();
+
+    if (!this->input_lists.empty())
+    {
+        std::map<std::string, AvailabilityValueKind> parameter_types;
+        std::map<std::string, AvailabilityExpr> expressions;
+        std::map<std::string, AvailabilityValueKind> bound_types;
+        for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
+        {
+            parameter_types[entry.first] = availability_value_kind(entry.second.type);
+            expressions[entry.first] = entry.second.get_availability_expr();
+            if (entry.second.domain.bound()) { bound_types[entry.first] = entry.second.domain.kind(); }
+        }
+        for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
+        {
+            entry.second.domain.validate_schema(entry.first, bound_types);
+            validate_availability_expr(entry.first,
+                                       entry.second.get_availability_expr(),
+                                       parameter_types);
+            validate_availability_self_contained(entry.first,
+                                                 entry.second.get_availability_expr(),
+                                                 expressions);
+        }
+    }
 }
 
 void ReadInput::read_parameters(Parameter& param, const std::string& filename_in)
@@ -185,10 +247,21 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     ModuleBase::TITLE("ReadInput", "read_parameters");
 
     // 1. only rank 0 read the input file
+    std::string input_error;
     if (this->rank == 0)
     {
         // We can also easily add other input file formats here
-        this->read_txt_input(param, filename_in);
+        input_error = this->read_txt_input(param, filename_in);
+    }
+#ifdef __MPI
+    // All ranks must leave together before the parameter broadcasts below.
+    Parallel_Common::bcast_string(input_error);
+#endif
+    if (!input_error.empty())
+    {
+        const std::string message = "Invalid parameters in " + filename_in + ":\n" + input_error;
+        ModuleBase::WARNING_QUIT("ReadInput", message);
+        return;
     }
 
     // 2. check the number of atom types from STRU file
@@ -201,7 +274,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
 
     // 3. broadcast input parameters
     // It must be after the check_ntype, because some parameters need to be filled due to ntype
-    for (auto& bcastfunc: this->bcastfuncs)
+    for (std::function<void (Parameter&)>& bcastfunc: this->bcastfuncs)
     {
         bcastfunc(param);
     }
@@ -214,7 +287,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     // It must be after the set_globalv, because some parameters need to be checked according to param.sys
     if (this->rank == 0)
     {
-        for (auto& input_item: this->input_lists)
+        for (std::pair<std::string, ModuleIO::Input_Item>& input_item: this->input_lists)
         {
             Input_Item* checkvalue_item = &(input_item.second);
             if (checkvalue_item->check_value != nullptr)
@@ -252,13 +325,15 @@ void ReadInput::create_directory(const Parameter& param)
     // NAME : Run::make_dir( dir name : OUT.suffix)
     //----------------------------------------------------------
     bool out_dir = false;
-    if (!param.input.out_app_flag
-        && (param.input.out_mat_hs2 || param.input.out_mat_r || param.input.out_mat_t || param.input.out_mat_dh || param.input.out_mat_ds))
+    if (param.input.out_app_flag == 0
+        && ((param.input.out_hsr[0] == 1 || param.input.out_hsr[0] == 2)
+            || param.input.out_mat_r[0] || param.input.out_mat_t[0]
+            || param.input.out_mat_dh[0] || param.input.out_mat_ds[0]))
     {
         out_dir = true;
     }
     bool out_wfc_dir = false;
-    if (param.input.out_wfc_lcao && !param.input.out_app_flag)
+    if (param.input.out_wfc_lcao && param.input.out_app_flag == 0)
     {
         out_wfc_dir = true;
     }
@@ -270,7 +345,30 @@ void ReadInput::create_directory(const Parameter& param)
                                           out_wfc_dir,
                                           this->rank,
                                           param.input.mdp.md_restart,
-                                          param.input.out_alllog); // xiaohui add 2013-09-01
+                                          param.input.out_alllog,
+                                          param.globalv.global_out_dir,
+                                          param.globalv.global_matrix_dir,
+                                          param.globalv.global_wfc_dir,
+                                          param.globalv.global_mlkedf_descriptor_dir,
+                                          param.globalv.global_deepks_label_elec_dir,
+                                          param.globalv.log_file,
+                                          param.input.of_ml_gene_data,
+                                          param.input.deepks_out_freq_elec > 0); // xiaohui add 2013-09-01
+
+    if (this->rank == 0 && param.input.calculation == "md" && param.mdp.md_restart
+        && !param.globalv.global_in_stru.empty())
+    {
+        const std::string full_path = ModuleBase::absolute_path_for_log(param.globalv.global_in_stru);
+        GlobalV::ofs_running << "Read file: " << full_path << std::endl;
+    }
+
+    // The unified subdirectories used when out_app_flag == 2 (STRUC/, PSI/,
+    // CHG/, POT/, ELF/, DOS/, DIP/, MAT/) are NOT created here. Each output
+    // writer creates its target directory lazily at write time via
+    // ModuleBase::ensure_directory, so this routine no longer needs to
+    // predict which outputs the user requested (a predicate that had to be
+    // fixed by hand for every new writer).
+
     //const std::string ss = "test -d " + PARAM.inp.read_file_dir;
     struct stat st;
     if (stat(PARAM.inp.read_file_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
@@ -288,27 +386,26 @@ void ReadInput::write_parameters(const Parameter& param, const std::string& file
     }
 }
 
-void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
+std::string ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 {
     ModuleBase::TITLE("ReadInput", "read_txt_input");
 
     std::stringstream ascii_stream;
 
-	std::ifstream ifs(filename.c_str(), std::ios::in);
+    std::ifstream ifs(filename.c_str(), std::ios::in);
 
-	if (!ifs)
-	{
-		std::cout << " Can't find the INPUT file." << std::endl;
-		ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
-	}
+    if (!ifs)
+    {
+        return "Cannot open the INPUT file. Check the file path and read permissions.\n";
+    }
 
-	ifs.clear();
-	ifs.seekg(0);
+    ifs.clear();
+    ifs.seekg(0);
 
-	filter_nonascii_and_comment(ifs, ascii_stream);
-	ifs.clear();
+    filter_nonascii_and_comment(ifs, ascii_stream);
+    ifs.clear();
 
-	// file close after reading
+    // file close after reading
 
     int ierr = 0;
     ascii_stream.rdstate();
@@ -326,32 +423,33 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 
     if (ierr == 0)
     {
-        std::cout << " Error parameter list. "
-                  << " The parameter list always starts with key word "
-                     "'INPUT_PARAMETERS'. "
-                  << std::endl;
-        ModuleBase::WARNING_QUIT("Input", 
-            "Bad parameter, please check the input parameters in file INPUT", 1);
+        return "Missing INPUT_PARAMETERS header. The parameter list must start with INPUT_PARAMETERS.\n"
+               "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html\n";
     }
 
     ascii_stream.rdstate();
     while (ascii_stream.good())
     {
         std::string word; // temporary variable to store the keyword read-in
-        ascii_stream >> word;
-        if (ascii_stream.eof()) { break; }
+        if (!(ascii_stream >> word)) { break; }
         word = FmtCore::lower(word); // the lowercase of the keyword
-        auto it = std::find_if(input_lists.begin(), input_lists.end(),
+        std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = std::find_if(input_lists.begin(), input_lists.end(),
             [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
         if (it != this->input_lists.end()) // find the keyword
         {
             Input_Item* p_item = &(it->second);
-            this->readvalue_items.push_back(p_item);
-            if(p_item->is_read())
+            // Preserve the legacy EOF handling until a domain declares the
+            // required token count. Some legacy readers accept empty values.
+            if (ascii_stream.eof() && p_item->domain.empty())
             {
-                std::string warningstr = "The parameter " + p_item->label + " has been read twice.";
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+                break;
             }
+            if (std::find(readvalue_items.begin(), readvalue_items.end(), p_item) != readvalue_items.end())
+            {
+                return "The parameter " + p_item->label + " has been read twice. Specify it only once.\nSee "
+                       + input_manual_link(p_item->label) + "\n";
+            }
+            this->readvalue_items.push_back(p_item);
             // qianrui delete '/' 2024-07-10, because path has '/' head.
             read_information(ascii_stream, p_item->str_values, "#!");
         }
@@ -359,9 +457,8 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         {
             if (word[0] != '#' && word[0] != '/' && word[0] != '!') // if not recognized
             {
-                std::cout << " THE PARAMETER NAME '" << word << "' IS INCORRECT!" << std::endl;
-                ModuleBase::WARNING_QUIT("Input",
-                    "Bad parameter, please check the input parameters in file INPUT", 1);
+                return "Unknown INPUT parameter '" + word + "'. Check the parameter name.\n"
+                       "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html\n";
             }
             // otherwise, it is a comment. However, ...
             // but it is not always to be shorter than 150 characters
@@ -376,32 +473,330 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         }
         else if (ascii_stream.bad())
         {
-            ModuleBase::WARNING_QUIT("Input", 
-                                    " Bad input parameters. ", 1);
+            return "Cannot read the INPUT parameter list: stream error.\n";
         }
         else if (ascii_stream.fail())
         {
-            ascii_stream.clear();
-            ModuleBase::WARNING_QUIT("Input", 
-                                    " fail to read parameters. ", 1);
+            return "Cannot read the INPUT parameter list: failed to extract a parameter.\n";
         }
     }
 
+    return this->prepare_input(param);
+}
+
+std::string ReadInput::prepare_input(Parameter& param)
+{
+    // Validate original tokens before any reader or default hook can discard
+    // an invalid value. In particular, std::stoi alone accepts numeric prefixes.
+    std::string errors;
+    for (const Input_Item* item : this->readvalue_items)
+    {
+        errors += item->domain.validate_explicit(item->label, item->str_values);
+    }
+
+    // out_dos and out_mat_xc take one or two tokens. Their vector domains skip the
+    // whole-token validation of the scalar readers, so check that every supplied
+    // token is a complete value before any read hook runs.
+    for (const ModuleIO::Input_Item* item : this->readvalue_items)
+    {
+        const bool starts_with_boolean = item->label == "out_mat_xc";
+        if (!starts_with_boolean && item->label != "out_dos")
+        {
+            continue;
+        }
+        bool valid = item->str_values.size() == 1 || item->str_values.size() == 2;
+        if (valid)
+        {
+            valid = starts_with_boolean ? is_boolean_token(item->str_values[0])
+                                        : is_integer_token(item->str_values[0]);
+        }
+        if (valid && item->str_values.size() == 2)
+        {
+            valid = is_integer_token(item->str_values[1]);
+        }
+        if (!valid)
+        {
+            errors += input_diagnostic(item->label, longstring(item->str_values), "supplied",
+                                       starts_with_boolean ? "Expected a Boolean and an optional Integer."
+                                                           : "Expected one Integer and an optional precision Integer.");
+        }
+    }
+
+    if (!errors.empty())
+    {
+        return errors;
+    }
+
     // 1) read the value of the parameters
-    for (auto& readvalue_item: this->readvalue_items)
+    for (ModuleIO::Input_Item*& readvalue_item: this->readvalue_items)
     {
         readvalue_item->read_value(*readvalue_item, param);
     }
 
+#if !defined(ABACUS_LIBXC_CUDA) || !defined(__CUDA)
+    // Return a shared input error before the device reset hook probes rank 0 for a GPU.
+    if (param.inp.device == "gpu" && param.inp.device_xc == "gpu")
+    {
+        return "device_xc gpu requires ABACUS built with -DENABLE_LIBXC_CUDA=ON.\nSee "
+               + input_manual_link("device_xc") + "\n";
+    }
+#endif
+
+    InputValues supplied_values;
+    for (const Input_Item* item : this->readvalue_items)
+    {
+        if (item->domain.bound()) { supplied_values[item->label] = item->domain.value(param); }
+    }
+
     // 2) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
-    for (auto& input_item: this->input_lists)
+    for (std::pair<std::string, ModuleIO::Input_Item>& input_item: this->input_lists)
     {
         Input_Item* resetvalue_item = &(input_item.second);
         if (resetvalue_item->reset_value != nullptr) 
-		{
-			resetvalue_item->reset_value(*resetvalue_item, param);
+        {
+            resetvalue_item->reset_value(*resetvalue_item, param);
         }
+    }
+
+    this->normalize_hs_output_options(param);
+    this->normalize_occ_mat_options(param);
+    this->normalize_out_eband_alias(param);
+    this->normalize_td_output_frequency(param);
+
+    // The CSR angular-momentum writer indexes the scalar real-harmonic basis.
+    // In nspin = 4 the spinor basis doubles nlocal and uses a different
+    // magnetic-quantum-number ordering, so only the spin-up block could be
+    // filled; reject the request before the calculation starts.
+    if (param.input.nspin == 4 && param.input.out_mat_l[0] != 0)
+    {
+        errors += "Invalid INPUT parameter 'out_mat_l': nspin = 4 is not supported because only the scalar "
+                  "(npol = 1) angular-momentum block can be written; set out_mat_l to 0.\n";
+    }
+
+    // The dense text body writer asserts a positive precision. These checks run
+    // on rank 0 inside prepare_input and the accumulated errors are broadcast
+    // to every rank before aborting, so the message must be returned here
+    // rather than raised with WARNING_QUIT (which would leave the other ranks
+    // blocked in the broadcast).
+    if (param.input.out_dmk[1] <= 0)
+    {
+        errors += "Invalid INPUT parameter 'out_dmk': precision must be a positive integer.\n";
+    }
+    if (param.input.out_hsk[1] <= 0)
+    {
+        errors += "Invalid INPUT parameter 'out_hsk': precision must be a positive integer.\n";
+    }
+    if (param.input.out_mat_tk[1] <= 0)
+    {
+        errors += "Invalid INPUT parameter 'out_mat_tk': precision must be a positive integer.\n";
+    }
+
+    // Snapshot typed effective values once for shared domain and dependency checks.
+    InputValues values;
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
+    {
+        if (entry.second.domain.bound()) { values[entry.first] = entry.second.domain.value(param); }
+    }
+
+    // Evaluate requirements with explicit values taking precedence over defaults,
+    // so a reset cannot hide a conflicting user request.
+    InputValues requested_values = values;
+    for (const InputValues::value_type& supplied : supplied_values)
+    {
+        requested_values[supplied.first] = supplied.second;
+    }
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
+    {
+        errors += entry.second.domain.validate_requirements(entry.first, requested_values);
+    }
+    if (!errors.empty()) { return errors; }
+
+    // Check effective values, including defaults, through the same domains.
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
+    {
+        errors += entry.second.domain.validate_resolved(entry.first, values);
+    }
+    if (!errors.empty()) { return errors; }
+    for (const std::pair<std::string, Input_Item>& entry : this->input_lists)
+    {
+        errors += entry.second.domain.validate_requirements(entry.first, values);
+    }
+    return errors;
+}
+
+void ReadInput::normalize_occ_mat_options(Parameter& param)
+{
+    // init_occ_mat is the current name of the former omc parameter; keep
+    // accepting omc so that INPUT files written by older versions still work.
+    const auto item_is_read = [this](const std::string& label) {
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
+            this->input_lists.begin(),
+            this->input_lists.end(),
+            [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
+        return item != this->input_lists.end() && item->second.is_read();
+    };
+
+    const bool init_occ_mat_is_read = item_is_read("init_occ_mat");
+    const bool omc_is_read = item_is_read("omc");
+    if (init_occ_mat_is_read)
+    {
+        if (omc_is_read)
+        {
+            ModuleBase::WARNING("ReadInput", "both init_occ_mat and omc are set; init_occ_mat takes precedence");
+        }
+    }
+    else
+    {
+        param.input.init_occ_mat = param.input.omc;
+    }
+}
+
+void ReadInput::normalize_hs_output_options(Parameter& param)
+{
+    const auto item_is_read = [this](const std::string& label) {
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
+            this->input_lists.begin(),
+            this->input_lists.end(),
+            [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
+        return item != this->input_lists.end() && item->second.is_read();
+    };
+
+    const bool out_hsk_is_read = item_is_read("out_hsk");
+    const bool out_mat_hs_is_read = item_is_read("out_mat_hs");
+    if (out_hsk_is_read)
+    {
+        if (out_mat_hs_is_read)
+        {
+            ModuleBase::WARNING("ReadInput", "both out_hsk and out_mat_hs are set; out_hsk takes precedence");
+        }
+    }
+    else
+    {
+        param.input.out_hsk = param.input.out_mat_hs;
+    }
+
+    const bool out_hsr_is_read = item_is_read("out_hsr");
+    const bool out_mat_hs2_is_read = item_is_read("out_mat_hs2");
+    const bool out_hsr_npz_is_read = item_is_read("out_hsr_npz");
+    param.input.out_hsr_npz_compat = false;
+    if (out_hsr_is_read)
+    {
+        if (out_mat_hs2_is_read || out_hsr_npz_is_read)
+        {
+            ModuleBase::WARNING(
+                "ReadInput",
+                "out_hsr is set together with out_mat_hs2 or out_hsr_npz; out_hsr takes precedence");
+        }
+        param.input.out_hsr_npz = false;
+    }
+    else if (param.input.out_mat_hs2[0] != 0)
+    {
+        param.input.out_hsr = param.input.out_mat_hs2;
+        param.input.out_hsr_npz_compat = param.input.out_hsr_npz;
+    }
+    else if (param.input.out_hsr_npz)
+    {
+        param.input.out_hsr[0] = 3;
+        param.input.out_hsr[1] = 8;
+    }
+
+    if (param.input.qo_switch)
+    {
+        param.input.out_hsk[0] = 1;
+    }
+
+    // Merge the legacy out_mat_h_* aliases into their canonical k-space names.
+    // Each alias is accepted for backward compatibility; when both names are
+    // present the canonical new name takes precedence. out_mat_h_t is an alias
+    // for out_mat_tk because both produce the T(k) NAO text matrices (the
+    // former via the redundant write_h_t path, now removed).
+    const auto merge_alias = [&](const char* new_label, const char* old_label,
+                                 std::vector<int>& new_val, const std::vector<int>& old_val) {
+        const bool new_is_read = item_is_read(new_label);
+        const bool old_is_read = item_is_read(old_label);
+        if (new_is_read)
+        {
+            if (old_is_read)
+            {
+                ModuleBase::WARNING("ReadInput",
+                                    std::string("both ") + new_label + " and " + old_label
+                                        + " are set; " + new_label + " takes precedence");
+            }
+        }
+        else if (old_is_read)
+        {
+            new_val = old_val;
+        }
+    };
+
+    merge_alias("out_mat_tk", "out_mat_h_t", param.input.out_mat_tk, param.input.out_mat_h_t);
+    merge_alias("out_mat_vnlk", "out_mat_h_vnl", param.input.out_mat_vnlk, param.input.out_mat_h_vnl);
+    merge_alias("out_mat_vlk", "out_mat_h_vl", param.input.out_mat_vlk, param.input.out_mat_h_vl);
+    merge_alias("out_mat_vhk", "out_mat_h_vh", param.input.out_mat_vhk, param.input.out_mat_h_vh);
+    merge_alias("out_mat_vxck", "out_mat_h_vxc", param.input.out_mat_vxck, param.input.out_mat_h_vxc);
+    merge_alias("out_mat_exxk", "out_mat_h_exx", param.input.out_mat_exxk, param.input.out_mat_h_exx);
+}
+
+void ReadInput::normalize_out_eband_alias(Parameter& param)
+{
+    const auto item_is_read = [this](const std::string& label) {
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
+            this->input_lists.begin(),
+            this->input_lists.end(),
+            [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
+        return item != this->input_lists.end() && item->second.is_read();
+    };
+
+    // out_eband_terms is the legacy spelling of out_eband. Accepting it keeps
+    // existing INPUT files working instead of aborting on an unknown keyword;
+    // the canonical out_eband wins when both are present.
+    const bool out_eband_is_read = item_is_read("out_eband");
+    const bool out_eband_terms_is_read = item_is_read("out_eband_terms");
+    if (out_eband_is_read)
+    {
+        if (out_eband_terms_is_read)
+        {
+            ModuleBase::WARNING("ReadInput", "both out_eband and out_eband_terms are set; out_eband takes precedence");
+        }
+    }
+    else if (out_eband_terms_is_read)
+    {
+        param.input.out_eband = param.input.out_eband_terms_compat;
+    }
+}
+
+void ReadInput::normalize_td_output_frequency(Parameter& param)
+{
+    const auto item_is_read = [this](const std::string& label) {
+        const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item = std::find_if(
+            this->input_lists.begin(),
+            this->input_lists.end(),
+            [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
+        return item != this->input_lists.end() && item->second.is_read();
+    };
+
+    // out_freq_td is the legacy RT-TDDFT spelling of out_freq_ion. Both counted
+    // completed electronic evolution steps, so the value can be forwarded
+    // unchanged. The canonical out_freq_ion wins when both are present.
+    if (!item_is_read("out_freq_td"))
+    {
+        return;
+    }
+    if (param.input.esolver_type != "tddft")
+    {
+        ModuleBase::WARNING("ReadInput", "out_freq_td is only available in RT-TDDFT and is ignored");
+        return;
+    }
+    ModuleBase::WARNING("ReadInput", "out_freq_td is deprecated; use out_freq_ion instead");
+    if (item_is_read("out_freq_ion"))
+    {
+        ModuleBase::WARNING("ReadInput", "both out_freq_ion and out_freq_td are set; out_freq_ion takes precedence");
+        return;
+    }
+    if (param.input.out_freq_td_compat > 0)
+    {
+        param.input.out_freq_ion = param.input.out_freq_td_compat;
     }
 }
 
@@ -413,9 +808,11 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     ofs << std::setiosflags(std::ios::left);
 
     ofs << "#Parameters (1.System)" << std::endl;
-    for (auto& item: this->input_lists)
+    for (std::pair<std::string, ModuleIO::Input_Item>& item: this->input_lists)
     {
         Input_Item* p_item = &(item.second);
+        // Do not serialize an inactive internal marker as a public INPUT value.
+        if (!p_item->domain.can_write(param)) { continue; }
         if (p_item->get_final_value == nullptr) {
             continue;
 }
@@ -522,32 +919,32 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
             {
                 break;
             }
-            else if (isalpha(temp[0]))
+            else if (!temp.empty() && std::isalpha(static_cast<unsigned char>(temp[0])))
             {
                 ntype_stru += 1;
             }
         }
     }
 
-    if (param_ntype == 0)
+    if (ntype_stru <= 0)
     {
-        param_ntype = ntype_stru;
-        GlobalV::ofs_running << " 'ntype' is no longer required in INPUT, and "
-                                "it will be ignored. "
-                             << std::endl;
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype",
+                                 "Failed to detect valid ntype from STRU: no valid ATOMIC_SPECIES entries were found.");
     }
-    else if (param_ntype != ntype_stru)
+
+    if (param_ntype < 0)
     {
-        ModuleBase::WARNING_QUIT("ReadInput",
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype", "The ntype in INPUT should not be less than 0.");
+    }
+    else if (param_ntype != 0 && param_ntype != ntype_stru)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype",
                                  "The ntype in INPUT is not equal to the ntype "
                                  "counted in STRU, check it.");
     }
-    if (param_ntype <= 0)
+    else if (param_ntype == 0)
     {
-        ModuleBase::WARNING_QUIT("ReadInput", "ntype should be greater than 0.");
-    }
-    else
-    {
+        param_ntype = ntype_stru;
         GlobalV::ofs_running << " 'ntype' is automatically set to " << param_ntype << std::endl;
     }
 }

@@ -1,26 +1,175 @@
 #include <ATen/kernels/blas.h>
+#include <ATen/kernels/lapack.h>
 #include <base/third_party/blas.h>
 
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
+#include <algorithm>
+#include <cstdint>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <vector>
+
 namespace container {
 namespace kernels {
 
 static cublasHandle_t cublas_handle = nullptr;
+static cublasHandle_t device_dot_handle = nullptr;
 
 void createGpuBlasHandle() {
     if (cublas_handle == nullptr) {
         CHECK_CUBLAS(cublasCreate(&cublas_handle));
+        // Both handles use the default stream. Only dot writes scalar results on the device.
+        CHECK_CUBLAS(cublasCreate(&device_dot_handle));
+        CHECK_CUBLAS(cublasSetPointerMode(device_dot_handle, CUBLAS_POINTER_MODE_DEVICE));
     }
 }
 
 void destroyGpuBlasHandle() {
     if (cublas_handle != nullptr) {
         CHECK_CUBLAS(cublasDestroy(cublas_handle));
+        CHECK_CUBLAS(cublasDestroy(device_dot_handle));
+        device_dot_handle = nullptr;
         cublas_handle = nullptr;
     }
 }
+
+namespace {
+bool device_result_ptr(const void* result)
+{
+    cudaPointerAttributes attr{};
+    const cudaError_t err = cudaPointerGetAttributes(&attr, result);
+#if CUDART_VERSION < 11000
+    // Older runtimes report ordinary host memory as an unregistered pointer error.
+    if (err == cudaErrorInvalidValue)
+    {
+        cudaGetLastError();
+        return false;
+    }
+#endif
+    CHECK_CUDA(err);
+#if CUDART_VERSION >= 10000
+    return attr.type == cudaMemoryTypeDevice || attr.type == cudaMemoryTypeManaged;
+#else
+    return attr.memoryType == cudaMemoryTypeDevice || attr.isManaged;
+#endif
+}
+
+template <typename T>
+void dot_result(int n, const T* x, int incx, const T* y, int incy, T* result)
+{
+    cublasHandle_t handle = device_result_ptr(result) ? device_dot_handle : cublas_handle;
+    cuBlasConnector::dot(handle, n, x, incx, y, incy, result);
+}
+
+template <typename Real>
+void dot_result(int n, const std::complex<Real>* x, int incx, const std::complex<Real>* y, int incy,
+                std::complex<Real>* result)
+{
+    using Native = typename std::conditional<std::is_same<Real, float>::value, cuComplex, cuDoubleComplex>::type;
+    if (!device_result_ptr(result))
+    {
+        Native value{};
+        cuBlasConnector::dot(cublas_handle, n, x, incx, y, incy, &value);
+        *result = std::complex<Real>(value.x, value.y);
+        return;
+    }
+    if (reinterpret_cast<std::uintptr_t>(result) % alignof(Native) == 0)
+    {
+        cuBlasConnector::dot(device_dot_handle, n, x, incx, y, incy, reinterpret_cast<Native*>(result));
+        return;
+    }
+
+    // A complex member of a device struct can have only the alignment of Real.
+    Tensor temp(DataTypeToEnum<std::complex<Real>>::value, DeviceType::GpuDevice, {1});
+    Native* value = reinterpret_cast<Native*>(temp.data());
+    cudaStream_t stream = nullptr;
+    CHECK_CUBLAS(cublasGetStream(device_dot_handle, &stream));
+    cuBlasConnector::dot(device_dot_handle, n, x, incx, y, incy, value);
+    CHECK_CUDA(cudaMemcpyAsync(result, value, sizeof(Native), cudaMemcpyDeviceToDevice, stream));
+    CHECK_CUDA(cudaStreamSynchronize(stream));
+}
+
+template <typename T>
+__global__ void set_identity(T* matrix, const int n)
+{
+    const size_t count = static_cast<size_t>(n) * n;
+    const size_t stride = static_cast<size_t>(blockDim.x) * gridDim.x;
+    for (size_t i = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x; i < count; i += stride)
+    {
+        matrix[i] = i % n == i / n ? T(1) : T(0);
+    }
+}
+
+template <typename T>
+__global__ void copy_triangle(const T* inverse, T* matrix, const int n, const int lda, const bool upper)
+{
+    const size_t count = static_cast<size_t>(n) * n;
+    const size_t stride = static_cast<size_t>(blockDim.x) * gridDim.x;
+    for (size_t i = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x; i < count; i += stride)
+    {
+        const size_t row = i % n;
+        const size_t column = i / n;
+        if (upper ? row <= column : row >= column)
+        {
+            matrix[column * lda + row] = inverse[i];
+        }
+    }
+}
+} // namespace
+
+template <typename T>
+struct lapack_trtri<T, DEVICE_GPU> {
+    void operator()(const char& uplo, const char& diag, const int& n, T* matrix, const int& lda)
+    {
+        if (n < 0 || lda < std::max(1, n))
+        {
+            throw std::invalid_argument("trtri: invalid matrix dimensions");
+        }
+        const bool upper = cublas_fill_mode(uplo) == CUBLAS_FILL_MODE_UPPER;
+        const bool unit_diag = cublas_diag_type(diag) == CUBLAS_DIAG_UNIT;
+        if (n == 0)
+        {
+            return;
+        }
+        if (!unit_diag)
+        {
+            // TRSM does not report singularity; preserve TRTRI's zero-diagonal rejection.
+            std::vector<T> diagonal(n);
+            const size_t pitch = (static_cast<size_t>(lda) + 1) * sizeof(T);
+            CHECK_CUDA(cudaMemcpy2D(diagonal.data(), sizeof(T), matrix, pitch, sizeof(T), n, cudaMemcpyDeviceToHost));
+            for (int i = 0; i < n; ++i)
+            {
+                if (diagonal[i] == T(0))
+                {
+                    throw std::runtime_error("trtri: zero diagonal at index " + std::to_string(i + 1));
+                }
+            }
+        }
+
+        // Solve A * inverse = I without the Xtrtri workspace overrun seen in CUDA 11.8/12.1.
+        Tensor inverse(DataTypeToEnum<T>::value, DeviceType::GpuDevice, {n, n});
+        T* data = inverse.data<T>();
+        using CudaType = typename GetTypeThrust<T>::type;
+        CudaType* cuda_data = reinterpret_cast<CudaType*>(data);
+        CudaType* cuda_matrix = reinterpret_cast<CudaType*>(matrix);
+        const size_t count = static_cast<size_t>(n) * n;
+        const size_t blocks_needed = (count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+        const int blocks = std::min<size_t>(65535, blocks_needed);
+        set_identity<<<blocks, THREADS_PER_BLOCK>>>(cuda_data, n);
+        CHECK_CUDA(cudaGetLastError());
+        cuBlasConnector::trsm(cublas_handle, uplo, diag, n, matrix, lda, data);
+        copy_triangle<<<blocks, THREADS_PER_BLOCK>>>(cuda_data, cuda_matrix, n, lda, upper);
+        CHECK_CUDA_SYNC();
+    }
+};
+
+template struct lapack_trtri<float, DEVICE_GPU>;
+template struct lapack_trtri<double, DEVICE_GPU>;
+template struct lapack_trtri<std::complex<float>, DEVICE_GPU>;
+template struct lapack_trtri<std::complex<double>, DEVICE_GPU>;
 
 template <typename T>
 struct blas_nrm2<T, DEVICE_GPU> {
@@ -59,7 +208,7 @@ struct blas_dot<T, DEVICE_GPU> {
         const int& incy,
         T* result)
     {
-        cuBlasConnector::dot(cublas_handle, n, x, incx, y, incy, result);
+        dot_result(n, x, incx, y, incy, result);
     }
 };
 

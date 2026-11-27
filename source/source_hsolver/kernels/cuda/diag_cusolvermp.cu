@@ -1,17 +1,16 @@
 #ifdef __CUSOLVERMP
 #include "diag_cusolvermp.cuh"
 #include "source_base/module_device/device_check.h"
-#include "source_base/global_variable.h"
+#include "source_base/global_function.h"
 
 #include <assert.h>
 
 extern "C"
 {
-#include "source_hsolver/module_genelpa/Cblacs.h"
+#include "source_hsolver/module_genelpa/cblacs.h"
 }
 #include <iostream>
 #include <cstdint>
-#include "source_base/global_function.h"
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/device_check.h"
 
@@ -58,7 +57,7 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
                                                  const int nacols,
                                                  const int* desc)
 {
-    // 构造函数的实现
+    /// constructor implementation
     this->cblacs_ctxt = desc[1];
     this->nFull = desc[2];
 
@@ -130,7 +129,8 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     // This is because the current implementation of the cusolvermp library is ONE process ONE GPU.
     // So, when we use cusolvermp, we must ensure that the number of processes is equal to the number of GPUs.
     // In a sense, the MPI usage strategy of ABACUS must be subject to the cusolvermp.
-    // Use ROW_MAJOR to match BLACS grid initialization (order='R' in parallel_2d.cpp)
+    // Use ROW_MAJOR to match BLACS grid initialization (order='R' in
+    // parallel_blkcyc.cpp)
     CHECK_CUSOLVER(cusolverMpCreateDeviceGrid(cusolverMpHandle,
                                                    &this->grid,
 #ifdef __USE_CAL
@@ -295,23 +295,6 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
 
     return 0;
 }
-template <typename inputT>
-void Diag_CusolverMP_gvd<inputT>::outputParameters()
-{
-    GlobalV::ofs_running << "nFull: " << this->nFull << std::endl
-                         << "m_local: " << this->m_local << std::endl
-                         << "n_local: " << this->n_local << std::endl
-                         << "lda: " << this->lda << std::endl
-                         << "nprows: " << this->nprows << std::endl
-                         << "npcols: " << this->npcols << std::endl
-                         << "myprow: " << this->myprow << std::endl
-                         << "mypcol: " << this->mypcol << std::endl
-                         << "globalMpiRank: " << this->globalMpiRank << std::endl
-                         << "globalMpiSize: " << this->globalMpiSize << std::endl
-                         << "matrix_i: " << this->matrix_i << std::endl
-                         << "matrix_j: " << this->matrix_j << std::endl;
-}
-
 template class Diag_CusolverMP_gvd<double>;
 template class Diag_CusolverMP_gvd<std::complex<double>>;
 #endif

@@ -37,7 +37,7 @@ class Bspline
     int norder; // the order of bezier base; norder >= 0
     double Dx; // Dx: the interval of control node
     double xi; // xi: the starting point
-    double *bezier; // bezier[n] = Bk[n]
+    double * bezier = nullptr; // bezier[n] = Bk[n]
 
   public:
     Bspline();

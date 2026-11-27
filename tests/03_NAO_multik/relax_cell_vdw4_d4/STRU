@@ -1,0 +1,29 @@
+ATOMIC_SPECIES
+Sn  118.710  Sn_ONCV_PBE-1.0.upf
+Te  127.603  Te_ONCV_PBE-1.0.upf
+
+NUMERICAL_ORBITAL
+Sn_pbe_9.0au_100Ry_2s2p2d
+Te_pbe_9.0au_100Ry_2s2p2d
+
+LATTICE_CONSTANT
+1.89035917
+
+LATTICE_VECTORS
+4.646 0 0 #latvec1
+0 4.561 0 #latvec2
+0 0 16.32 #latvec3
+
+ATOMIC_POSITIONS
+Direct
+
+Sn #label
+0 #magnetism
+1 #number of atoms
+0.5493  0.5000000000000000  0.2 1 1 1
+
+Te #label
+0 #magnetism
+1 #number of atoms
+0.0000000000000000  0.0000000000000000  0.2 1 1 1
+

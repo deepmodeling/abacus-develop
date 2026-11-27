@@ -1,12 +1,13 @@
 #ifndef TD_CURRENT_IO_H
 #define TD_CURRENT_IO_H
 
-#include "source_basis/module_nao/two_center_bundle.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_psi/psi.h"
 #include "source_lcao/module_rt/velocity_op.h"
 #include "source_lcao/setup_exx.h"
+#include "source_lcao/module_rt/td_info.h"
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif
@@ -25,6 +26,7 @@ void write_current_eachk(const UnitCell& ucell,
                         const Parallel_Orbitals* pv,
                         const LCAO_Orbitals& orb,
                         const Velocity_op<TR>* cal_current,
+                        TD_info* td_p,
                         Record_adj& ra);
 template <typename TR>
 void write_current(const UnitCell& ucell,
@@ -36,6 +38,7 @@ void write_current(const UnitCell& ucell,
                 const Parallel_Orbitals* pv,
                 const LCAO_Orbitals& orb,
                 const Velocity_op<TR>* cal_current,
+                TD_info* td_p,
                 Record_adj& ra);
 /// @brief func to output current calculated using i[r,H] directly
 template <typename TR>
@@ -48,29 +51,17 @@ void write_current(
     const K_Vectors& kv,
     const Parallel_Orbitals* pv,
     const LCAO_Orbitals& orb,
-    cal_r_overlap_R& r_calculator,
+    TD_info* td_p,
     const hamilt::HContainer<TR>* sR,
-    const hamilt::HContainer<TR>* hR,
-    const Exx_NAO<std::complex<double>>& exx_nao
+    const std::vector<hamilt::HContainer<TR>*>& spin_hR,
+    const Exx_NAO<std::complex<double>>& exx_nao,
+    const Exx_Info& exx_info
 );
-/// @brief calculate sum_n[𝜌_(𝑛𝑘,𝜇𝜈)] for current calculation
-void cal_tmp_DM_k(const UnitCell& ucell,
-                elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
-                elecstate::DensityMatrix<std::complex<double>, double>& DM_imag,
-                const int ik,
-                const int nspin,
-                const int is,
-                const bool reset = true);
-
-void cal_tmp_DM(const UnitCell& ucell,
-                elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
-                elecstate::DensityMatrix<std::complex<double>, double>& DM_imag,
-                const int nspin);
 void set_rR_from_hR(const UnitCell& ucell,
                     const Grid_Driver& GridD,
                     const LCAO_Orbitals& orb,
                     const Parallel_Orbitals* pv,
-                    cal_r_overlap_R& r_calculator,
+                    Position_op& r_calculator,
                     const hamilt::HContainer<std::complex<double>>* hR,
                     ModuleBase::Vector3<hamilt::HContainer<double>*>& rR);
 template <typename TR>
@@ -80,7 +71,9 @@ void sum_HR(
     const K_Vectors& kv,
     const hamilt::HContainer<TR>* hR,
     hamilt::HContainer<std::complex<double>>* full_hR,
-    const Exx_NAO<std::complex<double>>& exx_nao
+    const Exx_NAO<std::complex<double>>& exx_nao,
+    const Exx_Info& exx_info,
+    const TD_info& td_info
 );
 
 template <typename Tadd, typename Tfull>
@@ -96,12 +89,13 @@ template <typename TR, typename TA>
 void init_from_hR(const hamilt::HContainer<TR>* hR, hamilt::HContainer<TA>* aimR);
 template <typename TR>
 void cal_velocity_basis_k(const UnitCell& ucell,
+                          TD_info* td_p,
                           const LCAO_Orbitals& orb,
                           const Parallel_Orbitals* pv,
                           const K_Vectors& kv,
                           const ModuleBase::Vector3<hamilt::HContainer<double>*>& rR,
                           const hamilt::HContainer<TR>& sR,
-                          const hamilt::HContainer<std::complex<double>>& hR,
+                          const std::vector<const hamilt::HContainer<std::complex<double>>*>& spin_hR,
                           std::vector<ModuleBase::Vector3<std::complex<double>*>>& velocity_basis_k);
 
 void cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
@@ -115,9 +109,9 @@ void cal_current_comm_k(const UnitCell& ucell,
                         const LCAO_Orbitals& orb,
                         const Parallel_Orbitals* pv,
                         const K_Vectors& kv,
-                        cal_r_overlap_R& r_calculator,
+                        TD_info* td_p,
                         const hamilt::HContainer<TR>& sR,
-                        const hamilt::HContainer<std::complex<double>>& hR,
+                        const std::vector<const hamilt::HContainer<std::complex<double>>*>& spin_hR,
                         const psi::Psi<std::complex<double>>* psi,
                         const elecstate::ElecState* pelec,
                         std::vector<ModuleBase::Vector3<double>>& current_k);

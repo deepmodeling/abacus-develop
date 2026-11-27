@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_XC_HPP
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_XC_HPP
+
 #include "lr_util.h"
 namespace LR_Util
 {
@@ -46,3 +48,5 @@ namespace LR_Util
         lapl(rhor.data(), lapn.data(), rho_basis, tpiba2);
     }
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_XC_HPP

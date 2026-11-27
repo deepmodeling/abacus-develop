@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include "source_base/module_external/blacs_connector.h"
+#include "source_base/tool_quit.h"
 #include "source_base/module_external/scalapack_connector.h"
 
 #include <complex>
@@ -9,79 +10,7 @@
 #include <iostream>
 #include <mpi.h>
 #include <sstream>
-#ifdef __MPI
-void initBlacsGrid(int loglevel,
-                   MPI_Comm comm,
-                   int nFull,
-                   int nblk,
-                   int& blacs_ctxt,
-                   int& narows,
-                   int& nacols,
-                   int desc[])
-{
-    std::stringstream outlog;
-    char BLACS_LAYOUT = 'C';
-    int ISRCPROC = 0; // fortran array starts from 1
-    int nprows, npcols;
-    int myprow, mypcol;
-    int nprocs, myid;
-    int info = 0;
-    MPI_Comm_size(comm, &nprocs);
-    MPI_Comm_rank(comm, &myid);
-    // set blacs parameters
-    for (npcols = int(sqrt(double(nprocs))); npcols >= 2; --npcols)
-    {
-        if (nprocs % npcols == 0)
-            break;
-    }
-    nprows = nprocs / npcols;
-    if ((loglevel > 0 && myid == 0) || loglevel > 1)
-    {
-        outlog.str("");
-        outlog << "myid " << myid << ": nprows: " << nprows << " ; npcols: " << npcols << std::endl;
-        std::cout << outlog.str();
-    }
-
-    // int comm_f = MPI_Comm_c2f(comm);
-    blacs_ctxt = Csys2blacs_handle(comm);
-    Cblacs_gridinit(&blacs_ctxt, &BLACS_LAYOUT, nprows, npcols);
-    if ((loglevel > 0 && myid == 0) || loglevel > 1)
-    {
-        outlog.str("");
-        outlog << "myid " << myid << ": Cblacs_gridinit done, blacs_ctxt: " << blacs_ctxt << std::endl;
-        std::cout << outlog.str();
-    }
-    Cblacs_gridinfo(blacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
-    if ((loglevel > 0 && myid == 0) || loglevel > 1)
-    {
-        int mypnum = Cblacs_pnum(blacs_ctxt, myprow, mypcol);
-        int prow, pcol;
-        Cblacs_pcoord(blacs_ctxt, myid, &prow, &pcol);
-        outlog.str("");
-        outlog << "myid " << myid << ": myprow: " << myprow << " ;mypcol: " << mypcol << std::endl;
-        outlog << "myid " << myid << ": mypnum: " << mypnum << std::endl;
-        outlog << "myid " << myid << ": prow: " << prow << " ;pcol: " << pcol << std::endl;
-        std::cout << outlog.str();
-    }
-
-    narows = numroc_(&nFull, &nblk, &myprow, &ISRCPROC, &nprows);
-    nacols = numroc_(&nFull, &nblk, &mypcol, &ISRCPROC, &npcols);
-    descinit_(desc, &nFull, &nFull, &nblk, &nblk, &ISRCPROC, &ISRCPROC, &blacs_ctxt, &narows, &info);
-
-    if ((loglevel > 0 && myid == 0) || loglevel > 1)
-    {
-        outlog.str("");
-        outlog << "myid " << myid << ": narows: " << narows << " nacols: " << nacols << std::endl;
-        outlog << "myid " << myid << ": blacs parameters setting" << std::endl;
-        outlog << "myid " << myid << ": desc is: ";
-        for (int i = 0; i < 9; ++i)
-            outlog << desc[i] << " ";
-        outlog << std::endl;
-        std::cout << outlog.str();
-    }
-}
-#endif
-
+#include <string>
 // load matrix from the file
 void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int blacs_ctxt)
 {
@@ -92,9 +21,16 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     const int ROOT_PROC = 0;
     std::ifstream matrixFile;
     if (myid == ROOT_PROC)
+    {
         matrixFile.open(FileName);
+        if (!matrixFile.is_open())
+        {
+            ModuleBase::WARNING_QUIT("module_genelpa::loadMatrix",
+                                     std::string("Failed to open matrix file: ") + FileName);
+        }
+    }
 
-    double* b; // buffer
+    double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
@@ -147,6 +83,11 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, double* a)
 
     sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
     matrixFile.open(FileName);
+    if (!matrixFile.is_open())
+    {
+        ModuleBase::WARNING_QUIT("module_genelpa::saveLocalMatrix",
+                                 std::string("Failed to open matrix file for write: ") + FileName);
+    }
     matrixFile.flags(std::ios_base::scientific);
     matrixFile.precision(17);
     matrixFile.width(24);
@@ -174,12 +115,17 @@ void saveMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     if (myid == ROOT_PROC) // setup saved matrix format
     {
         matrixFile.open(FileName);
+        if (!matrixFile.is_open())
+        {
+            ModuleBase::WARNING_QUIT("module_genelpa::saveMatrix",
+                                     std::string("Failed to open matrix file for write: ") + FileName);
+        }
         matrixFile.flags(std::ios_base::scientific);
         matrixFile.precision(17);
         matrixFile.width(24);
     }
 
-    double* b; // buffer
+    double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
@@ -229,7 +175,14 @@ void loadMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
     const int ROOT_PROC = 0;
     std::ifstream matrixFile;
     if (myid == ROOT_PROC)
+    {
         matrixFile.open(FileName);
+        if (!matrixFile.is_open())
+        {
+            ModuleBase::WARNING_QUIT("module_genelpa::loadMatrix",
+                                     std::string("Failed to open matrix file: ") + FileName);
+        }
+    }
 
     std::complex<double>* b; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
@@ -285,6 +238,11 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::compl
 
     sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
     matrixFile.open(FileName);
+    if (!matrixFile.is_open())
+    {
+        ModuleBase::WARNING_QUIT("module_genelpa::saveLocalMatrix",
+                                 std::string("Failed to open matrix file for write: ") + FileName);
+    }
     matrixFile.flags(std::ios_base::scientific);
     matrixFile.precision(17);
     matrixFile.width(24);
@@ -312,6 +270,11 @@ void saveMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
     if (myid == ROOT_PROC) // setup saved matrix format
     {
         matrixFile.open(FileName);
+        if (!matrixFile.is_open())
+        {
+            ModuleBase::WARNING_QUIT("module_genelpa::saveMatrix",
+                                     std::string("Failed to open matrix file for write: ") + FileName);
+        }
         matrixFile.flags(std::ios_base::scientific);
         matrixFile.precision(17);
         matrixFile.width(24);

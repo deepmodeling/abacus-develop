@@ -390,24 +390,29 @@ class Tensor {
      *
      * @return The pointer to the specified row.
      *
-     * @note This function assumes the tensor is treated as a matrix, where each row
-     * is a contiguous block of memory.
-     * If the row index is out of bounds, the behavior is undefined.
+     * @note This function supports rank-1 and rank-2 tensors. For a rank-1 tensor,
+     * the index selects an element. For a rank-2 tensor, the index selects a row.
+     * An invalid rank or index throws std::invalid_argument.
      */
     template <typename T>
-    T* inner_most_ptr(const int &index) const {
-        if (shape_.ndim() > 2) {
-            throw std::invalid_argument("Invalid call, inner_most_ptr only support tensor rank <= 2!");
+    T* inner_most_ptr(const int& index) const
+    {
+        const unsigned int rank = shape_.ndim();
+        if (rank == 0 || rank > 2)
+        {
+            throw std::invalid_argument("Invalid call, inner_most_ptr only supports tensor ranks 1 and 2!");
         }
-        if (index > shape_.dim_size(static_cast<int>(shape_.ndim() - 2))) {
-            throw std::invalid_argument("Invalid index, index of the inner-most must less than the inner-most shape size!");
+        const int64_t outer_size = shape_.dim_size(0);
+        if (index < 0 || static_cast<int64_t>(index) >= outer_size)
+        {
+            throw std::invalid_argument("Invalid index, inner_most_ptr index is out of bounds!");
         }
-        if (shape_.ndim() == 1) {
+        if (rank == 1)
+        {
             return data<T>() + index;
         }
-        return data<T>() + index * shape_.dim_size(static_cast<int>(shape_.ndim()) - 1);
+        return data<T>() + index * shape_.dim_size(1);
     }
-
 
     /**
      * @brief Equality comparison operator for tensors.

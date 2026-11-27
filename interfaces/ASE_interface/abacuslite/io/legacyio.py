@@ -3,7 +3,7 @@ import shutil
 import unittest
 from io import TextIOWrapper
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 
 import numpy as np
 from ase.atoms import Atoms
@@ -12,7 +12,7 @@ from ase.calculators.singlepoint import (
     SinglePointDFTCalculator
 )
 from ase.units import Ry, eV, GPa, bar
-from ase.constraints import full_3x3_to_voigt_6_stress
+from ase.stress import full_3x3_to_voigt_6_stress
 # from ase.utils import reader
 
 __all__ = ['read_kpoints_from_running_log', 
@@ -258,19 +258,26 @@ def read_band_from_running_log(src: str | Path | List[str]) \
            f'Unexpected shape of k-points: {k.shape}, expected ({len(iekb)}, 3)'
 
     nframe = len(iekb) // (masknspin(nspin)*nk) # number of frames, for MD or relax tasks
-    ekb_raw = [l for i in iekb for l in raw[i+1:i+1+nbnd]]
-    # each line should in the format of
-    # r'\d+\s+(-?\d(\.\d+)?)\s+(\d(\.\d+)?)
-    # Changelog: there are cases that the band energies and occupations are in scientific
-    #            notation, e.g., 1.0e-01, 1.0e+00, so the regular expression should be
-    #            r'\d+\s+(-?\d+(\.\d+)?(e[+-]\d+)?)\s+(\d+(\.\d+)?(e[+-]\d+)?)' instead
-    ekbpat  = r'\d+\s+'
-    ekbpat += r'(-?\d+(\.\d+)?(e[+-]\d+)?)\s+'
-    ekbpat += r'(\d+(\.\d+)?(e[+-]\d+)?)'
-    assert all(re.match(ekbpat, l) for l in ekb_raw), \
-           'Unexpected format of band energies: \n' + '\n'.join(ekb_raw)
-    # ekb in the second column, occ in the third column
-    ekb_raw = np.array([list(map(float, l.split())) for l in ekb_raw])
+    ekb_raw = []
+    for i in iekb:
+        rows = []
+        j = i + 1
+        while j < len(raw) and len(rows) < nbnd:
+            if re.match(ekb_leading_pat, raw[j]):
+                break
+            parts = raw[j].strip().split()
+            if len(parts) >= 3 and parts[0].isdigit():
+                try:
+                    band_index = int(parts[0])
+                    if band_index == len(rows) + 1:
+                        rows.append([float(parts[0]), float(parts[1]), float(parts[2])])
+                except ValueError:
+                    pass
+            j += 1
+        assert len(rows) == nbnd, \
+               f'Unexpected number of band rows: {len(rows)} vs {nbnd}'
+        ekb_raw.extend(rows)
+    ekb_raw = np.array(ekb_raw)
     assert ekb_raw.shape == (nframe * masknspin(nspin) * nk * nbnd, 3), \
            f'Unexpected shape of band energies: {ekb_raw.shape}. ' \
            f'Expected ({nframe * masknspin(nspin) * nk * nbnd}, 3), in which ' \
@@ -662,7 +669,7 @@ def read_magmom_from_running_log(src: str | Path | List[str]) \
     while istart < len(raw):
         ith = None # index of the table header
         for i, l in enumerate(raw[istart:]):
-            if re.match(r'\s*Total\sMagnetism\s\(uB\)(\s+x\s+y\s+z)?\s*', l, 
+            if re.match(r'\s*Total\sMagnetism\s\(uB\)(\s+x\s+y\s+z)?\s*$', l, 
                         re.IGNORECASE):
                 ith = i
                 break
@@ -695,16 +702,73 @@ def read_magmom_from_running_log(src: str | Path | List[str]) \
         # the second to fourth items are the x, y, z components
         res = list(zip(*[l.split() for l in tb_raw]))[1:]
         assert len(res) in [1, 3] # colinear or non-colinear case
-        mx, my, mz = (0,) * len(res[-1]), (0,) * len(res[-1]), res[-1]
-        if len(res) == 3:
-            mx, my = res[0], res[1]
-        magmom.append(np.array([list(map(float, (mx, my, mz))) 
-                                for mx, my, mz in zip(mx, my, mz)]))
-        
+        if len(res) == 1: # colinear case
+            magmom.append(np.array([list(map(float, res[-1]))]).flatten())
+        else: # non-colinear case
+            mx, my, mz = res
+            magmom.append(np.array([list(map(float, (mx, my, mz))) 
+                                    for mx, my, mz in zip(mx, my, mz)]))
         # update the istart
         istart += ith + itb + jtb + 1
 
     return magmom
+
+def read_iter_header_from_running_log(src: str | Path | List[str]) \
+    -> List[Tuple[int, int]]:
+    '''
+    read the "iteration header" from the running log, useful for determining
+    which is the final iteration. The "iteration header" is defined as:
+    ```
+    LCAO ALGORITHM --------------- ION=   1  ELEC= 100---------------------
+    ```
+    or for PW:
+    ```
+    PW ALGORITHM --------------- ION=2     ELEC=1   -----------------------
+    ```
+    '''
+    if isinstance(src, (str, Path)):
+        with open(src) as f:
+            raw = f.readlines()
+    else: # assume the src is the return of the readlines()
+        raw = src
+    # with open(fn) as f:
+    #     raw = f.readlines()
+    raw = [l.strip() for l in raw]
+    raw = [l for l in raw if l] # remove empty lines
+
+    HEADER_PAT = r'(LCAO|PW)\s+ALGORITHM\s+-+\s+ION=\s+([0-9]+)\s+ELEC=\s+([0-9]+)'
+    res = [re.findall(HEADER_PAT, l) for l in raw]
+
+    return [(int(pack[0][1]), int(pack[0][2])) for pack in res if pack]
+
+def find_final_info_with_iter_header(
+    info: List[Any],
+    headers: List[Tuple[int, int]]
+    ) -> List[Any]:
+    '''find the energies of the final iteration
+    
+    Parameters
+    ----------
+    info: List[Dict[str, float]]
+        The information that is printed after each iteration. 
+    headers: List[Tuple[int, int]]
+        The "iteration header" returned from the function
+        `read_iter_header_from_running_log`
+    
+    Returns
+    -------
+    List[Any]
+        The information of the final iteration.
+    '''
+    headers = np.array(headers) # because indices should start from 0
+    assert headers.ndim == 2
+    assert headers.shape[1] == 2
+
+    ion = headers[:, 0].flatten()
+    ion, nelec = np.unique(ion, return_counts=True)
+    ielec = np.cumsum(nelec) - 1
+
+    return [info[i] for i in ielec]
 
 def is_invalid_arr(arr) -> bool:
     '''Check if the array is invalid, including the cases of None,
@@ -797,9 +861,11 @@ def read_abacus_out(fileobj,
     # the simulation, which is, not exactly to be true for the NPT-MD
     # runs.
 
-    _, energies   = read_energies_from_running_log(abacus_lines)
-    # only keep the SCF converged energies
-    energies = [edct for edct in energies if 'E_KS(sigma->0)' in edct]
+    # only keep the energies of the final iteration for each ion step
+    energies = find_final_info_with_iter_header(
+        read_energies_from_running_log(abacus_lines)[1],
+        read_iter_header_from_running_log(abacus_lines)
+    )
     
     # read the magmom
     magmom = read_magmom_from_running_log(abacus_lines)
@@ -828,7 +894,9 @@ def read_abacus_out(fileobj,
         ind = ind or list(range(len(frame['elem'])))
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
                       positions=frame['coords'][ind], 
-                      cell=frame['cell'])
+                      cell=frame['cell'],
+                      magmoms=mag[ind])
+        
         # from result, a calculator can be assembled
         # however, sometimes the force and stress is not calculated
         # in this case, we set them to None
@@ -837,7 +905,7 @@ def read_abacus_out(fileobj,
         calc = SinglePointDFTCalculator(atoms=atoms, energy=ener['E_KohnSham'],
                                         free_energy=ener['E_KohnSham'],
                                         forces=frs, stress=strs,
-                                        magmoms=mag, efermi=ener['E_Fermi'],
+                                        magmoms=mag[ind], efermi=ener['E_Fermi'],
                                         ibzkpts=kvecd, dipole=None)
         # import the eigenvalues and occupations kpoint-by-kpoint
         calc.kpts = []
@@ -919,6 +987,70 @@ class TestLegacyIO(unittest.TestCase):
             self.assertTrue(d['k'].shape == (nspin, nk, 3))
             self.assertTrue(d['e'].shape == (nspin, nk, nband))
             self.assertTrue(d['occ'].shape == (nspin, nk, nband))
+
+    def test_read_band_from_running_log_skips_non_band_rows(self):
+        data = read_band_from_running_log([
+            'nspin = 1',
+            'NBANDS = 2',
+            'nkstot = 1',
+            '1/1 kpoint (Cartesian) = 0.0 0.0 0.0 (1 pws)',
+            'BAND ENERGY OCCUPATION',
+            '1 -1.0 1.0',
+            '2 0.5 0.0',
+        ])
+
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['e'].shape, (1, 1, 2))
+        self.assertTrue(np.allclose(data[0]['e'][0, 0], [-1.0, 0.5]))
+        self.assertTrue(np.allclose(data[0]['occ'][0, 0], [1.0, 0.0]))
+
+    def test_read_band_from_running_log_does_not_cross_kpoint_blocks(self):
+        with self.assertRaises(AssertionError):
+            read_band_from_running_log([
+                'nspin = 1',
+                'NBANDS = 2',
+                'nkstot = 2',
+                '1/2 kpoint (Cartesian) = 0.0 0.0 0.0 (1 pws)',
+                '1 -1.0 1.0',
+                '2/2 kpoint (Cartesian) = 0.5 0.0 0.0 (1 pws)',
+                '1 -0.5 1.0',
+                '2 0.5 0.0',
+            ])
+
+    def test_read_abacus_out_reorders_calculator_magmoms(self):
+        import tempfile
+        from unittest.mock import patch
+
+        frame = {
+            'elem': ['Na', 'Na', 'Cl'],
+            'coords': np.array([[0.0, 0.0, 0.0],
+                                [1.0, 0.0, 0.0],
+                                [2.0, 0.0, 0.0]]),
+            'cell': np.eye(3),
+        }
+        elecstate = [{
+            'k': np.zeros((1, 1, 3)),
+            'e': np.zeros((1, 1, 1)),
+            'occ': np.ones((1, 1, 1)),
+        }]
+        energies = [{'E_KohnSham': -1.0, 'E_Fermi': 0.0}]
+        kpoints = ((np.zeros((1, 3)), np.ones(1), None), None, None, None, None)
+
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            with patch(__name__ + '.read_esolver_type_from_running_log', return_value='ksdft'), \
+                 patch(__name__ + '.read_traj_from_running_log', return_value=[frame]), \
+                 patch(__name__ + '.read_band_from_running_log', return_value=elecstate), \
+                 patch(__name__ + '.read_forces_from_running_log', return_value=[]), \
+                 patch(__name__ + '.read_stress_from_running_log', return_value=[]), \
+                 patch(__name__ + '.read_kpoints_from_running_log', return_value=kpoints), \
+                 patch(__name__ + '.read_energies_from_running_log', return_value=([], [])), \
+                 patch(__name__ + '.read_iter_header_from_running_log', return_value=[]), \
+                 patch(__name__ + '.find_final_info_with_iter_header', return_value=energies), \
+                 patch(__name__ + '.read_magmom_from_running_log', return_value=[np.array([10.0, 20.0, 30.0])]):
+                atoms = read_abacus_out(f.name, sort_atoms_with=[0, 2, 1])[0]
+
+        self.assertEqual(atoms.get_chemical_symbols(), ['Na', 'Cl', 'Na'])
+        self.assertTrue(np.allclose(atoms.calc.results['magmoms'], [10.0, 30.0, 20.0]))
 
     def test_read_traj_from_running_log(self):
         fn = self.testfiles / 'lcao-symm1-nspin1-multik-scf_'
@@ -1091,8 +1223,39 @@ class TestLegacyIO(unittest.TestCase):
         self.assertEqual(len(magmoms), 2) # 2 cell-relax steps
         for i, magmom in enumerate(magmoms):
             self.assertIsInstance(magmom, np.ndarray)
-            self.assertEqual(magmom.shape, (4, 3))
+            self.assertEqual(magmom.shape, (4,))
             self.assertAlmostEqual(magmom.sum(), 0.0, delta=1e-3) # AFM
+
+        # non-colinear case
+        fn = self.testfiles / 'pw-symm0-nspin4-gamma-md_'
+        magmoms = read_magmom_from_running_log(fn)
+        self.assertIsInstance(magmoms, list)
+        self.assertEqual(len(magmoms), 2)
+        for magmom in magmoms:
+            self.assertTrue(
+                np.allclose(magmom, 
+                            np.array([[0.        , 0.        , 3.62032142],
+                                      [0.        , 0.        , 3.62032142]])))
+
+    def test_read_iter_header_from_running_log(self):
+        fn = self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax_'
+        header = read_iter_header_from_running_log(fn)
+        self.assertEqual(header[0], (1,1))
+        self.assertEqual(header[1], (1,2))
+        self.assertEqual(header[2], (2,1))
+        fn = self.testfiles / 'pw-symm0-nspin4-gamma-md_'
+        header = read_iter_header_from_running_log(fn)
+        self.assertEqual(header[0], (1,1))
+        self.assertEqual(header[1], (1,2))
+        self.assertEqual(header[2], (1,3))
+        self.assertEqual(header[3], (3,2))
+        self.assertEqual(header[4], (3,3))
+
+    def test_find_final_info_with_iter_header(self):
+        info = [1, 2, 3, 4, 5, 6]
+        header = [[1,1], [1,2], [2,1], [3,1], [3,2], [3,3]]
+        final_info = find_final_info_with_iter_header(info, header)
+        self.assertListEqual(final_info, [info[1], info[2], info[5]])
 
 if __name__ == '__main__':
     unittest.main()

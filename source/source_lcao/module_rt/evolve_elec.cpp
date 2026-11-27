@@ -1,30 +1,30 @@
 #include "evolve_elec.h"
 
 #include "evolve_psi.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_estate/module_charge/symmetry_rho.h"
-#include "source_lcao/hamilt_lcao.h"
-#include "source_lcao/module_dftu/dftu.h"
 
 namespace module_rt
 {
 template <typename Device>
-Evolve_elec<Device>::Evolve_elec(){};
+Evolve_elec<Device>::Evolve_elec() {};
 template <typename Device>
-Evolve_elec<Device>::~Evolve_elec(){};
+Evolve_elec<Device>::~Evolve_elec() {};
 
 template <typename Device>
 ct::DeviceType Evolve_elec<Device>::ct_device_type = ct::DeviceTypeToEnum<Device>::value;
 
 // this routine only serves for TDDFT using LCAO basis set
 template <typename Device>
-void Evolve_elec<Device>::solve_psi(const int& istep,
+void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output,
                                     const int nband,
                                     const int nlocal,
                                     const int& nks,
                                     hamilt::Hamilt<std::complex<double>>* phm,
-                                    Parallel_Orbitals& para_orb,
+                                    const Parallel_Blkcyclic& matrix_layout,
+                                    const Parallel_Blkcyclic& wfc_layout,
+                                    const Parallel_Blkcyclic& mo_repr_layout,
                                     psi::Psi<std::complex<double>>* psi,
                                     psi::Psi<std::complex<double>>* psi_laststep,
                                     ct::Tensor& Hk_laststep,
@@ -33,10 +33,14 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                     std::ofstream& ofs_running,
                                     const int propagator,
                                     const bool use_tensor,
-                                    const bool use_lapack)
+                                    const bool use_lapack,
+                                    module_rt::TD_MovingGauge* td_mg,
+                                    const UnitCell* ucell,
+                                    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                    const bool use_td_moving_gauge)
 {
     ModuleBase::TITLE("Evolve_elec", "solve_psi");
-    ModuleBase::timer::tick("Evolve_elec", "solve_psi");
+    ModuleBase::timer::start("Evolve_elec", "solve_psi");
 
     // Control the print of matrix to running_md.log
     const int print_matrix = 0;
@@ -44,56 +48,60 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
     // Multi-GPU support
     CublasMpResources cublas_res;
 #ifdef __CUBLASMP
-    init_cublasmp_resources(cublas_res, MPI_COMM_WORLD, para_orb.desc);
+    init_cublasmp_resources(cublas_res, MPI_COMM_WORLD, matrix_layout.desc());
 #endif
 
     for (int ik = 0; ik < nks; ik++)
     {
         phm->updateHk(ik);
 
-        ModuleBase::timer::tick("TD_Efficiency", "evolve_k");
+        ModuleBase::timer::start("TD_Efficiency", "evolve_k");
         psi->fix_k(ik);
         psi_laststep->fix_k(ik);
 
         if (!use_tensor)
         {
-            const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.nloc;
+            // Construct the local P_k matrix for moving spatial gauge, CPU only for now
+            std::vector<std::complex<double>> P_k_local(matrix_layout.size(), {0.0, 0.0});
+            if (use_td_moving_gauge && td_mg != nullptr)
+            {
+                td_mg->get_P_k(ucell, kvec_d[ik], P_k_local.data(), matrix_layout.size(), matrix_layout.ncloc());
+            }
+
+            const int len_HS_laststep = use_lapack ? nlocal * nlocal : matrix_layout.size();
             evolve_psi(nband,
                        nlocal,
-                       &(para_orb),
+                       matrix_layout,
+                       wfc_layout,
+                       mo_repr_layout,
                        phm,
                        psi[0].get_pointer(),
                        psi_laststep[0].get_pointer(),
                        Hk_laststep.data<std::complex<double>>() + ik * len_HS_laststep,
                        Sk_laststep.data<std::complex<double>>() + ik * len_HS_laststep,
+                       P_k_local.data(),
+                       use_td_moving_gauge,
                        &(ekb(ik, 0)),
                        propagator,
                        ofs_running,
-                       print_matrix);
+                       print_matrix,
+                       eij_output[ik]);
             // GlobalV::ofs_running << "Print ekb: " << std::endl;
             // ekb.print(GlobalV::ofs_running);
         }
         else
         {
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
 
             const int len_psi_k_1 = use_lapack ? nband : psi->get_nbands();
             const int len_psi_k_2 = use_lapack ? nlocal : psi->get_nbasis();
-            const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.nloc;
+            const int len_HS_laststep = use_lapack ? nlocal * nlocal : matrix_layout.size();
 
             // Create Tensor for psi_k, psi_k_laststep, H_laststep, S_laststep, ekb
-            ct::Tensor psi_k_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                    ct_device_type,
-                                    ct::TensorShape({len_psi_k_1, len_psi_k_2}));
-            ct::Tensor psi_k_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                             ct_device_type,
-                                             ct::TensorShape({len_psi_k_1, len_psi_k_2}));
-            ct::Tensor H_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                         ct_device_type,
-                                         ct::TensorShape({len_HS_laststep}));
-            ct::Tensor S_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                         ct_device_type,
-                                         ct::TensorShape({len_HS_laststep}));
+            ct::Tensor psi_k_tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_psi_k_1, len_psi_k_2}));
+            ct::Tensor psi_k_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_psi_k_1, len_psi_k_2}));
+            ct::Tensor H_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS_laststep}));
+            ct::Tensor S_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS_laststep}));
             ct::Tensor ekb_tensor(ct::DataType::DT_DOUBLE, ct_device_type, ct::TensorShape({nband}));
 
             // Global psi
@@ -122,8 +130,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                 else
                 {
                     // Multiple processes: gather data to the root process (myid == 0) and point to the gathered data
-                    gatherPsi(myid, root_proc, psi[0].get_pointer(), para_orb, psi_g);
-                    gatherPsi(myid, root_proc, psi_laststep[0].get_pointer(), para_orb, psi_laststep_g);
+                    gatherPsi(myid, root_proc, psi[0].get_pointer(), wfc_layout, psi_g);
+                    gatherPsi(myid, root_proc, psi_laststep[0].get_pointer(), wfc_layout, psi_laststep_g);
 
                     if (myid == root_proc)
                     {
@@ -135,9 +143,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                 // Only the root process (myid == 0) performs the copy
                 if (myid == root_proc)
                 {
-                    syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(),
-                                             p_psi_host,
-                                             len_psi_k_1 * len_psi_k_2);
+                    syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(), p_psi_host, len_psi_k_1 * len_psi_k_2);
                     syncmem_complex_h2d_op()(psi_k_laststep_tensor.data<std::complex<double>>(),
                                              p_psi_last_host,
                                              len_psi_k_1 * len_psi_k_2);
@@ -147,9 +153,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
             else
             {
                 // Syncronize data from CPU to Device
-                syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(),
-                                         psi[0].get_pointer(),
-                                         len_psi_k_1 * len_psi_k_2);
+                syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(), psi[0].get_pointer(), len_psi_k_1 * len_psi_k_2);
                 syncmem_complex_h2d_op()(psi_k_laststep_tensor.data<std::complex<double>>(),
                                          psi_laststep[0].get_pointer(),
                                          len_psi_k_1 * len_psi_k_2);
@@ -163,11 +167,13 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                      len_HS_laststep);
             syncmem_double_h2d_op()(ekb_tensor.data<double>(), &(ekb(ik, 0)), nband);
 
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
 
             evolve_psi_tensor<Device>(nband,
                                       nlocal,
-                                      &(para_orb),
+                                      matrix_layout,
+                                      wfc_layout,
+                                      mo_repr_layout,
                                       phm,
                                       psi_k_tensor,
                                       psi_k_laststep_tensor,
@@ -178,9 +184,10 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                       ofs_running,
                                       print_matrix,
                                       use_lapack,
-                                      cublas_res);
+                                      cublas_res,
+                                      eij_output[ik]);
 
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             // Need to distribute global psi back to all processes
             if (use_lapack)
             {
@@ -192,9 +199,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
 
                 if (myid == 0)
                 {
-                    syncmem_complex_d2h_op()(p_psi_host,
-                                             psi_k_tensor.data<std::complex<double>>(),
-                                             len_psi_k_1 * len_psi_k_2);
+                    syncmem_complex_d2h_op()(p_psi_host, psi_k_tensor.data<std::complex<double>>(), len_psi_k_1 * len_psi_k_2);
                     syncmem_complex_d2h_op()(p_psi_last_host,
                                              psi_k_laststep_tensor.data<std::complex<double>>(),
                                              len_psi_k_1 * len_psi_k_2);
@@ -203,17 +208,15 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                 // If it's multi-process, distribute back; if it's single-process, the data is already in psi[0]
                 if (num_procs > 1)
                 {
-                    distributePsi(para_orb, psi[0].get_pointer(), psi_g);
-                    distributePsi(para_orb, psi_laststep[0].get_pointer(), psi_laststep_g);
+                    distributePsi(wfc_layout, psi[0].get_pointer(), psi_g);
+                    distributePsi(wfc_layout, psi_laststep[0].get_pointer(), psi_laststep_g);
                 }
 #endif
             }
             else
             {
                 // Syncronize data from Device to CPU
-                syncmem_complex_d2h_op()(psi[0].get_pointer(),
-                                         psi_k_tensor.data<std::complex<double>>(),
-                                         len_psi_k_1 * len_psi_k_2);
+                syncmem_complex_d2h_op()(psi[0].get_pointer(), psi_k_tensor.data<std::complex<double>>(), len_psi_k_1 * len_psi_k_2);
                 syncmem_complex_d2h_op()(psi_laststep[0].get_pointer(),
                                          psi_k_laststep_tensor.data<std::complex<double>>(),
                                          len_psi_k_1 * len_psi_k_2);
@@ -235,20 +238,20 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
             }
 #endif
 
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
 
             // GlobalV::ofs_running << "Print ekb: " << std::endl;
             // ekb.print(GlobalV::ofs_running);
         }
 
-        ModuleBase::timer::tick("TD_Efficiency", "evolve_k");
+        ModuleBase::timer::end("TD_Efficiency", "evolve_k");
     } // end k
 
 #ifdef __CUBLASMP
     finalize_cublasmp_resources(cublas_res);
 #endif
 
-    ModuleBase::timer::tick("Evolve_elec", "solve_psi");
+    ModuleBase::timer::end("Evolve_elec", "solve_psi");
     return;
 }
 

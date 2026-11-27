@@ -51,8 +51,6 @@ TEST_F(cal_pseudo_test, gauss_charge)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -70,13 +68,13 @@ TEST_F(cal_pseudo_test, gauss_charge)
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
-    std::complex<double>* N = new std::complex<double>[npw];
+    std::complex<double> *N = new std::complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(N, npw);
 
     Structure_Factor sf;
     sf.nbspline = -1;
 
-    sf.setup(&ucell, pgrid, &pwtest);
+    sf.setup(&ucell, pgrid, &pwtest, false);
 
     solvent_model.gauss_charge(ucell, pgrid, &pwtest, N, &sf);
 
@@ -107,8 +105,6 @@ TEST_F(cal_pseudo_test, cal_pseudo)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -128,16 +124,16 @@ TEST_F(cal_pseudo_test, cal_pseudo)
 
     Structure_Factor sf;
     sf.nbspline = -1;
-    sf.setup(&ucell, pgrid, &pwtest); // sf.setup is moved to here
+    sf.setup(&ucell, pgrid, &pwtest, false); // sf.setup is moved to here
 
-    std::complex<double>* Porter_g = new std::complex<double>[npw];
+    std::complex<double> *Porter_g = new std::complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(Porter_g, npw);
     for (int i = 0; i < npw; i++)
     {
         Porter_g[i] = 0.1;
     }
 
-    std::complex<double>* PS_TOTN = new std::complex<double>[npw];
+    std::complex<double> *PS_TOTN = new std::complex<double>[npw];
     solvent_model.cal_pseudo(ucell, pgrid, &pwtest, Porter_g, PS_TOTN, &sf);
 
     EXPECT_NEAR(PS_TOTN[16].real(), 0.098426466, 1e-9);
@@ -147,12 +143,10 @@ TEST_F(cal_pseudo_test, cal_pseudo)
     delete[] PS_TOTN;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

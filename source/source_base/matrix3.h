@@ -1,10 +1,6 @@
 #ifndef MatriX3_H
 #define MatriX3_H
 
-#ifdef _MCD_CHECK
-#include "mcd.h"
-#endif
-
 #include "matrix.h"
 #include "vector3.h"
 

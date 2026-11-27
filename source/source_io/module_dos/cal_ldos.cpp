@@ -2,8 +2,9 @@
 
 #include "cal_dos.h"
 #include "../module_output/cube_io.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_estate/module_dm/dm_from_psi.h"
+#include "source_hamilt/module_gint/gint_interface.h"
+#include "source_base/module_device/memory_op.h"
 
 #include <type_traits>
 
@@ -15,18 +16,27 @@ template <typename T>
 void Cal_ldos<T>::cal_ldos_lcao(
         const elecstate::Efermi &eferm, // mohan add 2025-11-02
         const Charge &chr, // mohan add add 2025-11-02
-        const LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-02 
+        const module_dm::Setup_DM<T> &dmat, // mohan add 2025-11-02 
 		const K_Vectors &kv, // k points, mohan add 2025-11-02
         const ModuleBase::matrix &ekb, // mohan add 2025-11-02
         const ModuleBase::matrix &wg, // mohan add 2025-11-02
 		const psi::Psi<T>& psi,
 		const Parallel_Grid& pgrid,
-		const UnitCell& ucell)
+		const Parallel_Orbitals& pv,
+		const Grid_Driver& grid_driver,
+		const UnitCell& ucell,
+		const std::vector<double>& stm_bias,
+		const int nspin,
+		const int istep,
+		const std::string& global_out_dir,
+		const bool two_fermi,
+		const int out_ldos_precision,
+		std::ofstream& ofs_running)
 {
-    for (int ie = 0; ie < PARAM.inp.stm_bias[2]; ie++)
+    for (int ie = 0; ie < stm_bias[2]; ie++)
     {
         // energy range for ldos (efermi as reference)
-        const double en = PARAM.inp.stm_bias[0] + ie * PARAM.inp.stm_bias[1];
+        const double en = stm_bias[0] + ie * stm_bias[1];
         const double emin = en < 0 ? en : 0;
         const double emax = en > 0 ? en : 0;
 
@@ -47,26 +57,26 @@ void Cal_ldos<T>::cal_ldos_lcao(
         }
 
         // calculate dm-like for ldos
-        const int nspin_dm = PARAM.inp.nspin == 2 ? 2 : 1;
-        elecstate::DensityMatrix<T, double> dm_ldos(dmat.dm->get_paraV_pointer(),
+        const int nspin_dm = nspin == 2 ? 2 : 1;
+        module_dm::DensityMatrix<T, double> dm_ldos(&pv,
                                                     nspin_dm,
                                                     kv.kvec_d,
                                                     kv.get_nks() / nspin_dm);
 
-        elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), weight, psi, dm_ldos);
-        dm_ldos.init_DMR(*(dmat.dm->get_DMR_pointer(1)));
-        dm_ldos.cal_DMR();
+        module_dm::dm_from_psi(&pv, weight, psi, dm_ldos);
+        dm_ldos.init_dmr(&grid_driver, &ucell);
+        dm_ldos.cal_dmr(-1);
 
         // allocate ldos space
-        std::vector<double> ldos_space(PARAM.inp.nspin * chr.nrxx);
-        double** ldos = new double*[PARAM.inp.nspin];
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        std::vector<double> ldos_space(nspin * chr.nrxx);
+        double** ldos = new double*[nspin];
+        for (int is = 0; is < nspin; ++is)
         {
             ldos[is] = &ldos_space[is * chr.nrxx];
         }
 
     // calculate ldos
-        ModuleGint::cal_gint_rho(dm_ldos.get_DMR_vector(), PARAM.inp.nspin, ldos);
+        ModuleGint::cal_gint_rho(dm_ldos.get_dmr_vec(), nspin, ldos);
 
         // I'm not sure whether ldos should be output for each spin or not
         // ldos[0] += ldos[1] for nspin_dm == 2
@@ -77,20 +87,25 @@ void Cal_ldos<T>::cal_ldos_lcao(
 
         // write ldos to cube file
         std::stringstream fn;
-        fn << PARAM.globalv.global_out_dir << "LDOS_" << en << "eV"
+        fn << global_out_dir << "ldos_" << en << "ev"
            << ".cube";
 
-        const int precision = PARAM.inp.out_ldos[1];
+        const int precision = out_ldos_precision;
         ModuleIO::write_vdata_palgrid(pgrid,
                                       ldos_space.data(),
                                       0,
-                                      PARAM.inp.nspin,
-                                      0,
+                                      nspin,
+                                      istep,
                                       fn.str(),
                                       0,
                                       &ucell,
                                       precision,
-                                      0);
+                                      0,
+                                      two_fermi,
+                                      false,
+                                      false,
+                                      ofs_running,
+                                      "local DOS");
 
         // free memory
         delete[] ldos;
@@ -103,35 +118,75 @@ template class Cal_ldos<double>;               // Gamma_only case
 template class Cal_ldos<std::complex<double>>; // multi-k case
 
 // pw case
+template <typename Device>
 void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
+                 const psi::Psi<std::complex<double>, Device>& psi,
+                 const Device* ctx,
                  const Parallel_Grid& pgrid,
-                 const UnitCell& ucell)
+                 const UnitCell& ucell,
+                 const std::vector<int>& out_ldos,
+                 const std::vector<double>& stm_bias,
+                 const int nspin,
+                 const int istep,
+                 const std::string& global_out_dir,
+                 const bool two_fermi,
+                 const int nbands,
+                 const double dos_edelta_ev,
+                 const double dos_scale,
+                 const bool dos_setemax,
+                 const double dos_emax_ev,
+                 const bool dos_setemin,
+                 const double dos_emin_ev,
+                 const double dos_sigma,
+                 const std::vector<double>& ldos_line,
+                 std::ofstream& ofs_running)
 {
-    if (PARAM.inp.out_ldos[0] == 1 || PARAM.inp.out_ldos[0] == 3)
+    if (out_ldos[0] == 1 || out_ldos[0] == 3)
     {
-        ModuleIO::stm_mode_pw(pelec, psi, pgrid, ucell);
+        const int out_ldos_precision = out_ldos[1];
+        ModuleIO::stm_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell,
+                                      stm_bias, nspin, istep, global_out_dir, two_fermi,
+                                      out_ldos_precision, ofs_running);
     }
-    if (PARAM.inp.out_ldos[0] == 2 || PARAM.inp.out_ldos[0] == 3)
+    if (out_ldos[0] == 2 || out_ldos[0] == 3)
     {
-        ModuleIO::ldos_mode_pw(pelec, psi, pgrid, ucell);
+        ModuleIO::ldos_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell, istep,
+                                       global_out_dir, nbands, dos_edelta_ev, dos_scale,
+                                       dos_setemax, dos_emax_ev, dos_setemin, dos_emin_ev,
+                                       two_fermi, dos_sigma, ldos_line, ofs_running);
     }
 }
 
+template <typename Device>
 void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
+                 const psi::Psi<std::complex<double>, Device>& psi,
+                 const Device* ctx,
                  const Parallel_Grid& pgrid,
-                 const UnitCell& ucell)
+                 const UnitCell& ucell,
+                 const std::vector<double>& stm_bias,
+                 const int nspin,
+                 const int istep,
+                 const std::string& global_out_dir,
+                 const bool two_fermi,
+                 const int out_ldos_precision,
+                 std::ofstream& ofs_running)
 {
-    for (int ie = 0; ie < PARAM.inp.stm_bias[2]; ie++)
+    for (int ie = 0; ie < stm_bias[2]; ie++)
     {
         // energy range for ldos (efermi as reference)
-        const double en = PARAM.inp.stm_bias[0] + ie * PARAM.inp.stm_bias[1];
+        const double en = stm_bias[0] + ie * stm_bias[1];
         const double emin = en < 0 ? en : 0;
         const double emax = en > 0 ? en : 0;
 
         std::vector<double> ldos(pelec->charge->nrxx);
         std::vector<std::complex<double>> wfcr(pelec->basis->nrxx);
+
+        // Allocate device memory
+        std::complex<double>* wfcr_dev = nullptr;
+        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+        {
+            base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfcr_dev, pelec->basis->nrxx);
+        }
 
         for (int ik = 0; ik < pelec->klist->get_nks(); ++ik)
         {
@@ -141,7 +196,18 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
             for (int ib = 0; ib < nbands; ib++)
             {
-                pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+                // FFT on device and copy result back to host
+                if (std::is_same<Device, base_device::DEVICE_CPU>::value)
+                {
+                    pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+                }
+                else
+                {
+                    pelec->basis->recip_to_real(ctx, &psi(ib, 0), wfcr_dev, ik);
+
+                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>()(
+                        wfcr.data(), wfcr_dev, pelec->basis->nrxx);
+                }
 
                 const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
                 double weight = en > 0 ? pelec->klist->wk[ik] - pelec->wg(ik, ib) : pelec->wg(ik, ib);
@@ -157,52 +223,86 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
             }
         }
 
+        // Free device memory
+        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+        {
+            base_device::memory::delete_memory_op<std::complex<double>, Device>()(wfcr_dev);
+        }
+
         std::stringstream fn;
-        fn << PARAM.globalv.global_out_dir << "LDOS_" << en << "eV"
+        fn << global_out_dir << "ldos_" << en << "ev"
            << ".cube";
 
-        const int precision = PARAM.inp.out_ldos[1];
-        ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, PARAM.inp.nspin, 0, fn.str(), 0, &ucell, precision, 0);
+        const int precision = out_ldos_precision;
+        ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, nspin, istep, fn.str(), 0, &ucell, precision, 0, two_fermi, false, false, ofs_running, "local DOS");
     }
 }
 
+template <typename Device>
 void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                  const psi::Psi<std::complex<double>>& psi,
+                  const psi::Psi<std::complex<double>, Device>& psi,
+                  const Device* ctx,
                   const Parallel_Grid& pgrid,
-                  const UnitCell& ucell)
+                  const UnitCell& ucell,
+                  const int istep,
+                  const std::string& global_out_dir,
+                  const int nbands,
+                  const double dos_edelta_ev,
+                  const double dos_scale,
+                  const bool dos_setemax,
+                  const double dos_emax_ev,
+                  const bool dos_setemin,
+                  const double dos_emin_ev,
+                  const bool two_fermi,
+                  const double dos_sigma,
+                  const std::vector<double>& ldos_line,
+                  std::ofstream& ofs_running)
 {
     double emax = 0.0;
     double emin = 0.0;
 
-    prepare_dos(GlobalV::ofs_running,
+    prepare_dos(ofs_running,
                 pelec->eferm,
                 pelec->ekb,
                 pelec->klist->get_nks(),
-                PARAM.inp.nbands,
-                PARAM.inp.dos_edelta_ev,
-                PARAM.inp.dos_scale,
+                nbands,
+                dos_edelta_ev,
+                dos_scale,
                 emax,
-                emin);
+                emin,
+                dos_setemax,
+                dos_emax_ev,
+                dos_setemin,
+                dos_emin_ev,
+                two_fermi);
 
-    const int ndata = static_cast<int>((emax - emin) / PARAM.inp.dos_edelta_ev) + 1;
-    const double sigma = sqrt(2.0) * PARAM.inp.dos_sigma;
+    const int ndata = static_cast<int>((emax - emin) / dos_edelta_ev) + 1;
+    const double sigma = sqrt(2.0) * dos_sigma;
     const double sigma2 = sigma * sigma;
     const double sigma_PI = sqrt(ModuleBase::PI) * sigma;
 
-    std::vector<double> start = {PARAM.inp.ldos_line[0], PARAM.inp.ldos_line[1], PARAM.inp.ldos_line[2]};
-    std::vector<double> end = {PARAM.inp.ldos_line[3], PARAM.inp.ldos_line[4], PARAM.inp.ldos_line[5]};
-    const int npoints = PARAM.inp.ldos_line[6];
+    std::vector<double> start = {ldos_line[0], ldos_line[1], ldos_line[2]};
+    std::vector<double> end = {ldos_line[3], ldos_line[4], ldos_line[5]};
+    const int npoints = ldos_line[6];
 
     // calculate grid points
     std::vector<std::vector<int>> points(npoints, std::vector<int>(3, 0));
     std::vector<std::vector<double>> shifts(npoints, std::vector<double>(3, 0));
-    get_grid_points(start, end, npoints, pgrid.nx, pgrid.ny, pgrid.nz, points, shifts);
+    get_grid_points(start, end, npoints, pgrid.get_nx(), pgrid.get_ny(), pgrid.get_nz(), points, shifts);
 
     std::vector<std::vector<double>> ldos(npoints, std::vector<double>(ndata, 0));
 
     // calculate ldos
     std::vector<double> tmp(pelec->charge->nrxx);
     std::vector<std::complex<double>> wfcr(pelec->basis->nrxx);
+
+    // Allocate device memory
+    std::complex<double>* wfcr_dev = nullptr;
+    if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+    {
+        base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfcr_dev, pelec->basis->nrxx);
+    }
+
     for (int ik = 0; ik < pelec->klist->get_nks(); ++ik)
     {
         psi.fix_k(ik);
@@ -211,7 +311,18 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
         for (int ib = 0; ib < nbands; ib++)
         {
-            pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+            // FFT on device and copy result back to host
+            if (std::is_same<Device, base_device::DEVICE_CPU>::value)
+            {
+                pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+            }
+            else
+            {
+                pelec->basis->recip_to_real(ctx, &psi(ib, 0), wfcr_dev, ik);
+
+                base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>()(
+                    wfcr.data(), wfcr_dev, pelec->basis->nrxx);
+            }
             const double weight = pelec->klist->wk[ik] / ucell.omega;
 
             for (int ir = 0; ir < pelec->basis->nrxx; ir++)
@@ -226,7 +337,7 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
             for (int ie = 0; ie < ndata; ++ie)
             {
-                const double en = emin + ie * PARAM.inp.dos_edelta_ev;
+                const double en = emin + ie * dos_edelta_ev;
                 const double de = en - eigenval;
                 const double de2 = de * de;
                 const double gauss = exp(-de2 / sigma2) / sigma_PI;
@@ -238,9 +349,15 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
         }
     }
 
+    // Free device memory
+    if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+    {
+        base_device::memory::delete_memory_op<std::complex<double>, Device>()(wfcr_dev);
+    }
+
     std::ofstream ofs_ldos;
     std::stringstream fn;
-    fn << PARAM.globalv.global_out_dir << "LDOS.txt";
+    fn << global_out_dir << "LDOS.txt";
     if (GlobalV::MY_RANK == 0)
     {
         ofs_ldos.open(fn.str().c_str());
@@ -313,9 +430,9 @@ void trilinear_interpolate(const std::vector<std::vector<int>>& points,
                            const std::vector<double>& data,
                            std::vector<double>& results)
 {
-    const int nx = pgrid.nx;
-    const int ny = pgrid.ny;
-    const int nz = pgrid.nz;
+    const int nx = pgrid.get_nx();
+    const int ny = pgrid.get_ny();
+    const int nz = pgrid.get_nz();
     const int nyz = ny * nz;
     const int nxyz = nx * ny * nz;
 
@@ -365,5 +482,50 @@ void trilinear_interpolate(const std::vector<std::vector<int>>& points,
     MPI_Bcast(results.data(), npoints, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 }
+
+template void cal_ldos_pw<base_device::DEVICE_CPU>(const elecstate::ElecStatePW<std::complex<double>>* pelec,
+                                                   const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& psi,
+                                                   const base_device::DEVICE_CPU* ctx,
+                                                   const Parallel_Grid& pgrid,
+                                                   const UnitCell& ucell,
+                                                   const std::vector<int>& out_ldos,
+                                                   const std::vector<double>& stm_bias,
+                                                   const int nspin,
+                                                   const int istep,
+                                                   const std::string& global_out_dir,
+                                                   const bool two_fermi,
+                                                   const int nbands,
+                                                   const double dos_edelta_ev,
+                                                   const double dos_scale,
+                                                   const bool dos_setemax,
+                                                   const double dos_emax_ev,
+                                                   const bool dos_setemin,
+                                                   const double dos_emin_ev,
+                                                   const double dos_sigma,
+                                                   const std::vector<double>& ldos_line,
+                                                   std::ofstream& ofs_running);
+#if defined(__CUDA) || defined(__ROCM)
+template void cal_ldos_pw<base_device::DEVICE_GPU>(const elecstate::ElecStatePW<std::complex<double>>* pelec,
+                                                   const psi::Psi<std::complex<double>, base_device::DEVICE_GPU>& psi,
+                                                   const base_device::DEVICE_GPU* ctx,
+                                                   const Parallel_Grid& pgrid,
+                                                   const UnitCell& ucell,
+                                                   const std::vector<int>& out_ldos,
+                                                   const std::vector<double>& stm_bias,
+                                                   const int nspin,
+                                                   const int istep,
+                                                   const std::string& global_out_dir,
+                                                   const bool two_fermi,
+                                                   const int nbands,
+                                                   const double dos_edelta_ev,
+                                                   const double dos_scale,
+                                                   const bool dos_setemax,
+                                                   const double dos_emax_ev,
+                                                   const bool dos_setemin,
+                                                   const double dos_emin_ev,
+                                                   const double dos_sigma,
+                                                   const std::vector<double>& ldos_line,
+                                                   std::ofstream& ofs_running);
+#endif
 
 } // namespace ModuleIO

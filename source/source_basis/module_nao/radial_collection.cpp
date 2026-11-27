@@ -1,7 +1,7 @@
 #include "source_basis/module_nao/radial_collection.h"
 #include <memory>
 
-#include "source_base/spherical_bessel_transformer.h"
+#include "source_base/sph_bessel_tf.h"
 #include "source_basis/module_nao/atomic_radials.h"
 #include "source_basis/module_nao/beta_radials.h"
 #include "source_basis/module_nao/sphbes_radials.h"

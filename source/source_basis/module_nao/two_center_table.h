@@ -2,7 +2,6 @@
 #define TWO_CENTER_TABLE_H
 
 #include <ATen/tensor.h>
-#include "source_base/spherical_bessel_transformer.h"
 #include "source_basis/module_nao/radial_collection.h"
 
 class TwoCenterTable

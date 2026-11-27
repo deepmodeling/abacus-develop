@@ -1,11 +1,11 @@
 import unittest
-import tempfile
 from pathlib import Path
 here = Path(__file__).parent
 from ase.build import bulk
 from abacuslite.io.generalio import load_pseudo, load_orbital
 from abacuslite import AbacusProfile, Abacus
 from abacuslite.utils.ksampling import kpathgen
+from common import preserved_tmpdir
 
 class TestSCFFollowedNSCF(unittest.TestCase):
 
@@ -28,7 +28,7 @@ class TestSCFFollowedNSCF(unittest.TestCase):
             omp_num_threads=1,
         )
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with preserved_tmpdir('abacus_ase_band_') as tmpdir:
             abacus = Abacus(
                 profile=aprof,
                 directory=tmpdir,

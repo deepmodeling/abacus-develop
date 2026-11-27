@@ -112,7 +112,7 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
                              const bool add,
                              const double factor) const
 {
-    ModuleBase::timer::tick(this->classname, "convolution");
+    ModuleBase::timer::start(this->classname, "convolution");
 
     assert(this->gamma_only == false);
     const base_device::DEVICE_GPU* gpux = nullptr;
@@ -143,7 +143,7 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
                                                                    this->ig2ixyz_k_cpu.data() + startig,
                                                                    auxr,
                                                                    output);
-    ModuleBase::timer::tick(this->classname, "convolution");
+    ModuleBase::timer::end(this->classname, "convolution");
 }
 
 template void PW_Basis_K::real2recip_dsp<float>(const std::complex<float>* in,

@@ -5,6 +5,9 @@
 #SBATCH -o compile.log
 #SBATCH -e compile.err
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "${SCRIPT_DIR}/scripts/lib/wrapper_runner.sh"
+
 # Users can easily modify these parameters to customize the build
 
 # Before running this script, ensure you have loaded your system packages
@@ -17,7 +20,7 @@ WITH_GCC="no"
 
 # Math Libraries (Intel MKL recommended)
 MATH_MODE="mkl"
-WITH_MKL="system"  # Use system MKL when MATH_MODE is mkl
+WITH_MKL="system" # Use system MKL when MATH_MODE is mkl
 
 # MPI Implementation (Intel MPI recommended, but OpenMPI/MPICH also supported)
 MPI_MODE="intelmpi"
@@ -27,14 +30,14 @@ WITH_MPICH="no"
 
 # Core Dependencies
 WITH_CMAKE="install"
-WITH_SCALAPACK="no"  # MKL provides ScaLAPACK
-WITH_FFTW="no"       # MKL provides FFTW interface
+WITH_SCALAPACK="no" # MKL provides ScaLAPACK
+WITH_FFTW="no"      # MKL provides FFTW interface
 WITH_LIBXC="install"
 WITH_ELPA="install"
 
 # Utility Libraries
 WITH_CEREAL="install"
-WITH_RAPIDJSON="install"
+WITH_JSON="install"
 
 # Advanced Features (EXX calculations)
 WITH_LIBRI="install"
@@ -45,6 +48,9 @@ WITH_LIBTORCH="no"
 WITH_LIBNPY="no"
 WITH_NEP="no"
 
+# Optional Features (DFT-D4 dispersion correction)
+WITH_DFTD4="install"
+
 # ELPA-GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"
 # GPU_VERSION="75"  # Check your GPU compute capability
@@ -54,29 +60,28 @@ WITH_NEP="no"
 # Execution Mode Control
 # ============================================================================
 # Dry-run mode: Show what would be done without actually executing
-DRY_RUN_MODE="no"   # Set to "yes" to enable dry-run mode
+DRY_RUN_MODE="no" # Set to "yes" to enable dry-run mode
 
 # Pack-run mode: Only check and install required packages
-PACK_RUN_MODE="no"  # Set to "yes" to enable pack-run mode
+PACK_RUN_MODE="no" # Set to "yes" to enable pack-run mode
 
 # ============================================================================
 # Intel Compiler and MPI Options
 # ============================================================================
 # Intel Compiler Version Selection
-WITH_INTEL_CLASSIC="no"  # Set to "yes" to use classic Intel compilers (icc/icpc/ifort)
-                         # Set to "no" to use new Intel compilers (icx/icpx/ifx)
-                         # Classic compilers needed for AMD-CPU or GPU-version
+WITH_INTEL_CLASSIC="no" # Set to "yes" to use classic Intel compilers (icc/icpc/ifort)
+# Set to "no" to use new Intel compilers (icx/icpx/ifx)
+# Classic compilers needed for AMD-CPU or GPU-version
 
-WITH_IFX="yes"           # Set to "yes" to use new Fortran compiler ifx (default)
-                        # Set to "no" to use traditional ifort
-                        # Only applies when WITH_INTEL_CLASSIC="no"
+WITH_IFX="yes" # Set to "yes" to use new Fortran compiler ifx (default)
+# Set to "no" to use traditional ifort
+# Only applies when WITH_INTEL_CLASSIC="no"
 
-# Intel MPI Version Selection  
-INTELMPI_CLASSIC="no"   # Set to "yes" to use classic Intel MPI wrappers (mpiicc/mpiicpc/mpiifort)
-                        # Set to "no" to use new Intel MPI wrappers (mpiicx/mpiicpx/mpiifx)
-                        # Should match WITH_INTEL_CLASSIC setting for consistency
-                        # Classic wrappers recommended for older Intel OneAPI versions
-
+# Intel MPI Version Selection
+INTELMPI_CLASSIC="no" # Set to "yes" to use classic Intel MPI wrappers (mpiicc/mpiicpc/mpiifort)
+# Set to "no" to use new Intel MPI wrappers (mpiicx/mpiicpx/mpiifx)
+# Should match WITH_INTEL_CLASSIC setting for consistency
+# Classic wrappers recommended for older Intel OneAPI versions
 
 # ============================================================================
 # Package Version Selection (main/alt versions)
@@ -84,11 +89,11 @@ INTELMPI_CLASSIC="no"   # Set to "yes" to use classic Intel MPI wrappers (mpiicc
 # Choose between main (latest stable) and alt (alternative/legacy) versions
 # Refer to scripts/package_versions.sh for specific version numbers
 
-CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
-ELPA_VERSION="alt"         # main=2025.06.001, alt=2024.05.001 for intel oneapi<2024.2
-LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
+CMAKE_VERSION="main" # main=3.31.7, alt=3.30.5
+ELPA_VERSION="alt"   # main=2026.02.001, alt=2024.05.001 for intel oneapi<2024.2
+LIBXC_VERSION="main" # main=7.0.0, alt=6.2.2
 # Optional Libraries
-LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
+LIBTORCH_VERSION="main" # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
 # Note: main(2.1.2) version of LibTorch need glibc > 2.27
 # Note: alt(1.12.1) version of LibTorch cannot support DeePMD-Torch for DPA
 
@@ -100,7 +105,7 @@ LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
 # ============================================================================
 
 # Call the main installation script with configured parameters
-exec ./install_abacus_toolchain_new.sh \
+run_toolchain_with_log compile.log ./install_abacus_toolchain_new.sh \
   --with-intel="$WITH_INTEL" \
   --with-gcc="$WITH_GCC" \
   --math-mode="$MATH_MODE" \
@@ -114,8 +119,9 @@ exec ./install_abacus_toolchain_new.sh \
   --with-libxc="$WITH_LIBXC" \
   --with-fftw="$WITH_FFTW" \
   --with-elpa="$WITH_ELPA" \
+  --with-dftd4="$WITH_DFTD4" \
   --with-cereal="$WITH_CEREAL" \
-  --with-rapidjson="$WITH_RAPIDJSON" \
+  --with-json="$WITH_JSON" \
   --with-libtorch="$WITH_LIBTORCH" \
   --with-nep="$WITH_NEP" \
   --with-libnpy="$WITH_LIBNPY" \
@@ -132,5 +138,4 @@ exec ./install_abacus_toolchain_new.sh \
   ${PACK_RUN_MODE:+$([ "$PACK_RUN_MODE" = "yes" ] && echo "--pack-run")} \
   ${ENABLE_CUDA:+--enable-cuda} \
   ${GPU_VERSION:+--gpu-ver="$GPU_VERSION"} \
-  "$@" \
-  | tee compile.log
+  "$@"

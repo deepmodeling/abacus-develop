@@ -1,20 +1,22 @@
 #include "potential_new.h"
+#include "pot_pcc.h"
+#include "pot_sccs.h"
+#include "sol_grid_field.h"
 
+#include "pot_ml_exx.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
-#include "pot_ml_exx.h"
 
 #include <map>
 
 namespace elecstate
 {
-
 Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      const ModulePW::PW_Basis* rho_basis_smooth_in,
                      const UnitCell* ucell_in,
@@ -24,9 +26,8 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      double* etxc_in,
                      double* vtxc_in,
                      VSep* vsep_cell_in)
-    : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), 
-      solvent_(solvent_in), vsep_cell(vsep_cell_in), etxc_(etxc_in),
-      vtxc_(vtxc_in)
+    : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), solvent_(solvent_in), vsep_cell(vsep_cell_in),
+      etxc_(etxc_in), vtxc_(vtxc_in)
 {
     this->rho_basis_ = rho_basis_in;
     this->rho_basis_smooth_ = rho_basis_smooth_in;
@@ -42,7 +43,7 @@ Potential::~Potential()
 {
     if (this->components.size() > 0)
     {
-        for (auto comp: this->components)
+        for (elecstate::PotBase* comp: this->components)
         {
             delete comp;
         }
@@ -64,11 +65,19 @@ Potential::~Potential()
 
 void Potential::pot_register(const std::vector<std::string>& components_list)
 {
+    this->pot_register(components_list, PARAM.inp);
+}
+
+void Potential::pot_register(const std::vector<std::string>& components_list, const Input_para& input)
+{
     ModuleBase::TITLE("Potential", "pot_register");
+    // The SCCS activation and warm start of an earlier ionic step, taken
+    // before the old components are deleted.
+    const SccsResume resume = this->get_resume();
     // delete old components first.
     if (this->components.size() > 0)
     {
-        for (auto comp: this->components)
+        for (elecstate::PotBase* comp: this->components)
         {
             delete comp;
         }
@@ -79,9 +88,9 @@ void Potential::pot_register(const std::vector<std::string>& components_list)
     //---------------------------
     // mapping for register
     //---------------------------
-    for (auto comp: components_list)
+    for (std::string comp: components_list)
     {
-        PotBase* tmp = this->get_pot_type(comp);
+        PotBase* tmp = this->get_pot_type(comp, input, resume);
         this->components.push_back(tmp);
     }
 
@@ -96,19 +105,19 @@ void Potential::allocate()
     ModuleBase::TITLE("Potential", "allocate");
 
     const int nspin = PARAM.inp.nspin;
-    assert(nspin==1 || nspin==2 || nspin==4);
+    assert(nspin == 1 || nspin == 2 || nspin == 4);
 
     const int nrxx = this->rho_basis_->nrxx;
     const int nrxx_smooth = this->rho_basis_smooth_->nrxx;
 
     if (nrxx == 0)
-	{
-		return;
-	}
-	if (nrxx_smooth == 0)
-	{
-		return;
-	}
+    {
+        return;
+    }
+    if (nrxx_smooth == 0)
+    {
+        return;
+    }
 
     this->v_eff_fixed.resize(nrxx);
     ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
@@ -156,10 +165,9 @@ void Potential::allocate()
     }
 }
 
-void Potential::update_from_charge(const Charge*const chg, const UnitCell*const ucell)
+void Potential::update_from_charge(const Charge* const chg, const UnitCell* const ucell)
 {
     ModuleBase::TITLE("Potential", "update_from_charge");
-    //ModuleBase::timer::tick("Potential", "update_from_charge");
 
     if (!this->fixed_done)
     {
@@ -194,14 +202,12 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
         }
         // There's no need to synchronize memory for double precision pointers while in a CPU environment
     }
-
-    //ModuleBase::timer::tick("Potential", "update_from_charge");
 }
 
 void Potential::cal_fixed_v(double* vl_pseudo)
 {
     ModuleBase::TITLE("Potential", "cal_fixed_v");
-    ModuleBase::timer::tick("Potential", "cal_fixed_v");
+    ModuleBase::timer::start("Potential", "cal_fixed_v");
 
     this->v_eff_fixed.assign(this->v_eff_fixed.size(), 0.0);
     for (size_t i = 0; i < this->components.size(); i++)
@@ -212,13 +218,13 @@ void Potential::cal_fixed_v(double* vl_pseudo)
         }
     }
 
-    ModuleBase::timer::tick("Potential", "cal_fixed_v");
+    ModuleBase::timer::end("Potential", "cal_fixed_v");
 }
 
-void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
+void Potential::cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("Potential", "cal_veff");
-    ModuleBase::timer::tick("Potential", "cal_veff");
+    ModuleBase::timer::start("Potential", "cal_veff");
 
     const int nspin_current = this->v_eff.nr;
     const int nrxx = this->v_eff.nc;
@@ -245,20 +251,20 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
         }
     }
 
-    ModuleBase::timer::tick("Potential", "cal_veff");
+    ModuleBase::timer::end("Potential", "cal_veff");
 }
 
-void Potential::init_pot(const Charge*const chg)
+void Potential::init_pot(const Charge* const chg)
 {
     ModuleBase::TITLE("Potential", "init_pot");
-    ModuleBase::timer::tick("Potential", "init_pot");
+    ModuleBase::timer::start("Potential", "init_pot");
 
     // fixed components only calculated in the beginning of SCF
     this->fixed_done = false;
 
     this->update_from_charge(chg, this->ucell_);
 
-    ModuleBase::timer::tick("Potential", "init_pot");
+    ModuleBase::timer::end("Potential", "init_pot");
     return;
 }
 
@@ -281,12 +287,12 @@ void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
 void Potential::interpolate_vrs(void)
 {
     ModuleBase::TITLE("Potential", "interpolate_vrs");
-    ModuleBase::timer::tick("Potential", "interpolate_vrs");
+    ModuleBase::timer::start("Potential", "interpolate_vrs");
 
     const int nspin = PARAM.inp.nspin;
-    assert(nspin==1 || nspin==2 || nspin==4);
+    assert(nspin == 1 || nspin == 2 || nspin == 4);
 
-    if (PARAM.globalv.double_grid)
+    if (rho_basis_ != rho_basis_smooth_)
     {
         if (rho_basis_->gamma_only != rho_basis_smooth_->gamma_only)
         {
@@ -316,7 +322,7 @@ void Potential::interpolate_vrs(void)
         this->vofk_smooth = this->vofk_eff;
     }
 
-    ModuleBase::timer::tick("Potential", "interpolate_vrs");
+    ModuleBase::timer::end("Potential", "interpolate_vrs");
 }
 
 template <>
@@ -358,6 +364,90 @@ double Potential::get_ml_exx_energy() const
 #else
     return 0.0;
 #endif
+}
+
+const PotPcc* Potential::pcc_component() const
+{
+    for (const PotBase* component : this->components)
+    {
+        const PotPcc* pcc = dynamic_cast<const PotPcc*>(component);
+        if (pcc != nullptr)
+        {
+            return pcc;
+        }
+    }
+    return nullptr;
+}
+
+double Potential::pcc_energy_rydberg() const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc == nullptr)
+    {
+        return 0.0;
+    }
+    return pcc->get_energy();
+}
+
+const std::vector<double>* Potential::pcc_electron_potential() const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc == nullptr)
+    {
+        return nullptr;
+    }
+    return &pcc->electron_potential();
+}
+
+void Potential::add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc != nullptr)
+    {
+        pcc->add_force(cell, force);
+    }
+}
+
+void Potential::sum_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+    for (const PotBase* component : this->components)
+    {
+        component->add_sol_force(cell, force);
+    }
+}
+
+void Potential::sum_sol_energy(double& electrostatic, double& non_electrostatic) const
+{
+    electrostatic = 0.0;
+    non_electrostatic = 0.0;
+    for (const PotBase* component : this->components)
+    {
+        double el = 0.0;
+        double nonel = 0.0;
+        component->sol_energy(el, nonel);
+        electrostatic += el;
+        non_electrostatic += nonel;
+    }
+}
+
+const std::vector<double>* Potential::find_sol_pot() const
+{
+    for (const PotBase* component : this->components)
+    {
+        const std::vector<double>* value = component->sol_elec_pot();
+        if (value != nullptr) { return value; }
+    }
+    return nullptr;
+}
+
+std::vector<SolventGridField> Potential::sol_out_fields() const
+{
+    std::vector<SolventGridField> fields;
+    for (const PotBase* component : this->components)
+    {
+        component->add_sol_fields(fields);
+    }
+    return fields;
 }
 
 } // namespace elecstate

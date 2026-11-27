@@ -1,10 +1,20 @@
 # Extracting Density Matrices
 
-ABACUS can output the density matrix by adding the keyword "[out_dmk](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-dm)" in INPUT file:
+ABACUS can output the density matrix by adding the keyword "[out_dmk](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out_dmk)" in INPUT file:
 ```
 out_dmk    1
 ```
-After finishing the calculation, the information of the density matrix is stroed in files `OUT.${suffix}/SPIN${spin}_DM`, which looks like:
+After finishing the calculation, the density matrix is written into `OUT.${suffix}/`.
+
+For current develop versions, the default filenames (with `out_app_flag = 0` or `1`) are:
+- gamma-only (`gamma_only = 1`): `dm_nao.txt` (`nspin=1/4`) or `dms1_nao.txt` and `dms2_nao.txt` (`nspin=2`)
+- multi-k (`gamma_only = 0`): `dmk1_nao.txt`, `dmk2_nao.txt`, ... (`nspin=1/4`) or `dmk1s1_nao.txt`, `dmk1s2_nao.txt`, ... (`nspin=2`)
+
+With `out_app_flag = 2`, a one-based geometry-step suffix `g{istep}` is inserted before `_nao` (for example `dmk1g1_nao.txt`). With `out_app_flag = 0` the fixed file is truncated and overwritten at every write, and with `out_app_flag = 1` records are appended to the fixed file.
+
+For 3.10-LTS, the corresponding keyword is `out_dm`, and file names follow the legacy style such as `SPIN1_DM` and `SPIN2_DM`.
+
+The file content looks like:
 ```
 test
  5.39761
@@ -35,9 +45,11 @@ The following lines are about the elements and coordinates, in order: all elemen
 After a blank line, the output is the values of NSPIN and fermi energy.\
 The following line is dimension of the density matrix, and the rest lines are the value of each matrix element.
 
-The examples can be found in [examples/density_matrix](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/density_matrix)
+The examples can be found in [examples/density_matrix](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/09_density_matrix)
 
-- Note: now this function is valid only for LCAO gamma only calcualtion.
+- Note: Version difference summary:
+    - develop: `out_dmk` supports both gamma-only and multi-k-point output.
+    - 3.10-LTS: use `out_dm`.
 
 ## Real-space Density Matrix (CSR format)
 
@@ -45,8 +57,13 @@ ABACUS can also output the real-space density matrix DM(R) in CSR (Compressed Sp
 ```
 out_dmr    1
 ```
+This feature is only valid for multi-k calculations (`gamma_only = 0`).
+
 After the calculation, the density matrix files are written to `OUT.${suffix}/`:
+- develop naming pattern: `dmr{s}{spin index}{g}{geometry index}{_nao}.csr`
 - `nspin=1`: `dmrs1_nao.csr`
 - `nspin=2` (spin-polarized): `dmrs1_nao.csr` (spin-up) and `dmrs2_nao.csr` (spin-down)
+
+For 3.10-LTS, the corresponding keyword is `out_dm1`, and the file names are `data-DMR-sparse_SPIN0.csr` and `data-DMR-sparse_SPIN1.csr`, etc.
 
 These files can be used to restart calculations by setting `init_chg dm` in the INPUT file together with `read_file_dir` pointing to the directory containing the CSR files. This is supported for both `nspin=1` and `nspin=2`.

@@ -35,14 +35,17 @@ namespace unitcell
      * @param nytpe: the number of types of the atoms [in]
      */
     void bcast_magnetism(Magnetism& magnet,
-                         const int ntype);
-    
+                         const int ntype,
+                         const int nspin);
+     
     /**
      * @brief broadcast the unitcell
      * 
      * @param ucell: the unitcell to be broadcasted [in/out]
+     * @param nspin: the number of spin components
      */
-    void bcast_unitcell(UnitCell& ucell);
+    void bcast_unitcell(UnitCell& ucell,
+                        const int nspin);
 
 
 }

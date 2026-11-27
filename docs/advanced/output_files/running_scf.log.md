@@ -1,6 +1,6 @@
 # The running_scf.log file
 
-- [The running\_scf.log file](#the-running_scf.log-file)
+- [The running\_scf.log file](#the-running_scflog-file)
   - [Reading information](#reading-information)
     - [Reading version information](#reading-version-information)
     - [Reading general information](#reading-general-information)
@@ -17,6 +17,7 @@
     - [Scf results](#scf-results)
   - [Results summary](#results-summary)
     - [TOTAL-FORCE](#total-force)
+    - [Net force vector and total drift](#net-force-vector-and-total-drift)
     - [TOTAL-STRESS](#total-stress)
     - [FINAL\_ETOT\_IS](#final_etot_is)
     - [TIME STATISTICS](#time-statistics)
@@ -1186,6 +1187,17 @@ correction force for each atom along direction 3 is -3.50742e-14
 // The table listing the total forces on each atom, indicating whether the system is close to a force minimum (stable configuration).
 ```
 
+### Net force vector and total drift
+```
+                Net force vector (eV/Ang) = [ -5.5795e-02, -9.6007e-02, 6.5738e-02 ]
+                     Total drift (ev/Ang) = 1.2615e-01
+// The sum of the forces of all atoms and the magnitude (L2 norm) of that vector.
+// They are printed after TOTAL-FORCE whenever forces are evaluated. The value is
+// measured after the symmetry symmetrization and before the uniform net-force
+// shift, so it reflects the force drift present in the calculation; for a
+// converged calculation it should be close to zero.
+```
+
 ### TOTAL-STRESS
 ```
 ----------------------------------------------------------------
@@ -1289,8 +1301,8 @@ TIME STATISTICS
  HSolverLCAO           hamiltSolvePsiK            90.50  17       5.32   18.07  
  ElecStateLCAO         psiToRho                   132.45 17       7.79   26.45  
  elecstate             cal_dm                     2.02   18       0.11   0.40   
- psiMulPsiMpi          pdgemm                     2.01   18       0.11   0.40   
- DensityMatrix         cal_DMR                    0.13   18       0.01   0.03   
+ cal_dmk_psi          pdgemm                     2.01   18       0.11   0.40   
+ DensityMatrix         cal_dmr                    0.13   18       0.01   0.03   
  Gint                  transfer_DMR               2.98   17       0.18   0.60   
  Gint_interface        cal_gint_rho               127.22 17       7.48   25.40  
  Charge_Mixing         get_drho                   0.07   17       0.00   0.01   

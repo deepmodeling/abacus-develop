@@ -6,7 +6,6 @@
 #define RDMFT_TOOLS_H
 
 #include "source_cell/klist.h"
-#include "source_io/module_parameter/parameter.h" // use PARAM
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -14,20 +13,18 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_base/parallel_2d.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_base/parallel_reduce.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 
-#include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/hs_matrix_k.hpp"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/hs_matrix_k.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 
 
 #ifdef __EXX
-#include "source_lcao/module_ri/RI_2D_Comm.h"
-#include "source_lcao/module_ri/Exx_LRI.h"
+#include "source_lcao/module_ri/exx_lri.h"
 // there are some operator reload to print data in different formats
 #endif
 
@@ -47,19 +44,6 @@ namespace rdmft
 double occNum_func(double eta, int symbol = 0, const std::string XC_func_rdmft = "hf", const double alpha_power = 1.0);
 
 
-template <typename TK>
-void conj_psi(psi::Psi<TK>& wfc)
-{
-    TK* pwfc = &wfc(0, 0, 0);
-    for(int i=0; i<wfc.size(); ++i) { pwfc[i] = std::conj( pwfc[i] );
-}
-}
-
-
-template <>
-void conj_psi<double>(psi::Psi<double>& wfc);
-
-
 // wfc and H_wfc need to be k_firest and provide wfc(ik, 0, 0) and H_wfc(ik, 0, 0)
 //! implement matrix multiplication of Hk^dagger and psi
 template <typename TK>
@@ -74,11 +58,11 @@ void HkPsi(const Parallel_Orbitals* ParaV, const TK& HK, const TK& wfc, TK& H_wf
     const char C_char = 'C';    // Using 'C' is consistent with the formula
 
 #ifdef __MPI
-    const int nbasis = ParaV->desc[2];
+    const int nbasis = ParaV->para_2d().desc()[2];
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_complex, &HK, one_int, one_int, ParaV->desc,
+    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_complex, &HK, one_int, one_int, ParaV->para_2d().desc(),
         &wfc, one_int, one_int, ParaV->desc_wfc, zero_complex, &H_wfc, one_int, one_int, ParaV->desc_wfc );
 #endif
 }
@@ -90,7 +74,7 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const doubl
 
 //! implement matrix multiplication of sum_mu conj(wfc(ik, m ,mu)) * op_wfc(ik, n, mu)
 template <typename TK>
-void cal_bra_op_ket(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn)
+void cal_bra_op_ket(const Parallel_Orbitals* ParaV, const Parallel_Blkcyclic& para_Eij_in, const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn)
 {
     const int one_int = 1;
     const std::complex<double> one_complex = {1.0, 0.0};
@@ -98,37 +82,37 @@ void cal_bra_op_ket(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_
     const char N_char = 'N';
     const char C_char = 'C';
 
-    const int nrow_bands = para_Eij_in.get_row_size();
-    const int ncol_bands = para_Eij_in.get_col_size();
+    const int nrow_bands = para_Eij_in.nrloc();
+    const int ncol_bands = para_Eij_in.ncloc();
 
 #ifdef __MPI
-    const int nbasis = ParaV->desc[2];
+    const int nbasis = ParaV->para_2d().desc()[2];
     const int nbands = ParaV->desc_wfc[3];
 
     ScalapackConnector::gemm( C_char, N_char, nbands, nbands, nbasis, one_complex, &wfc, one_int, one_int, ParaV->desc_wfc,
-            &H_wfc, one_int, one_int, ParaV->desc_wfc, zero_complex, &Dmn[0], one_int, one_int, para_Eij_in.desc );
+            &H_wfc, one_int, one_int, ParaV->desc_wfc, zero_complex, &Dmn[0], one_int, one_int, para_Eij_in.desc() );
 #endif
 }
 
 
 template <>
-void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in,
+void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, const Parallel_Blkcyclic& para_Eij_in,
                                 const double& wfc, const double& H_wfc, std::vector<double>& Dmn);
 
 
 //! for Dmn that conforms to the 2d-block rule, get its diagonal elements
 template <typename TK>
-void _diagonal_in_serial(const Parallel_2D& para_Eij_in, const std::vector<TK>& Dmn, double* wfcHwfc)
+void _diagonal_in_serial(const Parallel_Blkcyclic& para_Eij_in, const std::vector<TK>& Dmn, double* wfcHwfc)
 {
-    const int nrow_bands = para_Eij_in.get_row_size();
-    const int ncol_bands = para_Eij_in.get_col_size();
+    const int nrow_bands = para_Eij_in.nrloc();
+    const int ncol_bands = para_Eij_in.ncloc();
 
     for(int i=0; i<nrow_bands; ++i)
     {
-        int i_global = para_Eij_in.local2global_row(i);
+        int i_global = para_Eij_in.irglb(i);
         for(int j=0; j<ncol_bands; ++j)
         {
-            int j_global = para_Eij_in.local2global_col(j);
+            int j_global = para_Eij_in.icglb(j);
             if(i_global==j_global)
             {   
                 // because the Dmn obtained from pzgemm_() is stored column-major
@@ -155,7 +139,7 @@ void occNum_MulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ
     {
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)  // ib_local < nbands_local , some problem, ParaV->ncol_bands
         {
-            const double occNum_local = occNum_func( occ_number(ik, ParaV->local2global_col(ib_local)), symbol, XC_func_rdmft, alpha);
+            const double occNum_local = occNum_func( occ_number(ik, ParaV->para_2d().icglb(ib_local)), symbol, XC_func_rdmft, alpha);
             TK* wfc_pointer = &(wfc(ik, ib_local, 0));
             BlasConnector::scal(nbasis_local, occNum_local, wfc_pointer, 1);
         }

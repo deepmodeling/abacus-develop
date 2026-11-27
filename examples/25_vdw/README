@@ -4,15 +4,87 @@
 /
 /*******************************************************************************/
 
-ABACUS provides three Grimme DFT-D methods, including D2, D3(0) and D3(BJ), 
-to describe van der Waals interactions. Among them, the D3 method has been 
-implemented in ABACUS based on the dftd3 program written by Stefan Grimme, 
-Stephan Ehrlich and Helge Krieg.
+# van der Waals (vdW) Corrections Examples
 
-The user can set the vdW-corrected methods in INPUT file with the parameter, 
-'vdw_method':
- - none: the vdW corrections are not included
- - d2: DFT-D2 method
- - d3_0: DFT-D3(0) method
- - d3_bj: DFT-D3(BJ) method
+This directory contains examples for performing density functional theory calculations with van der Waals (vdW) corrections in ABACUS.
 
+## What are van der Waals Interactions?
+
+Van der Waals interactions are weak intermolecular forces that exist between all atoms and molecules, regardless of their chemical bonding. These forces arise from fluctuations in electron density and are crucial for accurately describing the properties of many systems, including:
+
+- Molecular crystals
+- Layered materials (e.g., graphene, transition metal dichalcogenides)
+- Adsorption processes
+- Biomolecular interactions
+- Noble gas solids
+
+Traditional density functional theory (DFT) methods often underestimate these weak interactions, leading to inaccurate predictions of structural and energetic properties.
+
+## vdW Correction Methods in ABACUS
+
+ABACUS provides several Grimme DFT-D methods to describe van der Waals interactions:
+
+- **none**: No vdW corrections (default)
+- **d2**: DFT-D2 method (Grimme, 2006)
+- **d3_0**: DFT-D3(0) method (Grimme et al., 2010)
+- **d3_bj**: DFT-D3(BJ) method with Becke-Johnson damping (Grimme et al., 2011)
+
+The D3 methods have been implemented in ABACUS based on the dftd3 program written by Stefan Grimme, Stephan Ehrlich, and Helge Krieg.
+
+## Examples Included
+
+### 1. 01_vdw_D2_Si2
+- **System**: Silicon dimer (Si2)
+- **Purpose**: Demonstrates the use of DFT-D2 method for vdW corrections
+- **Input Files**:
+  - `INPUT1`: LCAO basis calculation with D2 correction and manually set C6 parameters
+  - `INPUT2`: Plane wave basis calculation with D2 correction and manually set C6 parameters
+  - `c6.txt`: File containing manually set C6 parameters
+
+### 2. 02_vdw_D3_Si2
+- **System**: Silicon dimer (Si2)
+- **Purpose**: Demonstrates the use of DFT-D3 methods for vdW corrections
+- **Input Files**:
+  - `INPUT1`: LCAO basis calculation with D3(BJ) correction using SCAN functional
+  - `INPUT2`: Plane wave basis calculation with D3(BJ) correction using PBE functional
+  - `INPUT3`: LCAO basis calculation with D3(BJ) correction using PBE functional and manually set vdW parameters
+
+## Key Parameters in INPUT
+
+The INPUT files include specific parameters for vdW corrections:
+
+- `vdw_method`: Specifies the vdW correction method (none, d2, d3_0, d3_bj)
+- `vdw_C6_file`: Path to the file containing manually set C6 parameters (for D2 method)
+- `vdw_s6`: Scaling factor for the C6 term (for D3 methods)
+- `vdw_s8`: Scaling factor for the C8 term (for D3 methods)
+- `vdw_a1`: Scaling factor for the Becke-Johnson damping (for D3(BJ) method)
+- `vdw_a2`: Scaling factor for the Becke-Johnson damping (for D3(BJ) method)
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/25_vdw/01_vdw_D2_Si2
+   ```
+
+2. Run the calculation using the provided script:
+   ```bash
+   bash run.sh
+   ```
+
+3. Check the output files in the `OUT.ABACUS` directory.
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.ABACUS` directory:
+
+- `running_scf.log`: Log file for the SCF calculation
+
+## Notes
+
+- The vdW correction energy is included in the total energy reported in the output
+- For D2 method, you can manually set C6 parameters in a separate file specified by `vdw_C6_file`
+- For D3 methods, you can adjust the scaling parameters (`vdw_s6`, `vdw_s8`, `vdw_a1`, `vdw_a2`) for better performance on specific systems
+- The accuracy of vdW corrections depends on the choice of exchange-correlation functional
+- vdW corrections are particularly important for systems where dispersion interactions dominate, such as molecular crystals and layered materials
+- The examples provided are for demonstration purposes; for production calculations, you should carefully test the convergence of results with respect to basis set and k-point sampling

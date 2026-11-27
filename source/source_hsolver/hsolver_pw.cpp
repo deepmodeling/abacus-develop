@@ -1,22 +1,22 @@
 #include "hsolver_pw.h"
 
-#include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"
-#include "source_hamilt/hamilt.h"
+#include "source_estate/elecstate_tools.h"
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_bpcg.h"
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
+#include "source_hsolver/diago_lobpcg.h"
 #include "source_hsolver/diago_iter_assist.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
-#include "source_estate/elecstate_tools.h"
-
 
 #include <algorithm>
+#include <ostream>
+#include <sstream>
 #include <vector>
 
 namespace hsolver
@@ -65,24 +65,23 @@ void HSolverPW<T, Device>::cal_smooth_ethr(const double& wk,
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
+void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
                                  psi::Psi<T, Device>& psi,
                                  elecstate::ElecState* pes,
                                  double* out_eigenvalues,
                                  const int rank_in_pool_in,
                                  const int nproc_in_pool_in,
-                                 const bool skip_charge,
-                                 const double tpiba,
-                                 const int nat)
+                                 std::ostream& log,
+                                 const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
-    ModuleBase::timer::tick("HSolverPW", "solve");
+    ModuleBase::timer::start("HSolverPW", "solve");
 
     this->rank_in_pool = rank_in_pool_in;
     this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "lobpcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
@@ -107,11 +106,9 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             const int ik = k_order[i];
 
             // update H(k) for each k point
-            pHamilt->updateHk(ik);
+            op.update_k(ik);
 
-#ifdef USE_PAW
-            this->paw_func_in_kloop(ik, tpiba);
-#endif
+
 
             // update psi pointer for each k point
             psi.fix_k(ik);
@@ -125,7 +122,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             update_precondition(precondition, ik, this->wfc_basis->npwk[ik], Real(pes->pot->get_vl_of_0()));
 
             // use smooth threshold for all iter methods
-            if (PARAM.inp.diago_smooth_ethr == true)
+            if (this->diago_smooth_ethr == true)
             {
                 this->cal_smooth_ethr(pes->klist->wk[ik],
                                     &pes->wg(ik, 0),
@@ -133,18 +130,16 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                     ethr_band);
             }
 
-#ifdef USE_PAW
-            this->call_paw_cell_set_currentk(ik);
-#endif
+
 
             // solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
             if (skip_charge)
             {
-                GlobalV::ofs_running << " Average iterative diagonalization steps for k-points " << ik
-                                    << " is " << DiagoIterAssist<T, Device>::avg_iter
-                                    << "\n current threshold of diagonalization is " << this->diag_thr << std::endl;
+                log << " Average iterative diagonalization steps for k-points " << ik << " is "
+                    << DiagoIterAssist<T, Device>::avg_iter << "\n current threshold of diagonalization is "
+                    << this->diag_thr << std::endl;
                 DiagoIterAssist<T, Device>::avg_iter = 0.0;
             }
         }
@@ -154,11 +149,9 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
         {
             // update H(k) for each k point
-            pHamilt->updateHk(ik);
+            op.update_k(ik);
 
-#ifdef USE_PAW
-            this->paw_func_in_kloop(ik, tpiba);
-#endif
+
 
             // update psi pointer for each k point
             psi.fix_k(ik);
@@ -167,7 +160,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             update_precondition(precondition, ik, this->wfc_basis->npwk[ik], Real(pes->pot->get_vl_of_0()));
 
             // use smooth threshold for all iter methods
-            if (PARAM.inp.diago_smooth_ethr == true)
+            if (this->diago_smooth_ethr == true)
             {
                 this->cal_smooth_ethr(pes->klist->wk[ik],
                                     &pes->wg(ik, 0),
@@ -175,19 +168,17 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                     ethr_band);
             }
 
-#ifdef USE_PAW
-            this->call_paw_cell_set_currentk(ik);
-#endif
+
 
             // solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
             // output iteration information and reset avg_iter
             if (skip_charge)
             {
-                GlobalV::ofs_running << " k(" << ik+1 << "/" << pes->klist->get_nkstot()
-                                     << ") Iter steps (avg)=" << DiagoIterAssist<T, Device>::avg_iter
-                                     << " threshold=" << this->diag_thr << std::endl;
+                log << " k(" << ik + 1 << "/" << pes->klist->get_nkstot()
+                    << ") Iter steps (avg)=" << DiagoIterAssist<T, Device>::avg_iter << " threshold=" << this->diag_thr
+                    << std::endl;
                 DiagoIterAssist<T, Device>::avg_iter = 0.0;
             }
 
@@ -196,7 +187,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     } // else (use_k_continuity)
 
     // output average iteration information and reset avg_iter
-    this->output_iterInfo();
+    this->output_iterInfo(log);
 
     count++;
     // END Loop over k points
@@ -207,40 +198,40 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         eigenvalues.data(),
         this->wfc_basis->nks * psi.get_nbands());
 
-    auto _pes_pw = reinterpret_cast<elecstate::ElecStatePW<T>*>(pes);
-    elecstate::calculate_weights(_pes_pw->ekb,
-                                 _pes_pw->wg,
-                                 _pes_pw->klist,
-                                 _pes_pw->eferm,
-                                 _pes_pw->f_en,
-                                 _pes_pw->nelec_spin,
-                                 _pes_pw->skip_weights);
+    elecstate::calculate_weights(pes->ekb,
+                                 pes->wg,
+                                 pes->klist,
+                                 pes->eferm,
+                                 pes->f_en,
+                                 pes->nelec_spin,
+                                 this->nbands,
+                                 pes->skip_weights);
 
-    elecstate::calEBand(_pes_pw->ekb,_pes_pw->wg,_pes_pw->f_en);
+    elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
     if (skip_charge)
     {
-        if (PARAM.globalv.use_uspp)
+        if (this->use_uspp)
         {
             reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->cal_becsum(psi);
         }
     }
     else
     {
-        reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
+        pes->psiToRho(psi);
     }
 
-	ModuleBase::timer::tick("HSolverPW", "solve");
-	return;
+    ModuleBase::timer::end("HSolverPW", "solve");
+    return;
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
+void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                                            psi::Psi<T, Device>& psi,
                                            std::vector<Real>& pre_condition,
                                            Real* eigenvalue,
                                            const int& nk_nums)
 {
-    ModuleBase::timer::tick("HSolverPW", "solve_psik");
+    ModuleBase::timer::start("HSolverPW", "solve_psik");
 #ifdef __MPI
     const diag_comm_info comm_info = {POOL_WORLD, this->rank_in_pool, this->nproc_in_pool};
 #else
@@ -249,44 +240,40 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
     const int cur_nbasis = psi.get_current_nbas();
 
-    // Shared matrix-blockvector operators used by all iterative solvers.
-    auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
-        auto psi_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, cur_nbasis);
-        psi::Range bands_range(true, 0, 0, nvec - 1);
-        using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-        hpsi_info info(&psi_wrapper, bands_range, hpsi_out);
-        hm->ops->hPsi(info);
-    };
-    auto spsi_func = [hm](const T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
-        hm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
-    };
+    // Check for rank deficiency: the total number of plane waves (summed across
+    // all MPI processes) must be >= nbands. When npw_total < nbands, the basis is
+    // rank-deficient, leading to psi_norm <= 0 during Schmidt orthogonalization.
+    // Note: we sum cur_nbasis (local npw for this k-point) across the pool because
+    // psi.get_nbasis() gives the local storage dimension, not the total.
+    const int nbands = psi.get_nbands();
+    int npw_total = cur_nbasis;
+#ifdef __MPI
+    if (this->nproc_in_pool > 1)
+    {
+        MPI_Allreduce(&cur_nbasis, &npw_total, 1, MPI_INT, MPI_SUM, POOL_WORLD);
+    }
+#endif
+    if (npw_total < nbands)
+    {
+        const std::string msg = "npw_total < nbands (" + std::to_string(npw_total) + " < " + std::to_string(nbands)
+                            + "): the total number of plane waves across all MPI processes "
+                            + "is less than the number of bands, "
+                            + "which leads to a rank-deficient problem. "
+                            + "Please increase ecutwfc or reduce nbands.";
+        ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", msg);
+    }
 
     if (this->method == "cg")
     {
-        // wrap the subspace_func into a lambda function
-        // if S_orth is true, then assume psi is S-orthogonal, solve standard eigenproblem
-        // otherwise, solve generalized eigenproblem
-        auto subspace_func = [hm, cur_nbasis](T* psi_in,
-                                              T* psi_out,
-                                              const int ld_psi,
-                                              const int nband,
-                                              const bool S_orth) {
-            auto psi_in_wrapper = psi::Psi<T, Device>(psi_in, 1, nband, ld_psi, cur_nbasis);
-            auto psi_out_wrapper = psi::Psi<T, Device>(psi_out, 1, nband, ld_psi, cur_nbasis);
-            std::vector<Real> eigen(nband, 0.0);
-            DiagoIterAssist<T, Device>::diag_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data());
-        };
         DiagoCG<T, Device> cg(this->basis_type,
                               this->calculation_type,
                               this->need_subspace,
-                              subspace_func,
+                              comm_info,
                               this->diag_thr,
-                              this->diag_iter_max,
-                              this->nproc_in_pool);
+                              this->diag_iter_max);
 
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            cg.diag(hpsi_func,
-                    spsi_func,
+            cg.diag(op,
                     psi.get_nbasis(),
                     psi.get_nbands(),
                     psi.get_current_ngk(),
@@ -304,8 +291,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nbasis = psi.get_nbasis();
         const int ndim = psi.get_current_ngk();
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
-        bpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
-        bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
+        bpcg.init_iter(this->nbands, nband_l, nbasis, ndim);
+        bpcg.diag(op, psi.get_pointer(), eigenvalue, this->ethr_band);
     }
     else if (this->method == "dav_subspace")
     {
@@ -315,21 +302,21 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   psi.get_nbands(),
                                                   psi.get_k_first() ? psi.get_current_ngk()
                                                                     : psi.get_nk() * psi.get_nbasis(),
-                                                  PARAM.inp.pw_diag_ndim,
+                                                  this->pw_diag_ndim,
                                                   this->diag_thr,
                                                   this->diag_iter_max,
                                                   comm_info,
-                                                  PARAM.inp.diag_subspace,
-                                                  PARAM.inp.nb2d);
+                                                  this->diag_subspace,
+                                                  this->nb2d);
 
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            dav_subspace.diag(hpsi_func,
-                              spsi_func,
+            dav_subspace.diag(op,
                               psi.get_pointer(),
                               psi.get_nbasis(),
                               eigenvalue,
                               this->ethr_band,
-                              scf));
+                              scf,
+                              psi.get_current_k()));
     }
     else if (this->method == "dav")
     {
@@ -350,11 +337,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nband = psi.get_nbands();            /// number of eigenpairs sought
         const int ld_psi = psi.get_nbasis();           /// leading dimension of psi
 
-        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, PARAM.inp.pw_diag_ndim, this->use_paw, comm_info);
+        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, this->pw_diag_ndim, this->use_uspp, comm_info);
         // do diag and add davidson iteration counts up to avg_iter
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-             david.diag(hpsi_func,
-                        spsi_func,
+             david.diag(op,
                         ld_psi,
                         psi.get_pointer(),
                         eigenvalue,
@@ -363,7 +349,40 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                         ntry_max,
                         notconv_max));
     }
-    ModuleBase::timer::tick("HSolverPW", "solve_psik");
+    else if (this->method == "lobpcg")
+    {
+        const int dim = psi.get_current_ngk();
+        const int nband = psi.get_nbands();
+        const int ld_psi = psi.get_nbasis();
+        const double tolerance = this->diag_thr;
+        const std::vector<double> uniform_thresholds;
+        const std::vector<double>& lobpcg_ethr = this->diago_smooth_ethr ? this->ethr_band : uniform_thresholds;
+        const int npol = psi.get_npol();
+        const LobpcgBasisLayout layout = {cur_nbasis, npol};
+        const LobpcgLocking locking = this->lobpcg_locking == "soft" ? LobpcgLocking::Soft : LobpcgLocking::Hard;
+        DiagoLOBPCG<T, Device> lobpcg(pre_condition.data(), nband, dim, nband, layout, comm_info,
+                                      this->diag_subspace, this->nb2d, this->use_uspp, locking, this->rr_solver,
+                                      this->gpu_rr_solver);
+        const bool converged = lobpcg.diag(op, psi.get_pointer(), ld_psi, eigenvalue, tolerance,
+                                           this->diag_iter_max, lobpcg_ethr);
+        if (!converged)
+        {
+            // SCF, relax, cell-relax and MD can refine approximate Ritz pairs
+            // in later electronic steps; NSCF has no such outer update.
+            if (this->calculation_type == "nscf")
+            {
+                ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", "LOBPCG iteration budget exhausted in NSCF.");
+            }
+            const int kpoint = psi.get_current_k() + 1;
+            std::ostringstream message;
+            message << "LOBPCG reached the iteration limit at SCF step " << this->scf_iter
+                    << ", k-point " << kpoint << " (" << lobpcg.iterations()
+                    << " iterations); continuing SCF with approximate Ritz pairs.";
+            ModuleBase::WARNING("HSolverPW::hamiltSolvePsiK", message.str());
+        }
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(lobpcg.iterations());
+    }
+    ModuleBase::timer::end("HSolverPW", "solve_psik");
     return;
 }
 
@@ -375,7 +394,7 @@ void HSolverPW<T, Device>::update_precondition(std::vector<Real>& h_diag,
 {
     h_diag.assign(h_diag.size(), 1.0);
     int precondition_type = 2;
-    const auto tpiba2 = static_cast<Real>(this->wfc_basis->tpiba2);
+    const Real tpiba2 = static_cast<Real>(this->wfc_basis->tpiba2);
 
     //===========================================
     // Conjugate-Gradient diagonalization
@@ -417,14 +436,14 @@ void HSolverPW<T, Device>::update_precondition(std::vector<Real>& h_diag,
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::output_iterInfo()
+void HSolverPW<T, Device>::output_iterInfo(std::ostream& log)
 {
     // in PW base, average iteration steps for each band and k-point should be printing
     if (DiagoIterAssist<T, Device>::avg_iter > 0.0)
     {
-        GlobalV::ofs_running << " Average iterative diagonalization steps for k-points is "
-                             << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
-                             << "\n current threshold of diagonalizaiton is " << this->diag_thr << std::endl;
+        log << " Average iterative diagonalization steps for k-points is "
+            << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
+            << "\n current threshold of diagonalizaiton is " << this->diag_thr << std::endl;
         // reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }

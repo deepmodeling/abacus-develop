@@ -29,11 +29,11 @@ __launch_bounds__(1024) __global__ void vector_mul_real_kernel(const int size,
     }
 }
 
-template <typename T>
+template <typename T, typename Operand>
 __launch_bounds__(1024) __global__ void vector_mul_vector_kernel(const int size,
                                                                  T* result,
                                                                  const T* vector1,
-                                                                 const typename GetTypeReal<T>::type* vector2,
+                                                                 const Operand* vector2,
                                                                  const bool add)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -63,11 +63,11 @@ __launch_bounds__(1024) __global__ void vector_div_constant_kernel(const int siz
     }
 }
 
-template <typename T>
+template <typename T, typename Operand>
 __launch_bounds__(1024) __global__ void vector_div_vector_kernel(const int size,
                                                                  T* result,
                                                                  const T* vector1,
-                                                                 const typename GetTypeReal<T>::type* vector2)
+                                                                 const Operand* vector2)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size)
@@ -76,13 +76,13 @@ __launch_bounds__(1024) __global__ void vector_div_vector_kernel(const int size,
     }
 }
 
-template <typename T, typename Real>
-__launch_bounds__(1024) __global__ void constantvector_addORsub_constantVector_kernel(const int size,
-                                                                                      T* result,
-                                                                                      const T* vector1,
-                                                                                      const Real constant1,
-                                                                                      const T* vector2,
-                                                                                      const Real constant2)
+template <typename T, typename Scalar>
+__launch_bounds__(1024) __global__ void vector_add_vector_kernel(const int size,
+                                                                 T* result,
+                                                                 const T* vector1,
+                                                                 const Scalar constant1,
+                                                                 const T* vector2,
+                                                                 const Scalar constant2)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size)
@@ -218,158 +218,113 @@ void vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>::oper
     vector_div_constant_wrapper(dim, result, vector, constant);
 }
 
-// vector operator: result[i] = vector1[i](not complex) * vector2[i](not complex)
-template <>
-void vector_mul_vector_op<double, base_device::DEVICE_GPU>::operator()(const int& dim,
-                                                                       double* result,
-                                                                       const double* vector1,
-                                                                       const double* vector2,
-                                                                       const bool& add)
-{
-    int thread = 1024;
-    int block = (dim + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_vector_kernel<double>),
-                       dim3(block),
-                       dim3(thread),
-                       0,
-                       0,
-                       dim,
-                       result,
-                       vector1,
-                       vector2,
-                       add);
-
-    hipCheckOnDebug();
-}
-
-// vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
-template <typename FPTYPE>
-inline void vector_mul_vector_complex_wrapper(const int& dim,
-                                              std::complex<FPTYPE>* result,
-                                              const std::complex<FPTYPE>* vector1,
-                                              const FPTYPE* vector2,
-                                              const bool& add)
-{
-    thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
-    const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
-    int thread = 1024;
-    int block = (dim + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_vector_kernel<thrust::complex<FPTYPE>>),
-                       dim3(block),
-                       dim3(thread),
-                       0,
-                       0,
-                       dim,
-                       result_tmp,
-                       vector1_tmp,
-                       vector2,
-                       add);
-
-    hipCheckOnDebug();
-}
-template <>
-void vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& dim,
-                                                                                    std::complex<float>* result,
-                                                                                    const std::complex<float>* vector1,
-                                                                                    const float* vector2,
-                                                                                    const bool& add)
-{
-    vector_mul_vector_complex_wrapper(dim, result, vector1, vector2, add);
-}
-template <>
-void vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
-    const int& dim,
-    std::complex<double>* result,
-    const std::complex<double>* vector1,
-    const double* vector2,
-    const bool& add)
-{
-    vector_mul_vector_complex_wrapper(dim, result, vector1, vector2, add);
-}
-
-// vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
-template <>
-void vector_div_vector_op<double, base_device::DEVICE_GPU>::operator()(const int& dim,
-                                                                       double* result,
-                                                                       const double* vector1,
-                                                                       const double* vector2)
-{
-    int thread = 1024;
-    int block = (dim + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_vector_kernel<double>),
-                       dim3(block),
-                       dim3(thread),
-                       0,
-                       0,
-                       dim,
-                       result,
-                       vector1,
-                       vector2);
-
-    hipCheckOnDebug();
-}
-// vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
-template <typename FPTYPE>
-inline void vector_div_vector_op_complex_wrapper(const int& dim,
-                                                 std::complex<FPTYPE>* result,
-                                                 const std::complex<FPTYPE>* vector1,
-                                                 const FPTYPE* vector2)
-{
-    thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
-    const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
-    int thread = 1024;
-    int block = (dim + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_vector_kernel<thrust::complex<FPTYPE>>),
-                       dim3(block),
-                       dim3(thread),
-                       0,
-                       0,
-                       dim,
-                       result_tmp,
-                       vector1_tmp,
-                       vector2);
-
-    hipCheckOnDebug();
-}
-template <>
-void vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& dim,
-                                                                                    std::complex<float>* result,
-                                                                                    const std::complex<float>* vector1,
-                                                                                    const float* vector2)
-{
-    vector_div_vector_op_complex_wrapper(dim, result, vector1, vector2);
-}
-template <>
-void vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
-    const int& dim,
-    std::complex<double>* result,
-    const std::complex<double>* vector1,
-    const double* vector2)
-{
-    vector_div_vector_op_complex_wrapper(dim, result, vector1, vector2);
-}
-
-// vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
 template <typename T>
-void vector_add_vector_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
-                                                                                       T* result,
-                                                                                       const T* vector1,
-                                                                                       const Real constant1,
-                                                                                       const T* vector2,
-                                                                                       const Real constant2)
+inline T to_device_value(const T value)
 {
-    using Type = typename GetTypeThrust<T>::type;
-    using Real = typename GetTypeReal<T>::type;
+    return value;
+}
 
-    auto result_tmp = reinterpret_cast<Type*>(result);
-    auto vector1_tmp = reinterpret_cast<const Type*>(vector1);
-    auto vector2_tmp = reinterpret_cast<const Type*>(vector2);
+template <typename FPTYPE>
+inline thrust::complex<FPTYPE> to_device_value(const std::complex<FPTYPE> value)
+{
+    return thrust::complex<FPTYPE>(value.real(), value.imag());
+}
 
-    int thread = 1024;
-    int block = (dim + thread - 1) / thread;
-    constantvector_addORsub_constantVector_kernel<Type, Real>
-        <<<block, thread>>>(dim, result_tmp, vector1_tmp, constant1, vector2_tmp, constant2);
+template <typename T, typename Operand>
+void vector_mul_vector_op<T, base_device::DEVICE_GPU, Operand>::operator()(const int& dim,
+                                                                           T* result,
+                                                                           const T* vector1,
+                                                                           const Operand* vector2,
+                                                                           const bool& add)
+{
+    if (dim <= 0)
+    {
+        return;
+    }
 
+    using DeviceT = typename GetTypeThrust<T>::type;
+    using DeviceOperand = typename GetTypeThrust<Operand>::type;
+    auto result_tmp = reinterpret_cast<DeviceT*>(result);
+    auto vector1_tmp = reinterpret_cast<const DeviceT*>(vector1);
+    auto vector2_tmp = reinterpret_cast<const DeviceOperand*>(vector2);
+    const int thread = 1024;
+    const int block = (dim + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_vector_kernel<DeviceT, DeviceOperand>),
+                       dim3(block),
+                       dim3(thread),
+                       0,
+                       0,
+                       dim,
+                       result_tmp,
+                       vector1_tmp,
+                       vector2_tmp,
+                       add);
+    hipCheckOnDebug();
+}
+
+template <typename T, typename Operand>
+void vector_div_vector_op<T, base_device::DEVICE_GPU, Operand>::operator()(const int& dim,
+                                                                           T* result,
+                                                                           const T* vector1,
+                                                                           const Operand* vector2)
+{
+    if (dim <= 0)
+    {
+        return;
+    }
+
+    using DeviceT = typename GetTypeThrust<T>::type;
+    using DeviceOperand = typename GetTypeThrust<Operand>::type;
+    auto result_tmp = reinterpret_cast<DeviceT*>(result);
+    auto vector1_tmp = reinterpret_cast<const DeviceT*>(vector1);
+    auto vector2_tmp = reinterpret_cast<const DeviceOperand*>(vector2);
+    const int thread = 1024;
+    const int block = (dim + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_vector_kernel<DeviceT, DeviceOperand>),
+                       dim3(block),
+                       dim3(thread),
+                       0,
+                       0,
+                       dim,
+                       result_tmp,
+                       vector1_tmp,
+                       vector2_tmp);
+    hipCheckOnDebug();
+}
+
+template <typename T, typename Scalar>
+void vector_add_vector_op<T, base_device::DEVICE_GPU, Scalar>::operator()(const int& dim,
+                                                                          T* result,
+                                                                          const T* vector1,
+                                                                          const Scalar constant1,
+                                                                          const T* vector2,
+                                                                          const Scalar constant2)
+{
+    if (dim <= 0)
+    {
+        return;
+    }
+
+    using DeviceT = typename GetTypeThrust<T>::type;
+    using DeviceScalar = typename GetTypeThrust<Scalar>::type;
+    auto result_tmp = reinterpret_cast<DeviceT*>(result);
+    auto vector1_tmp = reinterpret_cast<const DeviceT*>(vector1);
+    auto vector2_tmp = reinterpret_cast<const DeviceT*>(vector2);
+    const DeviceScalar device_constant1 = to_device_value(constant1);
+    const DeviceScalar device_constant2 = to_device_value(constant2);
+    const int thread = 1024;
+    const int block = (dim + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_add_vector_kernel<DeviceT, DeviceScalar>),
+                       dim3(block),
+                       dim3(thread),
+                       0,
+                       0,
+                       dim,
+                       result_tmp,
+                       vector1_tmp,
+                       device_constant1,
+                       vector2_tmp,
+                       device_constant2);
     hipCheckOnDebug();
 }
 
@@ -437,18 +392,26 @@ template struct vector_div_constant_op<std::complex<float>, base_device::DEVICE_
 template struct vector_div_constant_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-template struct vector_mul_vector_op<float, base_device::DEVICE_GPU>;
-template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
-template struct vector_mul_vector_op<double, base_device::DEVICE_GPU>;
-template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
-template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
-template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
-template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct vector_mul_vector_op<float, base_device::DEVICE_GPU, float>;
+template struct vector_mul_vector_op<double, base_device::DEVICE_GPU, double>;
+template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU, float>;
+template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU, double>;
+template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU, std::complex<float>>;
+template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU, std::complex<double>>;
 
-template struct vector_add_vector_op<float, base_device::DEVICE_GPU>;
-template struct vector_add_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
-template struct vector_add_vector_op<double, base_device::DEVICE_GPU>;
-template struct vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct vector_div_vector_op<float, base_device::DEVICE_GPU, float>;
+template struct vector_div_vector_op<double, base_device::DEVICE_GPU, double>;
+template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU, float>;
+template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU, double>;
+template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU, std::complex<float>>;
+template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU, std::complex<double>>;
+
+template struct vector_add_vector_op<float, base_device::DEVICE_GPU, float>;
+template struct vector_add_vector_op<double, base_device::DEVICE_GPU, double>;
+template struct vector_add_vector_op<std::complex<float>, base_device::DEVICE_GPU, float>;
+template struct vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU, double>;
+template struct vector_add_vector_op<std::complex<float>, base_device::DEVICE_GPU, std::complex<float>>;
+template struct vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU, std::complex<double>>;
 
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct dot_real_op<double, base_device::DEVICE_GPU>;

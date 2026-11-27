@@ -1,0 +1,31 @@
+INPUT_PARAMETERS
+suffix autotest
+calculation scf
+basis_type pw
+latname fcc
+nspin 1
+nbands 10
+# Eight fully occupied bands and two empty bands.
+symmetry 0
+pseudo_dir ../../PP_ORB
+pw_seed 1
+ecutwfc 20
+ecutrho 160
+scf_thr 1e-15
+scf_nmax 150
+ks_solver bpcg
+pw_diag_thr 1e-12
+diago_smooth_ethr true
+kpar 2
+bndpar 2
+smearing_method fixed
+mixing_type pulay
+mixing_beta 0.4
+pseudo_mesh 1
+pseudo_rcut 10
+# Include an empty state to exercise occupation-independent partial charge.
+out_pchg 9*1
+# Band 1 is isolated from band 2 by more than 27 eV at both k-points.
+out_wfc_norm 1
+out_wfc_re_im 1
+out_chg 0

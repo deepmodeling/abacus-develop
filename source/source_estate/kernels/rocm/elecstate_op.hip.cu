@@ -50,7 +50,7 @@ __global__ void elecstate_pw(
     rho[3 * nrxx + idx] += w1 * (norm(wfcr[idx]) - norm(wfcr_another_spin[idx]));
   }
   else {
-    rho[0 * nrxx + idx] = 0;
+    // Keep the scalar charge accumulated above; only magnetization is disabled.
     rho[1 * nrxx + idx] = 0;
     rho[2 * nrxx + idx] = 0;
     rho[3 * nrxx + idx] = 0;

@@ -13,6 +13,7 @@ void calculate_weights(const ModuleBase::matrix& ekb,
                        Efermi& eferm,
                        fenergy& f_en,
                        std::vector<double>& nelec_spin,
+                       const int global_nbands,
                        const bool skip_weights);
 
 void fixed_weights(const std::vector<double>& ocp_kb,

@@ -1,0 +1,1 @@
+PW neutral water with periodic SCCS and the full cavity (sccs_solvent_mode full, default corespread 0.5): the O valence Gaussian is added to the cavity density, H is skipped (Z = zv). ecutwfc 20 and ecutrho 240.

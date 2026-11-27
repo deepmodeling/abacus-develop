@@ -23,7 +23,7 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
                                       std::vector<hamilt::HContainer<double>*>& phialpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "allocate_phialpha");
-    ModuleBase::timer::tick("DeePKS_domain", "allocate_phialpha");
+    ModuleBase::timer::start("DeePKS_domain", "allocate_phialpha");
 
     phialpha.resize(cal_deri ? 4 : 1);
 
@@ -75,7 +75,7 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
             phialpha[i] = new hamilt::HContainer<double>(*phialpha[0], nullptr); // copy constructor
         }
     }
-    ModuleBase::timer::tick("DeePKS_domain", "allocate_phialpha");
+    ModuleBase::timer::end("DeePKS_domain", "allocate_phialpha");
     return;
 }
 
@@ -88,7 +88,7 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
                                    std::vector<hamilt::HContainer<double>*>& phialpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "build_phialpha");
-    ModuleBase::timer::tick("DeePKS_domain", "build_phialpha");
+    ModuleBase::timer::start("DeePKS_domain", "build_phialpha");
 
     // Total number of atomic basis of projected orbitals
     // nw_alpha will be used frequently, better to add a function in Numerical Orbital to get it
@@ -129,8 +129,8 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
             // Get all indexes of atomic basis on the neighbour atom in this core
             // Notice that atom pair (a,b) and (b,a) are different when the former is changed to projected orbitals
             // So we need both row and col indexes for complete calculation
-            auto all_indexes = pv->get_indexes_row(ibt);
-            auto col_indexes = pv->get_indexes_col(ibt);
+            std::vector<int> all_indexes = pv->get_indexes_row(ibt);
+            std::vector<int> col_indexes = pv->get_indexes_col(ibt);
             all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
             std::sort(all_indexes.begin(), all_indexes.end());
             all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end()); // for unique
@@ -180,7 +180,7 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
         }
     );
 
-    ModuleBase::timer::tick("DeePKS_domain", "build_phialpha");
+    ModuleBase::timer::end("DeePKS_domain", "build_phialpha");
     return;
 }
 
@@ -193,7 +193,7 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
                                    const int rank)
 {
     ModuleBase::TITLE("DeePKS_domain", "check_phialpha");
-    ModuleBase::timer::tick("DeePKS_domain", "check_phialpha");
+    ModuleBase::timer::start("DeePKS_domain", "check_phialpha");
 
     if (rank != 0)
     {
@@ -296,8 +296,8 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
                     ofs_x << "iw : " << iw1_all << std::endl;
                     ofs_y << "iw : " << iw1_all << std::endl;
                     ofs_z << "iw : " << iw1_all << std::endl;
-                    const int iw1_local = pv->global2local_row(iw1_all);
-                    const int iw2_local = pv->global2local_col(iw1_all);
+                    const int iw1_local = pv->para_2d().irloc(iw1_all);
+                    const int iw2_local = pv->para_2d().icloc(iw1_all);
                     if (iw1_local < 0 && iw2_local < 0)
                         continue;
 
@@ -334,7 +334,7 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
         }         // end I0
     }             // end T0
 
-    ModuleBase::timer::tick("DeePKS_domain", "check_phialpha");
+    ModuleBase::timer::end("DeePKS_domain", "check_phialpha");
     return;
 }
 

@@ -25,6 +25,7 @@ ks_solver         scalapack_gvx
 basis_type        lcao
 gamma_only        0
 noncolin          1
+nspin             4
 lspinorb          1
 cal_force         1
 cal_stress        1

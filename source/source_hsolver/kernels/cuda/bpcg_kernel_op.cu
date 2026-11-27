@@ -14,8 +14,10 @@ template <typename Real>
 __global__ void line_minimize_with_block(
         thrust::complex<Real>* grad,
         thrust::complex<Real>* hgrad,
+        thrust::complex<Real>* sgrad,
         thrust::complex<Real>* psi,
         thrust::complex<Real>* hpsi,
+        thrust::complex<Real>* spsi,
         const int n_basis,
         const int n_basis_max)
 {
@@ -30,7 +32,7 @@ __global__ void line_minimize_with_block(
 
     for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
-        data[tid] += (grad[item] * thrust::conj(grad[item])).real();
+        data[tid] += (sgrad[item] * thrust::conj(grad[item])).real();
     }
     __syncthreads();
     // just do some parallel reduction in shared memory
@@ -55,6 +57,9 @@ __global__ void line_minimize_with_block(
 
     __syncthreads();
 
+    if (!(data[0] > 1.0e-20)) {
+        return;
+    }
     Real norm = 1.0 / sqrt(data[0]);
     __syncthreads();
 
@@ -65,6 +70,7 @@ __global__ void line_minimize_with_block(
         item = band_idx * n_basis_max + basis_idx;
         grad[item] *= norm;
         hgrad[item] *= norm;
+        sgrad[item] *= norm;
         data[tid] += (hpsi[item] * thrust::conj(psi[item])).real();
         data[thread_per_block + tid] += (grad[item] * thrust::conj(hpsi[item])).real();
         data[2 * thread_per_block + tid] += (grad[item] * thrust::conj(hgrad[item])).real();
@@ -105,13 +111,22 @@ __global__ void line_minimize_with_block(
     epsilo_1 = data[thread_per_block];
     epsilo_2 = data[2 * thread_per_block];
 
-    theta = 0.5 * abs(atan(2 * epsilo_1/(epsilo_0 - epsilo_2)));
+    theta = 0.5 * atan2(2 * epsilo_1, epsilo_0 - epsilo_2);
+    // Choose the rotation associated with the lower Ritz value.
+    const Real energy_delta = (epsilo_0 - epsilo_2) * cos(2.0 * theta)
+                            + 2.0 * epsilo_1 * sin(2.0 * theta);
+    const Real energy_1 = 0.5 * (epsilo_0 + epsilo_2 + energy_delta);
+    const Real energy_2 = 0.5 * (epsilo_0 + epsilo_2 - energy_delta);
+    if (energy_1 > energy_2) {
+        theta += 2.0 * atan(1.0);
+    }
     cos_theta = cos(theta);
     sin_theta = sin(theta);
     for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
         psi [item] = psi [item] * cos_theta + grad [item] * sin_theta;
         hpsi[item] = hpsi[item] * cos_theta + hgrad[item] * sin_theta;
+        spsi[item] = spsi[item] * cos_theta + sgrad[item] * sin_theta;
     }
 }
 
@@ -122,6 +137,7 @@ __global__ void calc_grad_with_block(
         Real* beta,
         thrust::complex<Real>* psi,
         thrust::complex<Real>* hpsi,
+        thrust::complex<Real>* spsi,
         thrust::complex<Real>* grad,
         thrust::complex<Real>* grad_old,
         const int n_basis,
@@ -142,7 +158,7 @@ __global__ void calc_grad_with_block(
 
     for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
-        data[tid] += (psi[item] * thrust::conj(psi[item])).real();
+        data[tid] += (spsi[item] * thrust::conj(psi[item])).real();
     }
     __syncthreads();
     // just do some parallel reduction in shared memory
@@ -172,6 +188,7 @@ __global__ void calc_grad_with_block(
         item = band_idx * n_basis_max + basis_idx;
         psi[item] *= norm;
         hpsi[item] *= norm;
+        spsi[item] *= norm;
         data[tid] += (hpsi[item] * thrust::conj(psi[item])).real();
     }
     __syncthreads();
@@ -201,7 +218,7 @@ __global__ void calc_grad_with_block(
     data[thread_per_block + tid] = 0;
     for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
-        grad_1 = hpsi[item] - epsilo * psi[item];
+        grad_1 = hpsi[item] - epsilo * spsi[item];
         grad_2 = thrust::norm(grad_1);
         data[tid] += grad_2;
         data[thread_per_block + tid] += grad_2 / prec[basis_idx];
@@ -237,7 +254,7 @@ __global__ void calc_grad_with_block(
     beta_st = data[thread_per_block];
     for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
-        grad_1 = hpsi[item] - epsilo * psi[item];
+        grad_1 = hpsi[item] - epsilo * spsi[item];
         grad[item] = -grad_1 / prec[basis_idx] + beta_st / beta[band_idx] * grad_old[item];
     }
 
@@ -332,16 +349,21 @@ __global__ void normalize_kernel(
 
     // Calculate the sum for normalization
     for (int i = tid; i < dim; i += thread_per_block) {
-        auto val = psi_iter[(nbase + m) * dim + i];
+        thrust::complex<Real> val = psi_iter[(nbase + m) * dim + i];
         local_sum += (val * thrust::conj(val)).real();
     }
 
     Real l2_sq = blockReduceSum(local_sum, shared);
     Real norm = sqrt(l2_sq);
 
-    // Normalize the vector
-    for (int i = tid; i < dim; i += thread_per_block) {
-        psi_iter[(nbase + m) * dim + i] /= norm;
+    // Guard against zero/denormal norm (degenerate direction, e.g. single-precision
+    // underflow): skip normalization and leave psi_norm[m] = 0 so the caller treats
+    // it as converged.
+    if (norm > 1.0e-12) {
+        // Normalize the vector
+        for (int i = tid; i < dim; i += thread_per_block) {
+            psi_iter[(nbase + m) * dim + i] /= norm;
+        }
     }
 
     // Store the norm if needed
@@ -372,19 +394,23 @@ __global__ void refresh_hcc_scc_vcc_kernel(
 template <typename T>
 void line_minimize_with_block_op<T, base_device::DEVICE_GPU>::operator()(T* grad_out,
                                                                          T* hgrad_out,
+                                                                         T* sgrad_out,
                                                                          T* psi_out,
                                                                          T* hpsi_out,
+                                                                         T* spsi_out,
                                                                          const int& n_basis,
                                                                          const int& n_basis_max,
                                                                          const int& n_band)
 {
-    auto A = reinterpret_cast<thrust::complex<Real>*>(grad_out);
-    auto B = reinterpret_cast<thrust::complex<Real>*>(hgrad_out);
-    auto C = reinterpret_cast<thrust::complex<Real>*>(psi_out);
-    auto D = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
+    thrust::complex<Real>* A = reinterpret_cast<thrust::complex<Real>*>(grad_out);
+    thrust::complex<Real>* B = reinterpret_cast<thrust::complex<Real>*>(hgrad_out);
+    thrust::complex<Real>* C = reinterpret_cast<thrust::complex<Real>*>(sgrad_out);
+    thrust::complex<Real>* D = reinterpret_cast<thrust::complex<Real>*>(psi_out);
+    thrust::complex<Real>* E = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
+    thrust::complex<Real>* F = reinterpret_cast<thrust::complex<Real>*>(spsi_out);
 
     line_minimize_with_block<Real><<<n_band, thread_per_block>>>(
-            A, B, C, D,
+            A, B, C, D, E, F,
             n_basis, n_basis_max);
 
     CHECK_CUDA_SYNC();
@@ -396,20 +422,22 @@ void calc_grad_with_block_op<T, base_device::DEVICE_GPU>::operator()(const Real*
                                                                      Real* beta_out,
                                                                      T* psi_out,
                                                                      T* hpsi_out,
+                                                                     T* spsi_out,
                                                                      T* grad_out,
                                                                      T* grad_old_out,
                                                                      const int& n_basis,
                                                                      const int& n_basis_max,
                                                                      const int& n_band)
 {
-    auto A = reinterpret_cast<thrust::complex<Real>*>(psi_out);
-    auto B = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
-    auto C = reinterpret_cast<thrust::complex<Real>*>(grad_out);
-    auto D = reinterpret_cast<thrust::complex<Real>*>(grad_old_out);
+    thrust::complex<Real>* A = reinterpret_cast<thrust::complex<Real>*>(psi_out);
+    thrust::complex<Real>* B = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
+    thrust::complex<Real>* C = reinterpret_cast<thrust::complex<Real>*>(spsi_out);
+    thrust::complex<Real>* D = reinterpret_cast<thrust::complex<Real>*>(grad_out);
+    thrust::complex<Real>* E = reinterpret_cast<thrust::complex<Real>*>(grad_old_out);
 
     calc_grad_with_block<Real><<<n_band, thread_per_block>>>(
             prec_in, err_out, beta_out,
-            A, B, C, D,
+            A, B, C, D, E,
             n_basis, n_basis_max);
 
     CHECK_CUDA_SYNC();
@@ -428,8 +456,8 @@ void apply_eigenvalues_op<T, base_device::DEVICE_GPU>::operator()(const int& nba
 
     dim3 grid(notconv, blocks_per_grid_y);
 
-    auto vec_complex = reinterpret_cast<const thrust::complex<Real>*>(vectors);
-    auto res_complex = reinterpret_cast<thrust::complex<Real>*>(result);
+    const thrust::complex<Real>* vec_complex = reinterpret_cast<const thrust::complex<Real>*>(vectors);
+    thrust::complex<Real>* res_complex = reinterpret_cast<thrust::complex<Real>*>(result);
 
     apply_eigenvalues_kernel<Real><<<grid, threads_per_block>>>(
         vec_complex, res_complex, eigenvalues, nbase, nbase_x, notconv);
@@ -450,7 +478,7 @@ void precondition_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
 
     dim3 grid(notconv, blocks_per_grid_y);
 
-    auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
+    thrust::complex<Real>* psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
 
     precondition_kernel<Real><<<grid, threads_per_block>>>(
         psi_complex, precondition, eigenvalues, dim, nbase, notconv);
@@ -465,7 +493,7 @@ void normalize_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                         const int& notconv,
                                                         Real* psi_norm)
 {
-    auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
+    thrust::complex<Real>* psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
     int sharedMemSize = (thread_per_block / WARP_SIZE) * sizeof(Real);
 
     normalize_kernel<Real><<<notconv, thread_per_block, sharedMemSize, 0>>>(

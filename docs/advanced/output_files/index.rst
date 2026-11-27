@@ -7,4 +7,5 @@ Detailed Introduction of the Output Files
 
     output-specification
     running_scf.log
+    output_dipole.md
     

@@ -2,6 +2,7 @@
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/elecstate_pw_sdft.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace elecstate
 {
@@ -106,6 +107,7 @@ void setup_estate_pw_impl(
     }
 
     locpp.init_vloc(ucell, pw_rhod);
+    locpp.print_vloc(ucell, pw_rhod, inp.out_element_info, PARAM.globalv.global_out_dir);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     ppcell.init(ucell, &sf, pw_wfc);
@@ -151,7 +153,7 @@ void teardown_estate_pw_impl(elecstate::ElecState*& pelec, VSep*& vsep_cell)
 
     if (pelec != nullptr)
     {
-        auto* pw_elec = dynamic_cast<elecstate::ElecStatePW<T, Device>*>(pelec);
+        elecstate::ElecStatePW<T, Device>* pw_elec = dynamic_cast<elecstate::ElecStatePW<T, Device>*>(pelec);
         if (pw_elec)
         {
             delete pw_elec;

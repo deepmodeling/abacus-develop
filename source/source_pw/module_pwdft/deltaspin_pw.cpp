@@ -1,13 +1,16 @@
 #include "source_pw/module_pwdft/deltaspin_pw.h"
+#include "source_estate/module_charge/chg_mix.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_estate/module_charge/charge_mixing.h"
 
 namespace pw
 {
 
-bool run_deltaspin_lambda_loop(const int iter,
-                               const double drho,
-                               const Input_para& inp)
+bool run_deltaspin_lambda_loop(
+    const int iter,
+    const double drho,
+    const Input_para &inp,
+    std::ostream &ofs_running)
 {
     /// Return false if DeltaSpin is not enabled
     if (!inp.sc_mag_switch)
@@ -16,23 +19,32 @@ bool run_deltaspin_lambda_loop(const int iter,
     }
 
     /// Get the singleton instance of SpinConstrain
-    spinconstrain::SpinConstrain<std::complex<double>>& sc
-        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+    spinconstrain::SpinConstrain<std::complex<double>> &sc =
+        spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+
+    /// Case 0: linear_scan strategy - sweep lambda values for energy landscape mapping
+    /// This is a diagnostic/debugging mode that does NOT optimize lambda,
+    /// only records Mi vs lambda to lambda_scan_results.dat.
+    if (inp.sc_lambda_strategy == "linear_scan")
+    {
+        sc.run_lambda_linear_scan(iter, ofs_running);
+        return true;
+    }
 
     /// Case 1: Magnetic moments not yet converged and SCF is close to convergence.
     /// This is the first time we enter the lambda loop after SCF is nearly converged.
     if (!sc.mag_converged() && drho > 0 && drho < inp.sc_scf_thr)
     {
         /// Optimize lambda to get target magnetic moments
-        sc.run_lambda_loop(iter);
+        sc.run_lambda_loop(iter - 1, true, ofs_running);
         sc.set_mag_converged(true);
         return true;
     }
     /// Case 2: Magnetic moments already converged in previous iteration.
-    /// Continue to refine lambda in subsequent SCF iterations.
+    /// Re-run the lambda loop to update psi and charge density with current lambda.
     else if (sc.mag_converged())
     {
-        sc.run_lambda_loop(iter);
+        sc.run_lambda_loop(iter - 1, true, ofs_running);
         return true;
     }
 
@@ -40,10 +52,11 @@ bool run_deltaspin_lambda_loop(const int iter,
     return false;
 }
 
-void check_deltaspin_oscillation(const int iter,
-                                 const double drho,
-                                 Charge_Mixing* p_chgmix,
-                                 const Input_para& inp)
+void check_deltaspin_oscillation(
+    const int iter,
+    const double drho,
+    Charge_Mixing *p_chgmix,
+    const Input_para &inp)
 {
     /// Return if DeltaSpin is not enabled
     if (!inp.sc_mag_switch)
@@ -52,8 +65,8 @@ void check_deltaspin_oscillation(const int iter,
     }
 
     /// Get the singleton instance of SpinConstrain
-    spinconstrain::SpinConstrain<std::complex<double>>& sc
-        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+    spinconstrain::SpinConstrain<std::complex<double>> &sc =
+        spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
 
     /// Check if higher magnetization precision is needed
     if (!sc.higher_mag_prec)
@@ -69,4 +82,4 @@ void check_deltaspin_oscillation(const int iter,
     }
 }
 
-}
+} // namespace pw

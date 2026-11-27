@@ -1,7 +1,6 @@
 #include "pulay_mixing.h"
 
 #include "source_base/module_external/lapack_connector.h"
-#include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 namespace Base_Mixing
@@ -98,7 +97,7 @@ template <class FPTYPE>
 void Pulay_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_product)
 {
     ModuleBase::TITLE("Charge_Mixing", "Pulay_mixing");
-    ModuleBase::timer::tick("Charge", "Pulay_mixing");
+    ModuleBase::timer::start("Charge", "Pulay_mixing");
     if (address != &mdata && address != nullptr)
         ModuleBase::WARNING_QUIT(
             "Pulay_mixing",
@@ -177,6 +176,6 @@ void Pulay_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(F
         coef[0] = 1.0;
     }
 
-    ModuleBase::timer::tick("Charge", "Pulay_mixing");
+    ModuleBase::timer::end("Charge", "Pulay_mixing");
 };
 } // namespace Base_Mixing

@@ -3,23 +3,73 @@
 // DATE : 2008-11-10
 //==========================================================
 
-#include "source_main/driver.h"
 #include "fftw3.h"
 #include "source_base/parallel_global.h"
-#include "source_io/parse_args.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/parse_args.h"
+#include "source_io/parse_command_line.h"
+#include "source_main/driver.h"
+#include "source_main/version.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
+#include <ctime>
+#include <exception>
+#include <iostream>
+
+namespace
+{
+void print_welcome_banner()
+{
+#ifdef VERSION
+    const char* version = VERSION;
+#else
+    const char* version = "unknown";
+#endif
+#ifdef COMMIT_INFO
+#include "commit.h"
+    const char* commit = COMMIT;
+#else
+    const char* commit = "unknown";
+#endif
+    std::cout << std::endl
+              << "                     ▄████▄ █████▄ ▄████▄ ▄█████ ██  ██ ▄█████ " << std::endl
+              << "                     ██▄▄██ ██▄▄██ ██▄▄██ ██     ██  ██ ▀▀▀▄▄▄ " << std::endl
+              << "                     ██  ██ ██▄▄█▀ ██  ██ ▀█████ ▀████▀ █████▀ " << std::endl
+              << std::endl;
+    std::cout << "                                                                                     " << std::endl
+              << "                                " << version << std::endl
+              << std::endl
+              << "               Atomic-orbital Based Ab-initio Computation at UStc                    " << std::endl
+              << std::endl
+              << "                     Website: http://abacus.ustc.edu.cn/                             " << std::endl
+              << "               Documentation: https://abacus.deepmodeling.com/                       " << std::endl
+              << "                  Repository: https://github.com/abacusmodeling/abacus-develop       " << std::endl
+              << "                              https://github.com/deepmodeling/abacus-develop         " << std::endl
+              << "                      Commit: " << commit << std::endl
+              << std::endl;
+    time_t time_now = time(nullptr);
+    std::cout << " " << ctime(&time_now);
+}
+} // namespace
+
 int main(int argc, char** argv)
 {
-    /*
-    read the arguement in the command-line,
-    with "abacus -v", the program exit and returns version info,
-    with no arguments, the program continues.
-    */
-    ModuleIO::parse_args(argc, argv);
+    // Finish all CLI validation before acquiring MPI or FFTW resources.
+    // Informational flags keep their existing early-exit precedence.
+    ModuleIO::CommandLineArgs cli;
+    try
+    {
+        ModuleIO::parse_args(argc, argv);
+        cli = ModuleIO::parse_command_line(argc, argv);
+    }
+    catch (const std::exception& error)
+    {
+        std::cerr << "Command line error: " << error.what() << std::endl;
+        ModuleIO::print_help(argv[0]);
+        return 1;
+    }
 
     /*
     read the mpi parameters in the command-line,
@@ -29,6 +79,10 @@ int main(int argc, char** argv)
     int my_rank = 0;
     int nthread_per_proc = 1;
     Parallel_Global::read_pal_param(argc, argv, nproc, nthread_per_proc, my_rank);
+    if (my_rank == 0)
+    {
+        print_welcome_banner();
+    }
 #ifdef _OPENMP
     // ref: https://www.fftw.org/fftw3_doc/Usage-of-Multi_002dthreaded-FFTW.html
     fftw_init_threads();
@@ -36,11 +90,17 @@ int main(int argc, char** argv)
 #endif
     PARAM.set_pal_param(my_rank, nproc, nthread_per_proc);
 
+    if (my_rank == 0 && !cli.vars.empty())
+    {
+        std::cerr << "Warning: -p/--parameter variables are parsed but are not applied to INPUT in PART I."
+                  << std::endl;
+    }
+
     /*
     main program for doing electronic structure calculations.
     */
     Driver DD;
-    DD.init();
+    DD.init(cli);
 
     /*
     After running mpi version of abacus, release the mpi resources.

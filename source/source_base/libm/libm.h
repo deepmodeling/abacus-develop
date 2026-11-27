@@ -14,7 +14,7 @@ namespace ModuleBase
 namespace libm
 {
 
-#ifdef USE_ABACUS_LIBM
+#ifdef __ABACUS_LIBM
 
 double __exp (double x);
 double __cos (double x);

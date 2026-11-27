@@ -2,105 +2,205 @@
 #include "cal_dos.h"
 #include "cal_pdos_gamma.h"
 #include "cal_pdos_multik.h"
-#include "source_io/module_energy/nscf_fermi_surf.h"
-#include "source_io/module_parameter/parameter.h"
+#include "dos_npy_header.h"
+#include "write_pdos_text.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
+#include "source_base/tool_quit.h"
+#include "source_io/module_output/write_notice.h"
+
+#include <exception>
+#include <fstream>
+#include <sstream>
 
 namespace ModuleIO
 {
 
+namespace
+{
+void write_dos_npy(const std::string& path, const std::vector<DosSpectrum>& spectra)
+{
+    const std::size_t npoints = spectra.front().size();
+    const std::size_t spins = spectra.size();
+    const std::string field_type = "','=f8',(" + std::to_string(spins) + ",))";
+    std::string fields = "('energy_eV','=f8')";
+    for (const char* name : {"dos", "dos_int", "dos_smear", "dos_smear_int"})
+    {
+        fields += std::string(",('") + name + field_type;
+    }
+
+    std::ofstream out;
+    const std::ios_base::iostate exception_mask = std::ios::badbit | std::ios::failbit;
+    out.exceptions(exception_mask);
+    out.open(path, std::ios::binary | std::ios::trunc);
+    write_dos_npy_header(out, fields, npoints);
+    // One shared energy, followed by all spin channels of each quantity.
+    const std::size_t record_width = 1 + 4 * spins;
+    std::vector<double> record(record_width);
+    const std::size_t bytes = record.size() * sizeof(double);
+    for (std::size_t n = 0; n < npoints; ++n)
+    {
+        record[0] = spectra.front()[n][0];
+        for (std::size_t field = 0; field < 4; ++field)
+        {
+            for (std::size_t is = 0; is < spins; ++is)
+            {
+                record[1 + field * spins + is] = spectra[is][n][1 + field];
+            }
+        }
+        out.write(reinterpret_cast<const char*>(record.data()), bytes);
+    }
+    out.close();
+}
+}
+
 template <typename T>
 void write_dos_lcao(
         const psi::Psi<T>* psi,
-		hamilt::Hamilt<T>* p_ham,
+        hamilt::Hamilt<T>* p_ham,
         const Parallel_Orbitals &pv, 
         const UnitCell& ucell,
-		const K_Vectors& kv,
-		const int nbands,
-		const elecstate::Efermi &energy_fermi,
+        const K_Vectors& kv,
+        const int nbands,
+        const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool out_app_flag,
+        const int out_dos,
+        const int out_app_flag,
+        const int precision,
         const int istep,
+        const int nspin,
+        const int nlocal,
+        const bool dos_setemax,
+        const double dos_emax_ev,
+        const bool dos_setemin,
+        const double dos_emin_ev,
+        const bool two_fermi,
+        const int bndpar,
+        const std::string& global_out_dir,
         std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
     
-    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
+    const int nspin0 = (nspin == 2) ? 2 : 1;
 
     double emax = 0.0;
     double emin = 0.0;
 
-	prepare_dos(ofs_running,
-			energy_fermi,
-			ekb,
-			kv.get_nks(),
-			nbands,
-			dos_edelta_ev,
-			dos_scale,
-			emax,
-			emin);
+    prepare_dos(ofs_running,
+            energy_fermi,
+            ekb,
+            kv.get_nks(),
+            nbands,
+            dos_edelta_ev,
+            dos_scale,
+            emax,
+            emin,
+            dos_setemax,
+            dos_emax_ev,
+            dos_setemin,
+            dos_emin_ev,
+            two_fermi);
 
-    // output the DOS file.
+    std::vector<DosSpectrum> total_dos;
+    if (out_dos == 2)
+    {
+        total_dos.resize(nspin0);
+    }
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-
-        ss << PARAM.globalv.global_out_dir << "doss" << is + 1;
-
-		if(istep>=0)
-		{
-            ss << "g" << istep+1;
-		}
-
-        ss << "_nao.txt";
-
-		ModuleIO::cal_dos(is,
-				ss.str(),
-				dos_edelta_ev,
-				emax,
-				emin,
-				bcoeff,
-				kv.get_nks(),
-				kv.get_nkstot(),
-				kv.wk,
-				kv.isk,
-				nbands,
-				ekb,
-				wg,
-				istep);
-	}
-
-
-    if (PARAM.inp.out_dos == 2)
-    {
-		cal_pdos(psi,
-				p_ham,
-				pv,
-				ucell,
-				kv,
-				nspin0,
-				nbands,
-				ekb,
-				emax,
-				emin,
-				dos_edelta_ev,
-				bcoeff);
-    }
-
-    if(PARAM.inp.out_dos == 3)
-    {
-        for (int is = 0; is < nspin0; is++)
+        DosSpectrum* spectrum = nullptr;
+        if (out_dos == 2)
         {
-            std::stringstream ss3;
-            ss3 << PARAM.globalv.global_out_dir << "fermi" << is << ".bxsf";
-            nscf_fermi_surface(ss3.str(), nbands, energy_fermi.ef, kv, ucell, ekb);
+            spectrum = &total_dos[is];
+        }
+        else
+        {
+            ss << global_out_dir << "doss" << is + 1;
+            if (istep >= 0 && out_app_flag == 2) { ss << "g" << istep + 1; }
+            ss << ".txt";
+        }
+        const bool calculated = ModuleIO::cal_dos(is,
+                ss.str(),
+                dos_edelta_ev,
+                emax,
+                emin,
+                bcoeff,
+                kv.get_nks(),
+                kv.get_nkstot(),
+                kv.wk,
+                kv.isk,
+                nbands,
+                ekb,
+                wg,
+                istep,
+                out_app_flag,
+                precision,
+                bndpar,
+                spectrum);
+
+        if (out_dos == 2 && !calculated)
+        {
+            ModuleBase::WARNING_QUIT("write_dos_lcao", "Cannot calculate total DOS for dos.npy");
+        }
+        if (out_dos != 2 && GlobalV::MY_RANK == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "DOS", is, nspin, ss.str());
         }
     }
 
-    ofs_running << " #DOS CALCULATION ENDS# " << std::endl;
+
+    // out_dos >= 1: always compute PDOS alongside DOS (LCAO only)
+    const std::vector<ModuleBase::matrix> pdos = cal_pdos(psi,
+            p_ham,
+            pv,
+            kv,
+            nspin0,
+            nbands,
+            ekb,
+            emax,
+            emin,
+            dos_edelta_ev,
+            bcoeff,
+            nlocal,
+            nspin);
+
+    std::string error;
+    if (GlobalV::MY_RANK == 0)
+    {
+        if (out_dos == 2)
+        {
+            std::string path = global_out_dir + "dos.npy";
+            try
+            {
+                write_dos_npy(path, total_dos);
+                ModuleIO::write_notice(ofs_running, "DOS", path);
+                path = global_out_dir + "pdos.npy";
+                write_pdos_npy(ucell, pdos, nspin, emin, dos_edelta_ev, path);
+                ModuleIO::write_notice(ofs_running, "PDOS", path);
+            }
+            catch (const std::exception& e)
+            {
+                error = path + ": " + e.what();
+            }
+        }
+        else
+        {
+            write_pdos_text(ucell, pdos.data(), nspin, nlocal, pdos.front().nc,
+                            emin, dos_edelta_ev, global_out_dir, istep, out_app_flag, precision, ofs_running);
+        }
+    }
+    if (out_dos == 2)
+    {
+        Parallel_Common::bcast_string(error);
+        if (!error.empty()) { ModuleBase::WARNING_QUIT("write_dos_lcao", error); }
+    }
+
+    ofs_running << " #DOS CALCULATION ENDS#" << std::endl;
 
     return;
 }
@@ -108,37 +208,59 @@ void write_dos_lcao(
 
 template void write_dos_lcao(
         const psi::Psi<double>* psi,
-		hamilt::Hamilt<double>* p_ham,
+        hamilt::Hamilt<double>* p_ham,
         const Parallel_Orbitals &pv, 
         const UnitCell& ucell,
-		const K_Vectors& kv,
-		const int nbands,
-		const elecstate::Efermi &energy_fermi,
+        const K_Vectors& kv,
+        const int nbands,
+        const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool out_app_flag,
+        const int out_dos,
+        const int out_app_flag,
+        const int precision,
         const int istep,
+        const int nspin,
+        const int nlocal,
+        const bool dos_setemax,
+        const double dos_emax_ev,
+        const bool dos_setemin,
+        const double dos_emin_ev,
+        const bool two_fermi,
+        const int bndpar,
+        const std::string& global_out_dir,
         std::ofstream &ofs_running);
 
 
 template void write_dos_lcao(
         const psi::Psi<std::complex<double>>* psi,
-		hamilt::Hamilt<std::complex<double>>* p_ham,
+        hamilt::Hamilt<std::complex<double>>* p_ham,
         const Parallel_Orbitals &pv, 
         const UnitCell& ucell,
-		const K_Vectors& kv,
-		const int nbands,
-		const elecstate::Efermi &energy_fermi,
+        const K_Vectors& kv,
+        const int nbands,
+        const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
-        const bool out_app_flag,
+        const int out_dos,
+        const int out_app_flag,
+        const int precision,
         const int istep,
+        const int nspin,
+        const int nlocal,
+        const bool dos_setemax,
+        const double dos_emax_ev,
+        const bool dos_setemin,
+        const double dos_emin_ev,
+        const bool two_fermi,
+        const int bndpar,
+        const std::string& global_out_dir,
         std::ofstream &ofs_running);
 
 }

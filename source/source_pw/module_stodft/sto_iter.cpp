@@ -2,13 +2,15 @@
 
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/para_gemm.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_estate/kernels/elecstate_op.h"
+#include "source_estate/module_charge/chg_parallel.h"
 #include "source_estate/occupy.h"
-#include "source_hsolver/para_linear_transform.h"
+#include "source_hsolver/para_lin_tf.h"
 #include "source_io/module_parameter/parameter.h"
 
 template <typename T, typename Device>
@@ -39,11 +41,11 @@ void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       Stochastic_WF<T, Device>& stowf,
                                       StoChe<Real, Device>& stoche,
-                                      hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto)
+                                      StoHamiltPW<T, Device>* p_hamilt_sto)
 {
-    p_che = stoche.p_che;
-    spolyv = stoche.spolyv;
-    spolyv_cpu = stoche.spolyv_cpu;
+    p_che = stoche.p_che.get();
+    spolyv = stoche.spolyv.get();
+    spolyv_cpu = stoche.spolyv_cpu.data();
     nchip = stowf.nchip;
     targetne = PARAM.inp.nelec;
     this->pkv = pkv_in;
@@ -56,7 +58,7 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi, Stochastic_WF<T, Device>& stowf)
 {
     ModuleBase::TITLE("Stochastic_Iter", "orthog");
-    ModuleBase::timer::tick("Stochastic_Iter", "orthog");
+    ModuleBase::timer::start("Stochastic_Iter", "orthog");
     int nbands_l = psi.get_nbands();
     const int nbands = PARAM.inp.nbands;
     // orthogonal part
@@ -130,7 +132,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
 
         delmem_complex_op()(sum);
     }
-    ModuleBase::timer::tick("Stochastic_Iter", "orthog");
+    ModuleBase::timer::end("Stochastic_Iter", "orthog");
 }
 
 template <typename T, typename Device>
@@ -140,7 +142,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
                                           Stochastic_WF<T, Device>& stowf)
 {
     ModuleBase::TITLE("Stochastic_Iter", "checkemm");
-    ModuleBase::timer::tick("Stochastic_Iter", "checkemm");
+    ModuleBase::timer::start("Stochastic_Iter", "checkemm");
     // iter = 1,2,...   istep = 0,1,2,...
     //  if( istep%PARAM.inp.initsto_freq != 0 )    return;
     const int npw = stowf.ngk[ik];
@@ -149,6 +151,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     {
         if (iter > 5)
         {
+            ModuleBase::timer::end("Stochastic_Iter", "checkemm");
             return;
         }
     }
@@ -156,6 +159,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     {
         if (iter > 1)
         {
+            ModuleBase::timer::end("Stochastic_Iter", "checkemm");
             return;
         }
     }
@@ -182,7 +186,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
         while (true)
         {
             bool converge;
-            auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<T, Device>::hPsi_norm,
+            auto hchi_norm = std::bind(&StoHamiltPW<T, Device>::hPsi_norm,
                                        p_hamilt_sto,
                                        std::placeholders::_1,
                                        std::placeholders::_2,
@@ -214,7 +218,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
         }
         change = false;
     }
-    ModuleBase::timer::tick("Stochastic_Iter", "checkemm");
+    ModuleBase::timer::end("Stochastic_Iter", "checkemm");
 }
 
 template <typename T, typename Device>
@@ -272,7 +276,7 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::itermu(const int iter, elecstate::ElecState* pes)
 {
     ModuleBase::TITLE("Stochastic_Iter", "itermu");
-    ModuleBase::timer::tick("Stochastic_Iter", "itermu");
+    ModuleBase::timer::start("Stochastic_Iter", "itermu");
     double dmu = 0.0;
     if (iter == 1)
     {
@@ -359,7 +363,7 @@ void Stochastic_Iter<T, Device>::itermu(const int iter, elecstate::ElecState* pe
             }
         }
     }
-    ModuleBase::timer::tick("Stochastic_Iter", "itermu");
+    ModuleBase::timer::end("Stochastic_Iter", "itermu");
     return;
 }
 
@@ -367,7 +371,7 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& stowf)
 {
     ModuleBase::TITLE("Stochastic_Iter", "calPn");
-    ModuleBase::timer::tick("Stochastic_Iter", "calPn");
+    ModuleBase::timer::start("Stochastic_Iter", "calPn");
 
     const int norder = p_che->norder;
     const int nchip_ik = nchip[ik];
@@ -396,7 +400,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         pchi = stowf.chi0->get_pointer();
     }
 
-    auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<T, Device>::hPsi_norm,
+    auto hchi_norm = std::bind(&StoHamiltPW<T, Device>::hPsi_norm,
                                p_hamilt_sto,
                                std::placeholders::_1,
                                std::placeholders::_2,
@@ -428,7 +432,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         ModuleBase::gemm_op<Real, Device>()(trans, normal, N, N, M, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
         // dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv, &N);
     }
-    ModuleBase::timer::tick("Stochastic_Iter", "calPn");
+    ModuleBase::timer::end("Stochastic_Iter", "calPn");
     return;
 }
 
@@ -436,7 +440,7 @@ template <typename T, typename Device>
 double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
 {
     ModuleBase::TITLE("Stochastic_Iter", "calne");
-    ModuleBase::timer::tick("Stochastic_Iter", "calne");
+    ModuleBase::timer::start("Stochastic_Iter", "calne");
     double totne = 0;
     KS_ne = 0;
     const int norder = p_che->norder;
@@ -476,7 +480,7 @@ double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
 #endif
 
     totne = KS_ne + sto_ne;
-    ModuleBase::timer::tick("Stochastic_Iter", "calne");
+    ModuleBase::timer::end("Stochastic_Iter", "calne");
     return totne;
 }
 
@@ -484,14 +488,14 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
 {
     ModuleBase::TITLE("Stochastic_Iter", "calHsqrtchi");
-    ModuleBase::timer::tick("Stochastic_Iter", "calHsqrtchi");
+    ModuleBase::timer::start("Stochastic_Iter", "calHsqrtchi");
     auto nroot_fd = std::bind(&Sto_Func<double>::nroot_fd, &this->stofunc, std::placeholders::_1);
     p_che->calcoef_real(nroot_fd);
     for (int ik = 0; ik < this->pkv->get_nks(); ++ik)
     {
         this->calTnchi_ik(ik, stowf);
     }
-    ModuleBase::timer::tick("Stochastic_Iter", "calHsqrtchi");
+    ModuleBase::timer::end("Stochastic_Iter", "calHsqrtchi");
 }
 
 template <typename T, typename Device>
@@ -501,7 +505,7 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
                                              ModulePW::PW_Basis_K* wfc_basis)
 {
     ModuleBase::TITLE("Stochastic_Iter", "sum_stoeband");
-    ModuleBase::timer::tick("Stochastic_Iter", "sum_stoeband");
+    ModuleBase::timer::start("Stochastic_Iter", "sum_stoeband");
     const int npwx = wfc_basis->npwk_max;
     const int norder = p_che->norder;
 
@@ -583,7 +587,7 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
     Parallel_Reduce::reduce_all(sto_eband);
 #endif
     pes->f_en.eband += sto_eband;
-    ModuleBase::timer::tick("Stochastic_Iter", "sum_stoeband");
+    ModuleBase::timer::end("Stochastic_Iter", "sum_stoeband");
 }
 
 template <typename T, typename Device>
@@ -593,7 +597,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
                                              ModulePW::PW_Basis_K* wfc_basis)
 {
     ModuleBase::TITLE("Stochastic_Iter", "cal_storho");
-    ModuleBase::timer::tick("Stochastic_Iter", "cal_storho");
+    ModuleBase::timer::start("Stochastic_Iter", "cal_storho");
     //---------------------cal rho-------------------------
     const int nrxx = wfc_basis->nrxx;
     const int npwx = wfc_basis->npwk_max;
@@ -642,8 +646,8 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
         for (int ichi = 0; ichi < nchip_ik; ++ichi)
         {
             wfc_basis->recip_to_real(this->ctx, tmpout, porter, ik);
-            const auto w1 = static_cast<Real>(this->pkv->wk[ik]);
-            elecstate::elecstate_pw_op<Real, Device>()(this->ctx, current_spin, nrxx, w1, pes->rho, porter);
+            const Real w1 = static_cast<Real>(this->pkv->wk[ik]);
+            elecstate::elecstate_pw_op<Real, Device>()(this->ctx, current_spin, nrxx, pes->charge->nrxx, w1, pes->rho, porter);
             // for (int ir = 0; ir < nrxx; ++ir)
             // {
             //     pes->charge->rho[0][ir] += norm(porter[ir]) * this->pkv->wk[ik];
@@ -669,7 +673,11 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
     {
         for (int is = 0; is < nspin; ++is)
         {
-            pes->charge->reduce_diff_pools(sto_rho[is]);
+            module_charge::reduce_diff_pools(sto_rho[is],
+                                             *pes->charge,
+                                             GlobalV::KPAR,
+                                             PARAM.globalv.all_ks_run,
+                                             PARAM.inp.bndpar);
             if (!PARAM.globalv.all_ks_run && PARAM.inp.bndpar > 1)
             {
                 MPI_Allreduce(MPI_IN_PLACE, sto_rho[is], nrxx, MPI_DOUBLE, MPI_SUM, BP_WORLD);
@@ -732,7 +740,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
         }
     }
 
-    ModuleBase::timer::tick("Stochastic_Iter", "cal_storho");
+    ModuleBase::timer::end("Stochastic_Iter", "cal_storho");
     return;
 }
 
@@ -776,7 +784,7 @@ void Stochastic_Iter<T, Device>::calTnchi_ik(const int& ik, Stochastic_WF<T, Dev
         {
             p_hamilt_sto->updateHk(ik); // necessary, because itermu should be called before this function
         }
-        auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<T, Device>::hPsi_norm,
+        auto hchi_norm = std::bind(&StoHamiltPW<T, Device>::hPsi_norm,
                                    p_hamilt_sto,
                                    std::placeholders::_1,
                                    std::placeholders::_2,

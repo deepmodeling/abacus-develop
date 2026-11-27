@@ -2,20 +2,23 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+
 #include <algorithm>
 #include <cmath>
 #include <ostream>
 
-bool Line_Search::line_search(const bool restart,
-                              const double x, // current point
-                              const double y, // function value at current point
-                              const double f, // derivative at current point
-                              double& xnew,   // the next point that we want to try
-                              const double conv_thr)
+bool Line_Search::line_search(
+    const bool restart,
+    const double x, // current point
+    const double y, // function value at current point
+    const double f, // derivative at current point
+    double &xnew,   // the next point that we want to try
+    const double conv_thr,
+    std::ofstream &ofs_running)
 {
-    if (restart) 
+    if (restart)
     {
-	ls_step = 0;
+        ls_step = 0;
     }
 
     if (ls_step == 0) // first point: make a trial step into trial direction
@@ -39,13 +42,17 @@ bool Line_Search::line_search(const bool restart,
 
     if (ls_step >= 2)
     {
-        return this->brent(x, y, f, xnew, conv_thr);
+        return this->brent(x, y, f, xnew, conv_thr, ofs_running);
     }
     ModuleBase::WARNING_QUIT("line_search", "ls_step <0");
     __builtin_unreachable();
 }
 
-bool Line_Search::first_order(const double x, const double y, const double f, double& xnew)
+bool Line_Search::first_order(
+    const double x,
+    const double y,
+    const double f,
+    double &xnew)
 {
     xa = x; // set the first endpoint
     ya = y;
@@ -55,7 +62,12 @@ bool Line_Search::first_order(const double x, const double y, const double f, do
     return false;
 }
 
-bool Line_Search::third_order(const double x, const double y, const double f, double& xnew, const double conv_thr)
+bool Line_Search::third_order(
+    const double x,
+    const double y,
+    const double f,
+    double &xnew,
+    const double conv_thr)
 {
     double dmove = 0.0;
     double dmoveh = 0.0;
@@ -102,26 +114,26 @@ bool Line_Search::third_order(const double x, const double y, const double f, do
         }
 
         dmoveh = -fa / (fab - fa) / 2.0;
-        if (dmoveh < 0) 
-	{
+        if (dmoveh < 0)
+        {
             dmoveh = 4.0;
         }
- 
-        if (dmove > 2.0 * dmoveh || dmoveh > 2.0 * dmove || (fa * fb > 0 && dmove < 1.0)
-            || (fa * fb < 0 && dmove > 1.0))
+
+        if (dmove > 2.0 * dmoveh || dmoveh > 2.0 * dmove || (fa * fb > 0 && dmove < 1.0) ||
+            (fa * fb < 0 && dmove > 1.0))
         {
             dmove = dmoveh;
         }
     } // end anharmonic case
 
-    if (dmove > 4.0) 
+    if (dmove > 4.0)
     {
-	dmove = 4.0;
+        dmove = 4.0;
     }
     xnew = dmove + xa;
 
     double dy = (fb + (fab - fb) / (xa - xb) * (dmove - xb)) * (dmove - xb);
-    if (std::abs(dy) < conv_thr) 
+    if (std::abs(dy) < conv_thr)
     {
         return true;
     }
@@ -142,8 +154,8 @@ void Line_Search::init_brent(const double x, const double y, const double f)
         xb = x;
         yb = y;
         fb = f;
-        if (fa * fb > 0) 
-	{
+        if (fa * fb > 0)
+        {
             bracked = false;
         }
         fstart = fa;
@@ -194,7 +206,13 @@ void Line_Search::update_brent(const double x, const double y, const double f)
     }
 }
 
-bool Line_Search::brent(const double x, const double y, const double f, double& xnew, const double conv_thr)
+bool Line_Search::brent(
+    const double x,
+    const double y,
+    const double f,
+    double &xnew,
+    const double conv_thr,
+    std::ofstream &ofs_running)
 {
     ls_step++;
 
@@ -239,8 +257,8 @@ bool Line_Search::brent(const double x, const double y, const double f, double& 
                 p = s * (2.0 * xm * qq * (qq - r) - (xb - xa) * (r - 1.0));
                 qq = (qq - 1.0) * (r - 1.0) * (s - 1.0);
             }
-            if (p > 0.0) 
-	    {
+            if (p > 0.0)
+            {
                 qq = -qq;
             }
             p = std::abs(p);
@@ -280,15 +298,15 @@ bool Line_Search::brent(const double x, const double y, const double f, double& 
         }
 
         xnew = xb;
-        if (std::abs(dy) < conv_thr) 
-	{
+        if (std::abs(dy) < conv_thr)
+        {
             return true;
         }
         if (ls_step == 4) // I'm not sure if this is a good choice, but the idea is there should not be so many line
                           // search steps I feel if the line search does not converge, we'd better change the direction
                           // and restart line search
         {
-            GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
+            ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
             // ModuleBase::WARNING_QUIT("Brent","too many steps in line search, something wrong");
         }
@@ -343,8 +361,8 @@ bool Line_Search::brent(const double x, const double y, const double f, double& 
                 p = s * (2.0 * xm * qq * (qq - r) - (xb - xa) * (r - 1.0));
                 qq = (qq - 1.0) * (r - 1.0) * (s - 1.0);
             }
-            if (p > 0.0) 
-	    {
+            if (p > 0.0)
+            {
                 qq = -qq;
             }
             p = std::abs(p);
@@ -390,15 +408,14 @@ bool Line_Search::brent(const double x, const double y, const double f, double& 
         }
 
         xnew = xb;
-        if (std::abs(dy) < conv_thr) 
+        if (std::abs(dy) < conv_thr)
         {
             return true;
         }
         if (ls_step == 4)
         {
-            GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
+            ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
-            // ModuleBase::WARNING_QUIT("Brent","too many steps in line search, something wrong");
         }
         return false;
     } // end ibrack

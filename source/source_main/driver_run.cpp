@@ -1,16 +1,16 @@
-#include "source_main/driver.h"
-#include "source_cell/check_atomic_stru.h"
-#include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_relax/relax_driver.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_io/module_json/para_json.h"
-#include "source_io/module_output/print_info.h"
-#include "source_md/run_md.h"
 #include "source_base/global_variable.h"
-#include "source_base/module_device/device.h"
-#include "source_base/module_device/memory_op.h"
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_cell/check_atomic_stru.h"
+#include "source_cell/dom_decomp.h"
+#include "source_cell/mdcell.h"
+#include "source_cell/mdcell_adapter.h"
+#include "source_esolver/esolver_factory.h"
 #include "source_hsolver/kernels/hegvd_op.h"
+#include "source_io/module_json/para_json.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_main/driver.h"
+#include "source_md/run_md.h"
+#include "source_relax/relax_driver.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
@@ -41,72 +41,117 @@ void Driver::driver_run()
     //! 1: setup cell and atom information
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
-    if (PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "lcao") {
-        ModuleBase::WARNING_QUIT("driver",
-                                 "to use LCAO basis, compile with __LCAO");
+    if (PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "lcao")
+    {
+        ModuleBase::WARNING_QUIT("driver", "to use LCAO basis, compile with __LCAO");
     }
-#endif
-
-    // the life of ucell should begin here, mohan 2024-05-12
-    UnitCell ucell;
-    ucell.setup(PARAM.inp.latname,
-                PARAM.inp.ntype,
-                PARAM.inp.lmaxmax,
-                PARAM.inp.init_vel,
-                PARAM.inp.fixed_axes);
-
-    ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running);
-    unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
-
-    //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
-    this->init_hardware();
-
-    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, ucell);
-
-    //! 3: initialize Esolver and fill json-structure
-    p_esolver->before_all_runners(ucell, PARAM.inp);
-
-    // this Json part should be moved to before_all_runners, mohan 2024-05-12
-#ifdef __RAPIDJSON
-    Json::gen_stru_wrapper(&ucell);
 #endif
 
     const std::string cal = PARAM.inp.calculation;
+    const Input_para& input = PARAM.inp;
 
-    //! 4: different types of calculations
+    this->init_hardware();
+    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp);
+
+    const bool direct_mdcell = input.esolver_type == "lj" || input.esolver_type == "dp" || input.esolver_type == "nep"
+                               || input.esolver_type == "snap";
+    UnitCell ucell;
+    bool ucell_initialized = false;
+    const auto initialize_ucell = [&ucell, &ucell_initialized, &input]() {
+        if (ucell_initialized)
+        {
+            return;
+        }
+
+        ucell.setup_from_input(input.latname, input.ntype, input.lmaxmax, input.init_vel, input.fixed_axes);
+        ucell.setup_cell(PARAM.globalv.global_in_stru,
+                         GlobalV::ofs_running,
+                         input.symmetry_prec,
+                         input.dfthalf_type,
+                         input.pseudo_dir,
+                         input.nspin,
+                         input.basis_type,
+                         input.orbital_dir,
+                         input.init_wfc,
+                         input.onsite_radius,
+                         PARAM.globalv.deepks_setorb,
+                         input.rpa,
+                         input.fixed_atoms,
+                         input.noncolin,
+                         input.calculation,
+                         input.esolver_type,
+                         std::stoi(input.symmetry));
+        unitcell::check_atomic_stru(ucell, input.min_dist_coef);
+        ucell_initialized = true;
+
+#ifdef __JSON
+        Json::gen_stru_wrapper(&ucell, input);
+#endif
+    };
+
     if (cal == "md")
     {
-        Run_MD::md_line(ucell, p_esolver, PARAM);
-    }
-    else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
-    {
-        Relax_Driver rl_driver;
-        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp);
-    }
-    else if (cal == "get_s")
-    {
-        p_esolver->runner(ucell, 0);
-    }
-    else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs" ||
-             cal == "test_memory" || cal == "test_neighbour")
-    {
-        const int istep = 0;
-        p_esolver->others(ucell, istep);
+        MDCell mdcell;
+        DomainDecomposition decomp;
+        if (direct_mdcell)
+        {
+            MDCellAdapter::initialize_from_stru(mdcell,
+                                                decomp,
+                                                PARAM.globalv.global_in_stru,
+                                                input.cell_replica,
+                                                input.mdp.md_restart,
+                                                input.mdp.md_neighbor_skin,
+                                                GlobalV::ofs_running);
+            p_esolver->before_all_runners(mdcell, PARAM.inp);
+            Run_MD::md_line(mdcell, p_esolver, PARAM, decomp);
+            p_esolver->after_all_runners(mdcell);
+        }
+        else
+        {
+            initialize_ucell();
+            MDCellAdapter::initialize_backed_from_unitcell(mdcell, decomp, ucell);
+            p_esolver->before_all_runners(ucell, PARAM.inp);
+            Run_MD::md_line(mdcell, p_esolver, PARAM, decomp);
+            p_esolver->after_all_runners(ucell);
+        }
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Driver::driver_run","cannot recognize the 'calculation' command");
+        initialize_ucell();
+        p_esolver->before_all_runners(ucell, PARAM.inp);
+        if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
+        {
+            Relax_Driver rl_driver;
+            rl_driver.relax_driver(p_esolver, ucell, PARAM.inp, GlobalV::ofs_running);
+        }
+        else if (cal == "get_s")
+        {
+            p_esolver->runner(ucell, 0);
+        }
+        else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs"
+                 || cal == "test_memory" || cal == "test_neighbour")
+        {
+            p_esolver->others(ucell, 0);
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Driver::driver_run", "cannot recognize the 'calculation' command");
+        }
+        if (cal != "scf" && cal != "relax" && cal != "cell-relax" && cal != "nscf")
+        {
+            p_esolver->after_all_runners(ucell);
+        }
     }
-
-    //! 5: clean up esolver
-    p_esolver->after_all_runners(ucell);
 
     delete p_esolver;
 
     this->finalize_hardware();
 
     //! 6: output the json file
-    Json::create_Json(&ucell, PARAM);
+    if (ucell_initialized)
+    {
+        Json::create_Json(&ucell, PARAM);
+    }
 
     return;
 }
@@ -124,13 +169,6 @@ void Driver::init_hardware()
 #endif
 
 #ifdef __DSP
-    if (GlobalV::NPROC > PARAM.inp.kpar && GlobalV::NPROC > PARAM.globalv.kpar_lcao)
-    {
-        ModuleBase::WARNING_QUIT(
-            "Driver::init_hardware",
-            "Number of processors must be equal to KPAR for DSP hardware initialization."
-        );
-    }
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
     mtfunc::dspInitHandle(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
@@ -150,6 +188,6 @@ void Driver::finalize_hardware()
 
 #ifdef __DSP
     std::cout << " ** Closing DSP Hardware..." << std::endl;
-    mtfunc::dspDestoryHandle(GlobalV::MY_RANK);
+    mtfunc::dspDestoryHandle(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
 }

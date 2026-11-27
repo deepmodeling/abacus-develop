@@ -14,7 +14,7 @@ void KEDF_TF::set_para(int nx, double dV, double tf_weight)
 
 /**
  * @brief Get the energy of TF KEDF,
- * \f[ E_{TF} = c_{TF} * \int{\rho^{5/3} dr} \f]
+ * \f[ E_{TF} = tf_weight * c_{TF} * \int{\rho^{5/3} dr} \f]
  *
  * @param prho charge density
  * @return the energy of TF KEDF
@@ -28,7 +28,7 @@ double KEDF_TF::get_energy(const double* const* prho)
         {
             energy += std::pow(prho[0][ir], 5. / 3.);
         }
-        energy *= this->dV_ * this->c_tf_;
+        energy *= this->dV_ * this->c_tf_ * this->tf_weight_;
     }
     else if (PARAM.inp.nspin == 2)
     {
@@ -43,7 +43,7 @@ double KEDF_TF::get_energy(const double* const* prho)
     }
     this->tf_energy = energy;
     Parallel_Reduce::reduce_all(this->tf_energy);
-    return energy;
+    return this->tf_energy;
 }
 
 /**
@@ -100,7 +100,8 @@ void KEDF_TF::tau_tf(const double* const* prho, double* rtau_tf)
  */
 void KEDF_TF::tf_potential(const double* const* prho, ModuleBase::matrix& rpotential)
 {
-    ModuleBase::timer::tick("KEDF_TF", "tf_potential");
+    ModuleBase::TITLE("KEDF_TF", "tf_potential");
+    ModuleBase::timer::start("KEDF_TF", "tf_potential");
     if (PARAM.inp.nspin == 1)
     {
         for (int ir = 0; ir < this->nx_; ++ir)
@@ -121,7 +122,7 @@ void KEDF_TF::tf_potential(const double* const* prho, ModuleBase::matrix& rpoten
 
     this->get_energy(prho);
 
-    ModuleBase::timer::tick("KEDF_TF", "tf_potential");
+    ModuleBase::timer::end("KEDF_TF", "tf_potential");
 }
 
 /**

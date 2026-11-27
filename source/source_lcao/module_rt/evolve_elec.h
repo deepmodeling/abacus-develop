@@ -3,17 +3,25 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/module_container/ATen/core/tensor.h"     // ct::Tensor
-#include "source_base/module_container/ATen/core/tensor_map.h" // TensorMap
-#include "source_base/module_device/device.h"                  // base_device
-#include "source_base/module_device/memory_op.h"               // memory operations
-#include "source_base/module_external/scalapack_connector.h"   // Cpxgemr2d
-#include "source_esolver/esolver_ks_lcao.h"
-#include "source_esolver/esolver_ks_lcao_tddft.h"
-#include "source_lcao/hamilt_lcao.h"
+#include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
+#include "source_base/module_device/device.h"              // base_device
+#include "source_base/module_device/memory_op.h"           // memory operations
+#include "source_hamilt/hamilt.h"
+#include "source_lcao/module_rt/band_energy.h"
 #include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
+#include "source_lcao/module_rt/td_moving_gauge.h"
 #include "source_psi/psi.h"
+
+class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
+
+namespace ModuleESolver
+{
+template <typename TK, typename TR>
+class ESolver_KS_LCAO;
+template <typename TR, typename Device>
+class ESolver_KS_LCAO_TDDFT;
+} // namespace ModuleESolver
 
 //-----------------------------------------------------------
 // mohan add 2021-02-09
@@ -144,12 +152,14 @@ class Evolve_elec
     ~Evolve_elec();
 
   private:
-    static void solve_psi(const int& istep,
+    static void solve_psi(const std::vector<EijOutputInfo>& eij_output,
                           const int nband,
                           const int nlocal,
                           const int& nks,
                           hamilt::Hamilt<std::complex<double>>* phm,
-                          Parallel_Orbitals& para_orb,
+                          const Parallel_Blkcyclic& matrix_layout,
+                          const Parallel_Blkcyclic& wfc_layout,
+                          const Parallel_Blkcyclic& mo_repr_layout,
                           psi::Psi<std::complex<double>>* psi,
                           psi::Psi<std::complex<double>>* psi_laststep,
                           ct::Tensor& Hk_laststep,
@@ -158,7 +168,11 @@ class Evolve_elec
                           std::ofstream& ofs_running,
                           const int propagator,
                           const bool use_tensor,
-                          const bool use_lapack);
+                          const bool use_lapack,
+                          module_rt::TD_MovingGauge* td_mg,
+                          const UnitCell* ucell,
+                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                          const bool use_td_moving_gauge);
 
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     static ct::DeviceType ct_device_type;
@@ -168,10 +182,8 @@ class Evolve_elec
     // Memory operations
     using syncmem_double_h2d_op = base_device::memory::synchronize_memory_op<double, Device, base_device::DEVICE_CPU>;
     using syncmem_double_d2h_op = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, Device>;
-    using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op
-        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>;
 };
 } // namespace module_rt
 #endif

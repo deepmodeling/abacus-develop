@@ -1,8 +1,8 @@
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
-#include "../module_ewald/H_Ewald_pw.h"
 #include "../module_ewald/dnrm2.h"
+#include "../module_ewald/h_ewald_pw.h"
 #include "source_base/matrix3.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include <vector>
 
 /************************************************
@@ -48,7 +48,7 @@ TEST_F(RgenTest, ZeroRmax)
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, 0.0, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
+    H_Ewald_pw::rgen(dtau, 0.0, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm, 0);
 
     EXPECT_EQ(nrm, 0);
 }
@@ -64,7 +64,7 @@ TEST_F(RgenTest, SimpleCubicNearestNeighbors)
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
+    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm, 0);
 
     EXPECT_EQ(nrm, 18);
 
@@ -98,7 +98,7 @@ TEST_F(RgenTest, SimpleCubicNonZeroDtau)
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
+    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm, 0);
 
     EXPECT_EQ(nrm, 2);
     for (int i = 0; i < nrm; ++i)
@@ -117,11 +117,17 @@ TEST_F(RgenTest, LargeRmaxExceedsOriginalLimit)
 
     // Replicate the dynamic mxr computation from compute_ewald()
     double bg1[3];
-    bg1[0] = G.e11; bg1[1] = G.e12; bg1[2] = G.e13;
+    bg1[0] = G.e11;
+    bg1[1] = G.e12;
+    bg1[2] = G.e13;
     int nm1 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
-    bg1[0] = G.e21; bg1[1] = G.e22; bg1[2] = G.e23;
+    bg1[0] = G.e21;
+    bg1[1] = G.e22;
+    bg1[2] = G.e23;
     int nm2 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
-    bg1[0] = G.e31; bg1[1] = G.e32; bg1[2] = G.e33;
+    bg1[0] = G.e31;
+    bg1[1] = G.e32;
+    bg1[2] = G.e33;
     int nm3 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
     const int mxr_test = (2 * nm1 + 1) * (2 * nm2 + 1) * (2 * nm3 + 1);
 
@@ -130,7 +136,7 @@ TEST_F(RgenTest, LargeRmaxExceedsOriginalLimit)
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
+    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm, 0);
 
     // Must exceed the old hard-coded limit that caused the crash
     EXPECT_GT(nrm, 200);

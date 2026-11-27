@@ -3,6 +3,17 @@ name: CUDA Test
 on:
   workflow_dispatch:
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '.coderabbit.yaml'
+  push:
+    branches:
+      - develop
+
+defaults:
+  run:
+    shell: bash
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -11,54 +22,152 @@ concurrency:
 jobs:
   test:
     name: Test on CUDA Build
-    runs-on: nvidia
+    runs-on: gpu
     if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-cuda
-      volumes:
-        - /tmp/ccache:/github/home/.ccache
       options: --gpus all
-      
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPRESS: "true"
+      CCACHE_MAXSIZE: 8G
+      # Test cases to run side by side on the GPU runner.
+      GPU_TEST_JOBS: "4"
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
         with:
           submodules: recursive
 
-      - name: Install Ccache
+      - name: Install CI tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache
+          sudo apt-get install -y ccache xz-utils ninja-build pkg-config
+
+      - name: Calculate compiler cache fingerprint
+        id: compiler
+        run: |
+          fingerprint="$({ c++ --version; nvcc --version; ccache --version; } | sha256sum | cut -d' ' -f1)"
+          echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore compiler cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
+          restore-keys: |
+            abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-
+
+      - name: Prepare compiler cache
+        run: |
+          mkdir -p "${CCACHE_DIR}"
+          ccache --set-config="max_size=${CCACHE_MAXSIZE}"
+          ccache --zero-stats
+
+      - name: Install external tools from toolchain
+        run: |
+          cd toolchain
+          ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
+          ./scripts/stage4/install_stage4.sh
+          cd ..
 
       - name: Configure & Build
         run: |
           nvidia-smi
+          source toolchain/install/setup
+          capabilities="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader)"
+          if [[ -z "${capabilities}" ]] || grep -qEv '^[0-9]+\.[0-9]+$' <<< "${capabilities}"; then
+            echo "::error::Could not detect valid CUDA compute capabilities from nvidia-smi"
+            exit 1
+          fi
+          architectures="$(tr -d '.' <<< "${capabilities}" | sort -nu | paste -sd';' -)"
+          echo "Detected CUDA architectures: ${architectures}"
           rm -rf build
-          cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
-          cmake --build build -j4
+          cmake -B build -G Ninja -DUSE_CUDA=ON -DENABLE_LIBXC=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
+            -DENABLE_GOOGLEBENCH=OFF \
+            -DCMAKE_CUDA_ARCHITECTURES="${architectures}"
+          cmake --build build -j "$(nproc)"
           cmake --install build
+
+      - name: Report compiler cache
+        if: always()
+        run: |
+          ccache --show-stats
+          ccache --show-stats >> "${GITHUB_STEP_SUMMARY}"
+
+      # Only develop writes the cache. A cache saved from a pull request is
+      # scoped to that pull request's ref, so no other branch can ever read
+      # it, while it still counts against the repository's 10 GB budget and
+      # evicts the develop entry that every pull request does restore from.
+      - name: Save compiler cache
+        if: github.ref == 'refs/heads/develop'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
+
+      - name: Module_LCAO CUDA Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R '^(MODULE_LCAO_tddft_radial_interpolation_cuda_test|MODULE_LCAO_tddft_snap_psibeta_half_test|MODULE_LCAO_radial_tables_gpu)$'
 
       - name: Test 11_PW_GPU
         run: |
           cd tests/11_PW_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
-      - name: Test 12_NAO_Gamma_GPU
+      - name: Test 02_NAO_Gamma on GPU
         run: |
-          cd tests/12_NAO_Gamma_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          cd tests/02_NAO_Gamma
+          find . -name INPUT | while read f; do
+              if grep -qE '^[[:space:]]*device[[:space:]]+' "$f"; then
+                  sed -i -E 's/^[[:space:]]*device[[:space:]]+.*/device    gpu/' "$f"
+              else
+                  printf '\ndevice    gpu\n' >> "$f"
+              fi
+          done
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
-      - name: Test 13_NAO_multik_GPU
+      - name: Test 03_NAO_multik on GPU
         run: |
-          cd tests/13_NAO_multik_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          cd tests/03_NAO_multik
+          find . -name INPUT | while read f; do
+              if grep -qE '^[[:space:]]*device[[:space:]]+' "$f"; then
+                  sed -i -E 's/^[[:space:]]*device[[:space:]]+.*/device    gpu/' "$f"
+              else
+                  printf '\ndevice    gpu\n' >> "$f"
+              fi
+          done
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
-      - name: Test 15_rtTDDFT_GPU
+      - name: Test 05_rtTDDFT on GPU
         run: |
-          cd tests/15_rtTDDFT_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          cd tests/05_rtTDDFT
+          find . -name INPUT | while read f; do
+              if grep -qE '^[[:space:]]*device[[:space:]]+' "$f"; then
+                  sed -i -E 's/^[[:space:]]*device[[:space:]]+.*/device    gpu/' "$f"
+              else
+                  printf '\ndevice    gpu\n' >> "$f"
+              fi
+          done
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 16_SDFT_GPU
         run: |
           cd tests/16_SDFT_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
+
+      - name: Test 01_PW on GPU
+        run: |
+          cd tests/01_PW
+          find . -name INPUT | while read f; do
+              if grep -q "^device" "$f"; then
+                  sed -i 's/^device.*/device    gpu/' "$f"
+              else
+                  printf '\ndevice    gpu\n' >> "$f"
+              fi
+          done
+          bash ../integrate/Autotest.sh -n 1 -j "$GPU_TEST_JOBS" -a abacus -f CASES_GPU.txt

@@ -31,6 +31,19 @@ class cal_vcav_test : public testing::Test
   protected:
     surchem solvent_model;
     UnitCell ucell;
+
+    // The solvent model carries no built-in defaults, so these tests state the
+    // values they were written against (the INPUT defaults for eb_k / tau /
+    // sigma_k / nc_k) instead of depending on SurchemParameters' initializers.
+    void SetUp() override
+    {
+        SurchemParameters parameters;
+        parameters.eb_k = 80.0;
+        parameters.tau = 1.0798e-05;
+        parameters.sigma_k = 0.6;
+        parameters.nc_k = 0.00037;
+        solvent_model.set_parameters(parameters);
+    }
 };
 TEST_F(cal_vcav_test, lapl_rho)
 {
@@ -41,7 +54,7 @@ TEST_F(cal_vcav_test, lapl_rho)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -54,8 +67,6 @@ TEST_F(cal_vcav_test, lapl_rho)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -71,11 +82,11 @@ TEST_F(cal_vcav_test, lapl_rho)
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
-    std::complex<double>* gdrtmpg = new std::complex<double>[npw];
-    double* lapn = new double[nrxx];
+    std::complex<double> *gdrtmpg = new std::complex<double>[npw];
+    double *lapn = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(lapn, nrxx);
 
-    std::complex<double>* aux = new std::complex<double>[pwtest.nmaxgr];
+    std::complex<double> *aux = new std::complex<double>[pwtest.nmaxgr];
 
     gdrtmpg[0] = {2.431e-07, 4.760e-08};
     gdrtmpg[1] = {-7.335e-08, 9.826e-07};
@@ -111,7 +122,7 @@ TEST_F(cal_vcav_test, shape_gradn)
     double TWO_PI = 6.283;
     double sigma_k = 0.6;
     double nc_k = 3.7e-04;
-    double* PS_TOTN_real = new double[nrxx];
+    double *PS_TOTN_real = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(PS_TOTN_real, nrxx);
 
     PS_TOTN_real[0] = 2.081e-03;
@@ -125,7 +136,7 @@ TEST_F(cal_vcav_test, shape_gradn)
     double epr_c = 1.0 / sqrt(TWO_PI) / sigma_k;
     double epr_z = 0;
     double min = 1e-10;
-    double* eprime = new double[nrxx];
+    double *eprime = new double[nrxx];
 
     for (int ir = 0; ir < nrxx; ir++)
     {
@@ -148,7 +159,7 @@ TEST_F(cal_vcav_test, createcavity)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -161,8 +172,6 @@ TEST_F(cal_vcav_test, createcavity)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -178,8 +187,8 @@ TEST_F(cal_vcav_test, createcavity)
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
-    std::complex<double>* PS_TOTN = new std::complex<double>[npw];
-    double* vwork = new double[nrxx];
+    std::complex<double> *PS_TOTN = new std::complex<double>[npw];
+    double *vwork = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(vwork, nrxx);
 
     PS_TOTN[0] = {2.432e-07, 4.862e-08};
@@ -209,7 +218,7 @@ TEST_F(cal_vcav_test, cal_vcav)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz;
     double wfcecut;
@@ -222,8 +231,6 @@ TEST_F(cal_vcav_test, cal_vcav)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -239,7 +246,7 @@ TEST_F(cal_vcav_test, cal_vcav)
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
-    std::complex<double>* PS_TOTN = new std::complex<double>[npw];
+    std::complex<double> *PS_TOTN = new std::complex<double>[npw];
 
     PS_TOTN[0] = {2.432e-07, 4.862e-08};
     PS_TOTN[1] = {-7.649e-08, 9.806e-07};
@@ -265,12 +272,10 @@ TEST_F(cal_vcav_test, cal_vcav)
     delete[] PS_TOTN;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

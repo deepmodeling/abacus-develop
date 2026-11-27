@@ -7,7 +7,7 @@ namespace ModulePW
 template <typename FPTYPE>
 void PW_Basis::real2recip_gpu(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::start(this->classname, "real_to_recip gpu");
     assert(this->poolnproc == 1);
     const size_t size = this->nrxx;
     base_device::memory::cast_memory_op<std::complex<FPTYPE>, FPTYPE,base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
@@ -25,7 +25,7 @@ void PW_Basis::real2recip_gpu(const FPTYPE* in, std::complex<FPTYPE>* out, const
                                                                    this->ig2ixyz_gpu,
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                                                    out);
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::end(this->classname, "real_to_recip gpu");
 }
 template <typename FPTYPE>
 void PW_Basis::real2recip_gpu(const std::complex<FPTYPE>* in,
@@ -33,7 +33,7 @@ void PW_Basis::real2recip_gpu(const std::complex<FPTYPE>* in,
                               const bool add,
                               const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::start(this->classname, "real_to_recip gpu");
     assert(this->poolnproc == 1);
     base_device::memory::synchronize_memory_op<std::complex<FPTYPE>,
                                                base_device::DEVICE_GPU,
@@ -50,13 +50,13 @@ void PW_Basis::real2recip_gpu(const std::complex<FPTYPE>* in,
                                                                    this->ig2ixyz_gpu,
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                                                    out);
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::end(this->classname, "real_to_recip gpu");
 }
 
 template <typename FPTYPE>
 void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in, FPTYPE* out, const bool add, const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::start(this->classname, "recip_to_real gpu");
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<FPTYPE>(), this->nxyz);
     base_device::memory::set_memory_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>()(
@@ -76,7 +76,7 @@ void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in, FPTYPE* out, const
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                                                    out);
 
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::end(this->classname, "recip_to_real gpu");
 }
 template <typename FPTYPE>
 void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in,
@@ -84,7 +84,7 @@ void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in,
                               const bool add,
                               const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::start(this->classname, "recip_to_real gpu");
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<double>(), this->nxyz);
     base_device::memory::set_memory_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>()(
@@ -105,7 +105,7 @@ void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in,
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                                                    out);
 
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::end(this->classname, "recip_to_real gpu");
 }
 template void PW_Basis::real2recip_gpu<double>(const double* in,
                                                std::complex<double>* out,

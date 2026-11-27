@@ -2,6 +2,7 @@
 #include "source_base/ylm.h"
 
 #include "gtest/gtest.h"
+#include <numeric>
 #include <random>
 #ifdef __MPI
 #include <mpi.h>
@@ -70,6 +71,19 @@ TEST_F(DelleyTest, NumGrid) {
     ngrid = ngrid_delley(lmax);
     EXPECT_EQ(lmax, 60);
     EXPECT_EQ(ngrid, -1);
+}
+
+
+TEST_F(DelleyTest, RawPointerInterface)
+{
+    int lmax = 17;
+    const int point_count = ngrid_delley(lmax);
+    std::vector<double> grid(3 * point_count);
+    std::vector<double> weight(point_count);
+
+    EXPECT_EQ(delley(lmax, grid.data(), weight.data()), 0);
+    EXPECT_EQ(lmax, 17);
+    EXPECT_NEAR(std::accumulate(weight.begin(), weight.end(), 0.0), 1.0, 1.0e-12);
 }
 
 

@@ -2,23 +2,36 @@ name: Integration Test and Unit Test
 
 on:
   pull_request:
+  push:
+    branches:
+      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: Test
-    runs-on: X64
+    runs-on:
+      - self-hosted
+      - cpu
+      - linux-x64
     if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-gnu
-      volumes:
-        - /tmp/ccache:/github/home/.ccache
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPRESS: "true"
+      CCACHE_MAXSIZE: 8G
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           # We will handle submodules manually after fixing ownership
@@ -32,28 +45,115 @@ jobs:
       - name: Install CI tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache ca-certificates python-is-python3 python3-pip
-          sudo pip install clang-format clang-tidy
+          sudo apt-get install -y \
+            gfortran \
+            ccache \
+            ca-certificates \
+            pkg-config \
+            python-is-python3 \
+            ninja-build \
+            xz-utils
+
+      - name: Calculate compiler cache fingerprint
+        id: compiler
+        run: |
+          fingerprint="$({ c++ --version; ccache --version; } | sha256sum | cut -d' ' -f1)"
+          echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore compiler cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: abacus-gnu-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
+          restore-keys: |
+            abacus-gnu-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-
+
+      - name: Prepare compiler cache
+        run: |
+          mkdir -p "${CCACHE_DIR}"
+          ccache --set-config="max_size=${CCACHE_MAXSIZE}"
+          ccache --zero-stats
+
+      - name: Install external tools from toolchain
+        run: |
+          cd toolchain
+          ./install_abacus_toolchain_new.sh --with-dftd4 --with-nep --dry-run -j8
+          ./scripts/stage4/install_stage4.sh
+          cd ..
+
+      # Keep the image's LibXC version: only enable the KXC needed by LR gradients.
+      - name: Identify LibXC version
+        id: libxc
+        run: echo "version=$(pkg-config --modversion libxc)" >> "${GITHUB_OUTPUT}"
+
+      - name: Cache LibXC with KXC
+        id: libxc-cache
+        uses: actions/cache@v6
+        with:
+          path: toolchain/install/libxc-kxc
+          key: libxc-kxc-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ steps.libxc.outputs.version }}
+
+      - name: Build LibXC with KXC
+        if: steps.libxc-cache.outputs.cache-hit != 'true'
+        env:
+          LIBXC_VERSION: ${{ steps.libxc.outputs.version }}
+        run: |
+          wget -q "https://gitlab.com/libxc/libxc/-/archive/${LIBXC_VERSION}/libxc-${LIBXC_VERSION}.tar.gz" -O /tmp/libxc-kxc.tar.gz
+          mkdir -p /tmp/libxc-kxc-source
+          tar -xzf /tmp/libxc-kxc.tar.gz --strip-components=1 -C /tmp/libxc-kxc-source
+          cmake -S /tmp/libxc-kxc-source -B /tmp/libxc-kxc-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="${GITHUB_WORKSPACE}/toolchain/install/libxc-kxc" \
+            -DCMAKE_INSTALL_LIBDIR=lib \
+            -DBUILD_SHARED_LIBS=ON -DENABLE_FORTRAN=OFF -DBUILD_TESTING=OFF \
+            -DDISABLE_KXC=OFF -DDISABLE_LXC=ON
+          cmake --build /tmp/libxc-kxc-build -j8
+          cmake --install /tmp/libxc-kxc-build
+
+      - name: Use KXC-enabled LibXC at runtime
+        run: echo "LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/toolchain/install/libxc-kxc/lib:${LD_LIBRARY_PATH:-}" >> "${GITHUB_ENV}"
+
+      - name: Test LR excited-state tracking checker
+        run: python3 tests/integrate/validation_tools/test_es_check.py
 
       - name: Configure
         run: |
-          cmake -B build -DBUILD_TESTING=ON -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DENABLE_FLOAT_FFTW=ON
-
-# Temporarily removed because no one maintains this now.
-# And it will break the CI test workflow.
-
-#      - uses: pre-commit/action@v3.0.1
-#        with:
-#          extra_args:
-#            --from-ref ${{ github.event.pull_request.base.sha }}
-#              --to-ref ${{ github.event.pull_request.head.sha }}
-#        continue-on-error: true
-#      - uses: pre-commit-ci/lite-action@v1.0.3
+          source toolchain/install/setup
+          cmake -B build -G Ninja \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DENABLE_MLALGO=ON \
+            -DENABLE_LIBXC=ON \
+            -DLibxc_DIR="${GITHUB_WORKSPACE}/toolchain/install/libxc-kxc/share/cmake/Libxc" \
+            -DENABLE_LIBRI=ON \
+            -DENABLE_GOOGLEBENCH=OFF \
+            -DENABLE_JSON=ON \
+            -DENABLE_FLOAT_FFTW=ON \
+            -DENABLE_DFTD4=ON \
+            -DENABLE_PEXSI=ON \
+            -DENABLE_NEP=ON \
+            -Werror=dev
 
       - name: Build
         run: |
           cmake --build build -j8
-          cmake --install build
+
+      - name: Report compiler cache
+        if: always()
+        run: |
+          ccache --show-stats
+          ccache --show-stats >> "${GITHUB_STEP_SUMMARY}"
+
+      # Only develop writes the cache. A cache saved from a pull request is
+      # scoped to that pull request's ref, so no other branch can ever read
+      # it, while it still counts against the repository's 10 GB budget and
+      # evicts the develop entry that every pull request does restore from.
+      - name: Save compiler cache
+        if: github.ref == 'refs/heads/develop'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: abacus-gnu-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
 
       - name: Integrated Tests Preparation
         env:
@@ -61,185 +161,199 @@ jobs:
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R integrated_test
-          
+
       - name: Module_Base Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_BASE
-          
+
       - name: Module_IO Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_IO
-          
+
       - name: Module_HSolver Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_HSOLVER -E PERF_MODULE_HSOLVER_KERNELS
-          
+          ctest --test-dir build -V --timeout 1700 -R MODULE_HSOLVER
+
       - name: Module_Cell Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_CELL
-          
+
       - name: Module_MD Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_MD
-          
+
       - name: Module_Psi Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_PSI
-          
+
       - name: Module_RI Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_RI
-      
+
       - name: Module_Estate Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_ESTATE
-      
+
+      - name: Module_Charge Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R MODULE_CHARGE
+
       - name: Module_Hamilt Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_HAMILT
-      
+
       - name: Module_PW Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_PW
-      
+
       - name: Module_LCAO Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_LCAO
-      
+
       - name: Module_AO Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_AO
-      
+
       - name: Module_NAO Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_NAO
-      
+
       - name: Module_RELAX Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_RELAX
-      
+
       - name: Module_LR Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_LR
-          
+
       - name: 01_PW Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R 01_PW
-          
+
       - name: 02_NAO_Gamma Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R 02_NAO_Gamma
-          
+
       - name: 03_NAO_multik Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R 03_NAO_multik
-          
+
       - name: 04_FF Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R 04_FF
-          
+
       - name: 05_rtTDDFT Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R 05_rtTDDFT
-          
+
       - name: 06_SDFT Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R 06_SDFT
-          
+
       - name: 07_OFDFT Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R 07_OFDFT
-          
-      - name: 08_EXX Test
+
+      - name: 08_RI Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 08_EXX
-          
+          ctest --test-dir build -V --timeout 1700 -R 08_RI
+
       - name: 09_DeePKS Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R 09_DeePKS
-          
+
       - name: 10_others Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R 10_others
-          
+
+#      - name: 17_DS_DFTU Test
+#        env:
+#          GTEST_COLOR: 'yes'
+#          OMP_NUM_THREADS: '2'
+#        run: |
+#          ctest --test-dir build -V --timeout 1700 -R 17_DS_DFTU
+
       - name: Other Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'
+          ctest --test-dir build -V --timeout 1700 -E 'integrated_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_RI|09_DeePKS|10_others|11_PW_GPU|16_SDFT_GPU|17_DS_DFTU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_CHARGE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'

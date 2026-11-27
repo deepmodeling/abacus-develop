@@ -30,6 +30,23 @@
 #include "../complexmatrix.h"
 #include "../global_function.h"
 
+#include <limits>
+// =========================================================
+// Tolerances for LAPACK/ScaLAPACK eigenvalue routines
+// =========================================================
+// Huawei KML strictly validates input parameters.
+// It rejects abstol=0 and orfac=-1, which are standard
+// defaults in open-source LAPACK to trigger internal logic.
+// We must explicitly pass the mathematically equivalent defaults.
+#ifdef __KML
+    constexpr double LAPACK_ABSTOL = 2*std::numeric_limits<double>::min();          // 2*PDLAMCH('S')
+    constexpr double LAPACK_ORFAC  = 2.0e-12;                                       // Default value
+#else
+    constexpr double LAPACK_ABSTOL = 0.0;
+    constexpr double LAPACK_ORFAC  = -1.0;
+#endif
+// =========================================================
+
 //Naming convention of lapack subroutines : ammxxx, where
 //"a" specifies the data type:
 // - s stands for float
@@ -142,6 +159,20 @@ void zhegvx_(const int* itype, const char* jobz, const char* range, const char* 
              std::complex<double>* work, const int* lwork,
              double* rwork, int* iwork, int* ifail,
              int* info);
+
+#ifdef __DSP
+void cpack_zhegvx_driver(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n,
+             std::complex<double>* a, const int* lda,
+             std::complex<double>* b, const int* ldb,
+             const double* vl, const double* vu,
+             const int* il, const int* iu,
+             const double* abstol,
+             int* m, double* w, std::complex<double>* z, const int* ldz,
+             std::complex<double>* work, const int* lwork,
+             double* rwork, int* iwork, int* ifail,
+             int* info);
+#endif
 
 // === Generalized Hermitian: all eigenvalues (simple driver) ===
 
@@ -301,6 +332,10 @@ void dsysv_(const char* uplo, const int* n, const int* nrhs,
             double* b, const int* ldb,
             double* work, const int* lwork,
             int* info);
+
+// === calculate matrix norm ===
+double dlange_(const char* norm, const int* m, const int* n, const double* A, const int* lda, double* work);
+double zlange_(const char* norm, const int* m, const int* n, const std::complex<double>* A, const int* lda, double* work);
 }  // extern "C"
 
 #ifdef GATHER_INFO
@@ -418,29 +453,29 @@ namespace LapackConnector
         }
     }
 
-	// Peize Lin add 2015-12-27
-	static inline
-	char change_uplo(const char &uplo)
-	{
-		switch(uplo)
-		{
-			case 'U': return 'L';
-			case 'L': return 'U';
-			default: throw std::invalid_argument("uplo must be 'U' or 'L'");
-		}
-	}
+    // Peize Lin add 2015-12-27
+    static inline
+    char change_uplo(const char &uplo)
+    {
+        switch(uplo)
+        {
+            case 'U': return 'L';
+            case 'L': return 'U';
+            default: throw std::invalid_argument("uplo must be 'U' or 'L'");
+        }
+    }
 
-	// Peize Lin add 2019-04-14
-	static inline
-	char change_trans_NC(const char &trans)
-	{
-		switch(trans)
-		{
-			case 'N': return 'C';
-			case 'C': return 'N';
-			default: throw std::invalid_argument("trans must be 'N' or 'C'");
-		}
-	}
+    // Peize Lin add 2019-04-14
+    static inline
+    char change_trans_NC(const char &trans)
+    {
+        switch(trans)
+        {
+            case 'N': return 'C';
+            case 'C': return 'N';
+            default: throw std::invalid_argument("trans must be 'N' or 'C'");
+        }
+    }
 
     // wrap function of fortran lapack routine zheev.
     static inline
@@ -483,95 +518,95 @@ namespace LapackConnector
         return;
     }
 
-	// Peize Lin add 2016-07-09
-	static inline
-	void potrf( const char &uplo, const int &n, float*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		spotrf_( &uplo_changed, &n, A, &lda, &info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, double*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		dpotrf_( &uplo_changed, &n, A, &lda, &info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		cpotrf_( &uplo_changed, &n, A, &lda, &info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		zpotrf_( &uplo_changed, &n, A, &lda, &info );
-	}	
+    // Peize Lin add 2016-07-09
+    static inline
+    void potrf( const char &uplo, const int &n, float*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        spotrf_( &uplo_changed, &n, A, &lda, &info );
+    }	
+    static inline
+    void potrf( const char &uplo, const int &n, double*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        dpotrf_( &uplo_changed, &n, A, &lda, &info );
+    }	
+    static inline
+    void potrf( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        cpotrf_( &uplo_changed, &n, A, &lda, &info );
+    }	
+    static inline
+    void potrf( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        zpotrf_( &uplo_changed, &n, A, &lda, &info );
+    }	
 
-	
-	// Peize Lin add 2016-07-09
-	static inline
-	void potri( const char &uplo, const int &n, float*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		spotri_( &uplo_changed, &n, A, &lda, &info);		
-	}	
-	static inline
-	void potri( const char &uplo, const int &n, double*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		dpotri_( &uplo_changed, &n, A, &lda, &info);		
-	}
-	static inline
-	void potri( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		cpotri_( &uplo_changed, &n, A, &lda, &info);		
-	}
-	static inline
-	void potri( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		zpotri_( &uplo_changed, &n, A, &lda, &info);		
-	}
+    
+    // Peize Lin add 2016-07-09
+    static inline
+    void potri( const char &uplo, const int &n, float*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        spotri_( &uplo_changed, &n, A, &lda, &info);		
+    }	
+    static inline
+    void potri( const char &uplo, const int &n, double*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        dpotri_( &uplo_changed, &n, A, &lda, &info);		
+    }
+    static inline
+    void potri( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        cpotri_( &uplo_changed, &n, A, &lda, &info);		
+    }
+    static inline
+    void potri( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        zpotri_( &uplo_changed, &n, A, &lda, &info);		
+    }
 
-	// Peize Lin add 2016-07-09
-	static inline
-	void potrf( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
-	{
-		potrf( uplo, n, A.c, lda, info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
-	{
-		potrf( uplo, n, A.c, lda, info );
-	}	
-	
-	// Peize Lin add 2016-07-09
-	static inline
-	void potri( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
-	{
-		potri( uplo, n, A.c, lda, info);		
-	}	
-	static inline
-	void potri( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
-	{
-		potri( uplo, n, A.c, lda, info);		
-	}	
-	
-	// Peize Lin add 2019-04-14
-	// if trans=='N':	C = a * A * A.H + b * C
-	// if trans=='C':	C = a * A.H * A + b * C
-	static inline
+    // Peize Lin add 2016-07-09
+    static inline
+    void potrf( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
+    {
+        potrf( uplo, n, A.c, lda, info );
+    }	
+    static inline
+    void potrf( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
+    {
+        potrf( uplo, n, A.c, lda, info );
+    }	
+    
+    // Peize Lin add 2016-07-09
+    static inline
+    void potri( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
+    {
+        potri( uplo, n, A.c, lda, info);		
+    }	
+    static inline
+    void potri( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
+    {
+        potri( uplo, n, A.c, lda, info);		
+    }	
+    
+    // Peize Lin add 2019-04-14
+    // if trans=='N':	C = a * A * A.H + b * C
+    // if trans=='C':	C = a * A.H * A + b * C
+    static inline
         void herk(const char uplo, const char trans, const int n, const int k,
-		const double alpha, const std::complex<double> *A, const int lda,
-		const double beta, std::complex<double> *C, const int ldc)
-	{
-		const char uplo_changed = change_uplo(uplo);
-		const char trans_changed = change_trans_NC(trans);
-		zherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
-	}
+        const double alpha, const std::complex<double> *A, const int lda,
+        const double beta, std::complex<double> *C, const int ldc)
+    {
+        const char uplo_changed = change_uplo(uplo);
+        const char trans_changed = change_trans_NC(trans);
+        zherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
+    }
     static inline
         void herk(const char uplo, const char trans, const int n, const int k,
             const float alpha, const std::complex<float>* A, const int lda,
@@ -581,5 +616,18 @@ namespace LapackConnector
         const char trans_changed = change_trans_NC(trans);
         cherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
     }
-} // namespace LapackConnector
-#endif  // LAPACK_CONNECTOR_HPP
+
+    static inline
+    double lange(const char& norm, const int& m, const int& n, const double* A, const int& lda, double* work)
+    {
+        return dlange_(&norm, &m, &n, A, &lda, work);
+    }
+
+    static inline
+    double lange(const char& norm, const int& m, const int& n, const std::complex<double>* A, const int& lda, double* work)
+    {
+        return zlange_(&norm, &m, &n, A, &lda, work);
+    }
+
+};
+#endif  // LAPACKCONNECTOR_HPP

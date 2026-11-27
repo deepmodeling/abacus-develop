@@ -1,8 +1,5 @@
 #include "../tool_quit.h"
 #include "../global_variable.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #ifdef __MPI
@@ -35,7 +32,7 @@ class ToolQuitTest : public testing::Test
 	{
 		GlobalV::ofs_warning.open("warning.log");
 		GlobalV::ofs_running.open("running.log");
-		PARAM.sys.global_out_dir = "OUT/";
+		ModuleBase::set_quit_out_dir("OUT/");
 	}
 	void TearDown()
 	{

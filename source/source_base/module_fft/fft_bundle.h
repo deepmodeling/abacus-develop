@@ -33,6 +33,14 @@ class FFT_Bundle
     void setfft(std::string device_in, std::string precision_in);
 
     /**
+     * @brief Set the DSP cluster id for the FFT_DSP backend.
+     * @param id  cluster id, typically computed as (MPI rank % dsp_count).
+     *
+     * Caller-injected DSP routing info; only used when device == "dsp".
+     */
+    void set_dsp_cluster_id(int id) { this->dsp_cluster_id_ = id; }
+
+    /**
      * @brief Initialize the fft parameters.
      * @param nx_in  number of grid points in x direction.
      * @param ny_in  number of grid points in y direction.
@@ -193,15 +201,44 @@ class FFT_Bundle
     template <typename FPTYPE>
     void fft3D_backward(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
+    /// @brief the device this bundle was configured for, "cpu" or "gpu"
+    std::string get_device() const { return device; }
+    /// @brief the precision this bundle was configured for, "single" or "double"
+    std::string get_precision() const { return precision; }
+
   private:
     int fft_mode = 0;
     bool float_flag = false;
     bool double_flag = false;
+    // Backends selected by `device`: an FFT_CPU instance for "cpu",
+    // FFT_CUDA/FFT_ROCM for "gpu", FFT_DSP for "dsp". They serve the
+    // device-memory ("gpu-like") 3D FFT interface; on "cpu" they also serve
+    // the host-memory ("cpu-like") interface.
     std::shared_ptr<FFT_BASE<float>> fft_float = nullptr;
     std::shared_ptr<FFT_BASE<double>> fft_double = nullptr;
+    // Extra CPU backends serving the host-memory ("cpu-like") interface when
+    // the configured device is not "cpu", since the gpu/dsp backends implement
+    // only the 3D FFT interface. They keep host post-processing such as the
+    // Wannier90 interface and Berry phase working, since those run on the CPU
+    // wavefunction mirror even in GPU calculations. Null when
+    // device == "cpu", where fft_float/fft_double already serve both
+    // interfaces.
+    std::shared_ptr<FFT_BASE<float>> host_fft_float = nullptr;
+    std::shared_ptr<FFT_BASE<double>> host_fft_double = nullptr;
+
+    // The backend that serves the host-memory interface, whichever it is.
+    FFT_BASE<float>* get_host_fft_float() const
+    {
+        return (this->device == "cpu") ? this->fft_float.get() : this->host_fft_float.get();
+    }
+    FFT_BASE<double>* get_host_fft_double() const
+    {
+        return (this->device == "cpu") ? this->fft_double.get() : this->host_fft_double.get();
+    }
 
     std::string device = "cpu";
     std::string precision = "double";
+    int dsp_cluster_id_ = 0;
 };
 // Use RAII (Resource Acquisition Is Initialization) to 
 // control the resources used by hthread when setting the DSP

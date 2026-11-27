@@ -1,9 +1,233 @@
 #include "spar_dh.h"
 
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/LCAO_domain.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_lcao/lcao_domain.h"
+#include "source_hamilt/module_gint/gint_dvlocal.h"
+
+#include <cmath>
+#include <map>
 #include <vector>
+
+namespace
+{
+
+using SparseMatrixR = std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>;
+
+// Adds one Cartesian component of the grid-integrated <phi|V|dphi> to dH{x,y,z}R_sparse,
+// completing the lower triangle from -R and reducing over the pool.
+void distribute_pvdpR_sparse(const int cspin,
+                             const int dim,
+                             const int nlocal,
+                             const double sparse_thr,
+                             const SparseMatrixR& pvdpR_sparse,
+                             const Parallel_Orbitals& pv,
+                             LCAO_HS_Arrays& hs_arrays)
+{
+    int total_R_num = hs_arrays.all_R_coor.size();
+    std::vector<int> nonzero_num(total_R_num);
+    std::vector<int> minus_nonzero_num(total_R_num);
+    int count = 0;
+    for (const Abfs::Vector3_Order<int>& R_coor: hs_arrays.all_R_coor)
+    {
+        std::map<Abfs::Vector3_Order<int>, std::map<std::size_t, std::map<std::size_t, double>>>::const_iterator iter = pvdpR_sparse.find(R_coor);
+        if (iter != pvdpR_sparse.end())
+        {
+            for (const std::pair<const std::size_t, std::map<std::size_t, double>>& row_loop: iter->second)
+            {
+                nonzero_num[count] += row_loop.second.size();
+            }
+        }
+
+        ModuleBase::Vector3<int> minus_R_coor = -1 * R_coor;
+
+        iter = pvdpR_sparse.find(minus_R_coor);
+        if (iter != pvdpR_sparse.end())
+        {
+            for (const std::pair<const std::size_t, std::map<std::size_t, double>>& row_loop: iter->second)
+            {
+                minus_nonzero_num[count] += row_loop.second.size();
+            }
+        }
+        count++;
+    }
+
+    Parallel_Reduce::reduce_all(nonzero_num.data(), total_R_num);
+    Parallel_Reduce::reduce_all(minus_nonzero_num.data(), total_R_num);
+
+    std::vector<double> tmp(nlocal);
+    count = 0;
+
+    const std::vector<int>& trace_lo = ModuleGint::Gint::get_gint_info().get_trace_lo();
+    for (const Abfs::Vector3_Order<int>& R_coor: hs_arrays.all_R_coor)
+    {
+        if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
+        {
+            ModuleBase::Vector3<int> minus_R_coor = -1 * R_coor;
+
+            for (int row = 0; row < nlocal; ++row)
+            {
+                tmp.assign(tmp.size(), 0);
+
+                std::map<Abfs::Vector3_Order<int>, std::map<std::size_t, std::map<std::size_t, double>>>::const_iterator iter = pvdpR_sparse.find(R_coor);
+                if (iter != pvdpR_sparse.end())
+                {
+
+                    if (trace_lo[row] >= 0)
+                    {
+                        std::map<std::size_t, std::map<std::size_t, double>>::const_iterator row_iter = iter->second.find(row);
+                        if (row_iter != iter->second.end())
+                        {
+                            for (const std::pair<const std::size_t, double>& value: row_iter->second)
+                            {
+                                tmp[value.first] = value.second;
+                            }
+                        }
+                    }
+                }
+
+                std::map<Abfs::Vector3_Order<int>, std::map<std::size_t, std::map<std::size_t, double>>>::const_iterator minus_R_iter = pvdpR_sparse.find(minus_R_coor);
+                if (minus_R_iter != pvdpR_sparse.end())
+                {
+                    for (int col = 0; col < row; ++col)
+                    {
+                        if (trace_lo[col] >= 0)
+                        {
+                            std::map<std::size_t, std::map<std::size_t, double>>::const_iterator row_iter = minus_R_iter->second.find(col);
+                            if (row_iter != minus_R_iter->second.end())
+                            {
+                                std::map<std::size_t, double>::const_iterator col_iter = row_iter->second.find(row);
+                                if (col_iter != row_iter->second.end())
+                                {
+                                    tmp[col] = col_iter->second;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Parallel_Reduce::reduce_pool(tmp.data(), nlocal);
+
+                if (pv.para_2d().irloc(row) >= 0)
+                {
+                    for (int col = 0; col < nlocal; ++col)
+                    {
+                        if (pv.para_2d().icloc(col) >= 0)
+                        {
+                            if (std::abs(tmp[col]) > sparse_thr)
+                            {
+                                if (dim == 0)
+                                {
+                                    double& value = hs_arrays.dHRx_sparse[cspin][R_coor][row][col];
+                                    value += tmp[col];
+                                    if (std::abs(value) <= sparse_thr)
+                                    {
+                                        hs_arrays.dHRx_sparse[cspin][R_coor][row].erase(col);
+                                    }
+                                }
+                                if (dim == 1)
+                                {
+                                    double& value = hs_arrays.dHRy_sparse[cspin][R_coor][row][col];
+                                    value += tmp[col];
+                                    if (std::abs(value) <= sparse_thr)
+                                    {
+                                        hs_arrays.dHRy_sparse[cspin][R_coor][row].erase(col);
+                                    }
+                                }
+                                if (dim == 2)
+                                {
+                                    double& value = hs_arrays.dHRz_sparse[cspin][R_coor][row][col];
+                                    value += tmp[col];
+                                    if (std::abs(value) <= sparse_thr)
+                                    {
+                                        hs_arrays.dHRz_sparse[cspin][R_coor][row].erase(col);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        count++;
+    }
+}
+
+// Converts the grid-integrated local-potential derivative <phi|V|dphi>, held per atom pair in
+// pvdpR{x,y,z}, to the global-index sparse format of LCAO_HS_Arrays.
+void cal_dvlocal_R_sparse(const hamilt::HContainer<double>& pvdpRx,
+                          const hamilt::HContainer<double>& pvdpRy,
+                          const hamilt::HContainer<double>& pvdpRz,
+                          const int npol,
+                          const int cspin,
+                          const int nlocal,
+                          const double sparse_thr,
+                          const Parallel_Orbitals& pv,
+                          const UnitCell& ucell,
+                          LCAO_HS_Arrays& hs_arrays)
+{
+    ModuleBase::TITLE("Gint", "cal_dvlocal_R_sparse");
+    ModuleBase::timer::start("Gint", "cal_dvlocal_R_sparse");
+    SparseMatrixR pvdpRx_sparse;
+    SparseMatrixR pvdpRy_sparse;
+    SparseMatrixR pvdpRz_sparse;
+
+    for (int iap = 0; iap < pvdpRx.size_atom_pairs(); iap++)
+    {
+        const hamilt::AtomPair<double>& ap = pvdpRx.get_atom_pair(iap);
+        const int iat1 = ap.get_atom_i();
+        const int iat2 = ap.get_atom_j();
+        const int it1 = ucell.iat2it[iat1];
+        const int it2 = ucell.iat2it[iat2];
+        const Atom* atom1 = &ucell.atoms[it1];
+        const Atom* atom2 = &ucell.atoms[it2];
+        const int start1 = ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0);
+        const int start2 = ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0);
+
+        for (int ir = 0; ir < ap.get_R_size(); ir++)
+        {
+            const ModuleBase::Vector3<int> R = ap.get_R_index(ir);
+            Abfs::Vector3_Order<int> dR(R.x, R.y, R.z);
+            double* p_pvdpRx = pvdpRx.get_atom_pair(iap).get_pointer(ir);
+            double* p_pvdpRy = pvdpRy.get_atom_pair(iap).get_pointer(ir);
+            double* p_pvdpRz = pvdpRz.get_atom_pair(iap).get_pointer(ir);
+
+            for (int iw = 0; iw < atom1->nw * npol; iw++)
+            {
+                for (int iw2 = 0; iw2 < atom2->nw * npol; iw2++)
+                {
+                    const int nw = atom2->nw;
+                    const int mug0 = iw / npol;
+                    const int nug0 = iw2 / npol;
+                    const int iw_nowg = mug0 * nw + nug0;
+
+                    double temp_value = p_pvdpRx[iw_nowg];
+                    if (std::abs(temp_value) > sparse_thr)
+                    {
+                        pvdpRx_sparse[dR][start1 + iw][start2 + iw2] = temp_value;
+                    }
+                    temp_value = p_pvdpRy[iw_nowg];
+                    if (std::abs(temp_value) > sparse_thr)
+                    {
+                        pvdpRy_sparse[dR][start1 + iw][start2 + iw2] = temp_value;
+                    }
+                    temp_value = p_pvdpRz[iw_nowg];
+                    if (std::abs(temp_value) > sparse_thr)
+                    {
+                        pvdpRz_sparse[dR][start1 + iw][start2 + iw2] = temp_value;
+                    }
+                }
+            }
+        }
+    }
+    distribute_pvdpR_sparse(cspin, 0, nlocal, sparse_thr, pvdpRx_sparse, pv, hs_arrays);
+    distribute_pvdpR_sparse(cspin, 1, nlocal, sparse_thr, pvdpRy_sparse, pv, hs_arrays);
+    distribute_pvdpR_sparse(cspin, 2, nlocal, sparse_thr, pvdpRz_sparse, pv, hs_arrays);
+    ModuleBase::timer::end("Gint", "cal_dvlocal_R_sparse");
+}
+
+} // namespace
 
 void sparse_format::cal_dS(const UnitCell& ucell,
     const Parallel_Orbitals& pv,
@@ -11,24 +235,20 @@ void sparse_format::cal_dS(const UnitCell& ucell,
     const Grid_Driver& grid,
     const TwoCenterBundle& two_center_bundle,
     const LCAO_Orbitals& orb,
-    const double& sparse_thr)
+    const double& sparse_thr,
+    const bool gamma_only_local,
+    const int nspin,
+    const int npol)
 {
 ModuleBase::TITLE("sparse_format", "cal_dS");
 
 sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
-const int nnr = pv.nnr;
+const int nnr = gamma_only_local ? pv.para_2d().size() : pv.nnr;
 
 ForceStressArrays fsr_dh;
-fsr_dh.DHloc_fixedR_x = new double[nnr];
-fsr_dh.DHloc_fixedR_y = new double[nnr];
-fsr_dh.DHloc_fixedR_z = new double[nnr];
-ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, nnr);
-ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, nnr);
-ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, nnr);
-// the pointers of dS is different from dH, use the dh pointers to reuse the print functions
-fsr_dh.DSloc_Rx = fsr_dh.DHloc_fixedR_x;
-fsr_dh.DSloc_Ry = fsr_dh.DHloc_fixedR_y;
-fsr_dh.DSloc_Rz = fsr_dh.DHloc_fixedR_z;
+fsr_dh.DHloc_fixedR_x.resize(nnr, 0.0);
+fsr_dh.DHloc_fixedR_y.resize(nnr, 0.0);
+fsr_dh.DHloc_fixedR_z.resize(nnr, 0.0);
 // cal dS=<phi|dphi> in LCAO
 const bool cal_deri = true;
 const bool cal_stress = false;
@@ -44,10 +264,7 @@ LCAO_domain::build_ST_new(fsr_dh,
        nullptr,
        false); // delete unused parameter lm.Hloc_fixedR
 
-sparse_format::cal_dSTN_R(ucell,pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), 0, sparse_thr);
-delete[] fsr_dh.DHloc_fixedR_x;
-delete[] fsr_dh.DHloc_fixedR_y;
-delete[] fsr_dh.DHloc_fixedR_z;
+sparse_format::cal_dSTN_R(ucell, pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), 0, sparse_thr, nspin, npol);
 return;
 }
 void sparse_format::cal_dH(const UnitCell& ucell,
@@ -58,23 +275,22 @@ void sparse_format::cal_dH(const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
                            const int& current_spin,
                            const double& sparse_thr,
-                           const ModuleBase::matrix& v_eff)
+                           const ModuleBase::matrix& v_eff,
+                           const bool gamma_only_local,
+                           const int nspin,
+                           const int npol)
 {
     ModuleBase::TITLE("sparse_format", "cal_dH");
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    const int nnr = pv.nnr;
+    const int nnr = gamma_only_local ? pv.para_2d().size() : pv.nnr;
 
     ForceStressArrays fsr_dh;
 
-    fsr_dh.DHloc_fixedR_x = new double[nnr];
-    fsr_dh.DHloc_fixedR_y = new double[nnr];
-    fsr_dh.DHloc_fixedR_z = new double[nnr];
-
-    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, nnr);
-    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, nnr);
-    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, nnr);
+    fsr_dh.DHloc_fixedR_x.resize(nnr, 0.0);
+    fsr_dh.DHloc_fixedR_y.resize(nnr, 0.0);
+    fsr_dh.DHloc_fixedR_z.resize(nnr, 0.0);
     // cal dT=<phi|kin|dphi> in LCAO
     // cal T + VNL(P1) in LCAO basis
     const bool cal_deri = true;
@@ -100,21 +316,26 @@ void sparse_format::cal_dH(const UnitCell& ucell,
                                        *(two_center_bundle.overlap_orb_beta),
                                        &grid);
 
-    sparse_format::cal_dSTN_R(ucell,pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), current_spin, sparse_thr);
+    sparse_format::cal_dSTN_R(ucell, pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), current_spin, sparse_thr, nspin, npol);
 
-    delete[] fsr_dh.DHloc_fixedR_x;
-    delete[] fsr_dh.DHloc_fixedR_y;
-    delete[] fsr_dh.DHloc_fixedR_z;
-
-    if(PARAM.inp.nspin==2)
+    if(nspin==2)
     {
         const double* vr_eff1
             = v_eff.nc * v_eff.nr > 0 ? &(v_eff(current_spin, 0)) : nullptr;
-        if (!PARAM.globalv.gamma_only_local) 
+        if (!gamma_only_local)
         {
-            ModuleGint::cal_dvlocal_R_sparseMatrix(
-                PARAM.inp.nspin, PARAM.globalv.npol, current_spin, PARAM.globalv.nlocal,
-                sparse_thr, vr_eff1, pv, ucell, grid, HS_Arrays);
+            ModuleGint::Gint_dvlocal gint_dvlocal(vr_eff1, nspin, npol);
+            gint_dvlocal.cal_dvlocal();
+            cal_dvlocal_R_sparse(*gint_dvlocal.get_pvdpRx(),
+                                 *gint_dvlocal.get_pvdpRy(),
+                                 *gint_dvlocal.get_pvdpRz(),
+                                 npol,
+                                 current_spin,
+                                 PARAM.globalv.nlocal,
+                                 sparse_thr,
+                                 pv,
+                                 ucell,
+                                 HS_Arrays);
         }
     }
     return;
@@ -152,7 +373,9 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                                const Grid_Driver& grid,
                                const std::vector<double>& orb_cutoff,
                                const int& current_spin,
-                               const double& sparse_thr)
+                               const double& sparse_thr,
+                               const int nspin,
+                               const int npol)
 {
     ModuleBase::TITLE("sparse_format", "cal_dSTN_R");
 
@@ -203,8 +426,8 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff[T1] + ucell.infoNL->get_rcut_max(T0);
+                        double rcut2 = orb_cutoff[T2] + ucell.infoNL->get_rcut_max(T0);
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
@@ -220,27 +443,27 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
 
                     Abfs::Vector3_Order<int> dR(grid.getBox(ad).x, grid.getBox(ad).y, grid.getBox(ad).z);
 
-                    for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++)
+                    for (int ii = 0; ii < atom1->nw * npol; ii++)
                     {
                         const int iw1_all = start + ii;
-                        const int mu = pv.global2local_row(iw1_all);
+                        const int mu = pv.para_2d().irloc(iw1_all);
 
                         if (mu < 0)
                         {
                             continue;
                         }
 
-                        for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
+                        for (int jj = 0; jj < atom2->nw * npol; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = pv.global2local_col(iw2_all);
+                            const int nu = pv.para_2d().icloc(iw2_all);
 
                             if (nu < 0)
                             {
                                 continue;
                             }
 
-                            if (PARAM.inp.nspin != 4)
+                            if (nspin != 4)
                             {
                                 temp_value_double = fsr.DHloc_fixedR_x[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
@@ -273,11 +496,11 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
     return;
 }
 
-void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays)
+void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays, const int nspin)
 {
     ModuleBase::TITLE("LCAO_domain", "destroy_dH_R_sparse");
 
-    if (PARAM.inp.nspin != 4)
+    if (nspin != 4)
     {
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_up;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_down;

@@ -1,13 +1,16 @@
 #include "ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 
+#include "source_base/fs_compat.h" // use ModuleBase::ensure_directory
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
+#include "source_hamilt/module_xc/exx_info.h"
 
 #include "../module_energy/write_proj_band_lcao.h" // projcted band structure
 #include "../module_dos/cal_ldos.h" // cal LDOS
-#include "../module_energy/write_eband_terms.hpp"
-#include "../module_hs/write_vxc.hpp"
-#include "../module_hs/write_vxc_r.hpp"
+#include "source_io/module_hs/vxc_op_r.h"
+#ifdef __EXX
+#include "source_lcao/module_ri/exx_lri_interface.h"
+#endif
 
 namespace ModuleIO
 {
@@ -15,9 +18,10 @@ namespace ModuleIO
 template <typename TK, typename TR>
 void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
+        const int istep,                    // ionic step index, zero-based
 		K_Vectors &kv,                      // k-point
 		elecstate::ElecState* pelec,// electronic info
-        const LCAO_domain::Setup_DM<TK> &dmat, // mohan add 2025-11-02
+        const module_dm::Setup_DM<TK> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
@@ -31,53 +35,44 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
 		Exx_NAO<TK> &exx_nao,
-        surchem &solvent)             // solvent model
+        const Exx_Info& exx_info,
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_lcao");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_runner_lcao");
+    ModuleBase::timer::start("ModuleIO", "ctrl_runner_lcao");
 
     // 1) write projected band structure
     if (inp.out_proj_band)
     {
-        ModuleIO::write_proj_band_lcao(psi, pv, pelec, kv, ucell, p_hamilt);
+        ModuleIO::write_proj_band_lcao(psi, pv, pelec, kv, ucell, p_hamilt, istep, inp.out_app_flag);
     }
 
 	// 2) out ldos
 	if (inp.out_ldos[0])
     {
-        ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(pelec->eferm, chr, dmat, kv, 
-          pelec->ekb, pelec->wg, psi[0], pgrid, ucell);
+        const std::string global_dos_dir = PARAM.globalv.global_dos_dir;
+        // Mode-2 DOS/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_dos_dir);
+        ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(pelec->eferm, chr, dmat, kv,
+          pelec->ekb, pelec->wg, psi[0], pgrid, pv, gd, ucell,
+          inp.stm_bias, inp.nspin, istep, global_dos_dir,
+          PARAM.globalv.two_fermi, inp.out_ldos[1], ofs_running);
     }
 
-    // 3) print out exchange-correlation potential
-    if (inp.out_mat_xc)
+    if (inp.out_mat_xc2[0])
     {
-        ModuleIO::write_Vxc<TK, TR>(inp.nspin,
-                                    PARAM.globalv.nlocal,
-                                    GlobalV::DRANK,
-                                    &pv,
-                                    *psi,
-                                    ucell,
-                                    sf,
-                                    solvent,
-                                    *pw_rho,
-                                    *pw_rhod,
-                                    vloc,
-                                    chr,
-                                    kv,
-                                    orb.cutoffs(),
-                                    pelec->wg,
-                                    gd
+        const std::string global_mat_dir = PARAM.globalv.global_mat_dir;
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
+        bool cal_exx = exx_info.info_global.cal_exx;
+        double hybrid_alpha = exx_info.info_global.hybrid_alpha;
+        bool real_number = exx_info.info_ri.real_number;
+        const double sparse_thr = 1e-10;
 #ifdef __EXX
-                                    ,
-                                    exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
-                                    exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
+        const auto* hexxd_ptr = exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr;
+        const auto* hexxc_ptr = exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr;
 #endif
-        );
-    }
-
-    if (inp.out_mat_xc2)
-    {
         ModuleIO::write_Vxc_R<TK, TR>(inp.nspin,
                                       &pv,
                                       ucell,
@@ -89,44 +84,25 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       chr,
                                       kv,
                                       orb.cutoffs(),
-                                      gd
+                                      gd,
+                                      global_mat_dir,
+                                      cal_exx,
+                                      hybrid_alpha,
+                                      real_number,
+                                      istep
 #ifdef __EXX
                                       ,
-                                      exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
-                                      exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
+                                      hexxd_ptr,
+                                      hexxc_ptr
 #endif
+                                      ,
+                                      sparse_thr,
+                                      inp.out_mat_xc2[1],
+                                      ofs_running
         );
     }
 
-
-    // write eband terms
-    if (inp.out_eband_terms)
-    {
-        ModuleIO::write_eband_terms<TK, TR>(inp.nspin,
-                                            PARAM.globalv.nlocal,
-                                            GlobalV::DRANK,
-                                            &pv,
-                                            *psi,
-                                            ucell,
-                                            sf,
-                                            solvent,
-                                            *pw_rho,
-                                            *pw_rhod,
-                                            vloc,
-                                            chr,
-                                            kv,
-                                            pelec->wg,
-                                            gd,
-                                            orb.cutoffs(),
-                                            two_center_bundle
-#ifdef __EXX
-                                            ,
-                                            exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
-                                            exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
-#endif
-       );
-    }
-
+    ModuleBase::timer::end("ModuleIO", "ctrl_runner_lcao");
 }
 
 
@@ -135,9 +111,10 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 // TK: double  TR: double 
 template void ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
+        const int istep,                    // ionic step index, zero-based
 		K_Vectors &kv,                      // k-point
 		elecstate::ElecState* pelec,// electronic info
-        const LCAO_domain::Setup_DM<double> &dmat, // mohan add 2025-11-02
+        const module_dm::Setup_DM<double> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
@@ -151,14 +128,17 @@ template void ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<double> &exx_nao,
-        surchem &solvent);             // solvent model
+        const Exx_Info& exx_info,
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running);
 
 // TK: complex<double>  TR: double 
 template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
+        const int istep,                    // ionic step index, zero-based
 		K_Vectors &kv,                      // k-point
 		elecstate::ElecState* pelec,// electronic info
-        const LCAO_domain::Setup_DM<std::complex<double>> &dmat, // mohan add 2025-11-02
+        const module_dm::Setup_DM<std::complex<double>> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
@@ -172,14 +152,17 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<std::complex<double>> &exx_nao,
-        surchem &solvent);             // solvent model
+        const Exx_Info& exx_info,
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running);
 
 // TK: complex<double>  TR: complex<double>
 template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
+        const int istep,                    // ionic step index, zero-based
 		K_Vectors &kv,                      // k-point
 		elecstate::ElecState* pelec,// electronic info
-        const LCAO_domain::Setup_DM<std::complex<double>> &dmat, // mohan add 2025-11-02
+        const module_dm::Setup_DM<std::complex<double>> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
@@ -193,6 +176,8 @@ template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitC
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<std::complex<double>> &exx_nao,
-        surchem &solvent);             // solvent model
+        const Exx_Info& exx_info,
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running);
 
 } // end namespace

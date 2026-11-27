@@ -1,6 +1,7 @@
 #include "sto_tool.h"
 
 #include "source_base/math_chebyshev.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_device.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -17,7 +18,7 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
                                               const int& nbands_sto,
                                               K_Vectors* p_kv,
                                               Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf,
-                                              hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>* p_hamilt_sto)
+                                              StoHamiltPW<std::complex<FPTYPE>, Device>* p_hamilt_sto)
 {
     //------------------------------
     //      Convergence test
@@ -77,7 +78,7 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
             while (true)
             {
                 bool converge;
-                auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>::hPsi_norm,
+                auto hchi_norm = std::bind(&StoHamiltPW<std::complex<FPTYPE>, Device>::hPsi_norm,
                                            p_hamilt_sto,
                                            std::placeholders::_1,
                                            std::placeholders::_2,
@@ -129,28 +130,28 @@ psi::Psi<std::complex<FPTYPE>, Device>* gatherchi_op<FPTYPE, Device>::operator()
     if (PARAM.inp.bndpar > 1)
     {
         p_chi = &chi_all;
-        ModuleBase::timer::tick("sKG", "bands_gather");
+        ModuleBase::timer::start("sKG", "bands_gather");
         Parallel_Common::gatherv_dev<std::complex<FPTYPE>, Device>(chi.get_pointer(),
                                                                    perbands_sto * npwx,
                                                                    chi_all.get_pointer(),
                                                                    nrecv_sto,
                                                                    displs_sto,
                                                                    BP_WORLD);
-        ModuleBase::timer::tick("sKG", "bands_gather");
+        ModuleBase::timer::end("sKG", "bands_gather");
     }
 #endif
     return p_chi;
 }
 
 template struct check_che_op<double, base_device::DEVICE_CPU>;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
 template struct check_che_op<float, base_device::DEVICE_CPU>;
 #endif
 template struct gatherchi_op<double, base_device::DEVICE_CPU>;
 template struct gatherchi_op<float, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template struct check_che_op<double, base_device::DEVICE_GPU>;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
 template struct check_che_op<float, base_device::DEVICE_GPU>;
 #endif
 template struct gatherchi_op<double, base_device::DEVICE_GPU>;

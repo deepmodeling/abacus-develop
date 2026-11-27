@@ -8,10 +8,10 @@
 #include "source_base/module_container/ATen/kernels/lapack.h" // container::kernels
 
 #include "source_hsolver/diag_comm_info.h"
+#include "source_hsolver/hs_operator.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 
 #include <vector>
-#include <functional>
 
 namespace hsolver
 {
@@ -45,7 +45,6 @@ class DiagoDavid
      * @param[in] david_ndim_in Dimension of the reduced basis set of Davidson.
      *                      `david_ndim_in` * `nband_in` is the maximum allowed size of
      *                      the reduced basis set before \b restart of Davidson.
-     * @param[in] use_paw_in Flag indicating whether to use PAW.
      * @param[in] diag_comm_in Communication information for diagonalization.
      *
      * @tparam T The data type of the matrices and arrays.
@@ -57,7 +56,7 @@ class DiagoDavid
                const int nband_in,
                const int dim_in,
                const int david_ndim_in,
-               const bool use_paw_in,
+               const bool use_uspp_in,
                const diag_comm_info& diag_comm_in);
 
     /**
@@ -70,54 +69,12 @@ class DiagoDavid
     ~DiagoDavid();
 
 
-    // declare type of matrix-blockvector functions.
-    // the function type is defined as a std::function object.
-    /**
-     * @brief A function type representing the HX function.
-     *
-     * This function type is used to define a matrix-blockvector operator H.
-     * For eigenvalue problem HX = λX or generalized eigenvalue problem HX = λSX,
-     * this function computes the product of the Hamiltonian matrix H and a blockvector X.
-     *
-     * Called as follows:
-     * hpsi(X, HX, ld, nvec) where X and HX are (ld, nvec)-shaped blockvectors.
-     * Result HX = H * X is stored in HX.
-     *
-     * @param[out] X      Head address of input blockvector of type `T*`.
-     * @param[in]  HX     Head address of output blockvector of type `T*`.
-     * @param[in]  ld     Leading dimension of blockvector.
-     * @param[in]  nvec   Number of vectors in a block.
-     *
-     * @warning X and HX are the exact address to read input X and store output H*X,
-     * @warning both of size ld * nvec.
-     */
-    using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
-
-    /**
-     * @brief A function type representing the SX function.
-     *
-     * nrow is leading dimension of spsi, npw is leading dimension of psi, nbands is number of vecs
-     *
-     * This function type is used to define a matrix-blockvector operator S.
-     * For generalized eigenvalue problem HX = λSX,
-     * this function computes the product of the overlap matrix S and a blockvector X.
-     *
-     * @param[in]   X       Pointer to the input blockvector.
-     * @param[out] SX       Pointer to the output blockvector.
-     * @param[in] ld_psi    Leading dimension of psi and spsi. Dimension of X&SX: ld * nvec.
-     * @param[in] nvec      Number of vectors.
-     */
-    using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
-
     /**
      * @brief Performs iterative diagonalization using the David algorithm.
      *
-     * @warning Please see docs of `HPsiFunc` for more information about the hpsi mat-vec interface.
-     *
      * @tparam T The type of the elements in the matrix.
      * @tparam Device The device type (CPU or GPU).
-     * @param hpsi_func The function object that computes the matrix-blockvector product H * psi.
-     * @param spsi_func The function object that computes the matrix-blockvector product overlap S * psi.
+     * @param op The H and S block-vector operator, see hsolver::HSOperator.
      * @param ld_psi The leading dimension of the psi_in array.
      * @param psi_in The input wavefunction.
      * @param eigenvalue_in The array to store the eigenvalues.
@@ -131,8 +88,7 @@ class DiagoDavid
      *       notconv_max is determined by the accuracy required for the calculation, default 0
      */
     int diag(
-      const HPsiFunc& hpsi_func,  // function void hpsi(T*, T*, const int, const int)
-      const SPsiFunc& spsi_func,  // function void spsi(T*, T*, const int, const int, const int)
+      const HSOperator<T, Device>& op, // applies H and S to block vectors
       const int ld_psi,           // Leading dimension of the psi input
       T *psi_in,                  // Pointer to eigenvectors
       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
@@ -142,7 +98,6 @@ class DiagoDavid
       const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
 
   private:
-    bool use_paw = false;
     int test_david = 0;
 
     diag_comm_info diag_comm;
@@ -155,6 +110,8 @@ class DiagoDavid
     const int nbase_x;
     /// dimension of the subspace allowed in Davidson
     const int david_ndim = 4;
+    /// whether the SCF uses ultrasoft pseudopotentials
+    const bool use_uspp = false;
     /// number of unconverged eigenvalues
     int notconv = 0;
 
@@ -182,8 +139,7 @@ class DiagoDavid
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    int diag_once(const HPsiFunc& hpsi_func,
-                  const SPsiFunc& spsi_func,
+    int diag_once(const HSOperator<T, Device>& op,
                   const int dim,
                   const int nband,
                   const int ld_psi,
@@ -195,8 +151,7 @@ class DiagoDavid
     /**
      * Calculates the preconditioned gradient of the eigenvectors in Davidson method.
      *
-     * @param hpsi_func The function to calculate the matrix-blockvector product H * psi.
-     * @param spsi_func The function to calculate the matrix-blockvector product overlap S * psi.
+     * @param op The H and S block-vector operator.
      * @param dim The dimension of the blockvector.
      * @param nbase The current dimension of the reduced basis.
      * @param nbase_x The maximum dimension of the reduced basis set.
@@ -207,8 +162,7 @@ class DiagoDavid
      * @param unconv The array of indices for the unconverged eigenpairs.
      * @param eigenvalue The array of eigenvalues.
      */
-    void cal_grad(const HPsiFunc& hpsi_func,
-                  const SPsiFunc& spsi_func,
+    void cal_grad(const HSOperator<T, Device>& op,
                   const int& dim,
                   const int& nbase,
                   const int nbase_x,
@@ -279,7 +233,7 @@ class DiagoDavid
      * @param mm_size The size of the square matrix for future lagranges.
      * @param mv_size The size of the lagrange_m array.
      */
-    void SchmidtOrth(const int& dim,
+    bool SchmidtOrth(const int& dim,
                      const int nband,
                      const int m,
                      const T* spsi,
@@ -327,6 +281,9 @@ class DiagoDavid
      */
     bool check_block_conv(const int &ntry, const int &notconv, const int &ntry_max, const int &notconv_max);
 
+    /// @brief Whether to form CUDA float Davidson bases with a single-pass QR.
+    bool use_block_qr() const;
+
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
@@ -343,7 +300,6 @@ class DiagoDavid
 
     // Note that ct_Device is different from base_device!
     using ct_Device = typename ct::PsiToContainer<Device>::type;
-    // using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info; // Dependence of hpsi removed
 
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
     const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);

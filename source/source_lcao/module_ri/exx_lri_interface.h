@@ -1,0 +1,212 @@
+#ifndef EXX_LRI_INTERFACE_H
+#define EXX_LRI_INTERFACE_H
+
+#include "exx_lri.h"
+#include "source_estate/module_charge/chg_mix.h"
+#include "source_lcao/module_ri/mix_dmk_2d.h"
+#include "source_lcao/module_ri/hybrid_gauge_phase.h"
+#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
+#include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
+#include "source_hamilt/hamilt.h"
+#include "source_hamilt/module_xc/exx_info_global.h"
+#include <memory>
+
+class LCAO_Matrix;
+class Charge_Mixing;
+namespace elecstate
+{
+    class ElecState;
+    class TDFieldManager;
+}
+namespace module_dm
+{
+    template <typename TK, typename TR>
+    class DensityMatrix;
+}
+namespace elecstate
+{
+    /// for symmetry, multi-k, nspin<4: restore DM(k) form DM(k_ibz)
+    std::vector<std::vector<std::complex<double>>> restore_dm(const K_Vectors& kv,
+        const std::vector<std::vector<std::complex<double>>>& dm_k_ibz,
+        const ModuleSymmetry::Symmetry_rotation& symrot,
+        const Parallel_Blkcyclic& pv);
+    /// do nothing if gamma_only
+    std::vector<std::vector<double>> restore_dm(const K_Vectors& kv,
+        const std::vector<std::vector<double>>& dm_k_ibz,
+        const ModuleSymmetry::Symmetry_rotation& symrot,
+        const Parallel_Blkcyclic& pv);
+
+}
+
+template<typename T, typename Tdata>
+class Exx_LRI_Interface
+{
+public:
+    using TA = int;
+    using TC = std::array<int, 3>;
+    using TAC = std::pair<TA, TC>;
+
+    /// @brief  Constructor for Exx_LRI_Interface
+    Exx_LRI_Interface(const Exx_Info_RI& info_ri, const Exx_Info_Global& info_global)
+    {
+        this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info_ri);
+        this->info_global = info_global;
+        this->hybrid_step_ = info_global.hybrid_step;
+    }
+    Exx_LRI_Interface() = delete;
+
+    void set_gpu(const bool use_gpu)
+    {
+#ifdef __GPU_RI
+        RI::LRI_Cal_Mode& mode = this->exx_ptr->exx_lri.lri.cal_mode;
+        mode = use_gpu ? RI::LRI_Cal_Mode::GPU : RI::LRI_Cal_Mode::CPU;
+#else
+        (void)use_gpu;
+#endif
+    }
+
+    ///// read and write Hexxs using cereal
+    //void write_Hexxs_cereal(const std::string& file_name) const;
+    //void read_Hexxs_cereal(const std::string& file_name);
+
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
+    double &get_Eexx() const { return this->exx_ptr->Eexx; }
+    ModuleBase::matrix &get_force() const { return this->exx_ptr->force_exx; }
+    ModuleBase::matrix &get_stress() const { return this->exx_ptr->stress_exx; }
+    int get_two_level_step() const
+    {
+        return this->two_level_step;
+    }
+
+    // Processes in ESolver_KS_LCAO
+    /// @brief in init: Exx_LRI::init()
+    void init(
+        const MPI_Comm &mpi_comm,
+        const UnitCell &ucell,
+        const K_Vectors &kv,
+        const LCAO_Orbitals &orb,
+        const bool use_gpu);
+
+    /// @brief: in cal_exx_ions: Exx_LRI::cal_exx_ions()
+    void cal_exx_ions(const UnitCell& ucell, const bool write_cv = false);
+
+    /// @brief: in cal_exx_elec: Exx_LRI::cal_exx_elec()
+    void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+                      const UnitCell& ucell,
+                      const Parallel_Orbitals& pv,
+                      const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
+
+    /// @brief: in cal_exx_force: Exx_LRI::cal_exx_force()
+    void cal_exx_force(const int& nat);
+
+    /// @brief: in cal_exx_stress: Exx_LRI::cal_exx_stress()
+    void cal_exx_stress(const double& omega, const double& lat0);
+
+    // Processes in ESolver_KS_LCAO
+    /// Initialize EXX symmetry before the first ionic step.
+    void exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_Blkcyclic& pv);
+
+    /// Discard old atom mappings, lattice returns and rotation caches before rebuilding.
+    void refresh_symmetry(const K_Vectors& kv, const UnitCell& ucell, const Parallel_Blkcyclic& pv);
+
+    /// @brief in beforescf: set xc type, opt_orb, do DM mixing
+    void exx_beforescf(
+        const int istep,
+        const K_Vectors &kv,
+        const Charge_Mixing &chgmix,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        const Parallel_Blkcyclic &pv,
+        const bool update_symmetry,
+        const bool use_gpu);
+
+    /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
+    void exx_eachiterinit(const int istep,
+                          const UnitCell& ucell,
+                          const module_dm::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
+                          const K_Vectors& kv,
+                          const Parallel_Orbitals& pv,
+                          const int& iter,
+                          const elecstate::ElecState& elec);
+
+    /// @brief in hamilt2rho: calculate Hexx and Eexx
+    void exx_hamilt2rho(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const int iter);
+
+    /// @brief in iter_finish: write Hexx, do something according to whether SCF is converged
+    void exx_iter_finish(const K_Vectors& kv,
+                         const UnitCell& ucell,
+                         hamilt::Hamilt<T>& hamilt,
+                         elecstate::ElecState& elec,
+                         module_dm::DensityMatrix<T,double>* dm, // mohan add 2025-11-04
+                         const Parallel_Orbitals& pv,
+                         Charge_Mixing& chgmix,
+                         const double& scf_ene_thr,
+                         int& iter,
+                         const int istep,
+                         bool& conv_esolver);
+    /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
+    bool exx_after_converge(const UnitCell& ucell,
+                            hamilt::Hamilt<T>& hamilt,
+                            const module_dm::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
+                            const K_Vectors& kv,
+                            const Parallel_Orbitals& pv,
+                            const int& nspin,
+                            int& iter,
+                            const int& istep,
+                            const double& etot,
+                            const double& scf_ene_thr,
+                            const elecstate::TDFieldManager* field);
+
+    /// @brief  the step of the outer loop.
+    /// nullptr: no dependence on the number of two_level_step, contributeHk will do enerything normally.
+    /// 0: the first outer loop. If restart, contributeHk will directly add Hexx to Hloc. else, do nothing.
+    /// >0: not the first outer loop. contributeHk will do enerything normally.
+    int two_level_step = 0;
+    double etot_last_outer_loop = 0.0;
+    module_dm::DensityMatrix<T, double>* dm_last_step;
+
+    size_t hybrid_step() const { return hybrid_step_; }
+    void set_hybrid_step(size_t s) { hybrid_step_ = s; }
+
+    std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
+
+private:
+
+    Mix_DMk_2D<T> mix_DMk_2D;
+    Mix_DMk_2D<std::complex<double>> mix_common_density_;
+    RI_2D_Comm::HybridDensityLayout common_density_layout_;
+
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> prepare_exx_density(
+        const std::vector<std::vector<T>>& dmk, const UnitCell& ucell,
+        const K_Vectors& kv, const Parallel_Orbitals& pv, const int nspin,
+        const bool restart, const ModuleBase::Vector3<double>* source_A);
+    void mix_common_density(RI_2D_Comm::HybridGaugeComplexDensity& density,
+        const UnitCell& ucell, const ModuleBase::Vector3<double>& source_A, const bool restart);
+    void mix_common_density(std::vector<std::map<TA, std::map<TAC, RI::Tensor<double>>>>& density,
+        const UnitCell& ucell, const ModuleBase::Vector3<double>& source_A, const bool restart);
+
+    Exx_Info_Global info_global;
+    size_t hybrid_step_ = 1;
+    // non-owning ptr to Charge_Mixing captured in exx_beforescf, used to refresh the
+    // borrowed mixing pointer in exx_eachiterinit (mixing_restart reallocates it via init_mixing)
+    const Charge_Mixing* p_chgmix_ = nullptr;
+    // identity of the last borrowed mixing engine; a change means init_mixing() reallocated it
+    // (mixing_restart fired), so the DM mixer must also restart to keep engine+history consistent
+    const void* last_borrowed_mixing_ = nullptr;
+
+    bool exx_spacegroup_symmetry = false;
+    ModuleSymmetry::Symmetry_rotation symrot_;
+
+    struct Flag_Finish
+    {
+        bool init = false;
+        bool ions = false;
+        bool elec = false;
+        bool force = false;
+        bool stress = false;
+    };
+    Flag_Finish flag_finish;
+};
+
+
+#endif

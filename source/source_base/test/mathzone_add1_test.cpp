@@ -69,7 +69,7 @@ TEST_F(MathzoneAdd1Test, Constructor)
 /// first kind boundary condition: f'(0) = f'(n) = 0.0
 TEST_F(MathzoneAdd1Test, CubicSplineBoundary1)
 {
-    // data from abacus/tests/integrate/tools/PP_ORB/Si_gga_8au_60Ry_2s2p1d.orb
+    // data from abacus/tests/PP_ORB/Si_gga_8au_60Ry_2s2p1d.orb
     // data for d orbital of Si : L = 2, N = 0
     psi_in[0] = 0;
     psi_in[1] = -2.583946346740e-01;
@@ -232,7 +232,7 @@ TEST_F(MathzoneAdd1Test, expx)
 /// second kind boundary condition: f''(0) = f''(n) = 0.0
 TEST_F(MathzoneAdd1Test, CubicSplineBoundary2)
 {
-    // data from abacus/tests/integrate/tools/PP_ORB/Si_gga_8au_60Ry_2s2p1d.orb
+    // data from abacus/tests/PP_ORB/Si_gga_8au_60Ry_2s2p1d.orb
     // data for 1st p orbital of Si: L = 1, N= 0
     psi_in[0] = 0;
     psi_in[1] = 2.023466616834e-01;
@@ -279,7 +279,7 @@ TEST_F(MathzoneAdd1Test, CubicSplineBoundary2)
 
 TEST_F(MathzoneAdd1Test, UniRadialF)
 {
-    // data from abacus/tests/integrate/tools/PP_ORB/Si_gga_8au_60Ry_2s2p1d.orb
+    // data from abacus/tests/PP_ORB/Si_gga_8au_60Ry_2s2p1d.orb
     // data for 1st p orbital of Si: L = 1, N= 0
     psi_in[0] = 0;
     psi_in[1] = 2.023466616834e-01;

@@ -49,11 +49,27 @@ All output file naming conventions can be found in the online documentation (wit
 | `s12` | Non-collinear spin calculation |
 | `k#` | k-point index (e.g., `k1`, `k2`) |
 | `g#` | Ionic step index for relax/md (e.g., `g1`, `g2`) |
+| `ini` | Initial state (before electronic iteration), used before or after `g#` |
 
 **Important:**
 - All index numbers start from 1 (not 0)
 - For Gamma-only algorithm in LCAO, no `k` index is included
 - Overlap matrix `s` does not distinguish spin, so only one matrix is output
+- `out_app_flag = 0` keeps the fixed cube filenames (chg/tau/pot/elf) and
+  truncates and overwrites them at every write. `out_app_flag = 1` also keeps
+  the fixed filenames: the first written ionic step truncates them and every
+  later written step appends one complete cube frame whose first comment line
+  is `Ionic_Step {#}` (one-based). Only `out_app_flag = 2` adds the `g#` suffix
+  and writes those suffixed files into the `CHG/`, `POT/` and `ELF/`
+  subdirectories
+- For initial charge density output (`out_chg = 2`):
+  - `nspin=1`: `chg_ini.cube`; `nspin=2/4`: `chgs{#}_ini.cube`
+  - `out_freq_ion = 0` writes at every step; `out_freq_ion > 0` writes every `out_freq_ion` steps
+  - Only `out_app_flag = 2` inserts `g{#}` (e.g., `chgg1_ini.cube`, `chgs1g1_ini.cube`); modes 0 and 1 keep the fixed name
+- For initial potential output (`out_pot = 3`):
+  - `nspin=1`: `pot_ini.cube`; `nspin=2/4`: `pots{#}_ini.cube`
+  - `out_freq_ion = 0` writes at every step; `out_freq_ion > 0` writes every `out_freq_ion` steps
+  - Only `out_app_flag = 2` inserts `g{#}` (e.g., `potg1_ini.cube`, `pots1g1_ini.cube`); modes 0 and 1 keep the fixed name
 
 ### 2.2 Examples
 
@@ -62,9 +78,24 @@ All output file naming conventions can be found in the online documentation (wit
 | `chgs1.cube` | Charge density, spin 1 |
 | `chgs2.cube` | Charge density, spin 2 |
 | `chgs3.cube` | Charge density, spin 3 (non-collinear with SOC) |
+| `chg_ini.cube` | Initial charge density (out_freq_ion=0, nspin=1) |
+| `chgs1_ini.cube` | Initial charge density (out_freq_ion=0, spin 1, nspin=2/4) |
+| `chgg1_ini.cube` | Initial charge density, geometry step 1, out_app_flag=2 (nspin=1) |
+| `chgs1g1_ini.cube` | Initial charge density, spin 1, geometry step 1, out_app_flag=2 (nspin=2/4) |
+| `pot_ini.cube` | Initial potential (out_freq_ion=0, nspin=1) |
+| `pots1_ini.cube` | Initial potential (out_freq_ion=0, spin 1, nspin=2/4) |
+| `potg1_ini.cube` | Initial potential, geometry step 1, out_app_flag=2 (nspin=1) |
+| `pots1g1_ini.cube` | Initial potential, spin 1, geometry step 1, out_app_flag=2 (nspin=2/4) |
 | `pots1.cube` | Local potential, spin 1 |
+| `elftot.cube` | ELF, total (nspin=1/4) |
+| `elfs1.cube` | ELF, spin 1 (nspin=2) |
+| `elfs2.cube` | ELF, spin 2 (nspin=2) |
+| `elftot.cube` | ELF, total (nspin=2) |
+| `elftotg1.cube` | ELF, total, geometry step 1, out_app_flag=2 (nspin=1/4) |
+| `elfs1g1.cube` | ELF, spin 1, geometry step 1, out_app_flag=2 (nspin=2) |
+| `elftotg1.cube` | ELF, total, geometry step 1, out_app_flag=2 (nspin=2) |
 | `eig_occ.txt` | Eigenvalues and occupations |
-| `doss1g1_nao.txt` | DOS, spin 1, geometry step 1, NAO basis |
+| `doss1g1.txt` | DOS, spin 1, geometry step 1, out_app_flag=2 |
 | `wf_pw.dat` | Wavefunction, plane wave basis |
 | `sr.csr` | Overlap matrix in real space (no spin index) |
 
@@ -73,14 +104,46 @@ All output file naming conventions can be found in the online documentation (wit
 | File Name | Description |
 |-----------|-------------|
 | `running_scf.log` | SCF iteration log |
-| `dos.txt` | Density of states |
+| `doss1g1.txt` | Density of states, spin 1, geometry step 1, out_app_flag=2 |
 | `eig_occ.txt` | Eigenvalues and occupations |
 | `mulliken.txt` | Mulliken population analysis |
-| `band.txt` | Band structure |
+| `band.txt` | Band structure (nspin=1/4); `bands1.txt`/`bands2.txt` when nspin=2 |
 | `chgs1.cube`, `chgs2.cube` | Charge density (spin 1, spin 2) |
 | `chg.cube` | Total charge density |
+| Initial charge density (out_chg=2) | |
+| `chg_ini.cube` | Initial charge density (out_freq_ion=0, nspin=1) |
+| `chgs{#}_ini.cube` | Initial charge density (out_freq_ion=0, spin {#}, nspin=2/4) |
+| `chgg{#}_ini.cube` | Initial charge density (geometry step {#}, nspin=1, out_app_flag=2) |
+| `chgs{#}g{#}_ini.cube` | Initial charge density (spin {#}, geometry step {#}, nspin=2/4, out_app_flag=2) |
+| Initial potential (out_pot=3) | |
+| `pot_ini.cube` | Initial potential (out_freq_ion=0, nspin=1) |
+| `pots{#}_ini.cube` | Initial potential (out_freq_ion=0, spin {#}, nspin=2/4) |
+| `potg{#}_ini.cube` | Initial potential (geometry step {#}, nspin=1, out_app_flag=2) |
+| `pots{#}g{#}_ini.cube` | Initial potential (spin {#}, geometry step {#}, nspin=2/4, out_app_flag=2) |
 | `taus1.cube`, `taus2.cube` | Kinetic energy density (tau) |
 | `pots1.cube`, `pots2.cube` | Local potential |
+| ELF (out_elf) | |
+| `elftot.cube` | ELF, total (nspin=1/4) |
+| `elfs1.cube`, `elfs2.cube` | ELF, spin 1/2 (nspin=2) |
+| `elftot.cube` | ELF, total (nspin=2) |
+| `elftotg{#}.cube` | ELF, total, geometry step {#}, out_app_flag=2 (nspin=1/4) |
+| `elfs{#}g{#}.cube` | ELF, spin {#}, geometry step {#}, out_app_flag=2 (nspin=2) |
+| `elftotg{#}.cube` | ELF, total, geometry step {#}, out_app_flag=2 (nspin=2) |
+
+**Band structure files (`out_band`):** each ionic step of `band.txt`,
+`bands1.txt` and `bands2.txt` is preceded by a provenance comment block, so the
+k-point blocks appended by a relax/md run stay distinguishable:
+
+```
+# ABACUS version: v3.11.0-beta11
+# Written at 2026-10-20 15:40:45
+# IONIC STEP 1 (spin up)
+   1 0.00000000 -5.36802595 6.70427084 ...
+```
+
+`# IONIC STEP` is one-based and carries the collinear spin-channel label only
+when `nspin = 2`. Consumers that parse the numeric columns must skip lines
+starting with `#`.
 
 ## 3. File Format Standards
 
@@ -269,7 +332,7 @@ void OutputMyData::write(const std::string& filename, int precision)
 | File | Location | Strengths |
 |------|----------|-----------|
 | `chgs1.cube` | `tests/03_NAO_multik/scf_out_chg_tau/OUT.autotest/` | Short name, spin index convention |
-| `dos.txt` | `tests/03_NAO_multik/scf_out_dos_spin2/OUT.autotest/` | Clear header with metadata |
+| `doss1.txt` | `tests/03_NAO_multik/scf_out_dos_spin2/OUT.autotest/` | Clear header with metadata |
 | `eig_occ.txt` | Same as above | Clear block structure for spin/k-point |
 | `mulliken.txt` | `tests/03_NAO_multik/scf_out_mul/OUT.autotest/` | Clear atom separators |
 

@@ -2,13 +2,199 @@
 
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
-#include "source_io/module_wf/write_wfc_nao.h"
-
-#include "source_io/module_wf/write_wfc_nao.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_io/module_output/filename.h"
+#include "source_base/module_out/filename.h"
 #include "source_base/tool_title.h" // use title
 #include "source_base/global_function.h" // use READ_VALUE
+
+#include <string>
+#include <type_traits>
+#include <vector>
+
+namespace
+{
+
+template <typename T>
+bool read_binary_value(std::ifstream& ifs, T& value)
+{
+    ifs.read(reinterpret_cast<char*>(&value), sizeof(T));
+    return static_cast<bool>(ifs);
+}
+
+/**
+ * @brief skip leading comment lines starting with '#' in a text stream.
+ *
+ * Text wavefunction files may carry a provenance header (ABACUS version,
+ * timestamp, ionic step) before the data block. The stream is left positioned
+ * at the first non-comment character. Must not be used on binary streams,
+ * where '#' is legitimate record data.
+ *
+ * @param ifs text input stream positioned at the start of the file
+ */
+void skip_comment_lines(std::ifstream& ifs)
+{
+    std::string line;
+    while (ifs.peek() != std::char_traits<char>::eof())
+    {
+        const std::streampos pos = ifs.tellg();
+        ifs >> std::ws;
+        if (ifs.peek() == '#')
+        {
+            std::getline(ifs, line);
+        }
+        else
+        {
+            ifs.seekg(pos);
+            ifs.clear();
+            break;
+        }
+    }
+}
+
+template <typename T>
+bool read_record_value(std::ifstream& ifs, T& value, const bool binary)
+{
+    if (binary)
+    {
+        return read_binary_value(ifs, value);
+    }
+    ModuleBase::GlobalFunc::READ_VALUE(ifs, value);
+    return static_cast<bool>(ifs);
+}
+
+bool read_binary_wfc_data(std::ifstream& ifs, double& data)
+{
+    return read_binary_value(ifs, data);
+}
+
+bool read_binary_wfc_data(std::ifstream& ifs, float& data)
+{
+    double value = 0.0;
+    if (!read_binary_value(ifs, value))
+    {
+        return false;
+    }
+    data = static_cast<float>(value);
+    return true;
+}
+
+bool read_binary_wfc_data(std::ifstream& ifs, std::complex<double>& data)
+{
+    double real = 0.0;
+    double imag = 0.0;
+    if (!read_binary_value(ifs, real) || !read_binary_value(ifs, imag))
+    {
+        return false;
+    }
+    data = std::complex<double>(real, imag);
+    return true;
+}
+
+bool read_binary_wfc_data(std::ifstream& ifs, std::complex<float>& data)
+{
+    double real = 0.0;
+    double imag = 0.0;
+    if (!read_binary_value(ifs, real) || !read_binary_value(ifs, imag))
+    {
+        return false;
+    }
+    data = std::complex<float>(static_cast<float>(real), static_cast<float>(imag));
+    return true;
+}
+
+} // namespace
+
+bool ModuleIO::read_wfc_nao_spin_populations(const std::string& readin_dir,
+                                          int nkstot,
+                                          int nspin,
+                                          bool gamma_only,
+                                          bool binary,
+                                          int my_rank,
+                                          std::vector<double>& populations)
+{
+    populations.assign(nspin, 0.0);
+    bool success = (nspin == 1 || nspin == 2) && nkstot > 0 && nkstot % nspin == 0;
+    std::vector<int> ik2iktot;
+    for (int ik = 0; ik < nkstot; ++ik)
+    {
+        ik2iktot.push_back(ik);
+    }
+    if (gamma_only && nkstot != nspin)
+    {
+        success = false;
+    }
+    if (my_rank == 0 && success)
+    {
+        const int nk = nkstot / nspin;
+        const int read_type = binary ? 2 : 1;
+        for (int ik = 0; ik < nkstot && success; ++ik)
+        {
+            const std::string file = ModuleIO::filename_output(readin_dir, "wf", "nao",
+                ik, ik2iktot, nspin, nkstot, read_type, false, gamma_only, -1);
+            const std::ios_base::openmode mode = binary ? std::ios::in | std::ios::binary : std::ios::in;
+            std::ifstream ifs(file.c_str(), mode);
+            if (!binary)
+            {
+                skip_comment_lines(ifs);
+            }
+            if (!gamma_only)
+            {
+                int ik_file = 0;
+                double k = 0.0;
+                success = read_record_value(ifs, ik_file, binary);
+                if (binary)
+                {
+                    success = success && read_binary_value(ifs, k)
+                              && read_binary_value(ifs, k) && read_binary_value(ifs, k);
+                }
+                else
+                {
+                    ifs >> k >> k >> k;
+                    success = success && static_cast<bool>(ifs);
+                }
+                success = success && ik_file == ik + 1;
+            }
+            int nbands = 0;
+            int nbasis = 0;
+            success = success && read_record_value(ifs, nbands, binary)
+                      && read_record_value(ifs, nbasis, binary) && nbands > 0 && nbasis > 0;
+            for (int ib = 0; ib < nbands && success; ++ib)
+            {
+                int ib_file = 0;
+                double energy = 0.0;
+                double occupation = 0.0;
+                success = read_record_value(ifs, ib_file, binary)
+                          && read_record_value(ifs, energy, binary)
+                          && read_record_value(ifs, occupation, binary) && ib_file == ib + 1;
+                populations[ik / nk] += occupation;
+                const int ncoeff = gamma_only ? nbasis : 2 * nbasis;
+                if (binary)
+                {
+                    const std::streamoff bytes = ncoeff * sizeof(double);
+                    ifs.ignore(bytes);
+                    success = success && ifs.gcount() == bytes;
+                }
+                else
+                {
+                    double coefficient = 0.0;
+                    for (int i = 0; i < ncoeff && success; ++i)
+                    {
+                        ifs >> coefficient;
+                        success = static_cast<bool>(ifs);
+                    }
+                }
+            }
+        }
+    }
+#ifdef __MPI
+    Parallel_Common::bcast_bool(success);
+    if (success)
+    {
+        Parallel_Common::bcast_double(populations.data(), nspin);
+    }
+#endif
+    return success;
+}
 
 // mohan add 2025-10-19
 void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, float& data)
@@ -42,23 +228,37 @@ bool ModuleIO::read_wfc_nao(
     const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<T>& psid,
-	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
+    const bool binary,
     const int skip_band,
     const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
-    ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
+    ModuleBase::timer::start("ModuleIO", "read_wfc_nao");
 
     const int nk = ekb.nr;
 
-    const bool gamma_only = std::is_same<T, double>::value;
-    const int out_type = 1; // only support .txt file now
+    const bool gamma_only = std::is_same<T, double>::value || std::is_same<T, float>::value;
     bool read_success = true;
     int myrank = 0;
+#ifdef __MPI
+    MPI_Comm_rank(ParaV.para_2d().comm(), &myrank);
+#endif
+    if (skip_band < 0)
+    {
+        if (myrank == 0)
+        {
+            std::cout << " Error in reading wave function files!\n"
+                      << " skip_band should not be negative, but got " << skip_band << std::endl;
+        }
+        ModuleBase::timer::end("ModuleIO", "read_wfc_nao");
+        return false;
+    }
+
     int nbands = ParaV.get_wfc_global_nbands(); // the global number of bands
     int nlocal = ParaV.get_wfc_global_nbasis(); // the global number of basis functions
     int nbands_local = ParaV.ncol_bands; // the number of bands in the local process
@@ -68,40 +268,73 @@ bool ModuleIO::read_wfc_nao(
     {
         // I don't know why, but in orther places, the init of psi is using ParaV.ncol for gamma_only case
         // It seems that the diagonalization of double case need a full matrix of psi.
-        nbands_local = ParaV.ncol;
+        nbands_local = ParaV.para_2d().ncloc();
     }
     psid.resize(nk, nbands_local, nlocal_local);
-
-#ifdef __MPI
-    MPI_Comm_rank(ParaV.comm(), &myrank);
-#endif   
+    if (gamma_only)
+    {
+        // Gamma diagonalizers may reserve more band slots than the wavefunction file provides.
+        psid.zero_out();
+    }
 
     // lambda function to read one file
-	auto read_one_file = [&](const std::string& ss, 
-			std::stringstream& error_message, 
-			const int ik, 
-			std::vector<T>& ctot)
+    auto read_one_file = [&](const std::string& ss, 
+            std::stringstream& error_message, 
+            const int ik, 
+            std::vector<T>& ctot)
     {
         std::ifstream ifs;
-        ifs.open(ss.c_str());
+        const std::ios_base::openmode mode
+            = binary ? (std::ios::in | std::ios::binary) : std::ios::in;
+        ifs.open(ss.c_str(), mode);
         if (!ifs)
         {
             error_message << " Can't open file:" << ss << std::endl;
             return false;
         }
         else
-		{
+        {
             std::cout << " Read NAO wave functions from " << ss << std::endl;
-		}
+        }
+
+        if (!binary)
+        {
+            skip_comment_lines(ifs);
+        }
+
+        const auto incomplete_file = [&](const std::string& field) {
+            error_message << "The wave function file is incomplete or corrupted while reading "
+                          << field << ": " << ss << std::endl;
+            ifs.close();
+            return false;
+        };
 
         if (!gamma_only)
         {
             int ik_file = 0;
-			double kx = 0.0;
-			double ky = 0.0;
-			double kz = 0.0;
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, ik_file);
-            ifs >> kx >> ky >> kz;
+            double kx = 0.0;
+            double ky = 0.0;
+            double kz = 0.0;
+            if (!read_record_value(ifs, ik_file, binary))
+            {
+                return incomplete_file("the k-point index");
+            }
+            if (binary)
+            {
+                if (!read_binary_value(ifs, kx) || !read_binary_value(ifs, ky)
+                    || !read_binary_value(ifs, kz))
+                {
+                    return incomplete_file("the k-point vector");
+                }
+            }
+            else
+            {
+                ifs >> kx >> ky >> kz;
+                if (!ifs)
+                {
+                    return incomplete_file("the k-point vector");
+                }
+            }
             if (ik_file != ik + 1)
             {
                 error_message << "The k index read in from file do not match the k index generated by ABACUS!\n";
@@ -112,12 +345,16 @@ bool ModuleIO::read_wfc_nao(
             }
         }
         int nbands_file = 0, nlocal_file = 0;
-        ModuleBase::GlobalFunc::READ_VALUE(ifs, nbands_file);
-        ModuleBase::GlobalFunc::READ_VALUE(ifs, nlocal_file);
-        if (nbands > nbands_file)
+        if (!read_record_value(ifs, nbands_file, binary)
+            || !read_record_value(ifs, nlocal_file, binary))
+        {
+            return incomplete_file("the dimensions");
+        }
+        if (nbands_file < 0 || skip_band > nbands_file || nbands > nbands_file - skip_band)
         {
             error_message << "The number of bands to be read exceeds the number of bands in the file generated by ABACUS!\n";
             error_message << " nbands in the existing file=" << nbands_file;
+            error_message << " skip_band=" << skip_band;
             error_message << " nbands to be read into ABACUS=" << nbands << std::endl;
             ifs.close();
             return false;
@@ -135,9 +372,12 @@ bool ModuleIO::read_wfc_nao(
             // the first skip_bands useless bands are read into 0th band to be overwritten
             const int ib_read = std::max(i - skip_band, 0);
             int ib = 0;
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, ib);
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, ekb(ik, ib_read));
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, wg(ik, ib_read));
+            if (!read_record_value(ifs, ib, binary)
+                || !read_record_value(ifs, ekb(ik, ib_read), binary)
+                || !read_record_value(ifs, wg(ik, ib_read), binary))
+            {
+                return incomplete_file("band " + std::to_string(i + 1) + " metadata");
+            }
             if (i+1 != ib)
             {
                 error_message << "The band index read in from file do not match the global parameter band index!\n";
@@ -148,7 +388,20 @@ bool ModuleIO::read_wfc_nao(
             }
             for (int j = 0; j < nlocal; j++)
             {
-                read_wfc_nao_one_data(ifs, ctot[ib_read * nlocal + j]);
+                bool data_read = false;
+                if (binary)
+                {
+                    data_read = read_binary_wfc_data(ifs, ctot[ib_read * nlocal + j]);
+                }
+                else
+                {
+                    read_wfc_nao_one_data(ifs, ctot[ib_read * nlocal + j]);
+                    data_read = static_cast<bool>(ifs);
+                }
+                if (!data_read)
+                {
+                    return incomplete_file("band " + std::to_string(i + 1) + " coefficients");
+                }
             }
         }
         ifs.close();
@@ -158,31 +411,160 @@ bool ModuleIO::read_wfc_nao(
 
     std::string errors;
 
-	std::vector<T> ctot;
-	if (myrank == 0) 
-	{
-		ctot.resize(nbands * nlocal);
-	}
-	else
-	{
-		ctot.resize(0);
-	}
+    std::vector<T> ctot;
+    if (myrank == 0) 
+    {
+        ctot.resize(nbands * nlocal);
+    }
+    else
+    {
+        ctot.resize(0);
+    }
 
     for(int ik=0;ik<nk;ik++)
     {
         if (myrank == 0)
         {
-            const bool out_app_flag = false;
             std::stringstream error_message;
-            std::string readin_dir = global_readin_dir;
-            if(istep >= 0)
+            const int read_type = binary ? 2 : 1;
+            // Candidate file locations, in priority order:
+            // 1. readin_dir + step-suffixed name: layout written by older runs
+            //    with out_app_flag 0 (per-step g files in the OUT directory root)
+            // 2. readin_dir + "PSI/" + step-suffixed name: layout written by
+            //    runs with out_app_flag 2 (also accepts a g file in the root)
+            // 3. readin_dir + "WFC/" + step-suffixed name: layout written by
+            //    releases before the out_app_flag rework
+            // 4. readin_dir + name without the step suffix: written in fixed-name
+            //    modes (out_app_flag 0/1)
+            //
+            // Step-suffixed names are generated with out_app_flag 2, the only
+            // mode that still embeds g{step}; this keeps backward compatibility
+            // with files written by older versions.
+            //
+            // istep semantics:
+            // - istep > 0: positive indexed restart. Only step-suffixed
+            //   snapshots are accepted; the append-mode fixed-name file is
+            //   excluded because read_one_file always loads its first frame,
+            //   which would silently return step-0 data for a positive index.
+            // - istep == 0: ordinary first-frame initialization (e.g.
+            //   non-restart TDDFT). Try the step-suffixed g1 layout first,
+            //   then fall back to the append-mode fixed-name file.
+            // - istep < 0: default read. Append-mode fixed-name file only.
+            std::vector<std::string> candidates;
+            if (istep > 0)
             {
-                readin_dir = readin_dir + "WFC/";
+                const int suffix_app_flag = 2;
+                candidates.push_back(ModuleIO::filename_output(global_readin_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+                const std::string psi_dir = global_readin_dir + "PSI/";
+                candidates.push_back(ModuleIO::filename_output(psi_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+                const std::string legacy_dir = global_readin_dir + "WFC/";
+                candidates.push_back(ModuleIO::filename_output(legacy_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
             }
-            std::string ss = ModuleIO::filename_output(readin_dir,"wf","nao",
-                    ik,ik2iktot,nspin,nkstot,out_type,out_app_flag,gamma_only,istep);
+            else if (istep == 0)
+            {
+                const int suffix_app_flag = 2;
+                candidates.push_back(ModuleIO::filename_output(global_readin_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+                const std::string psi_dir = global_readin_dir + "PSI/";
+                candidates.push_back(ModuleIO::filename_output(psi_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+                const std::string legacy_dir = global_readin_dir + "WFC/";
+                candidates.push_back(ModuleIO::filename_output(legacy_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        suffix_app_flag,
+                        gamma_only,
+                        istep));
+                const int append_app_flag = 1;
+                candidates.push_back(ModuleIO::filename_output(global_readin_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        append_app_flag,
+                        gamma_only,
+                        istep));
+            }
+            else
+            {
+                const int append_app_flag = 1;
+                candidates.push_back(ModuleIO::filename_output(global_readin_dir,
+                        "wf",
+                        "nao",
+                        ik,
+                        ik2iktot,
+                        nspin,
+                        nkstot,
+                        read_type,
+                        append_app_flag,
+                        gamma_only,
+                        istep));
+            }
 
-            read_success = read_one_file(ss, error_message, ik, ctot);
+            for (size_t ic = 0; ic < candidates.size(); ++ic)
+            {
+                read_success = read_one_file(candidates[ic], error_message, ik, ctot);
+                if (read_success)
+                {
+                    break;
+                }
+            }
             errors = error_message.str();
         }   
 #ifdef __MPI
@@ -193,24 +575,25 @@ bool ModuleIO::read_wfc_nao(
         {
             std::cout << " Error in reading wave function files!\n";
             std::cout << errors << std::endl;
+            ModuleBase::timer::end("ModuleIO", "read_wfc_nao");
             return false;
         }
 
         psid.fix_k(ik);
 #ifdef __MPI
-        Parallel_2D pv_glb;
-        pv_glb.set(nlocal, nbands, std::max(nlocal, nbands), ParaV.blacs_ctxt);
+        Parallel_Blkcyclic pv_glb;
+        pv_glb.set(nlocal, nbands, std::max(nlocal, nbands), ParaV.para_2d().ictxt());
         Cpxgemr2d(nlocal,
                   nbands,
                   ctot.data(),
                   1,
                   1,
-                  pv_glb.desc,
+                  const_cast<int*>(pv_glb.desc()),
                   psid.get_pointer(),
                   1,
                   1,
                   const_cast<int*>(ParaV.desc_wfc),
-                  pv_glb.blacs_ctxt);
+                  pv_glb.ictxt());
         Parallel_Common::bcast_double(&ekb(ik, 0), nbands);
         Parallel_Common::bcast_double(&wg(ik, 0), nbands);
 #else
@@ -218,51 +601,56 @@ bool ModuleIO::read_wfc_nao(
 #endif
     }// end of loop over k-points
     
+    ModuleBase::timer::end("ModuleIO", "read_wfc_nao");
     return true;    
 };
 
 template bool ModuleIO::read_wfc_nao<double>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<double>& psid,
-	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
-    const int istep,
-    const int skip_band);
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
+    const bool binary,
+    const int skip_band,
+    const int istep);
 
 // mohan add 2025-10-19
 template bool ModuleIO::read_wfc_nao<float>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<float>& psid,
-	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
-    const int istep,
-    const int skip_band);
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
+    const bool binary,
+    const int skip_band,
+    const int istep);
 
 template bool ModuleIO::read_wfc_nao<std::complex<double>>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
-	psi::Psi<std::complex<double>>& psid,
-	ModuleBase::matrix& ekb,
+    psi::Psi<std::complex<double>>& psid,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
-    const int istep,
-	const int skip_band);
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
+    const bool binary,
+    const int skip_band,
+    const int istep);
 
 // mohan add 2025-10-19
 template bool ModuleIO::read_wfc_nao<std::complex<float>>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
-	psi::Psi<std::complex<float>>& psid,
-	ModuleBase::matrix& ekb,
+    psi::Psi<std::complex<float>>& psid,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
-    const int istep,
-	const int skip_band);
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
+    const bool binary,
+    const int skip_band,
+    const int istep);

@@ -2,7 +2,7 @@
 
 In ABACUS, we provide the option to write the Hamiltonian and Overlap matrices to files after SCF calculations.
 
-For periodic systems, there are two ways to construct the matrices, the first is to write the entire square matrices for each $k$ point in the Brillouin zone, namely $H(k)$ and $S(k)$; the second one is the real space representation, $H(R)$ and $S(R)$, where R is the Bravis lattice vector. The two representations are connected by Fourier transform:
+For periodic systems, there are two ways to construct the matrices. The reciprocal-space representation writes the entire square matrices $H(k)$ and $S(k)$ for each $k$ point in the Brillouin zone. The real-space representation writes $H(R)$ and $S(R)$ indexed by the Bravais lattice vector $R$. The two representations are connected by Fourier transform:
 
 - $H(k)=\sum_R H(R)e^{-ikR}$
 
@@ -10,47 +10,160 @@ and
 
 - $S(k)=\sum_R S(R)e^{-ikR}$
 
-## out_mat_hs
+## out_hsk
 
-Users can set the keyword [out_mat_hs](../input_files/input-main.md#out_mat_hs) to true to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. It is available for both gamma_only and multi-k calculations. 
+Use [out_hsk](../input_files/input-main.md#out_hsk) to print the Hamiltonian and overlap matrices for each k point into `OUT.${suffix}`. It is available for both gamma-only and multi-k calculations. The format value is:
+
+| Value | Format |
+| --- | --- |
+| `0` | Disabled |
+| `1` | Text; an optional second value controls precision, for example `out_hsk 1 12` |
+| `2` | Native binary `.dat` output |
+| `3` | Reserved for H(k)/S(k) NPZ output; not implemented |
+
+The legacy keyword `out_mat_hs 1 [precision]` remains supported as an alias for `out_hsk 1 [precision]`. If both names are present, `out_hsk` takes precedence.
 
 The $H(k)$ and $S(k)$ matrices are stored with numerical atomic orbitals as basis, and the corresponding sequence of the numerical atomic orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
 
 As for information on the k points, one may look for the `SETUP K-POINTS` section in the running log.
 
-The first number of the first line in each file gives the size of the matrix, namely, the number of atomic basis functions in the system.
+The output filenames depend on the k-point algorithm and `nspin`. Text output (`out_hsk 1`) and native binary output (`out_hsk 2`) use different gamma-only names, because only the text writer omits the `k` marker when there is no k-point index to report:
 
-The rest of the file contains the upper triangular part of the specified matrices. For multi-k calculations, the matrices are Hermitian and the matrix elements are complex; for gamma-only calculations, the matrices are symmetric and the matrix elements are real.
+| Calculation mode | `nspin` | Text H(k) | Text S(k) | Binary H(k) | Binary S(k) |
+| --- | --- | --- | --- | --- | --- |
+| `gamma_only = 1` | 1 | `h_nao.txt` | `s_nao.txt` | `hk_nao.dat` | `sk_nao.dat` |
+| `gamma_only = 1` | 2 | `hs1_nao.txt`, `hs2_nao.txt` | `s_nao.txt` | `hks1_nao.dat`, `hks2_nao.dat` | `sk_nao.dat` |
+| `gamma_only = 0` | 1 | `hk${k}_nao.txt` | `sk${k}_nao.txt` | `hk${k}_nao.dat` | `sk${k}_nao.dat` |
+| `gamma_only = 0` | 2 | `hk${k}s1_nao.txt`, `hk${k}s2_nao.txt` | `sk${k}_nao.txt` | `hk${k}s1_nao.dat`, `hk${k}s2_nao.dat` | `sk${k}_nao.dat` |
+| `gamma_only = 0` | 4 | `hk${k}_nao.txt` | `sk${k}_nao.txt` | `hk${k}s4_nao.dat` | `sk${k}_nao.dat` |
 
-## out_mat_hs2
+Here `${k}` is the one-based k-point index. For `nspin = 2`, the overlap matrix is spin-independent, so only one overlap file is written for each physical k point. The gamma-only algorithm does not support `nspin = 4`; use the multi-k algorithm with an explicit Gamma-only `KPT` file for a noncollinear calculation at Gamma. In text output the spinor Hamiltonian is stored as one complex matrix, so no spin suffix is added; the binary format keeps the historical `s4` marker.
 
-The output of $H(R)$ and $S(R)$ matrices is controlled by the keyword [out_mat_hs2](../input_files/input-main.md#out_mat_hs2). This functionality is not available for gamma_only calculations. To generate such matrices for gamma only calculations, users should turn off [gamma_only](../input_files/input-main.md#gamma_only), and explicitly specify that gamma point is the only k point in the KPT file.
+Only when `out_app_flag` is 2 is `g${step}` inserted before `_nao`, where `${step}` is the one-based ionic-step index. For example, the first spin channel at the first k point and first ionic step is written to `hk1s1g1_nao.txt`. With `out_app_flag = 0` the fixed file is truncated and overwritten at every write, and with `out_app_flag = 1` it accumulates one record per written step.
 
-For single-point SCF calculations, if nspin = 1 or nspin = 4, two files `hrs1_nao.csr` and `sr_nao.csr` are generated, which contain the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively. For nspin = 2, three files `hrs1_nao.csr` and `hrs2_nao.csr` and `sr_nao.csr` are created, where the first two files correspodn to $H(R)$ for spin up and spin down, respectively.
+With `out_hsk 1`, each ionic-step record is a self-describing text block. It starts with `Ionic_Step ${step}`, followed by the number of spin directions, the one-based spin index, the total number of k points, the one-based k-point index, the Cartesian and direct coordinates, the k-point weight, the Fermi energy in Ry, the number of localized basis functions, and the matrix dimension. A `user_defined_lattice` block with the lattice vectors and atomic positions follows. The matrix body then stores every element of the dense $N \times N$ matrix in row-major order: row by row from $i = 0$ to $N-1$, and within each row from $j = 0$ to $N-1$. Both triangles and the diagonal are written; the body is not restricted to the upper triangle. Four complex values or eight real values are written per line, and values with magnitude below $10^{-10}$ are flushed to zero.
 
-Each file or each section of the appended file starts with three lines, the first gives the current ion/md step, the second gives the dimension of the matrix, and the last indicates how many different `R` are in the file.
+For multi-k calculations, the matrices are Hermitian and each matrix element is written as `(real,imag)`. For gamma-only calculations, the matrices are symmetric and the matrix elements are written as real numbers.
 
-The rest of the files are arranged in blocks. Each block starts with a line giving the lattice vector `R` and the number of nonzero matrix elements, such as:
+> **Note (3.10-LTS):** In the 3.10-LTS version, the corresponding keyword is `out_mat_hs`, and the output file names are `data-0-H` and `data-0-S`, etc.
 
+### Native Binary Format
+
+For `out_hsk 2`, the binary filenames listed in the table above are used. Each matrix record is written without padding or a self-describing header:
+
+1. the matrix dimension as a native C++ `int`;
+2. the upper-triangular elements in row-major order, from `(0,0)` through `(0,N-1)`, then `(1,1)` through `(1,N-1)`, and so on;
+3. each gamma-only element as one native `double`, or each multi-k/spinor element as two consecutive native `double` values containing the real and imaginary parts.
+
+The file therefore contains `sizeof(int) + N(N+1)/2 * sizeof(double)` bytes for a gamma-only record and `sizeof(int) + N(N+1) * sizeof(double)` bytes for a multi-k or spinor record. The format uses the host integer representation and byte order and is intended for readers using a compatible ABI.
+
+When `out_app_flag` is 1, the first ionic step truncates the shared file and every later step appends another complete record. When `out_app_flag` is 0, the fixed file is truncated and overwritten at every write. Only when `out_app_flag` is 2 does each ionic step have a separate filename containing `g${step}` before `_nao`.
+
+## out_hsr
+
+The output of $H(R)$ and $S(R)$ matrices is controlled by [out_hsr](../input_files/input-main.md#out_hsr). It is available for both gamma-only and multi-k LCAO calculations:
+
+| Value | Format |
+| --- | --- |
+| `0` | Disabled |
+| `1` | Text CSR; an optional second value controls precision, for example `out_hsr 1 12` |
+| `2` | Native binary CSR using `.dat` files |
+| `3` | NPZ: `hrs1_nao.npz`, `hrs2_nao.npz` when needed, and `sr_nao.npz` |
+
+The legacy keywords `out_mat_hs2 1 [precision]` and `out_hsr_npz 1` remain supported as aliases for text and NPZ output respectively. If `out_hsr` is present together with either legacy keyword, `out_hsr` takes precedence.
+
+For a multi-k calculation, the files contain the individual real-space blocks stored for the Bravais lattice vectors $R$. For a gamma-only calculation, ABACUS stores the real-space contributions in a folded representation. Text CSR, native binary, and NPZ output write this internal representation directly: all stored $R$-space contributions are summed into a single block labelled `R = (0, 0, 0)`.
+
+The folded gamma-only output is sufficient to inspect the matrix used by the gamma-only real-space container, but it does not retain the original lattice-vector resolution and cannot be used to interpolate matrices at arbitrary k points. Terms that are added only while constructing $H(k)$, rather than stored in the internal $H(R)$ container, are not guaranteed to be present. Use [out_hsk](../input_files/input-main.md#out_hsk) when the final $H(\Gamma)$ and $S(\Gamma)$ matrices are required.
+
+> **Note (3.10-LTS):** In the 3.10-LTS version, the corresponding keyword is `out_mat_hs2`, and the output file names are `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SPIN0.csr`, etc.
+
+### Text CSR Format
+
+The H(R) and S(R) matrices are output in standard Compressed Sparse Row (CSR) format, matching the format used by `out_dmr`.
+
+For single-point SCF calculations:
+- **nspin = 1**: Two files `hrs1_nao.csr` and `sr_nao.csr` are generated, containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively.
+- **nspin = 2**: Three files `hrs1_nao.csr`, `hrs2_nao.csr`, and `sr_nao.csr` are created, where the first two files correspond to $H(R)$ for spin up and spin down, respectively.
+- **nspin = 4**: Multi-k calculations generate `hrs1_nao.csr` and `sr_nao.csr`. The gamma-only algorithm itself does not support `nspin = 4`.
+
+In gamma-only mode, every generated file reports one Bravais lattice vector and contains one CSR block for `0 0 0`. The header also contains:
+
+```text
+# representation: gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)
 ```
--3 1 1 1020
+
+### Native Binary CSR Format
+
+Set `out_hsr 2` to write the same H(R) and S(R) matrix sets with a `.dat` suffix. For example, an `nspin = 2` calculation writes `hrs1_nao.dat`, `hrs2_nao.dat`, and `sr_nao.dat`. When `out_app_flag` is 2, the one-based ionic step is included before `_nao`, for example `hrs1g1_nao.dat` and `srg1_nao.dat`.
+
+Each ionic step is a complete record with no padding; its header is self-identifying through a magic value and a format version:
+
+1. Versioned header: five native `int` values, namely the magic `0x48535242` (`HSRB`), the format version (`2`), the one-based ionic step, the matrix dimension, and the number of R blocks. The magic and version are absent from the unversioned layout described in the migration note below.
+2. For every R block in lexicographic `(Rx, Ry, Rz)` order, four native `int` values: `Rx`, `Ry`, `Rz`, and `nnz`.
+3. `nnz` matrix values in CSR order. Real matrices use one native `double`; complex matrices use consecutive real and imaginary `double` values.
+4. `nnz` native `int` column indices.
+5. `dimension + 1` native `long long` row pointers.
+
+All R blocks stored by the internal HContainer are present, including blocks with zero nonzero values. The binary sparse threshold is `1e-10`; the text CSR files instead drop complex components below `1e-16` and keep real values unfiltered, so the two formats may differ on near-zero elements. The format uses the host integer representation and byte order and therefore requires a compatible ABI. It does not contain unit-cell, spin, or matrix-label metadata; those are determined by the calculation input and filename.
+
+When `out_app_flag` is 1, the first ionic step truncates the shared file and later ionic steps append complete records. When `out_app_flag` is 0, the fixed file is truncated and overwritten at every write. Only when `out_app_flag` is 2 is every ionic step written to its own file.
+
+> **Format version and migration note.** The native binary record is now versioned. Version `2` starts with the magic `0x48535242` and the version itself, and stores a one-based ionic step. Earlier files are unversioned and start directly with the ionic step, so the first `int` of an unversioned file is a small step index (`0` or `1`) rather than the magic, which makes the two layouts distinguishable.
+> - **v3.11.0-beta9 and v3.11.0-beta10** wrote unversioned records with a **zero-based** ionic step (the first ionic step is stored as `0`).
+> - **Development builds between that change and this versioning scheme** wrote unversioned records with a **one-based** ionic step, so an unversioned file cannot be interpreted from its content alone; the writer version is required.
+> - **Version `2` and later** write the magic, the format version, and a **one-based** ionic step.
+>
+> The matrix data itself is unchanged; only the header and the step convention differ. Readers should reject a record whose first `int` is not the expected magic instead of guessing the layout, and must consult the format version before interpreting the remaining fields. Reading an unversioned beta file as version `2`, or a version `2` file as unversioned, shifts the reported ionic-step index and misaligns every following field.
+
+### NPZ Format
+
+Set `out_hsr 3` to write `hrs1_nao.npz`, `hrs2_nao.npz` when a second spin channel is present, and `sr_nao.npz`. Matrix entry names include the atom-pair indices and the three components of $R$. Multi-k calculations retain the stored $R$ blocks, while gamma-only calculations contain only matrix entry names ending in `_0_0_0`.
+
+### File Structure
+
+Each file starts with a header:
+```
+ --- Ionic Step 1 ---
+ # print H matrix in real space H(R)
+ 1 # number of spin directions
+ 1 # spin index, E_Fermi = 10.3798 eV
+ 100 # number of localized basis
+ 50 # number of Bravais lattice vector R
+
+[UnitCell information]
+
+#----------------------------------------------------------------------#
+#                               CSR Format                             #
+...
+ 0 0 0 5
+ # CSR values
+ 1.234e-01 2.345e-02 ...
+ # CSR column indices
+ 0 5 10 ...
+ # CSR row pointers
+ 0 3 7 ...
 ```
 
-which means there are 1020 nonzero elements in the (-3,1,1) cell.
+The spin index line may carry an optional `, E_Fermi = <value> eV` suffix when the Fermi energy is available (only for the H matrix). The value is printed in eV with 6 significant digits.
 
-If there is no nonzero matrix element, then the next block starts immediately on the next line. Otherwise, there will be 3 extra lines in the block, which gives the matrix in CSR format. According to Wikipedia:
+The CSR format stores a sparse m × n matrix M in row form using three arrays (values, column indices, row pointers). According to Wikipedia:
 
-The CSR format stores a sparse m × n matrix M in row form using three (one-dimensional) arrays (V, COL_INDEX, ROW_INDEX). Let NNZ denote the number of nonzero entries in M. (Note that zero-based indices shall be used here.)
+- The arrays **values** and **column indices** are of length NNZ (number of nonzero entries), and contain the non-zero values and the column indices of those values respectively.
+- The array **row pointers** is of length m + 1 and encodes the index where each row starts. The last element is NNZ.
 
-  - The arrays V and COL_INDEX are of length NNZ, and contain the non-zero values and the column indices of those values respectively.
-  - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
+### Precision Control
+
+Use `out_hsr 1 12` to output text CSR files with 12-digit precision (default is 8). Precision is ignored for native binary and NPZ output.
 
 For calculations involving ionic movements, the output frequency of the matrix is controlled by [out_freq_ion](../input_files/input-main.md#out_freq_ion) and [out_app_flag](../input_files/input-main.md#out_app_flag). 
 
 ## get_s
 We also offer the option of only calculating the overlap matrix without running SCF. For that purpose, in `INPUT` file we need to set the value keyword [calculation](../input_files/input-main.md#calculation) to be `get_s`.
 
-A file named `sr_nao.csr` will be generated in the working directory, which contains the overlap matrix.
+A file named `sr_nao.csr` will be generated in `OUT.${suffix}`, which contains the overlap matrix.
+
+When [out_mat_l](../input_files/input-main.md#out_mat_l) is enabled, the expectation values of the angular momentum operators are written in the same run as `lx_nao.csr`, `ly_nao.csr` and `lz_nao.csr` in `OUT.${suffix}`. Like the overlap matrix, these matrices are built from the orbital tables and require no SCF cycle; because the NAO basis functions are real, only the imaginary part of each matrix element is stored. This combination is not available for `nspin = 4`, and [out_app_flag](../input_files/input-main.md#out_app_flag) controls whether the L files carry an ionic-step suffix (`lxg${step}_nao.csr` etc.) and whether they are overwritten or appended.
 
 > When `nspin` is set to 1 or 2, the dimension of the overlap matrix is nlocal $\times$ nlocal, where nlocal is the total number of numerical atomic orbitals. 
 These numerical atomic orbitals are ordered from outer to inner loop as atom, angular quantum number $l$, zeta (multiple radial orbitals corresponding to each $l$), and magnetic quantum number $m$. 
@@ -58,11 +171,11 @@ When `nspin` is set to 4, the dimension of the overlap matrix is (2 $\times$ nlo
 
 
 ## examples
-We provide [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/matrix_hs) of outputting the matrices. There are four examples:
+We provide [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/10_hs_matrix) of outputting the matrices.
 
-- out_hs_gammaonly: writing H(k) and S(k) for gamma-only calculation
-- out_hs_multik: writing H(k) and S(k) for multi-k calculation
-- out_hs2_multik: writing H(R) and S(R) for multi-k calculation
-- out_s_multik: running calculation=get_s to obtain overlap matrix for multi-k calculation
+- `03_out_hsk_gamma`: writing H(k) and S(k) for a gamma-only calculation
+- `04_out_hsk_multik`: writing H(k) and S(k) for a multi-k calculation
+- `01_out_hsr_multik` and `02_out_hsr_multik`: writing H(R) and S(R) for a multi-k calculation
+- `05_gets`: running `calculation = get_s` to obtain the overlap matrix; enabling `out_mat_l` in the same run also writes the angular momentum matrices
 
 Reference output files are provided in each directory.

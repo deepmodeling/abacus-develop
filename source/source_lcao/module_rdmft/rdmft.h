@@ -5,34 +5,38 @@
 #ifndef RDMFT_H
 #define RDMFT_H
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
 
-#include "source_base/parallel_2d.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
-#include "source_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/orb_read.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/hs_matrix_k.hpp"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/hs_matrix_k.h"
 
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI.h"
-#include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
-// there are some operator reload to print data in different formats
+// Exx_LRI forward declaration, full definition in exx_lri.h (moved to .cpp)
+// mohan add 20260605
+template <typename TR> class Exx_LRI;
+#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 #endif
 
 #include "source_estate/elecstate.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h" // use Grid_Driver
+#include "source_hamilt/module_xc/exx_info.h"
 
 #include <iostream>
 #include <type_traits>
 #include <complex>
 #include <vector>
 #include <iomanip>
+#include <memory>
+
+class BasisFlattenedIndexing; // Defined in source/source_base/basis_flattened_indexing.h
 
 //! Reduced Density Matrix Functional Theory (RDMFT)
 namespace rdmft
@@ -48,7 +52,7 @@ class RDMFT
     
     const Parallel_Orbitals* ParaV = nullptr;
 
-    Parallel_2D para_Eij;
+    Parallel_Blkcyclic para_Eij;
 
     //! obain Ewald and this->pelec->pot
     elecstate::ElecState* pelec = nullptr;
@@ -88,7 +92,8 @@ class RDMFT
               LCAO_Orbitals& orb_in,
               TwoCenterBundle& two_center_bundle_in,
               std::string XC_func_rdmft_in,
-              double alpha_power_in);
+              double alpha_power_in,
+              const Exx_Info& exx_info);
 
     //! update in ion-step and get V_TV
     void update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis_in,
@@ -146,6 +151,8 @@ class RDMFT
     hamilt::HS_Matrix_K<TK>* hsk_exx_XC = nullptr;
 
     std::vector<TK> HK_XC;
+
+    std::unique_ptr<BasisFlattenedIndexing> basis_index_;
     std::vector< std::vector<TK> > DM_XC_pass;
     // ModuleDirectMin::ProdStiefelVariable HK_RDMFT_pass;
     // ModuleDirectMin::ProdStiefelVariable HK_XC_pass;
@@ -180,6 +187,7 @@ class RDMFT
     Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;
     ModuleSymmetry::Symmetry_rotation symrot_exx;
     bool exx_spacegroup_symmetry = false;
+    const Exx_Info* exx_info_ = nullptr;
 #endif
 
     double etxc = 0.0;

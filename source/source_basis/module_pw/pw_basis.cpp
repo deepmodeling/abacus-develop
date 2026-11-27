@@ -55,7 +55,7 @@ PW_Basis:: ~PW_Basis()
 ///
 void PW_Basis::setuptransform()
 {
-    ModuleBase::timer::tick(this->classname, "setuptransform");
+    ModuleBase::timer::start(this->classname, "setuptransform");
     this->distribute_r();
     this->distribute_g();
     this->getstartgr();
@@ -70,7 +70,7 @@ void PW_Basis::setuptransform()
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }
     this->fft_bundle.setupFFT();
-    ModuleBase::timer::tick(this->classname, "setuptransform");
+    ModuleBase::timer::end(this->classname, "setuptransform");
 }
 
 void PW_Basis::getstartgr()
@@ -85,42 +85,42 @@ void PW_Basis::getstartgr()
     }
     
     //---------------------------------------------
-	// sum : starting plane of FFT box.
-	//---------------------------------------------
+    // sum : starting plane of FFT box.
+    //---------------------------------------------
     delete[] this->numg; this->numg = new int[poolnproc];
-	delete[] this->startg; this->startg = new int[poolnproc];
-	delete[] this->startr; this->startr = new int[poolnproc];
-	delete[] this->numr; this->numr = new int[poolnproc];
+    delete[] this->startg; this->startg = new int[poolnproc];
+    delete[] this->startr; this->startr = new int[poolnproc];
+    delete[] this->numr; this->numr = new int[poolnproc];
 
-	// Each processor has a set of full sticks,
-	// 'rank_use' processor send a piece(npps[ip]) of these sticks(nst_per[rank_use])
-	// to all the other processors in this pool
-	for (int ip = 0;ip < poolnproc; ++ip)
+    // Each processor has a set of full sticks,
+    // 'rank_use' processor send a piece(npps[ip]) of these sticks(nst_per[rank_use])
+    // to all the other processors in this pool
+    for (int ip = 0;ip < poolnproc; ++ip)
     {
         this->numg[ip] = this->nst_per[poolrank] * this->numz[ip];
     }
 
 
-	// Each processor in a pool send a piece of each stick(nst_per[ip]) to
-	// other processors in this pool
-	// rank_use processor receive datas in npps[rank_p] planes.
-	for (int ip = 0;ip < poolnproc; ++ip)
+    // Each processor in a pool send a piece of each stick(nst_per[ip]) to
+    // other processors in this pool
+    // rank_use processor receive datas in npps[rank_p] planes.
+    for (int ip = 0;ip < poolnproc; ++ip)
     {
         this->numr[ip] = this->nst_per[ip] * this->numz[poolrank];
     }
 
 
-	// startg record the starting 'numg' position in each processor.
-	this->startg[0] = 0;
-	for (int ip = 1;ip < poolnproc; ++ip)
+    // startg record the starting 'numg' position in each processor.
+    this->startg[0] = 0;
+    for (int ip = 1;ip < poolnproc; ++ip)
     {
         this->startg[ip] = this->startg[ip-1] + this->numg[ip-1];
     }
 
 
-	// startr record the starting 'numr' position
-	this->startr[0] = 0;
-	for (int ip = 1;ip < poolnproc; ++ip)
+    // startr record the starting 'numr' position
+    this->startr[0] = 0;
+    for (int ip = 1;ip < poolnproc; ++ip)
     {
         this->startr[ip] = this->startr[ip-1] + this->numr[ip-1];
     }

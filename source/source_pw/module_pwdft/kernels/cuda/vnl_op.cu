@@ -1,17 +1,20 @@
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
+
 #include "vnl_tools_cu.hpp"
+#include <cstdint>
 
 #include <complex>
 
-#include <thrust/complex.h>
-#include <cuda_runtime.h>
 #include <base/macros/macros.h>
+#include <cuda_runtime.h>
+#include <thrust/complex.h>
 
 #define THREADS_PER_BLOCK 256
 
-namespace hamilt {
+namespace hamilt
+{
 
-template<typename FPTYPE>
+template <typename FPTYPE>
 __global__ void cal_vnl(
     const int ntype,
     const int npw,
@@ -19,9 +22,9 @@ __global__ void cal_vnl(
     const int nhm,
     const int tab_2,
     const int tab_3,
-    const int * atom_na,
-    const int * atom_nb,
-    const int * atom_nh,
+    const int *atom_na,
+    const int *atom_nb,
+    const int *atom_nh,
     const FPTYPE DQ,
     const FPTYPE tpiba,
     const thrust::complex<FPTYPE> NEG_IMAG_UNIT,
@@ -37,35 +40,47 @@ __global__ void cal_vnl(
 {
     FPTYPE vq = 0.0;
     int iat = 0, jkb = 0, ig = blockIdx.x * blockDim.x + threadIdx.x;
-    if (ig >= npw) {return;}
-    for (int it = 0; it < ntype; it++) {
+    if (ig >= npw)
+    {
+        return;
+    }
+    for (int it = 0; it < ntype; it++)
+    {
         // calculate beta in G-space using an interpolation table
         const int nh = atom_nh[it];
         const int nbeta = atom_nb[it];
 
-        for (int nb = 0; nb < nbeta; nb++) {
-            const FPTYPE gnorm = sqrt(gk[ig * 3 + 0] * gk[ig * 3 + 0] + gk[ig * 3 + 1] * gk[ig * 3 + 1] +
-                                      gk[ig * 3 + 2] * gk[ig * 3 + 2]) * tpiba;
+        for (int nb = 0; nb < nbeta; nb++)
+        {
+            const std::int64_t g_offset = static_cast<std::int64_t>(ig) * 3;
+            const FPTYPE gnorm = sqrt(
+                                     gk[g_offset + 0] * gk[g_offset + 0] + gk[g_offset + 1] * gk[g_offset + 1] +
+                                     gk[g_offset + 2] * gk[g_offset + 2]) *
+                                 tpiba;
 
-            vq = _polynomial_interpolation(
-                    tab, it, nb, tab_2, tab_3, DQ, gnorm);
+            vq = _polynomial_interpolation(tab, it, nb, tab_2, tab_3, DQ, gnorm);
 
             // add spherical harmonic part
-            for (int ih = 0; ih < nh; ih++) {
-                if (nb == indv[it * nhm + ih]) {
-                    const int lm = static_cast<int>(nhtolm[it * nhm + ih]);
-                    vkb1[ih * npw + ig] = ylm[lm * npw + ig] * vq;
+            for (int ih = 0; ih < nh; ih++)
+            {
+                if (nb == indv[static_cast<std::int64_t>(it) * nhm + ih])
+                {
+                    const int lm = static_cast<int>(nhtolm[static_cast<std::int64_t>(it) * nhm + ih]);
+                    vkb1[static_cast<std::int64_t>(ih) * npw + ig] = ylm[static_cast<std::int64_t>(lm) * npw + ig] * vq;
                 }
             } // end ih
         } // end nbeta
 
         // vkb1 contains all betas including angular part for type nt
         // now add the structure factor and factor (-i)^l
-        for (int ia = 0; ia < atom_na[it]; ia++) {
-            for (int ih = 0; ih < nh; ih++) {
-                thrust::complex<FPTYPE> pref = pow(NEG_IMAG_UNIT, nhtol[it * nhm + ih]);    //?
-                thrust::complex<FPTYPE> *pvkb = vkb_in + jkb * npwx;
-                pvkb[ig] = vkb1[ih * npw + ig] * sk[iat * npw + ig] * pref;
+        for (int ia = 0; ia < atom_na[it]; ia++)
+        {
+            for (int ih = 0; ih < nh; ih++)
+            {
+                thrust::complex<FPTYPE> pref = pow(NEG_IMAG_UNIT, nhtol[static_cast<std::int64_t>(it) * nhm + ih]); //?
+                thrust::complex<FPTYPE> *pvkb = vkb_in + static_cast<std::int64_t>(jkb) * npwx;
+                pvkb[ig] = vkb1[static_cast<std::int64_t>(ih) * npw + ig] *
+                           sk[static_cast<std::int64_t>(iat) * npw + ig] * pref;
                 ++jkb;
             } // end ih
             iat++;
@@ -74,7 +89,7 @@ __global__ void cal_vnl(
 }
 
 template <typename FPTYPE>
-void cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>::operator() (
+void cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     const base_device::DEVICE_GPU *ctx,
     const int &ntype,
     const int &npw,
@@ -82,9 +97,9 @@ void cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>::operator() (
     const int &nhm,
     const int &tab_2,
     const int &tab_3,
-    const int * atom_na,
-    const int * atom_nb,
-    const int * atom_nh,
+    const int *atom_na,
+    const int *atom_nb,
+    const int *atom_nh,
     const FPTYPE &DQ,
     const FPTYPE &tpiba,
     const std::complex<FPTYPE> &NEG_IMAG_UNIT,
@@ -98,15 +113,11 @@ void cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>::operator() (
     const std::complex<FPTYPE> *sk,
     std::complex<FPTYPE> *vkb_in)
 {
-    int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    int block = npw / THREADS_PER_BLOCK + (npw % THREADS_PER_BLOCK != 0);
     cal_vnl<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
-            ntype, npw, npwx, nhm, tab_2, tab_3,
-            atom_na, atom_nb, atom_nh,
-            DQ, tpiba,
-            static_cast<thrust::complex<FPTYPE>>(NEG_IMAG_UNIT),
-            gk, ylm, indv, nhtol, nhtolm, tab, vkb1,
-            reinterpret_cast<const thrust::complex<FPTYPE>*>(sk),
-            reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_in));
+        ntype, npw, npwx, nhm, tab_2, tab_3, atom_na, atom_nb, atom_nh, DQ, tpiba,
+        static_cast<thrust::complex<FPTYPE>>(NEG_IMAG_UNIT), gk, ylm, indv, nhtol, nhtolm, tab, vkb1,
+        reinterpret_cast<const thrust::complex<FPTYPE> *>(sk), reinterpret_cast<thrust::complex<FPTYPE> *>(vkb_in));
 
     CHECK_CUDA_SYNC();
 }
@@ -114,4 +125,4 @@ void cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>::operator() (
 template struct cal_vnl_op<float, base_device::DEVICE_GPU>;
 template struct cal_vnl_op<double, base_device::DEVICE_GPU>;
 
-}  // namespace hamilt
+} // namespace hamilt

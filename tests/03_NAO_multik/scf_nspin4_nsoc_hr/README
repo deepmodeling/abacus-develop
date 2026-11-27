@@ -1,0 +1,7 @@
+Self-consistent nspin=4 O2 H(R)/S(R) regression, without SOC.
+O-O distance 2.3 bohr in an 18-bohr cubic cell; existing O FR PP and minimal 6-bohr 1s1p orbitals.
+PBE/LCAO, 15 Ry, Gamma 1x1x1; initial moments (1/sqrt(2),1/sqrt(2),0) muB per atom.
+Full SCF uses scf_thr=1e-7, scf_nmax=50, Pulay 0.4 and mixing_gg0=3; no DeltaSpin.
+References are complete raw 16x16 complex matrices with only R=0 and finite y magnetization.
+Repeated local GNU/Intel runs pass the unchanged matrix comparator; the unfixed parent fails H.
+These compact parameters test the assembly regression rather than material-property convergence.

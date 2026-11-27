@@ -1,0 +1,170 @@
+#include "symm_rotation.h"
+#include "source_base/module_external/blas_connector.h"
+#include "source_base/parallel_reduce.h"
+namespace ModuleSymmetry
+{
+    template<typename TR>
+    inline void print_global(const TR* tlocal, const int nr, const int nc, const std::string name)
+    {
+        GlobalV::ofs_running << name << std::endl;
+        for (int i = 0;i < nr;++i)
+        {
+            for (int j = 0;j < nc;++j) GlobalV::ofs_running << tlocal[j + i * nc] << " ";
+            GlobalV::ofs_running << "\n";
+        }
+    }
+    template<typename TR>
+    inline void print_local(const Parallel_Orbitals& pv, const TR* tlocal, const std::string name)
+    {
+        GlobalV::ofs_running << name << std::endl;
+        for (int i = 0; i < pv.para_2d().nrloc(); ++i)
+        {
+            for (int j = 0; j < pv.para_2d().ncloc(); ++j)
+                GlobalV::ofs_running << tlocal[j + i * pv.para_2d().ncloc()] << " ";
+            GlobalV::ofs_running << "\n";
+        }
+    }
+    template<typename TR>
+    inline void print_atompair_local(const Parallel_Orbitals& pv, const int iat1, const int iat2, const TR* tlocal, const std::string name)
+    {
+        GlobalV::ofs_running << name << std::endl;
+        for (int i = 0;i < pv.get_nrow_atom(iat1);++i)
+        {
+            for (int j = 0;j < pv.get_ncol_atom(iat2);++j) GlobalV::ofs_running << tlocal[j + i * pv.get_ncol_atom(iat2)] << " ";
+            GlobalV::ofs_running << "\n";
+        }
+    }
+
+    template<typename TR>   // HContainer type
+    void Symmetry_rotation::restore_HR(
+        const Symmetry& symm, const Atom* atoms,
+        const std::vector<int>& iat2it, const std::vector<int>& iat2ia, const char mode,
+        const hamilt::HContainer<TR>& HR_irreduceble,
+        hamilt::HContainer<TR>& HR_rotated)const
+    {
+        ModuleBase::TITLE("Symmetry_rotation", "restore_HR");
+        ModuleBase::timer::start("Symmetry_rotation", "restore_HR");
+        for (auto& apR_isym_irapR : this->irs_.full_map_to_irreducible_sector_)
+        {
+            const Tap& ap = apR_isym_irapR.first.first;
+            const TC& R = apR_isym_irapR.first.second;
+            const int& isym = apR_isym_irapR.second.first;
+            const Tap& irap = apR_isym_irapR.second.second.first;
+            const TC& irR = apR_isym_irapR.second.second.second;
+            assert(irR == this->irs_.rotate_R(symm, isym, ap.first, ap.second, R));
+            // get in and out pointer from HContainer
+            const hamilt::AtomPair<TR>& irap_hc = HR_irreduceble.get_atom_pair(irap.first, irap.second);
+            const int irR_hc = irap_hc.find_R(irR[0], irR[1], irR[2]);
+            if (irR_hc < 0) continue;
+            const TR* irijR_ptr = irap_hc.get_pointer(irR_hc);
+            const hamilt::AtomPair<TR>& ap_hc = HR_rotated.get_atom_pair(ap.first, ap.second);
+            const int R_hc = ap_hc.find_R(R[0], R[1], R[2]);
+            if (R_hc < 0) continue;
+            TR* ijR_ptr = ap_hc.get_pointer(R_hc);
+            rotate_atompair_parallel(irijR_ptr, isym, atoms, iat2it, iat2ia, irap, ap, mode, *irap_hc.get_paraV(), ijR_ptr);
+        }
+        ModuleBase::timer::end("Symmetry_rotation", "restore_HR");
+    }
+
+    inline void set_block(const int starti, const int startj, const int nr, const ModuleBase::ComplexMatrix& block, double* obj)
+    {   // row-major (col-contiguous)
+        for (int i = 0;i < block.nr;++i)
+            for (int j = 0;j < block.nc;++j)
+                obj[starti + i + (startj + j) * nr] = block(j, i).real();
+    };
+    inline void set_block(const int starti, const int startj, const int nr, const ModuleBase::ComplexMatrix& block, std::complex<double>* obj)
+    {   // row-major (col-contiguous)
+        for (int i = 0;i < block.nr;++i)
+            for (int j = 0;j < block.nc;++j)
+                obj[starti + i + (startj + j) * nr] = block(j, i);
+    };
+    template<typename TR>
+    void Symmetry_rotation::rotate_atompair_parallel(const TR* Alocal_in, const int isym, const Atom* atoms,
+        const std::vector<int>& iat2it, const std::vector<int>& iat2ia,
+        const Tap& ap_in, const Tap& ap_out, const char mode, const Parallel_Orbitals& pv, TR* Alocal_out, const bool output)const
+    {
+        // all the matrices are row-major (col-contiguous)
+        int iat1 = ap_in.first, iat2 = ap_in.second;
+        int it1 = iat2it[iat1], it2 = iat2it[iat2];
+        int ia1 = iat2ia[iat1], ia2 = iat2ia[iat2];
+        // contruct T matrix
+        std::vector<TR> T1, T2;
+        auto set_rotation_matrix = [&](const int& it, const int& ia, std::vector<TR>& T)->int
+            {
+                T.resize(atoms[it].nw * atoms[it].nw, 0.0);
+                const int iwstart = atoms[it].stapos_wf + ia * atoms[it].nw;
+                int iw = 0;
+                while (iw < atoms[it].nw)
+                {
+                    int l = atoms[it].iw2l[iw];
+                    int nm = 2 * l + 1;
+                    // this->set_block_to_mat2d(iwstart, iwstart, this->rotmat_Slm_[isym][l], T_full_2d, pv);
+                    set_block(iw, iw, atoms[it].nw, this->rotmat_Slm_[isym][l], T.data());
+                    iw += nm;
+                }
+                return iwstart;
+            };
+        int iw1start = set_rotation_matrix(it1, ia1, T1);
+        int iw2start = set_rotation_matrix(it2, ia2, T2);
+
+        // copy Aocal_in to a global atom-pair matrix
+        std::vector<TR> A(atoms[it1].nw * atoms[it2].nw, 0.0);
+
+        int abr1 = pv.atom_begin_row[iat1], abc2 = pv.atom_begin_col[iat2];
+        if (abr1 >= 0 && abc2 >= 0)
+        { // "pv.para_2d().irglb(i) - iw1start": global index in current atom pair
+            for (int j = 0;j < pv.get_ncol_atom(iat2);++j)
+                for (int i = 0;i < pv.get_nrow_atom(iat1);++i)
+                    A[(pv.para_2d().irglb(i + abr1) - iw1start) * atoms[it2].nw
+                      + (pv.para_2d().icglb(j + abc2) - iw2start)]
+                    = Alocal_in[j + i * pv.get_ncol_atom(iat2)];
+        }
+        if (output) print_global(A.data(), atoms[it1].nw, atoms[it2].nw, "A before allreduce");
+        Parallel_Reduce::reduce_all(A.data(), A.size());
+
+        // rotate
+        const char notrans = 'N', transpose = 'T', dagger = 'C';
+        // const std::complex<double> alpha(1.0, 0.0), beta(0.0, 0.0);
+        std::vector<TR> AT2(atoms[it1].nw * atoms[it2].nw, 0.0);
+        std::vector<TR> TAT(atoms[it1].nw * atoms[it2].nw, 0.0);
+        if (mode == 'H')
+        {   // H'=T1^\dagger * H * T2
+            BlasConnector::gemm(notrans, notrans, atoms[it1].nw, atoms[it2].nw, atoms[it2].nw,
+                1.0, A.data(), atoms[it2].nw, T2.data(), atoms[it2].nw, 0.0, AT2.data(), atoms[it2].nw);
+            BlasConnector::gemm(dagger, notrans, atoms[it1].nw, atoms[it2].nw, atoms[it1].nw,
+                1.0, T1.data(), atoms[it1].nw, AT2.data(), atoms[it2].nw, 0.0, TAT.data(), atoms[it2].nw);
+        }
+        else if (mode == 'D')
+        {   // D' = T1^T * D * T2^* = T1^T * [T2^\dagger * D^T]^T
+            BlasConnector::gemm(dagger, transpose, atoms[it2].nw, atoms[it1].nw, atoms[it2].nw,
+                1.0, T2.data(), atoms[it2].nw, A.data(), atoms[it2].nw, 0.0, AT2.data(), atoms[it1].nw);
+            BlasConnector::gemm(transpose, transpose, atoms[it1].nw, atoms[it2].nw, atoms[it1].nw,
+                1.0, T1.data(), atoms[it1].nw, AT2.data(), atoms[it1].nw, 0.0, TAT.data(), atoms[it2].nw);
+        }
+        else throw std::invalid_argument("Symmetry_rotation::rotate_atompair_tensor: invalid mode.");
+
+        if (output)
+        {
+            print_global(A.data(), atoms[it1].nw, atoms[it2].nw, "A");
+            print_global(T1.data(), atoms[it1].nw, atoms[it1].nw, "T1");
+            print_global(TAT.data(), atoms[it1].nw, atoms[it2].nw, "TAT");
+            print_atompair_local(pv, iat1, iat2, Alocal_out, "Alocal_out");
+        }
+
+        // copy back to Alocal_out
+        iat1 = ap_out.first, iat2 = ap_out.second;
+        it1 = iat2it[iat1], it2 = iat2it[iat2];
+        ia1 = iat2ia[iat1], ia2 = iat2ia[iat2];
+        abr1 = pv.atom_begin_row[iat1], abc2 = pv.atom_begin_col[iat2];
+        iw1start = atoms[it1].stapos_wf + ia1 * atoms[it1].nw;
+        iw2start = atoms[it2].stapos_wf + ia2 * atoms[it2].nw;
+        if (abr1 >= 0 && abc2 >= 0)
+        {// ap_in index for TAT but ap_out index for Alocal_out
+            for (int j = 0;j < pv.get_ncol_atom(iat2);++j)
+                for (int i = 0;i < pv.get_nrow_atom(iat1);++i)
+                    Alocal_out[j + i * pv.get_ncol_atom(iat2)]
+                    = TAT[(pv.para_2d().irglb(i + abr1) - iw1start) * atoms[it2].nw
+                          + (pv.para_2d().icglb(j + abc2) - iw2start)];
+        }
+    }
+}

@@ -2,6 +2,7 @@
 #include "source_base/global_function.h"
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
+#include <vector>
 
 /************************************************
  *  serial unit test of functions in pw_basis.cpp
@@ -35,15 +36,18 @@
  *     - collect_uniqgg: get uniq gg without duplication in length
  */
 
-#define protected public
-#define private public
 #include "../pw_basis.h"
-#undef private
-#undef protected
 
 class PWBasisTEST: public testing::Test
 {
 public:
+	// PW_Basis declares this fixture a friend, but a TEST_F body lives in a
+	// class derived from it and friendship is not inherited, so the calls into
+	// the protected distribution routines are routed through these.
+	static void distribute_r(ModulePW::PW_Basis& b) { b.distribute_r(); }
+	static void distribute_g(ModulePW::PW_Basis& b) { b.distribute_g(); }
+	static void getstartgr(ModulePW::PW_Basis& b) { b.getstartgr(); }
+
 	std::string precision_flag = "double";
 	std::string device_flag = "cpu";
 	ModulePW::PW_Basis pwb;
@@ -55,10 +59,10 @@ TEST_F(PWBasisTEST,Constructor)
 	ModulePW::PW_Basis pwb2(device_flag, precision_flag);
 	EXPECT_EQ(pwb1.classname,"PW_Basis");
 	EXPECT_EQ(pwb2.classname,"PW_Basis");
-	EXPECT_EQ(pwb2.device,"cpu");
-	EXPECT_EQ(pwb2.precision,"double");
-	EXPECT_EQ(pwb2.fft_bundle.device,"cpu");
-	EXPECT_EQ(pwb2.fft_bundle.precision,"double");
+	EXPECT_EQ(pwb2.get_device(),"cpu");
+	EXPECT_EQ(pwb2.get_precision(),"double");
+	EXPECT_EQ(pwb2.fft_bundle.get_device(),"cpu");
+	EXPECT_EQ(pwb2.fft_bundle.get_precision(),"double");
 }
 
 TEST_F(PWBasisTEST,Initgrids1)
@@ -161,7 +165,7 @@ TEST_F(PWBasisTEST,DistributeR)
 	//this is serial test, so that
 	EXPECT_EQ(pwb.poolrank,0);
 	EXPECT_EQ(pwb.poolnproc,1);
-	pwb.distribute_r();
+	distribute_r(pwb);
 	EXPECT_EQ(pwb.startz[0],0);
 	EXPECT_EQ(pwb.numz[0],pwb.nz);
 	EXPECT_EQ(pwb.nplane,pwb.nz);
@@ -202,7 +206,7 @@ TEST_F(PWBasisTEST,DistributeMethod1)
 	EXPECT_EQ(pwb.fftnxy,220);
 	EXPECT_EQ(pwb.distribution_type,1);
 	//call distribute_g
-	pwb.distribute_g();
+	distribute_g(pwb);
 	EXPECT_EQ(pwb.npwtot,1994);
 	EXPECT_EQ(pwb.nstot,156);
 }
@@ -239,7 +243,7 @@ TEST_F(PWBasisTEST,DistributeMethod2)
 	EXPECT_EQ(pwb.fftnxy,220);
 	EXPECT_EQ(pwb.distribution_type,2);
 	//call distribute_g
-	pwb.distribute_g();
+	distribute_g(pwb);
 	EXPECT_EQ(pwb.npwtot,1994);
 	EXPECT_EQ(pwb.nstot,156);
 	EXPECT_EQ(pwb.npw,1994);
@@ -260,7 +264,7 @@ TEST_F(PWBasisTEST,GetStartGR)
 	//call initgrids
 	pwb.initgrids(lat0,latvec,gridecut);
 	//call distribute_r
-	pwb.distribute_r();
+	distribute_r(pwb);
 	bool gamma_only_in = true;
 	double pwecut_in = 11.0;
 	int distribution_type_in = 2;
@@ -268,9 +272,9 @@ TEST_F(PWBasisTEST,GetStartGR)
 	//call initparameters
 	pwb.initparameters(gamma_only_in,pwecut_in,distribution_type_in,xprime_in);
 	//call distribute_g
-	pwb.distribute_g();
+	distribute_g(pwb);
 	//call getstartgr
-	pwb.getstartgr();
+	getstartgr(pwb);
 	EXPECT_TRUE(pwb.gamma_only);
 	EXPECT_EQ(pwb.npw,1994);
 	EXPECT_EQ(pwb.nz,20);
@@ -361,4 +365,42 @@ TEST_F(PWBasisTEST,CollectUniqgg)
 	EXPECT_EQ(pwb.ig_gge0,9);
 	pwb.collect_uniqgg();
 	EXPECT_EQ(pwb.ngg,78);
+}
+
+TEST_F(PWBasisTEST,ComplexTransformRoundTrip)
+{
+	double lat0 = 2.0;
+	ModuleBase::Matrix3 latvec(1.0,0.0,1.0,
+				0.0,2.0,0.0,
+				0.0,0.0,2.0);
+	double gridecut = 30.0;
+	bool gamma_only_in = false;
+	double pwecut_in = 20.0;
+	int distribution_type_in = 2;
+	bool xprime_in = false;
+
+	pwb.initgrids(lat0, latvec, gridecut);
+	pwb.initparameters(gamma_only_in, pwecut_in, distribution_type_in, xprime_in);
+	ASSERT_NO_THROW(pwb.setuptransform());
+
+	// Use reciprocal-space input because arbitrary real-space data is projected
+	// by the plane-wave cutoff and is not exactly recoverable.
+	std::vector<std::complex<double>> recip_in(pwb.npw);
+	std::vector<std::complex<double>> real_space(pwb.nrxx);
+	std::vector<std::complex<double>> recip_out(pwb.npw);
+	for (int ig = 0; ig < pwb.npw; ++ig)
+	{
+		const double real_part = (ig % 11 - 5) / 7.0;
+		const double imag_part = (ig % 13 - 6) / 9.0;
+		recip_in[ig] = std::complex<double>(real_part, imag_part);
+	}
+
+	pwb.recip2real(recip_in.data(), real_space.data());
+	pwb.real2recip(real_space.data(), recip_out.data());
+
+	for (int ig = 0; ig < pwb.npw; ++ig)
+	{
+		EXPECT_NEAR(recip_in[ig].real(), recip_out[ig].real(), 1e-10);
+		EXPECT_NEAR(recip_in[ig].imag(), recip_out[ig].imag(), 1e-10);
+	}
 }

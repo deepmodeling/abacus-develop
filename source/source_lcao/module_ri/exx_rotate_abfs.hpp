@@ -2,7 +2,7 @@
 #define EXX_ROTATE_ABFS_HPP
 #include "source_base/constants.h"
 #include "source_base/math_integral.h"
-#include "source_basis/module_ao/element_basis_index-ORB.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "exx_rotate_abfs.h"
 
 #include <cmath> // For std::erfc function used in smooth truncation
@@ -12,7 +12,7 @@ template <typename Tdata>
 void Moment_abfs<Tdata>::cal_multipole(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in)
 {
     ModuleBase::TITLE("Rotate_abfs", "cal_multipole");
-    ModuleBase::timer::tick("Rotate_abfs", "cal_multipole");
+    ModuleBase::timer::start("Rotate_abfs", "cal_multipole");
 
     this->multipole.resize(orb_in.size());
     for (size_t T = 0; T != orb_in.size(); ++T)
@@ -34,14 +34,14 @@ void Moment_abfs<Tdata>::cal_multipole(const std::vector<std::vector<std::vector
         }
     }
 
-    ModuleBase::timer::tick("Rotate_abfs", "cal_multipole");
+    ModuleBase::timer::end("Rotate_abfs", "cal_multipole");
 }
 
 template <typename Tdata>
 void Moment_abfs<Tdata>::rotate_abfs(std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in)
 {
     ModuleBase::TITLE("Rotate_abfs", "rotate_abfs");
-    ModuleBase::timer::tick("Rotate_abfs", "rotate_abfs");
+    ModuleBase::timer::start("Rotate_abfs", "rotate_abfs");
 
     // construct tranformation matrix A
     for (int T = 0; T != orb_in.size(); ++T)
@@ -96,7 +96,7 @@ void Moment_abfs<Tdata>::rotate_abfs(std::vector<std::vector<std::vector<Numeric
         }
     }
 
-    ModuleBase::timer::tick("Rotate_abfs", "rotate_abfs");
+    ModuleBase::timer::end("Rotate_abfs", "rotate_abfs");
 }
 
 template <typename Tdata>
@@ -191,8 +191,8 @@ void Moment_abfs<Tdata>::cal_VR(
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut)
 {
     ModuleBase::TITLE("Rotate_abfs", "cal_VR");
-    ModuleBase::timer::tick("Rotate_abfs", "cal_VR");
-    // copy in source\module_hamilt_lcao\hamilt_lcaodft\center2_orb-orb11.cpp
+    ModuleBase::timer::start("Rotate_abfs", "cal_VR");
+    // copy in source\module_hamilt_lcao\hamilt_lcaodft\center2orb_orb11.cpp
     const double tiny1 = 1e-12;
     const ModuleBase::Element_Basis_Index::Range range = ModuleBase::Element_Basis_Index::construct_range(orb_in);
     // index: T: type, L: angular momentum, N: radial index, M: magnetic moment
@@ -269,8 +269,8 @@ void Moment_abfs<Tdata>::cal_VR(
                             // Determine N1 and N2 loop ranges based on rotate_abfs
                             // When rotate_abfs=true: only N=0 has non-zero moment, calculate only N1=0 and N2=0
                             // When rotate_abfs=false: all moments are non-zero, calculate all N1, N2
-                            const int N1_max = GlobalC::exx_info.info_ri.rotate_abfs ? 1 : orb_in[T1][L1].size();
-                            const int N2_max = GlobalC::exx_info.info_ri.rotate_abfs ? 1 : orb_in[T2][L2].size();
+                            const int N1_max = this->info.rotate_abfs ? 1 : orb_in[T1][L1].size();
+                            const int N2_max = this->info.rotate_abfs ? 1 : orb_in[T2][L2].size();
 
                             for (int N1 = 0; N1 != N1_max; ++N1)
                             {
@@ -395,7 +395,7 @@ void Moment_abfs<Tdata>::cal_VR(
             }
         }
     }
-    ModuleBase::timer::tick("Rotate_abfs", "cal_VR");
+    ModuleBase::timer::end("Rotate_abfs", "cal_VR");
 }
 
 template <typename Tdata>
@@ -409,7 +409,7 @@ void Moment_abfs<Tdata>::discard0_VR(
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut)
 {
     ModuleBase::TITLE("Rotate_abfs", "discard0_VR");
-    ModuleBase::timer::tick("Rotate_abfs", "discard0_VR");
+    ModuleBase::timer::start("Rotate_abfs", "discard0_VR");
 
     const double tiny1 = 1e-12;
     const ModuleBase::Element_Basis_Index::Range range = ModuleBase::Element_Basis_Index::construct_range(orb_in);
@@ -565,7 +565,7 @@ void Moment_abfs<Tdata>::discard0_VR(
         }
     }
 
-    ModuleBase::timer::tick("Rotate_abfs", "discard0_VR");
+    ModuleBase::timer::end("Rotate_abfs", "discard0_VR");
 }
 
 template <typename Tdata>
@@ -635,7 +635,7 @@ void Moment_abfs<Tdata>::out_pure_ri_tensor(const std::string fn,
 //     const std::vector<double>& orb_cutoff)
 // {
 //     ModuleBase::TITLE("Rotate_abfs", "diverge_list");
-//     ModuleBase::timer::tick("Rotate_abfs", "diverge_list");
+//     ModuleBase::timer::start("Rotate_abfs", "diverge_list");
 
 //     double Rcut_max = 0;
 //     for (int T = 0; T < ucell.ntype; ++T)
@@ -702,14 +702,14 @@ void Moment_abfs<Tdata>::out_pure_ri_tensor(const std::string fn,
 //     }
 //     std::cout << "All No.(atom pairs)=" << flag_k + flag_r << ", " << flag_k << " inside Rcut, " << flag_r
 //               << " outside Rcut" << std::endl;
-//     ModuleBase::timer::tick("Rotate_abfs", "diverge_list");
+//     ModuleBase::timer::end("Rotate_abfs", "diverge_list");
 // }
 
 // template <typename Tdata>
 // void Moment_abfs<Tdata>::merge_list(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut)
 // {
 //     ModuleBase::TITLE("Rotate_abfs", "merge_list");
-//     ModuleBase::timer::tick("Rotate_abfs", "merge_list");
+//     ModuleBase::timer::start("Rotate_abfs", "merge_list");
 
 //     for (const auto& IJRc: this->VR)
 //     {
@@ -740,7 +740,7 @@ void Moment_abfs<Tdata>::out_pure_ri_tensor(const std::string fn,
 //             }
 //         }
 //     }
-//     ModuleBase::timer::tick("Rotate_abfs", "merge_list");
+//     ModuleBase::timer::end("Rotate_abfs", "merge_list");
 // }
 
 #endif

@@ -1,21 +1,60 @@
 #ifndef CUBE_IO_H
 #define CUBE_IO_H
 #include "source_cell/unitcell.h"
+#include "spin_tag.h"
 
+#include <fstream>
 #include <string>
+#include <vector>
 class Parallel_Grid;
 
 namespace ModuleIO
 {
+/// Build a descriptive label for the data channel at spin index is.
+/// For nspin==2 and is>=0: appends " (spin up  )" or " (spin down)".
+/// For nspin==4 and is>0: returns mag_base with the axis letter appended,
+///     e.g. mag_base "magnetization density m" yields "magnetization density mx".
+/// For nspin==1, nspin==4 with is==0, or spin-summed calls (is<0): no suffix.
+///
+/// @param base label of the scalar channel (is == 0), e.g. "charge density".
+/// @param mag_base label of the nspin==4 magnetic channels (is = 1..3),
+///     ending with the component letter: "m" for magnetization densities
+///     (rho[1..3]), "b" for magnetic fields (the B_xc components of the
+///     effective potential).
+inline std::string make_data_desc(const std::string& base, const std::string& mag_base, const int is, const int nspin)
+{
+    std::string desc = base + make_spin_tag(is, nspin);
+    if (nspin == 4 && is > 0)
+    {
+        desc = mag_base;
+        if (is == 1)
+        {
+            desc += "x";
+        }
+        else if (is == 2)
+        {
+            desc += "y";
+        }
+        else if (is == 3)
+        {
+            desc += "z";
+        }
+    }
+    return desc;
+}
+
 /// read volumetric data from .cube file into the parallel distributed grid.
 bool read_vdata_palgrid(const Parallel_Grid& pgrid,
                         const int my_rank,
-                        std::ofstream& ofs_running,
+                        std::ostream& ofs_running,
                         const std::string& fn,
                         double* const data,
                         const int nat);
 
 /// write volumetric data on the parallized grid into a .cube file
+/// @param append append a complete frame to an existing cube file instead of
+///     truncating it. Used by out_app_flag == 1, where successive ionic steps
+///     reuse a fixed filename and each written step contributes one frame.
 void write_vdata_palgrid(const Parallel_Grid& pgrid,
                          const double* const data,
                          const int is,
@@ -24,9 +63,13 @@ void write_vdata_palgrid(const Parallel_Grid& pgrid,
                          const std::string& fn,
                          const double ef,
                          const UnitCell* const ucell,
-                         const int precision = 11,
-                         const int out_fermi = 1,
-                         const bool reduce_all_pool = false); // only reduce in the main pool as default
+                         const int precision,
+                         const int out_fermi,
+                         const bool two_fermi,
+                         const bool reduce_all_pool,
+                         const bool append,
+                         std::ofstream& ofs_running,
+                         const std::string& data_desc);
 
 /// read the full data from a cube file
 bool read_cube(const std::string& file,
@@ -45,6 +88,8 @@ bool read_cube(const std::string& file,
                std::vector<double>& data);
 
 /// write a cube file
+/// @param append append a complete frame to an existing file instead of
+///     truncating it (out_app_flag == 1 multi-step trajectories).
 void write_cube(const std::string& file,
                 const std::vector<std::string>& comment,
                 const int& natom,
@@ -60,7 +105,35 @@ void write_cube(const std::string& file,
                 const std::vector<std::vector<double>>& atom_pos,
                 const std::vector<double>& data,
                 const int precision,
+                const bool append,
                 const int ndata_line = 6);
+
+/// write the two comment lines, the grid geometry and the atom list of a cube
+/// file, and leave the stream configured for the following scientific data block
+void write_cube_header(std::ofstream& ofs,
+                       const std::vector<std::string>& comment,
+                       const int& natom,
+                       const std::vector<double>& origin,
+                       const int& nx,
+                       const int& ny,
+                       const int& nz,
+                       const std::vector<double>& dx,
+                       const std::vector<double>& dy,
+                       const std::vector<double>& dz,
+                       const std::vector<int>& atom_type,
+                       const std::vector<double>& atom_charge,
+                       const std::vector<std::vector<double>>& atom_pos,
+                       const int precision);
+
+/// write a cube header for a volumetric field sampled on the ucell grid
+/// (grid spacings, atom types and Cartesian positions are derived from ucell)
+void write_cube_header_for_cell(std::ofstream& ofs,
+                                const UnitCell& ucell,
+                                const int nx,
+                                const int ny,
+                                const int nz,
+                                const std::vector<std::string>& comment,
+                                const int precision);
 
 /**
  * @brief The trilinear interpolation method

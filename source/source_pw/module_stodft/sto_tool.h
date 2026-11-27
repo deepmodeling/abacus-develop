@@ -1,7 +1,10 @@
 #ifndef STO_TOOL_H
 #define STO_TOOL_H
+
+#include <vector>
+
 #include "source_cell/klist.h"
-#include "source_pw/module_stodft/hamilt_sdft_pw.h"
+#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_wf.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_psi/psi.h"
@@ -24,7 +27,7 @@ struct check_che_op
                     const int& nbands_sto,
                     K_Vectors* p_kv,
                     Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf,
-                    hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>* p_hamilt_sto);
+                    StoHamiltPW<std::complex<FPTYPE>, Device>* p_hamilt_sto);
 };
 
 /**
@@ -38,12 +41,12 @@ struct parallel_distribution
 {
     parallel_distribution(const int& num_all, const int& np, const int myrank)
     {
-        int num_per = num_all / np;
-        int st_per = num_per * myrank;
+        int num_per_ = num_all / np;
+        int st_per = num_per_ * myrank;
         int re = num_all % np;
         if (myrank < re)
         {
-            ++num_per;
+            ++num_per_;
             st_per += myrank;
         }
         else
@@ -51,7 +54,7 @@ struct parallel_distribution
             st_per += re;
         }
         this->start = st_per;
-        this->num_per = num_per;
+        this->num_per = num_per_;
     }
     int start = 0;
     int num_per = 0;
@@ -65,10 +68,9 @@ struct parallel_distribution
 struct info_gatherv
 {
     info_gatherv(const int& ngroup_per, const int& np, const int& num_in_group, MPI_Comm comm_world)
+        : nrecv(np), displs(np)
     {
-        nrecv = new int[np];
-        displs = new int[np];
-        MPI_Allgather(&ngroup_per, 1, MPI_INT, nrecv, 1, MPI_INT, comm_world);
+        MPI_Allgather(&ngroup_per, 1, MPI_INT, nrecv.data(), 1, MPI_INT, comm_world);
         displs[0] = 0;
         for (int i = 1; i < np; ++i)
         {
@@ -80,13 +82,8 @@ struct info_gatherv
             displs[i] *= num_in_group;
         }
     }
-    ~info_gatherv()
-    {
-        delete[] nrecv;
-        delete[] displs;
-    }
-    int* nrecv = nullptr;
-    int* displs = nullptr;
+    std::vector<int> nrecv;
+    std::vector<int> displs;
 };
 #endif
 

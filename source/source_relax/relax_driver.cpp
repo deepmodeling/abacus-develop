@@ -1,210 +1,408 @@
 #include "relax_driver.h"
 
+#include "relax_history.h"
+#include "relax_stru_io.h"
+#include "socket_driver.h"
+#include "source_base/formatter.h"
+#include "source_base/fs_compat.h"
 #include "source_base/global_file.h"
-#include "source_io/module_output/cif_io.h"
+#include "source_base/module_out/read_exit_file.h"
 #include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
+#include "source_io/module_output/frame_append.h"
 #include "source_io/module_output/print_info.h"
-#include "source_io/module_output/read_exit_file.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_cell/print_cell.h"
 
 void Relax_Driver::relax_driver(
-		ModuleESolver::ESolver* p_esolver, 
-		UnitCell& ucell,
-		const Input_para& inp)
-{ 
+    ModuleESolver::ESolver *p_esolver,
+    UnitCell &ucell,
+    const Input_para &inp,
+    std::ofstream &ofs_running)
+{
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
-    ModuleBase::timer::tick("Relax_Driver", "relax_driver");
+    ModuleBase::timer::start("Relax_Driver", "relax_driver");
 
-    if (inp.calculation == "relax" || inp.calculation == "cell-relax" )
+    // Cache global configuration once so downstream helpers do not each reach
+    // into PARAM / GlobalV.
+    out_dir_ = PARAM.globalv.global_stru_dir;
+    deepks_setorb_ = PARAM.globalv.deepks_setorb;
+    my_rank_ = GlobalV::MY_RANK;
+
+    if (inp.socket_driver)
     {
-        if (!inp.relax_new) // traditional relax
-        {
-            rl_old.init_relax(ucell.nat);
-        }
-        else // relax new
-        {
-            rl.init_relax(ucell.nat);
-        }
+        Socket_Driver socket_driver;
+        socket_driver.socket_driver(p_esolver, ucell, inp, ofs_running);
+        p_esolver->after_all_runners(ucell);
+        ModuleBase::timer::end("Relax_Driver", "relax_driver");
+        return;
     }
 
-    this->istep = 1;
-    int force_step = 1;
-    int stress_step = 1;
-    bool stop = false;
+    this->init_relax(ucell.nat, inp);
 
-    while (istep <= inp.relax_nmax && !stop)
+    // steps[0]: istep (main iteration step)
+    // steps[1]: force_step
+    // steps[2]: stress_step
+    std::vector<int> steps = {0, 1, 1};
+
+    // Main iteration loop for relaxation calculations
+    // For scf/nscf calculations, relax_step returns true immediately,
+    // so the loop exits after one iteration
+    double etot = 0.0;
+    ModuleBase::matrix stress(3, 3);
+    ModuleBase::matrix force(ucell.nat, 3);
+
+    // Track whether the current geometry has been evaluated by esolve().
+    // After relax_step() proposes a new geometry, it is not evaluated until
+    // the next esolve() call; if we exit the loop early, force/stress are stale.
+    bool geometry_evaluated = false;
+    RelaxStopReason stop_reason = RelaxStopReason::Finished;
+    bool after_all_runners_called = false;
+
+    if (inp.relax_nmax == 0 && (inp.calculation == "relax" || inp.calculation == "cell-relax"))
     {
-        time_t estart = time(nullptr);
+        stop_reason = RelaxStopReason::DryRun;
+    }
 
-		if (inp.out_level == "ie"
-				&& (inp.calculation == "relax" 
-					|| inp.calculation == "cell-relax" 
-					|| inp.calculation == "scf"
-					|| inp.calculation == "nscf")
-				&& (inp.esolver_type != "lr"))
-		{
-            ModuleIO::print_screen(stress_step, force_step, istep);
+    while (steps[0] < inp.relax_nmax)
+    {
+        this->iter_info(steps, inp);
+        this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
+        geometry_evaluated = true;
+        this->stru_out(steps[0], ucell, inp, etot, stress, force, ofs_running);
+        this->json_out(p_esolver, ucell, inp, force, stress);
+
+        if (ModuleIO::read_exit_file(my_rank_, "EXIT", ofs_running))
+        {
+            stop_reason = RelaxStopReason::UserExit;
+            break;
         }
 
-#ifdef __RAPIDJSON
-        Json::init_output_array_obj();
-#endif //__RAPIDJSON
-
-        // mohan added eiter to count for the electron iteration number, 2021-01-28
-        p_esolver->runner(ucell, istep - 1);
-
-        time_t eend = time(nullptr);
-        time_t fstart = time(nullptr);
-        ModuleBase::matrix force;
-        ModuleBase::matrix stress;
-
-        // I'm considering putting force and stress
-        // as part of ucell and use ucell to pass information
-        // back and forth between esolver and relaxation
-        // but I'll use force and stress explicitly here for now
-
-        // calculate the total energy
-        this->etot = p_esolver->cal_energy();
-
-        // calculate and gather all parts of total ionic forces
-        if (inp.cal_force)
+        const bool laststep =
+            (inp.calculation == "relax" || inp.calculation == "cell-relax") && steps[0] + 1 == inp.relax_nmax;
+        if (laststep)
         {
-            p_esolver->cal_force(ucell, force);
+            p_esolver->after_all_runners(ucell);
+            after_all_runners_called = true;
         }
-		else
-		{
-            // do nothing
-		}
 
+        const bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
 
-        // calculate and gather all parts of stress
-        if (inp.cal_stress)
+        // Check stop conditions
+        if (ucell.ionic_position_updated || ucell.cell_parameter_updated)
         {
-            p_esolver->cal_stress(ucell, stress);
+            geometry_evaluated = false;
         }
-		else
-		{
-            // do nothing
-		}
 
-        if (inp.calculation == "relax" || inp.calculation == "cell-relax")
+        if (converged)
         {
-            if (inp.relax_new)
+            if (inp.calculation == "relax" || inp.calculation == "cell-relax")
             {
-                stop = rl.relax_step(ucell, force, stress, this->etot);
-                // mohan added 2025-07-14
-                stress_step = istep+1;
-                force_step = 1;
+                stop_reason = RelaxStopReason::Converged;
             }
             else
             {
-                stop = rl_old.relax_step(istep,
-                                         this->etot,
-                                         ucell,
-                                         force,
-                                         stress,
-                                         force_step,
-                                         stress_step);
+                stop_reason = RelaxStopReason::Finished;
             }
-
-            bool need_orb = inp.basis_type == "pw";
-            need_orb = need_orb && inp.init_wfc.substr(0, 3) == "nao";
-            need_orb = need_orb || inp.basis_type == "lcao";
-            need_orb = need_orb || inp.basis_type == "lcao_in_pw";
-
-            std::stringstream ss, ss1;
-            ss << PARAM.globalv.global_out_dir << "STRU_ION_D";
-
-            unitcell::print_stru_file(ucell,
-                                  ucell.atoms,
-                                  ucell.latvec,
-                                  ss.str(),
-                                  inp.nspin,
-                                  true,
-                                  inp.calculation == "md",
-                                  inp.out_mul,
-                                  need_orb,
-                                  PARAM.globalv.deepks_setorb,
-                                  GlobalV::MY_RANK);
-
-            if (Ions_Move_Basic::out_stru)
-            {
-                ss1 << PARAM.globalv.global_out_dir << "STRU_ION";
-                ss1 << istep << "_D";
-                unitcell::print_stru_file(ucell,
-                                      ucell.atoms,
-                                      ucell.latvec,
-                                      ss1.str(),
-                                      inp.nspin,
-                                      true,
-                                      inp.calculation == "md",
-                                      inp.out_mul,
-                                      need_orb,
-                                      PARAM.globalv.deepks_setorb,
-                                      GlobalV::MY_RANK);
-                ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_NOW.cif",
-                                           ucell,
-                                           "# Generated by ABACUS ModuleIO::CifParser",
-                                           "data_?");
-            }
-
-            ModuleIO::output_after_relax(stop, p_esolver->conv_esolver, GlobalV::ofs_running);
-        }// end relax or cell_relax
-
-#ifdef __RAPIDJSON
-        // add the energy to outout
-        Json::add_output_energy(p_esolver->cal_energy() * ModuleBase::Ry_to_eV);
-        // add Json of cell coo stress force
-        double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-        double fac = ModuleBase::Ry_to_eV / 0.529177;
-        Json::add_output_cell_coo_stress_force(&ucell, force, fac, stress, unit_transform);
-#endif //__RAPIDJSON
-
-        if (stop == false)
-        {
-            stop = ModuleIO::read_exit_file(GlobalV::MY_RANK, "EXIT", GlobalV::ofs_running);
+            break;
         }
 
-        time_t fend = time(nullptr);
+        if (steps[0] + 1 >= inp.relax_nmax)
+        {
+            stop_reason = RelaxStopReason::MaxSteps;
+            break;
+        }
 
-        ++istep;
-    } // end while (istep <= inp.relax_nmax && !stop)
-
-
-	if (inp.calculation == "relax" || inp.calculation == "cell-relax")
-	{
-		if (istep-1 == inp.relax_nmax)
-		{
-			std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-			std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
-			std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
-			std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-		}
-		else
-		{
-			std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-			std::cout << " Geometry relaxation thresholds are reached within " << istep-1 << " steps." << std::endl; 
-			std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-		}
-	}
-	else
-	{
-		// do nothing
-	}
-
-	if (inp.relax_nmax == 0)
-    {
-        std::cout << "-----------------------------------------------" << std::endl;
-        std::cout << " relax_nmax = 0, DRY RUN TEST SUCCEEDS :)" << std::endl;
-        std::cout << "-----------------------------------------------" << std::endl;
+        ++steps[0];
     }
-	else
-	{
-		// do nothing 
-	}
 
-    ModuleBase::timer::tick("Relax_Driver", "relax_driver");
+    this->final_out(steps[0], stop_reason, ucell, inp, etot, stress, force, geometry_evaluated, ofs_running);
+
+    if (!after_all_runners_called)
+    {
+        p_esolver->after_all_runners(ucell);
+    }
+
+    ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
+}
+
+void Relax_Driver::init_relax(const int nat, const Input_para &inp)
+{
+    if (inp.calculation == "relax" || inp.calculation == "cell-relax")
+    {
+        if (!inp.uses_simultaneous_relaxation())
+        {
+            this->rl_old.init_relax(nat, inp);
+        }
+        else
+        {
+            this->rl.init_relax(nat, inp);
+        }
+    }
+}
+
+void Relax_Driver::iter_info(const std::vector<int> &steps, const Input_para &inp)
+{
+    if (inp.out_level == "ie" &&
+        (inp.calculation == "relax" || inp.calculation == "cell-relax" || inp.calculation == "scf" ||
+            inp.calculation == "nscf") &&
+        (inp.esolver_type != "lr"))
+    {
+        ModuleIO::print_screen(steps[2], steps[1], steps[0] + 1);
+    }
+
+#ifdef __JSON
+    // ks-lr runs an embedded KS calculation in before_all_runners(), which
+    // already starts the first output record.
+    if (inp.esolver_type != "ks-lr" || steps[0] != 0)
+    {
+        Json::init_output_array_obj();
+    }
+#endif
+}
+
+void Relax_Driver::esolve(
+    const int istep,
+    ModuleESolver::ESolver *p_esolver,
+    UnitCell &ucell,
+    const Input_para &inp,
+    ModuleBase::matrix &force,
+    ModuleBase::matrix &stress,
+    double &etot)
+{
+    p_esolver->runner(ucell, istep);
+
+    etot = p_esolver->cal_energy();
+
+    if (inp.cal_force)
+    {
+        p_esolver->cal_force(ucell, force);
+    }
+
+    if (inp.cal_stress)
+    {
+        p_esolver->cal_stress(ucell, stress);
+    }
+}
+
+bool Relax_Driver::relax_step(
+    std::vector<int> &steps,
+    ModuleESolver::ESolver *p_esolver,
+    UnitCell &ucell,
+    const Input_para &inp,
+    const ModuleBase::matrix &force,
+    const ModuleBase::matrix &stress,
+    const double etot,
+    std::ofstream &ofs_running)
+{
+    // Guard: For non-relaxation calculations (scf, nscf, etc.), return true immediately
+    // to ensure the main loop exits after one iteration. This provides robustness
+    // even if relax_nmax is set to a large value.
+    if (inp.calculation != "relax" && inp.calculation != "cell-relax")
+    {
+        return true;
+    }
+
+    bool converged = false;
+
+    if (inp.uses_simultaneous_relaxation())
+    {
+        converged = this->rl.relax_step(ucell, force, stress, etot, ofs_running);
+        // stress step +1
+        steps[2]++;
+        // fix force step to 1
+        steps[1] = 1;
+    }
+    else
+    {
+        converged = this->rl_old.relax_step(steps[0] + 1, etot, ucell, force, stress, steps[1], steps[2], ofs_running);
+    }
+
+    ModuleIO::output_after_relax(converged, p_esolver->conv_esolver, ofs_running);
+
+    return converged;
+}
+
+void Relax_Driver::stru_out(
+    const int istep,
+    UnitCell &ucell,
+    const Input_para &inp,
+    const double etot,
+    const ModuleBase::matrix &stress,
+    const ModuleBase::matrix &force,
+    std::ofstream &ofs_running)
+{
+    // out_stru is effective for scf/nscf/relax/cell-relax; md handles STRU output in run_md.cpp
+    if (inp.calculation != "relax" && inp.calculation != "cell-relax" && inp.calculation != "scf" &&
+        inp.calculation != "nscf")
+    {
+        return;
+    }
+
+    const bool is_relax = (inp.calculation == "relax" || inp.calculation == "cell-relax");
+
+    // out_stru: -1 no output, 0 final only, 1 STRU format, 2 CIF format
+    // For -1 and 0, no per-step structure output
+    if (inp.out_stru <= 0)
+    {
+        return;
+    }
+
+    // stru_out is called right after esolve(), so the geometry has been
+    // evaluated and forces/stress are consistent with the written structure.
+    const bool geometry_evaluated = true;
+    const std::string header = relax_stru_io::build_stru_header(istep, etot, stress, inp, false, geometry_evaluated);
+    const bool need_orb = relax_stru_io::need_orbital(inp);
+    const bool freq_ok = (inp.out_freq_ion > 0 && istep % inp.out_freq_ion == 0);
+
+    // STRU_NOW: overwrite each step (for out_stru 1 and 2)
+    // For scf/nscf the structure is identical to STRU_FINAL; only STRU_FINAL
+    // is written in final_out() to avoid a duplicate file.
+    if (is_relax)
+    {
+        // Mode-2 STRUC/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(out_dir_);
+        const std::string now_file = out_dir_ + (inp.out_stru == 1 ? "STRU_NOW" : "STRU_NOW.cif");
+        relax_stru_io::write_stru(
+            ucell, inp, now_file, header, force, need_orb, deepks_setorb_, my_rank_, inp.cal_force, false);
+        if (my_rank_ == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "Structure at current step", now_file);
+        }
+    }
+
+    // Numbered files per out_freq_ion: only meaningful for relaxation calculations
+    if (is_relax && freq_ok && inp.out_app_flag != 0)
+    {
+        // Mode 1: single fixed-name STRU accumulates one block per step (CIF
+        // format truncates to the latest frame instead). Mode 2 keeps the
+        // numbered STRU{istep+1} files. Mode 0 only writes STRU_NOW, which is
+        // already overwritten each step above.
+        const bool append_stru = (inp.out_app_flag == 1) && (inp.out_stru == 1) && (istep > 0);
+        const std::string stru_filename = ModuleIO::stru_frame_filename(out_dir_, inp.out_app_flag, istep);
+        const std::string step_file = stru_filename + (inp.out_stru == 1 ? "" : ".cif");
+        relax_stru_io::write_stru(
+            ucell, inp, step_file, header, force, need_orb, deepks_setorb_, my_rank_, inp.cal_force, append_stru);
+        if (my_rank_ == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "Structure at current step", step_file);
+        }
+    }
+}
+
+void Relax_Driver::json_out(
+    ModuleESolver::ESolver *p_esolver,
+    UnitCell &ucell,
+    const Input_para &inp,
+    const ModuleBase::matrix &force,
+    const ModuleBase::matrix &stress)
+{
+#ifdef __JSON
+    Json::add_output_energy(p_esolver->cal_energy() * ModuleBase::Ry_to_eV);
+
+    double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+    double fac = ModuleBase::Ry_to_eV / 0.529177;
+    Json::add_output_cell_coo_stress_force(ucell, force, fac, stress, unit_transform, inp.cal_force, inp.cal_stress);
+#endif
+}
+
+void Relax_Driver::final_out(
+    const int istep,
+    const RelaxStopReason stop_reason,
+    UnitCell &ucell,
+    const Input_para &inp,
+    const double etot,
+    const ModuleBase::matrix &stress,
+    const ModuleBase::matrix &force,
+    const bool geometry_evaluated,
+    std::ofstream &ofs_running)
+{
+    int ionic_steps = istep + 1;
+    if (stop_reason == RelaxStopReason::DryRun)
+    {
+        ionic_steps = 0;
+    }
+
+    // Structure final output is effective for scf/nscf/relax/cell-relax;
+    // relax-specific screen messages remain guarded below.
+    const bool is_relax = (inp.calculation == "relax" || inp.calculation == "cell-relax");
+    const bool stru_effective = is_relax || inp.calculation == "scf" || inp.calculation == "nscf";
+
+    // out_stru: 0 no output, 1 STRU format, 2 CIF format
+    // 1: write STRU_FINAL; 2: write STRU_FINAL.cif
+    if (stru_effective && (inp.out_stru == 1 || inp.out_stru == 2))
+    {
+        // Mode-2 STRUC/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(out_dir_);
+        const std::string header = relax_stru_io::build_stru_header(istep, etot, stress, inp, true, geometry_evaluated);
+        const bool need_orb = relax_stru_io::need_orbital(inp);
+        const std::string final_file = out_dir_ + (inp.out_stru == 1 ? "STRU_FINAL" : "STRU_FINAL.cif");
+        // Only write forces when they were actually computed and belong
+        // to the geometry being written.
+        const bool write_force = inp.cal_force && geometry_evaluated;
+        relax_stru_io::write_stru(
+            ucell, inp, final_file, header, force, need_orb, deepks_setorb_, my_rank_, write_force, false);
+        if (my_rank_ == 0)
+        {
+            ModuleIO::write_notice(ofs_running, "Final structure", final_file);
+        }
+    }
+
+    if (stop_reason == RelaxStopReason::MaxSteps)
+    {
+        print_not_converged_summary(ionic_steps, inp, ofs_running);
+
+        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+        std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
+        std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
+        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    }
+    else if (stop_reason == RelaxStopReason::Converged)
+    {
+        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+        std::cout << " Geometry relaxation thresholds are reached within " << ionic_steps << " steps." << std::endl;
+        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    }
+    else if (stop_reason == RelaxStopReason::UserExit)
+    {
+        ofs_running << " Geometry relaxation stopped by EXIT after " << ionic_steps << " ionic step(s)." << std::endl;
+        std::cout << " Geometry relaxation stopped by EXIT after " << ionic_steps << " ionic step(s)." << std::endl;
+    }
+    else if (stop_reason == RelaxStopReason::DryRun)
+    {
+        print_dry_run_message();
+    }
+}
+
+void Relax_Driver::print_not_converged_summary(
+    const int ionic_steps, const Input_para &inp, std::ofstream &ofs_running) const
+{
+    // Unified not-converged summary for both relaxation paths so ASE and
+    // users can read the method, the actual number of steps taken, and
+    // the per-step force / stress history from the running log.
+    const std::vector<double> &force_hist =
+        inp.uses_simultaneous_relaxation() ? rl.get_max_force_history() : rl_old.get_max_force_history();
+    const std::vector<double> &stress_hist =
+        inp.uses_simultaneous_relaxation() ? rl.get_max_stress_history() : rl_old.get_max_stress_history();
+    const std::string method = inp.relax_method.empty() ? "unknown" : inp.relax_method;
+    ofs_running << " Relaxation method: " << method << std::endl;
+    ofs_running << " Relaxation stopped after " << ionic_steps << " ionic step(s) (relax_nmax = " << inp.relax_nmax
+                << " reached)." << std::endl;
+    if (!force_hist.empty())
+    {
+        ofs_running << " Largest force per step (eV/Angstrom):" << format_relax_history(force_hist);
+    }
+    if (!stress_hist.empty())
+    {
+        ofs_running << " Largest stress per step (kbar):" << format_relax_history(stress_hist);
+    }
+    ofs_running << " Relaxation is not converged after reaching relax_nmax!" << std::endl;
+}
+
+void Relax_Driver::print_dry_run_message() const
+{
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << " relax_nmax = 0, DRY RUN TEST SUCCEEDS :)" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
 }

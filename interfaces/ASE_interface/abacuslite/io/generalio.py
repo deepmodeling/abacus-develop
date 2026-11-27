@@ -11,6 +11,7 @@ from typing import Optional, Dict, List, Any
 import numpy as np
 from ase.atoms import Atoms
 from ase.build import bulk
+from ase.constraints import FixAtoms, FixCartesian
 from ase.data import chemical_symbols, atomic_masses
 ATOM_MASS = dict(zip(chemical_symbols, atomic_masses.tolist()))
 
@@ -84,16 +85,17 @@ def file_safe_backup(fn: Path, suffix: str = 'bak'):
     '''
     assert isinstance(fn, Path)
     where = fn.parent
+    prefix = f'{fn.name}.{suffix}.'
+    indexed_backups = []
 
-    # get the backup files
-    fbak = sorted(list(where.glob(f'{fn.name}.{suffix}.*')),
-                  key=lambda p: int(p.name.split('.')[-1]))
-    if fbak:
-        # rename the elder by adding 1 to the suffix
-        for i, f in enumerate(fbak[::-1]): # reverse order, to avoid overwrite
-            j = len(fbak) - i + 1 #: STRU.bak.i -> STRU.bak.i+1
-            fname = f.name.replace(f'.{j}', f'.{j+1}')
-            f.rename(f.parent / fname)
+    for backup in where.glob(f'{fn.name}.{suffix}.*'):
+        index_text = backup.name.removeprefix(prefix)
+        if not re.fullmatch(r'0|[1-9][0-9]*', index_text):
+            continue
+        indexed_backups.append((int(index_text), backup))
+
+    for backup_index, backup in sorted(indexed_backups, key=lambda item: item[0], reverse=True):
+        backup.rename(backup.parent / f'{fn.name}.{suffix}.{backup_index + 1}')
     
     # backup the latest file, if there is one
     if fn.exists():
@@ -177,6 +179,29 @@ def _write_stru(job_dir, stru, fname='STRU'):
 
                 f.write('\n')
 
+def species_group_indices(symbols: List[str]) -> List[int]:
+    """Return indices grouped by first-occurrence species order."""
+    species_order = list(dict.fromkeys(symbols))
+    return [i for species in species_order for i, symbol in enumerate(symbols) if symbol == species]
+
+
+def _constraint_mobility(atoms: Atoms) -> np.ndarray:
+    """Return ABACUS mobility flags derived from ASE constraints."""
+    mobility = np.ones((len(atoms), 3), dtype=int)
+    for constraint in atoms.constraints:
+        if isinstance(constraint, FixAtoms):
+            mobility[constraint.get_indices()] = 0
+        elif isinstance(constraint, FixCartesian):
+            indices = np.asarray(constraint.get_indices(), dtype=int)
+            mask = np.asarray(constraint.mask, dtype=bool)
+            if mask.ndim == 1:
+                mobility[np.ix_(indices, np.where(mask)[0])] = 0
+            else:
+                for atom_index, atom_mask in zip(indices, mask):
+                    mobility[atom_index, atom_mask] = 0
+    return mobility
+
+
 def write_stru(stru: Atoms,
                outdir: str,
                pp_file: Optional[Dict[str, str]],
@@ -216,11 +241,20 @@ def write_stru(stru: Atoms,
 
     elem = stru.get_chemical_symbols()    
     # ABACUS requires the atoms ranged species-by-species, therefore
-    # we need to sort the atoms by species
-    ind = np.argsort(elem)
+    # we need to group atoms by species. Preserve first-occurrence species
+    # order from ASE instead of forcing alphabetical order.
+    ind = species_group_indices(elem)
     coords = stru.get_positions()[ind]
+    mobility = _constraint_mobility(stru)[ind]
     elem = [elem[i] for i in ind]
-    elem_uniq, nat = np.unique(elem, return_counts=True)
+
+    # handle the atomic magnetic moment (issue #6516)
+    magmoms = np.array([stru[i].magmom for i in ind]).reshape(len(stru), -1) # ncol in [1, 3]
+    magmoms = [{} if abs(np.linalg.norm(m)) <= 1e-10 
+               else {'mag': m[0] if len(m) == 1 else ('Cartesian', m.tolist())}
+               for m in magmoms]
+    elem_uniq = list(dict.fromkeys(elem))
+    nat = np.array([elem.count(e) for e in elem_uniq])
     stru_dict = {
         'coord_type': 'Cartesian',
         'lat': {
@@ -236,10 +270,10 @@ def write_stru(stru: Atoms,
                 'natom': n,
                 'mag_each': 0.0,
                 'atom': [
-                    {
-                        'coord': coords[j].tolist(),
-                        'm': [1, 1, 1],
-                        'v': [0.0, 0.0, 0.0]
+                    magmoms[j] | {
+                        'coord': coords[j].tolist(), # coordinate
+                        'm': mobility[j].tolist(), # mobility
+                        'v': [0.0, 0.0, 0.0], # velocity
                     } for j in range(np.sum(nat[:i]), np.sum(nat[:i+1]))
                 ]
             }
@@ -461,7 +495,7 @@ def read_stru(fn: str) -> Dict[str, Any]:
                               for line in blocks['LATTICE_VECTORS']]
     elif 'LATTICE_PARAMETER' in blocks:
         stru['lat']['param'] = [float(x)
-                                for x in blocks['LATTICE_PARAMETERS'].split()]
+                                for x in blocks['LATTICE_PARAMETER'][0].split()]
 
     #============ ATOMIC_SPECIES ============
     stru['species'] = [dict(zip(['symbol', 'mass', 'pp_file', 'pp_type'],
@@ -525,7 +559,6 @@ def _read_kline(raw: List[str]) -> Dict[str, Any]:
     assert all(m for m in mymatch), \
              'Invalid KPT file, expected the k-points to be in the format ' \
              '"x y z n # comment"'
-    print(raw)
     return {
         'mode': 'line',
         'coordinate': 'Cartesian' if raw[2].lower().endswith('cartesian') else 'Direct', 
@@ -626,6 +659,25 @@ class TestAbacusCalculatorIOUtil(unittest.TestCase):
             self.assertDictEqual(data, data_)
         # will automatically delete the file after the context manager
 
+    def test_file_safe_backup_rotates_numbered_backups(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workdir = Path(tmpdir)
+            live = workdir / 'STRU'
+            live.write_text('live')
+            (workdir / 'STRU.bak.0').write_text('bak0')
+            (workdir / 'STRU.bak.1').write_text('bak1')
+            (workdir / 'STRU.bak.01').write_text('bak01')
+            (workdir / 'STRU.bak.note').write_text('note')
+
+            file_safe_backup(live)
+
+            self.assertFalse(live.exists())
+            self.assertEqual((workdir / 'STRU.bak.0').read_text(), 'live')
+            self.assertEqual((workdir / 'STRU.bak.1').read_text(), 'bak0')
+            self.assertEqual((workdir / 'STRU.bak.2').read_text(), 'bak1')
+            self.assertEqual((workdir / 'STRU.bak.01').read_text(), 'bak01')
+            self.assertEqual((workdir / 'STRU.bak.note').read_text(), 'note')
+
     def test_stru_io(self):
         from ase.units import Bohr, Angstrom
         nacl = bulk('NaCl', 'rocksalt', a=5.64)
@@ -670,14 +722,88 @@ class TestAbacusCalculatorIOUtil(unittest.TestCase):
                 self.assertEqual(a['m'], [1, 1, 1])
                 self.assertEqual(a['v'], [0.0, 0.0, 0.0])
                 
-        self.assertEqual(stru_['species'][0]['symbol'], 'Cl')
-        self.assertEqual(stru_['species'][1]['symbol'], 'Na')
-        self.assertEqual(stru_['species'][0]['mass'], ATOM_MASS['Cl'])
-        self.assertEqual(stru_['species'][1]['mass'], ATOM_MASS['Na'])
-        self.assertEqual(stru_['species'][0]['pp_file'], 'Cl.pz-bhs.UPF')
-        self.assertEqual(stru_['species'][1]['pp_file'], 'Na.pz-bhs.UPF')
-        self.assertEqual(stru_['species'][0]['orb_file'], 'Cl_gga_6au_100Ry_2s2p1d.orb')
-        self.assertEqual(stru_['species'][1]['orb_file'], 'Na_gga_6au_100Ry_2s2p1d.orb')
+        self.assertEqual(stru_['species'][0]['symbol'], 'Na')
+        self.assertEqual(stru_['species'][1]['symbol'], 'Cl')
+        self.assertEqual(stru_['species'][0]['mass'], ATOM_MASS['Na'])
+        self.assertEqual(stru_['species'][1]['mass'], ATOM_MASS['Cl'])
+        self.assertEqual(stru_['species'][0]['pp_file'], 'Na.pz-bhs.UPF')
+        self.assertEqual(stru_['species'][1]['pp_file'], 'Cl.pz-bhs.UPF')
+        self.assertEqual(stru_['species'][0]['orb_file'], 'Na_gga_6au_100Ry_2s2p1d.orb')
+        self.assertEqual(stru_['species'][1]['orb_file'], 'Cl_gga_6au_100Ry_2s2p1d.orb')
+
+    def test_read_stru_with_lattice_parameter(self):
+        # STRU that uses LATTICE_PARAMETER instead of LATTICE_VECTORS
+        # (issue #7555: previously raised KeyError on 'LATTICE_PARAMETERS')
+        content = (
+            "ATOMIC_SPECIES\n"
+            "Si 28.085 Si.upf\n"
+            "\n"
+            "LATTICE_CONSTANT\n"
+            "10.2\n"
+            "\n"
+            "LATTICE_PARAMETER\n"
+            "5.43 5.43 5.43 90 90 90\n"
+            "\n"
+            "ATOMIC_POSITIONS\n"
+            "Direct\n"
+            "\n"
+            "Si\n"
+            "0.0\n"
+            "2\n"
+            "0.0 0.0 0.0 1 1 1\n"
+            "0.25 0.25 0.25 1 1 1\n"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fn = Path(tmpdir) / 'STRU'
+            fn.write_text(content)
+            stru = read_stru(fn)
+        self.assertEqual(stru['lat']['const'], 10.2)
+        self.assertNotIn('vec', stru['lat'])
+        self.assertEqual(stru['lat']['param'], [5.43, 5.43, 5.43, 90.0, 90.0, 90.0])
+        self.assertEqual(stru['species'][0]['symbol'], 'Si')
+        self.assertEqual(stru['species'][0]['natom'], 2)
+
+    def test_write_stru_preserves_first_occurrence_species_order(self):
+        atoms = Atoms(
+            symbols=['C', 'C', 'Pt', 'H', 'H'],
+            positions=np.zeros((5, 3)),
+            cell=np.eye(3),
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            write_stru(
+                atoms,
+                outdir=tmpdir,
+                pp_file={'C': 'C.upf', 'Pt': 'Pt.upf', 'H': 'H.upf'},
+            )
+            stru = read_stru(Path(tmpdir) / 'STRU')
+
+        self.assertEqual([s['symbol'] for s in stru['species']], ['C', 'Pt', 'H'])
+        self.assertEqual([s['natom'] for s in stru['species']], [2, 1, 2])
+
+    def test_write_stru_uses_ase_constraints_for_mobility(self):
+        atoms = Atoms(
+            symbols=['C', 'C', 'Pt', 'H'],
+            positions=np.zeros((4, 3)),
+            cell=np.eye(3),
+        )
+        atoms.set_constraint([
+            FixAtoms(indices=[0]),
+            FixCartesian(2, mask=[True, False, True]),
+        ])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            write_stru(
+                atoms,
+                outdir=tmpdir,
+                pp_file={'C': 'C.upf', 'Pt': 'Pt.upf', 'H': 'H.upf'},
+            )
+            stru = read_stru(Path(tmpdir) / 'STRU')
+
+        self.assertEqual(stru['species'][0]['atom'][0]['m'], [0, 0, 0])
+        self.assertEqual(stru['species'][0]['atom'][1]['m'], [1, 1, 1])
+        self.assertEqual(stru['species'][1]['atom'][0]['m'], [0, 1, 0])
+        self.assertEqual(stru['species'][2]['atom'][0]['m'], [1, 1, 1])
 
     def test_kpt_io(self):
         kpt = {
@@ -744,6 +870,72 @@ class TestAbacusCalculatorIOUtil(unittest.TestCase):
         self.assertEqual(orbital_map['O'],  'O_gga_6au_100Ry_2s2p1d.orb')
         self.assertEqual(orbital_map['Si'], 'Si_gga_7au_100Ry_2s2p1d.orb')
         self.assertEqual(orbital_map['In'], 'In_gga_8au_100Ry_2s2p2d1f.orb')
+
+    def test_write_stru_with_magmom(self):
+        # from issue #6516: https://github.com/deepmodeling/abacus-develop/issues/6516
+        atoms = Atoms(
+            symbols=['Co', 'Cr', 'Ni', 'Co'],
+            cell=np.eye(3),
+            magmoms=[1, 2, 3, 1]
+        )
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            write_stru(
+                stru=atoms,
+                outdir=self.testfiles,
+                pp_file={ # as if we have some pseudopotentials
+                    'Co': 'Co.upf', 'Cr': 'Cr.upf', 'Ni': 'Ni.upf', 'Co': 'Co.upf',
+                },
+                orb_file={ # as if we have some orbitals
+                    'Co': 'Co.orb', 'Cr': 'Cr.orb', 'Ni': 'Ni.orb', 'Co': 'Co.orb',
+                },
+                fname=f.name,
+            )
+            stru = read_stru(f.name)
+        # Co
+        self.assertEqual(stru['species'][0]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][0]['atom'][0]['mag'], 1.0)
+        self.assertEqual(stru['species'][0]['atom'][1]['mag'], 1.0)
+        # Cr
+        self.assertEqual(stru['species'][1]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][1]['atom'][0]['mag'], 2.0)
+        # Ni
+        self.assertEqual(stru['species'][2]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][2]['atom'][0]['mag'], 3.0)
+
+        # then the non-colinear case
+        atoms = Atoms(
+            symbols=['Co', 'Cr', 'Ni', 'Co'],
+            cell=np.eye(3),
+            magmoms=np.array([
+                [1, 0, 0],
+                [0, 2, 0],
+                [0, 0, 3],
+                [1, 0, 0],
+            ])
+        )
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            write_stru(
+                stru=atoms,
+                outdir=self.testfiles,
+                pp_file={ # as if we have some pseudopotentials
+                    'Co': 'Co.upf', 'Cr': 'Cr.upf', 'Ni': 'Ni.upf', 'Co': 'Co.upf',
+                },
+                orb_file={ # as if we have some orbitals
+                    'Co': 'Co.orb', 'Cr': 'Cr.orb', 'Ni': 'Ni.orb', 'Co': 'Co.orb',
+                },
+                fname=f.name,
+            )
+            stru = read_stru(f.name)
+        # Co
+        self.assertEqual(stru['species'][0]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][0]['atom'][0]['mag'], ('Cartesian', [1.0, 0.0, 0.0]))
+        self.assertEqual(stru['species'][0]['atom'][1]['mag'], ('Cartesian', [1.0, 0.0, 0.0]))
+        # Cr
+        self.assertEqual(stru['species'][1]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][1]['atom'][0]['mag'], ('Cartesian', [0.0, 2.0, 0.0]))
+        # Ni
+        self.assertEqual(stru['species'][2]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][2]['atom'][0]['mag'], ('Cartesian', [0.0, 0.0, 3.0]))
 
 if __name__ == '__main__':
     unittest.main()

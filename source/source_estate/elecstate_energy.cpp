@@ -1,7 +1,10 @@
 #include "elecstate.h"
 #include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
+#include "makov_payne.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <cmath>
@@ -131,7 +134,7 @@ void ElecState::cal_bandgap_updw()
 /// @brief calculate deband
 double ElecState::cal_delta_eband(const UnitCell& ucell) const
 {
-	ModuleBase::timer::tick("ElecState", "cal_delta_eband");
+	ModuleBase::timer::start("ElecState", "cal_delta_eband");
 	// out potentials from potential mixing
 	// total energy and band energy corrections
     double deband0 = 0.0;
@@ -163,7 +166,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
         }
     }
 
-    if (PARAM.inp.nspin == 2)
+    if (this->charge->nspin == 2)
     {
         v_eff = this->pot->get_eff_v(1);
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
@@ -183,7 +186,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
             }
         }
     }
-    else if (PARAM.inp.nspin == 4)
+    else if (this->charge->nspin == 4)
     {
         for (int is = 1; is < 4; is++)
         {
@@ -206,7 +209,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
     // \int rho(r) v_{exx}(r) dr = 2 E_{exx}[rho]
     deband0 -= 2 * this->f_en.exx; // Peize Lin add 2017-10-16
 
-	ModuleBase::timer::tick("ElecState", "cal_delta_eband");
+	ModuleBase::timer::end("ElecState", "cal_delta_eband");
     return deband0;
 }
 
@@ -214,7 +217,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
 double ElecState::cal_delta_escf() const
 {
     ModuleBase::TITLE("ElecState", "cal_delta_escf");
-	ModuleBase::timer::tick("ElecState", "cal_delta_escf");
+	ModuleBase::timer::start("ElecState", "cal_delta_escf");
     double descf = 0.0;
 
     // now rho1 is "mixed" charge density
@@ -242,7 +245,7 @@ double ElecState::cal_delta_escf() const
         }
     }
 
-    if (PARAM.inp.nspin == 2)
+    if (this->charge->nspin == 2)
     {
         v_eff = this->pot->get_eff_v(1);
         if (XC_Functional::get_ked_flag())
@@ -258,7 +261,7 @@ double ElecState::cal_delta_escf() const
             }
         }
     }
-    if (PARAM.inp.nspin == 4)
+    if (this->charge->nspin == 4)
     {
         for (int is = 1; is < 4; is++)
         {
@@ -276,6 +279,11 @@ double ElecState::cal_delta_escf() const
 
     assert(this->charge->rhopw->nxyz > 0);
 
+    // BUG(investigate): rhopw->omega is stale in variable-cell calculations
+    // (NPT): pw_rho/pw_rhod are not rebuilt on cell change, so this uses the
+    // initial cell volume. Should use ucell.omega instead. The descf term is
+    // typically small, so the impact may be minor, but it should be verified
+    // for NPT calculations.
     descf *= this->charge->rhopw->omega / this->charge->rhopw->nxyz;
 
 // mohan move the code here, 2025-11-28
@@ -284,7 +292,7 @@ double ElecState::cal_delta_escf() const
 #endif
 
 
-	ModuleBase::timer::tick("ElecState", "cal_delta_escf");
+	ModuleBase::timer::end("ElecState", "cal_delta_escf");
     return descf;
 }
 
@@ -307,7 +315,11 @@ void ElecState::cal_converged()
  * @param type: 1 means Harris-Foulkes functinoal;
  * @param type: 2 means Kohn-Sham functional;
  */
-void ElecState::cal_energies(const int type)
+void ElecState::cal_energies(const int type,
+                             const int imp_sol,
+                             const bool sc_mag_switch,
+                             const int dft_plus_u,
+                             const std::string& assume_isolated)
 {
     //! Hartree energy
     this->f_en.hartree_energy = get_hartree_energy();
@@ -319,25 +331,66 @@ void ElecState::cal_energies(const int type)
     this->f_en.gatefield = get_etot_gatefield();
 
     //! energy from implicit solvation model
-    if (PARAM.inp.imp_sol)
+    if (imp_sol == 1)
     {
         this->f_en.esol_el = get_solvent_model_Ael();
         this->f_en.esol_cav = get_solvent_model_Acav();
     }
-
-    //! spin constrained energy
-    if (PARAM.inp.sc_mag_switch)
+    else if (imp_sol == 2)
     {
-        this->f_en.escon = get_spin_constrain_energy();
+        this->pot->sum_sol_energy(this->f_en.esol_el, this->f_en.esol_cav);
+    }
+    else
+    {
+        this->f_en.esol_el = 0.0;
+        this->f_en.esol_cav = 0.0;
+    }
+
+    // The solver supplies the constraint energy before energy convergence and mixing.
+    if (!sc_mag_switch)
+    {
+        this->f_en.escon = 0.0;
     }
 
     // energy from DFT+U
-    if (PARAM.inp.dft_plus_u)
+    if (dft_plus_u)
     {
         this->f_en.edftu = get_dftu_energy();
     }
 
     this->f_en.e_local_pp = get_local_pp_energy();
+
+    if (assume_isolated == "makov-payne")
+    {
+        const UnitCell* ucell = this->pot->get_ucell();
+        if (ucell == nullptr || this->charge == nullptr || this->charge->rhopw == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("ElecState::cal_energies",
+                                     "Makov-Payne correction requires an initialized unit cell and charge density.");
+        }
+        std::vector<double> v_elecstat;
+        const double* v_elecstat_ptr = nullptr;
+        {
+            ModuleBase::matrix vh(this->charge->nspin, this->charge->rhopw->nrxx);
+            vh = elecstate::H_Hartree_pw::v_hartree(*ucell, this->charge->rhopw, this->charge->nspin, this->charge->rho);
+            v_elecstat.assign(this->charge->rhopw->nrxx, 0.0);
+            const double* v_fixed = this->pot->get_fixed_v();
+            for (int ir = 0; ir < this->charge->rhopw->nrxx; ++ir)
+            {
+                v_elecstat[ir] = vh(0, ir) + v_fixed[ir];
+            }
+            v_elecstat_ptr = v_elecstat.data();
+        }
+        this->f_en.correction_el = makov_payne_correction(*ucell, *this->charge, v_elecstat_ptr).total;
+    }
+    else if (assume_isolated == "pcc_0d" || assume_isolated == "pcc_2d")
+    {
+        this->f_en.correction_el = this->pot->pcc_energy_rydberg();
+    }
+    else
+    {
+        this->f_en.correction_el = 0.0;
+    }
 
 #ifdef __MLALGO
     this->f_en.ml_exx = this->pot->get_ml_exx_energy();

@@ -11,15 +11,14 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         double* mat_mo,
-        const MO_TYPE type)
+        const LR_Util::MO_TYPE type,
+        const double factor)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_forloop_serial");
+        ModuleBase::TITLE("LR", "ao_to_mo_forloop_serial");
         const int nks = mat_ao.size();
         const int naos = coeff.get_nbasis();
-        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
-        const int imo1 = type == MO_TYPE::VV ? nocc : 0;
-        const int imo2 = type == MO_TYPE::OO ? 0 : nocc;
+        int nmo1, nmo2, imo1, imo2;
+        LR_Util::set_dim(type, nocc, nvirt, nmo1, nmo2, imo1, imo2);
 
         ModuleBase::GlobalFunc::ZEROS(mat_mo, nks * nmo1 * nmo2);
 
@@ -35,7 +34,7 @@ namespace LR
                     {
                         for (int mu = 0;mu < naos;++mu)
                         {
-                            mat_mo[start + p * nmo2 + q] += coeff(imo2 + q, mu) * mat_ao[isk].data<double>()[nu * naos + mu] * coeff(imo1 + p, nu);
+                            mat_mo[start + p * nmo2 + q] += coeff(imo2 + q, mu) * mat_ao[isk].data<double>()[nu * naos + mu] * coeff(imo1 + p, nu) * factor;
                         }
                     }
                 }
@@ -49,15 +48,14 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         std::complex<double>* const mat_mo,
-        const MO_TYPE type)
+        const LR_Util::MO_TYPE type,
+        const std::complex<double> factor)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_forloop_serial");
+        ModuleBase::TITLE("LR", "ao_to_mo_forloop_serial");
         const int nks = mat_ao.size();
         const int naos = coeff.get_nbasis();
-        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
-        const int imo1 = type == MO_TYPE::VV ? nocc : 0;
-        const int imo2 = type == MO_TYPE::OO ? 0 : nocc;
+        int nmo1, nmo2, imo1, imo2;
+        LR_Util::set_dim(type, nocc, nvirt, nmo1, nmo2, imo1, imo2);
 
         ModuleBase::GlobalFunc::ZEROS(mat_mo, nks * nmo1 * nmo2);
 
@@ -73,7 +71,7 @@ namespace LR
                     {
                         for (int mu = 0;mu < naos;++mu)
                         {
-                            mat_mo[start + p * nmo2 + q] += std::conj(coeff(imo2 + q, mu)) * mat_ao[isk].data<std::complex<double>>()[nu * naos + mu] * coeff(imo1 + p, nu);
+                            mat_mo[start + p * nmo2 + q] += std::conj(coeff(imo2 + q, mu)) * mat_ao[isk].data<std::complex<double>>()[nu * naos + mu] * coeff(imo1 + p, nu) * factor;
                         }
                     }
                 }
@@ -88,15 +86,14 @@ namespace LR
         const int& nvirt,
         double* mat_mo,
         const bool add_on,
-        const MO_TYPE type)
+        const LR_Util::MO_TYPE type,
+        const double factor)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_blas");
+        ModuleBase::TITLE("LR", "ao_to_mo_blas");
         const int nks = mat_ao.size();
-        const int naos = coeff.get_nbasis();
-        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
-        const int imo1 = type == MO_TYPE::VV ? nocc : 0;
-        const int imo2 = type == MO_TYPE::OO ? 0 : nocc;
+        const int naos = coeff.get_nbasis();        
+        int nmo1, nmo2, imo1, imo2;
+        LR_Util::set_dim(type, nocc, nvirt, nmo1, nmo2, imo1, imo2);
 
         for (int isk = 0;isk < nks;++isk)
         {
@@ -116,7 +113,7 @@ namespace LR
 
             transa = 'T';
             //mat_mo=coeff^TVc (nvirt major)
-            BlasConnector::gemm(transb, transa, nmo1, nmo2, naos, alpha,
+            BlasConnector::gemm(transb, transa, nmo1, nmo2, naos, factor,
                 Vc.data<double>(), naos, coeff.get_pointer(imo2), naos, beta,
                 mat_mo + start, nmo2);
         }
@@ -129,15 +126,14 @@ namespace LR
         const int& nvirt,
         std::complex<double>* const mat_mo,
         const bool add_on,
-        const MO_TYPE type)
+        const LR_Util::MO_TYPE type,
+        const std::complex<double> factor)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_blas");
+        ModuleBase::TITLE("LR", "ao_to_mo_blas");
         const int nks = mat_ao.size();
         const int naos = coeff.get_nbasis();
-        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
-        const int imo1 = type == MO_TYPE::VV ? nocc : 0;
-        const int imo2 = type == MO_TYPE::OO ? 0 : nocc;
+        int nmo1, nmo2, imo1, imo2;
+        LR_Util::set_dim(type, nocc, nvirt, nmo1, nmo2, imo1, imo2);
 
         for (int isk = 0;isk < nks;++isk)
         {
@@ -157,7 +153,7 @@ namespace LR
 
             transa = 'C';
             //mat_mo=coeff^\dagger Vc (nvirt major)
-            BlasConnector::gemm(transb, transa, nmo1, nmo2, naos, alpha,
+            BlasConnector::gemm(transb, transa, nmo1, nmo2, naos, factor,
                 Vc.data<std::complex<double>>(), naos, coeff.get_pointer(imo2), naos, beta,
                 mat_mo + start, nmo2);
         }
