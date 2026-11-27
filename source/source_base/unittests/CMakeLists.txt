@@ -9,14 +9,12 @@ addtest(
 addtest(
   TARGET MODULE_BASE_filename
   LIBS parameter base device
-  SOURCES test_filename.cpp
-)
+  SOURCES test_filename.cpp)
 
 addtest(
   TARGET MODULE_BASE_integral
   LIBS parameter base device
-  SOURCES test_math_integral.cpp ../math_integral.cpp
-)
+  SOURCES test_math_integral.cpp ../math_integral.cpp)
 
 addtest(
   TARGET MODULE_BASE_net_force
