@@ -199,7 +199,7 @@ double evaluate_libvdwxc(
     vdwxc_data data = vdwxc_new(VDWXC_RVV10);
     if (vdwxc_set_rvv10_parameters(data, parameters.rvv10_b, parameters.rvv10_c) != 0)
     {
-        ModuleBase::WARNING_QUIT("vdw::evaluate_libvdwxc", "libvdwxc rejected vdw_rvv10_b or vdw_rvv10_c");
+        ModuleBase::WARNING_QUIT("vdw::evaluate_libvdwxc", "libvdwxc rejected rvv10_b or rvv10_c");
     }
     // libvdwxc integrates with the signed cell volume, and inverting a left-handed cell leaves rVV10 unchanged
     ModuleBase::Matrix3 a = pw.latvec * pw.lat0;

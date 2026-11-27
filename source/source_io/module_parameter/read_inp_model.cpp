@@ -281,7 +281,7 @@ void ReadInput::item_model()
 * d3_0: Grimme's DFT-D3(0) dispersion correction method (zero-damping)
 * d3_bj: Grimme's DFTD3(BJ) dispersion correction method (BJ-damping)
 * d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
-* rvv10: rVV10 nonlocal correlation evaluated self-consistently with the external libvdwxc library and added to the exchange-correlation energy, potential, forces and stress of dft_functional; see vdw_rvv10_b and vdw_rvv10_c
+* rvv10: rVV10 nonlocal correlation evaluated self-consistently with the external libvdwxc library and added to the exchange-correlation energy, potential, forces and stress of dft_functional; see rvv10_b and rvv10_c
 * none: no vdW correction
 
 [NOTE] ABACUS automatically loads DFT-D3 parameters for supported functionals according to dft_functional setting. Individual user values overwrite the corresponding tabulated values. Setting all four of vdw_s6, vdw_s8, vdw_a1 and vdw_a2 defines a fully custom set and bypasses functional lookup.
@@ -322,7 +322,7 @@ Available options are:
         this->add_item(item);
     }
     {
-        Input_Item item("vdw_rvv10_b");
+        Input_Item item("rvv10_b");
         item.domain.set_rule("value>0");
         item.annotation = "rVV10 parameter b";
         item.category = "vdW correction";
@@ -345,24 +345,24 @@ Available options are:
             std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), ::tolower);
             if (dft_functional_lower == "scan" || dft_functional_lower == "mgga_x_scan+mgga_c_scan")
             {
-                para.input.vdw_rvv10_b = rvv10_b_scan;
+                para.input.rvv10_b = rvv10_b_scan;
             }
             else if (dft_functional_lower == "mgga_x_r2scan+mgga_c_r2scan")
             {
-                para.input.vdw_rvv10_b = rvv10_b_r2scan;
+                para.input.rvv10_b = rvv10_b_r2scan;
             }
             else if (dft_functional_lower != "gga_x_rpw86+gga_c_pbe")
             {
                 const std::string message
-                    = "vdw_rvv10_b is not set: the rPW86-PBE value 6.3 is used with dft_functional " + dft_functional;
+                    = "rvv10_b is not set: the rPW86-PBE value 6.3 is used with dft_functional " + dft_functional;
                 ModuleBase::WARNING("ReadInput", message);
             }
         };
-        read_sync_double(input.vdw_rvv10_b);
+        read_sync_double(input.rvv10_b);
         this->add_item(item);
     }
     {
-        Input_Item item("vdw_rvv10_c");
+        Input_Item item("rvv10_c");
         item.domain.set_rule("value>=0");
         item.annotation = "rVV10 parameter C";
         item.category = "vdW correction";
@@ -372,7 +372,7 @@ Available options are:
         item.default_value = "0.0093";
         item.unit = "";
         item.set_availability("vdw_method==rvv10");
-        read_sync_double(input.vdw_rvv10_c);
+        read_sync_double(input.rvv10_c);
         this->add_item(item);
     }
     {

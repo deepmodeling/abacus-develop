@@ -177,7 +177,7 @@ In the input file:
 ```text
 dft_functional GGA_X_RPW86+GGA_C_PBE
 vdw_method rvv10
-vdw_rvv10_b 6.3    # optional; the default follows dft_functional for rPW86-PBE, SCAN and r2SCAN
+rvv10_b 6.3    # optional; the default follows dft_functional for rPW86-PBE, SCAN and r2SCAN
 ```
 
 ## Build with JSON support

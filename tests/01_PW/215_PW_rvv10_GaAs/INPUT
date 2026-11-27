@@ -9,7 +9,7 @@ scf_thr           1e-8
 scf_nmax          100
 dft_functional    pbe
 vdw_method        rvv10
-vdw_rvv10_b       6.3
+rvv10_b       6.3
 cal_force         1
 cal_stress        1
 smearing_method   gaussian

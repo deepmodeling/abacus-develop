@@ -104,7 +104,7 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell, const Input_para &input, st
         // rVV10 is evaluated inside XC_Functional, so there is no pairwise term here
         if (plog != nullptr)
         {
-            *plog << "\nrVV10 nonlocal correlation (libvdwxc): b=" << input.vdw_rvv10_b << " C=" << input.vdw_rvv10_c
+            *plog << "\nrVV10 nonlocal correlation (libvdwxc): b=" << input.rvv10_b << " C=" << input.rvv10_c
                   << "\nincluded in the exchange-correlation energy, potential, forces and stress" << std::endl;
         }
         return nullptr;

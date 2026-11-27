@@ -1,6 +1,6 @@
 // read_inp_model.cpp: the rVV10 INPUT items. vdw_method accepts rvv10 and declares the unsupported DFPT and
-// LR-TDDFT force calculations; vdw_rvv10_b follows dft_functional unless it is set; vdw_rvv10_b and
-// vdw_rvv10_c have domains. Complete INPUT files are read for valid input; invalid values are checked on the
+// LR-TDDFT force calculations; rvv10_b follows dft_functional unless it is set; rvv10_b and
+// rvv10_c have domains. Complete INPUT files are read for valid input; invalid values are checked on the
 // declared domains, because a rejected INPUT ends the process in an MPI build.
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_parameter/read_input.h"
@@ -71,21 +71,21 @@ void read_input(const std::string &parameters, Parameter &param)
 TEST(ReadInpModelRvv10, ReadsTheParametersAndPairsBWithTheFunctional)
 {
     Parameter param;
-    read_input("vdw_method rvv10\ndft_functional scan\nvdw_rvv10_b 15.7\ncalculation cell-relax\n", param);
+    read_input("vdw_method rvv10\ndft_functional scan\nrvv10_b 15.7\ncalculation cell-relax\n", param);
     EXPECT_EQ(param.inp.vdw_method, "rvv10");
-    EXPECT_DOUBLE_EQ(param.inp.vdw_rvv10_b, 15.7);
-    EXPECT_DOUBLE_EQ(param.inp.vdw_rvv10_c, 0.0093);
+    EXPECT_DOUBLE_EQ(param.inp.rvv10_b, 15.7);
+    EXPECT_DOUBLE_EQ(param.inp.rvv10_c, 0.0093);
     // b follows dft_functional unless it is set: SCAN 15.7, r2SCAN 11.95, otherwise the rPW86-PBE value 6.3
     const std::vector<std::pair<std::string, double>> b_cases = {{"vdw_method rvv10\ndft_functional scan\n", 15.7},
         {"vdw_method rvv10\ndft_functional MGGA_X_SCAN+MGGA_C_SCAN\n", 15.7},
         {"vdw_method rvv10\ndft_functional mgga_x_r2scan+mgga_c_r2scan\n", 11.95},
-        {"vdw_method rvv10\ndft_functional scan\nvdw_rvv10_b 9.0\n", 9.0},
-        {"vdw_method rvv10\ndft_functional pbe\n", 6.3}, {"vdw_method rvv10\n", 6.3}};
+        {"vdw_method rvv10\ndft_functional scan\nrvv10_b 9.0\n", 9.0}, {"vdw_method rvv10\ndft_functional pbe\n", 6.3},
+        {"vdw_method rvv10\n", 6.3}};
     for (const std::pair<std::string, double> &b_case : b_cases)
     {
         Parameter param_b;
         read_input(b_case.first, param_b);
-        EXPECT_DOUBLE_EQ(param_b.inp.vdw_rvv10_b, b_case.second) << b_case.first;
+        EXPECT_DOUBLE_EQ(param_b.inp.rvv10_b, b_case.second) << b_case.first;
     }
 }
 
@@ -112,15 +112,15 @@ TEST(ReadInpModelRvv10, DeclaresTheUnsupportedCalculationsAndTheDomains)
         EXPECT_TRUE(domain_errors(method, param).empty()) << esolver;
     }
 
-    const ModuleIO::Input_Item &b = items.at("vdw_rvv10_b");
-    const ModuleIO::Input_Item &c = items.at("vdw_rvv10_c");
+    const ModuleIO::Input_Item &b = items.at("rvv10_b");
+    const ModuleIO::Input_Item &c = items.at("rvv10_c");
     Parameter rvv10;
     Input_para &rvv10_input = TestParameters::input(rvv10);
     rvv10_input.vdw_method = "rvv10";
     EXPECT_TRUE(domain_errors(b, rvv10).empty());
     EXPECT_TRUE(domain_errors(c, rvv10).empty());
-    rvv10_input.vdw_rvv10_b = 0.0;
-    rvv10_input.vdw_rvv10_c = -0.1;
+    rvv10_input.rvv10_b = 0.0;
+    rvv10_input.rvv10_c = -0.1;
     EXPECT_FALSE(domain_errors(b, rvv10).empty());
     EXPECT_FALSE(domain_errors(c, rvv10).empty());
 }
