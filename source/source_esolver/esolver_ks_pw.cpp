@@ -17,7 +17,7 @@
 #endif
 
 #include "source_estate/module_charge/chg_routine.h"  // use charge mixing, mohan add 20251006
-#include "source_estate/setup_estate_pw.h"            // mohan add 20251005
+#include "source_pw/module_pwdft/setup_estate_pw.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type used via general_exx_info_
 #include "source_io/module_ctrl/ctrl_output_pw.h"     // mohan add 20250927
 #include "source_lcao/module_deltaspin/spin_constrain.h"

@@ -325,7 +325,6 @@ OBJS_ELECSTAT=elecstate.o\
     td_field_profiles.o\
     td_field_manager.o\
     read_orb.o\
-    setup_estate_pw.o\
     update_pot.o\
     occ_matrix.o\
     occ_mixer.o\
@@ -1041,6 +1040,7 @@ OBJS_SRCPW=h_ewald_pw.o\
     write_init.o\
     fp_energy.o\
     setup_pot.o\
+    setup_estate_pw.o\
     setup_pwrho.o\
     setup_pwwfc.o\
     uspp_support.o\
