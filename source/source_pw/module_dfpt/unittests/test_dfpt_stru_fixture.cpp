@@ -11,20 +11,15 @@ namespace dfpt_test
 
 stru_ cubic_carbon_stru()
 {
-    return stru_{1,
-                 "O_h",
-                 "m-3m",
-                 "Pm-3m",
-                 std::vector<double>{1., 0., 0., 0., 1., 0., 0., 0., 1.},
-                 std::vector<atomtype_>{atomtype_{"C",
-                                                  std::vector<std::vector<double>>{
-                                                      {0., 0., 0.},
-                                                  }}}};
+    return stru_{1, "O_h", "m-3m", "Pm-3m", std::vector<double>{1., 0., 0., 0., 1., 0., 0., 0., 1.},
+        std::vector<atomtype_>{atomtype_{"C", std::vector<std::vector<double>>{
+                                                  {0., 0., 0.},
+                                              }}}};
 }
 
-void construct_ucell(UnitCell& ucell, const stru_& stru)
+void construct_ucell(UnitCell &ucell, const stru_ &stru)
 {
-    const std::vector<atomtype_>& coord = stru.all_type;
+    const std::vector<atomtype_> &coord = stru.all_type;
     ucell.a1 = ModuleBase::Vector3<double>(stru.cell[0], stru.cell[1], stru.cell[2]);
     ucell.a2 = ModuleBase::Vector3<double>(stru.cell[3], stru.cell[4], stru.cell[5]);
     ucell.a3 = ModuleBase::Vector3<double>(stru.cell[6], stru.cell[7], stru.cell[8]);
@@ -53,21 +48,10 @@ void construct_ucell(UnitCell& ucell, const stru_& stru)
         {
             std::vector<double> this_atom = coord[i].coordinate[j];
             ucell.atoms[i].tau[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
-            ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[i].tau[j].x,
-                                                      ucell.atoms[i].tau[j].y,
-                                                      ucell.atoms[i].tau[j].z,
-                                                      ucell.a1.x,
-                                                      ucell.a1.y,
-                                                      ucell.a1.z,
-                                                      ucell.a2.x,
-                                                      ucell.a2.y,
-                                                      ucell.a2.z,
-                                                      ucell.a3.x,
-                                                      ucell.a3.y,
-                                                      ucell.a3.z,
-                                                      ucell.atoms[i].taud[j].x,
-                                                      ucell.atoms[i].taud[j].y,
-                                                      ucell.atoms[i].taud[j].z);
+            ModuleBase::Mathzone::Cartesian_to_Direct(
+                ucell.atoms[i].tau[j].x, ucell.atoms[i].tau[j].y, ucell.atoms[i].tau[j].z, ucell.a1.x, ucell.a1.y,
+                ucell.a1.z, ucell.a2.x, ucell.a2.y, ucell.a2.z, ucell.a3.x, ucell.a3.y, ucell.a3.z,
+                ucell.atoms[i].taud[j].x, ucell.atoms[i].taud[j].y, ucell.atoms[i].taud[j].z);
         }
         ucell.nat += ucell.atoms[i].na;
     }

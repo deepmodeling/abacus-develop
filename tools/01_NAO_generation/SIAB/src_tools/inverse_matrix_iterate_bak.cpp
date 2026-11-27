@@ -12,7 +12,7 @@ void Inverse_Matrix_Iterate::init(size_t dim_in)
     this->error_matrix.create(dim_in, dim_in);
 }
 
-Inverse_Matrix_Iterate& Inverse_Matrix_Iterate::set_X0(const ComplexMatrix& X0_in)
+Inverse_Matrix_Iterate &Inverse_Matrix_Iterate::set_X0(const ComplexMatrix &X0_in)
 {
     if (&X0_in == &this->X_store_1) // without this will cause a bug when istep==1
     {
@@ -26,14 +26,14 @@ Inverse_Matrix_Iterate& Inverse_Matrix_Iterate::set_X0(const ComplexMatrix& X0_i
     return *this;
 }
 
-void Inverse_Matrix_Iterate::iterate(const ComplexMatrix& old_X, ComplexMatrix& new_X)
+void Inverse_Matrix_Iterate::iterate(const ComplexMatrix &old_X, ComplexMatrix &new_X)
 {
     // I - A * X_n
     if (this->matrix_info.symmetry)
     {
-        this->error_matrix
-            = this->identity
-              - multiply_special(this->matrix_info.symmetry, 'L', this->matrix_info.uplo, *(this->A_ptr), old_X);
+        this->error_matrix =
+            this->identity -
+            multiply_special(this->matrix_info.symmetry, 'L', this->matrix_info.uplo, *(this->A_ptr), old_X);
     }
     else
     {
@@ -66,7 +66,7 @@ void Inverse_Matrix_Iterate::iterate(const ComplexMatrix& old_X, ComplexMatrix& 
     this->inverse_ptr = &new_X;
 }
 
-const ComplexMatrix& Inverse_Matrix_Iterate::cal_inverse()
+const ComplexMatrix &Inverse_Matrix_Iterate::cal_inverse()
 {
     try
     {
@@ -88,7 +88,7 @@ const ComplexMatrix& Inverse_Matrix_Iterate::cal_inverse()
             }
         }
     }
-    catch (const Little_Error& e)
+    catch (const Little_Error &e)
     {
     }
 

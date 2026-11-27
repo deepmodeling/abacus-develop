@@ -2,17 +2,12 @@
 
 #include "../src_parallel/parallel_common.h"
 
-Bessel_Basis::Bessel_Basis()
-{
-    Dk = 0.0;
-}
+Bessel_Basis::Bessel_Basis() { Dk = 0.0; }
 
-Bessel_Basis::~Bessel_Basis()
-{
-}
+Bessel_Basis::~Bessel_Basis() {}
 
 // the function is called in numerical_basis.
-void Bessel_Basis::init(const double& dk, const double& dr)
+void Bessel_Basis::init(const double &dk, const double &dr)
 {
     TITLE("Bessel_Basis", "init");
     this->Dk = dk;
@@ -23,7 +18,7 @@ void Bessel_Basis::init(const double& dk, const double& dr)
     return;
 }
 
-double Bessel_Basis::Polynomial_Interpolation2(const int& l, const int& ie, const double& gnorm) const
+double Bessel_Basis::Polynomial_Interpolation2(const int &l, const int &ie, const double &gnorm) const
 {
     const double position = gnorm / this->Dk;
     const int iq = static_cast<int>(position);
@@ -37,21 +32,22 @@ double Bessel_Basis::Polynomial_Interpolation2(const int& l, const int& ie, cons
     const double x1 = 1.0 - x0;
     const double x2 = 2.0 - x0;
     const double x3 = 3.0 - x0;
-    const double y = this->TableOne(l, ie, iq) * x1 * x2 * x3 / 6.0 + this->TableOne(l, ie, iq) * x0 * x2 * x3 / 2.0
-                     - this->TableOne(l, ie, iq) * x1 * x0 * x3 / 2.0 + this->TableOne(l, ie, iq) * x1 * x2 * x0 / 6.0;
+    const double y = this->TableOne(l, ie, iq) * x1 * x2 * x3 / 6.0 + this->TableOne(l, ie, iq) * x0 * x2 * x3 / 2.0 -
+                     this->TableOne(l, ie, iq) * x1 * x0 * x3 / 2.0 + this->TableOne(l, ie, iq) * x1 * x2 * x0 / 6.0;
     return y;
 }
 
 // be called in Bessel_Basis::init()
-void Bessel_Basis::init_TableOne(const bool smooth_in,   // mohan add 2009-08-28
-                                 const double& sigma_in, // mohan add 2009-08-28
-                                 const double& ecutwfc,
-                                 const double& rcut,
-                                 const double& dr,
-                                 const double& dk,
-                                 const int& lmax,
-                                 const int& ecut_number,
-                                 const double& tolerence)
+void Bessel_Basis::init_TableOne(
+    const bool smooth_in,   // mohan add 2009-08-28
+    const double &sigma_in, // mohan add 2009-08-28
+    const double &ecutwfc,
+    const double &rcut,
+    const double &dr,
+    const double &dk,
+    const int &lmax,
+    const int &ecut_number,
+    const double &tolerence)
 {
     TITLE("Bessel_Basis", "init_TableOne");
     timer::tick("Spillage", "TableOne");
@@ -63,7 +59,9 @@ void Bessel_Basis::init_TableOne(const bool smooth_in,   // mohan add 2009-08-28
     // init kmesh
     this->kmesh = static_cast<int>(sqrt(ecutwfc) / dk) + 1 + 4;
     if (kmesh % 2 == 0)
+    {
         ++kmesh;
+    }
     cout << "\n kmesh = " << kmesh;
 
     // init Table One
@@ -72,17 +70,19 @@ void Bessel_Basis::init_TableOne(const bool smooth_in,   // mohan add 2009-08-28
     // init rmesh
     int rmesh = static_cast<int>(rcut / dr) + 4;
     if (rmesh % 2 == 0)
+    {
         ++rmesh;
+    }
     cout << "\n rmesh = " << rmesh;
 
     // allocate rmesh and Jlk and eigenvalue of Jlq
-    double* r = new double[rmesh];
-    double* rab = new double[rmesh];
-    double* jle = new double[rmesh];
-    double* jlk = new double[rmesh];
-    double* g = new double[rmesh]; // smooth function
-    double* function = new double[rmesh];
-    double* en = new double[ecut_number];
+    double *r = new double[rmesh];
+    double *rab = new double[rmesh];
+    double *jle = new double[rmesh];
+    double *jlk = new double[rmesh];
+    double *g = new double[rmesh]; // smooth function
+    double *function = new double[rmesh];
+    double *en = new double[ecut_number];
 
     for (int ir = 0; ir < rmesh; ir++)
     {

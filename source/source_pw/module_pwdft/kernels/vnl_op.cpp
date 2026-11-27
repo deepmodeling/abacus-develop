@@ -10,28 +10,29 @@ namespace hamilt
 template <typename FPTYPE>
 struct cal_vnl_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* ctx,
-                    const int& ntype,
-                    const int& npw,
-                    const int& npwx,
-                    const int& nhm,
-                    const int& tab_2,
-                    const int& tab_3,
-                    const int* atom_na,
-                    const int* atom_nb,
-                    const int* atom_nh,
-                    const FPTYPE& DQ,
-                    const FPTYPE& tpiba,
-                    const std::complex<FPTYPE>& NEG_IMAG_UNIT,
-                    const FPTYPE* gk,
-                    const FPTYPE* ylm,
-                    const FPTYPE* indv,
-                    const FPTYPE* nhtol,
-                    const FPTYPE* nhtolm,
-                    const FPTYPE* tab,
-                    FPTYPE* vkb1,
-                    const std::complex<FPTYPE>* sk,
-                    std::complex<FPTYPE>* vkb_in)
+    void operator()(
+        const base_device::DEVICE_CPU *ctx,
+        const int &ntype,
+        const int &npw,
+        const int &npwx,
+        const int &nhm,
+        const int &tab_2,
+        const int &tab_3,
+        const int *atom_na,
+        const int *atom_nb,
+        const int *atom_nh,
+        const FPTYPE &DQ,
+        const FPTYPE &tpiba,
+        const std::complex<FPTYPE> &NEG_IMAG_UNIT,
+        const FPTYPE *gk,
+        const FPTYPE *ylm,
+        const FPTYPE *indv,
+        const FPTYPE *nhtol,
+        const FPTYPE *nhtolm,
+        const FPTYPE *tab,
+        FPTYPE *vkb1,
+        const std::complex<FPTYPE> *sk,
+        std::complex<FPTYPE> *vkb_in)
     {
         const int imag_pow_period = 4;
         // result table of pow(0-1i, int)
@@ -56,9 +57,11 @@ struct cal_vnl_op<FPTYPE, base_device::DEVICE_CPU>
                     for (int ig = 0; ig < npw; ig++)
                     {
                         const std::int64_t g_offset = static_cast<std::int64_t>(ig) * 3;
-                        const FPTYPE gnorm = sqrt(gk[g_offset + 0] * gk[g_offset + 0] + gk[g_offset + 1] * gk[g_offset + 1]
-                                                  + gk[g_offset + 2] * gk[g_offset + 2])
-                                             * tpiba;
+                        const FPTYPE gnorm =
+                            sqrt(
+                                gk[g_offset + 0] * gk[g_offset + 0] + gk[g_offset + 1] * gk[g_offset + 1] +
+                                gk[g_offset + 2] * gk[g_offset + 2]) *
+                            tpiba;
 
                         vq = _polynomial_interpolation(tab, it, nb, tab_2, tab_3, DQ, gnorm);
 
@@ -68,7 +71,8 @@ struct cal_vnl_op<FPTYPE, base_device::DEVICE_CPU>
                             if (nb == indv[static_cast<std::int64_t>(it) * nhm + ih])
                             {
                                 const int lm = static_cast<int>(nhtolm[static_cast<std::int64_t>(it) * nhm + ih]);
-                                vkb1[static_cast<std::int64_t>(ih) * npw + ig] = ylm[static_cast<std::int64_t>(lm) * npw + ig] * vq;
+                                vkb1[static_cast<std::int64_t>(ih) * npw + ig] =
+                                    ylm[static_cast<std::int64_t>(lm) * npw + ig] * vq;
                             }
                         } // end ih
                     }
@@ -81,20 +85,22 @@ struct cal_vnl_op<FPTYPE, base_device::DEVICE_CPU>
                     for (int ih = 0; ih < nh; ih++)
                     {
                         // std::complex<FPTYPE> pref = pow(NEG_IMAG_UNIT, nhtol[it * nhm + ih]);    //?
-                        std::complex<FPTYPE> pref = pref_tab[int(nhtol[static_cast<std::int64_t>(it) * nhm + ih]) % imag_pow_period];
-                        std::complex<FPTYPE>* pvkb = vkb_in + static_cast<std::int64_t>(jkb) * npwx;
+                        std::complex<FPTYPE> pref =
+                            pref_tab[int(nhtol[static_cast<std::int64_t>(it) * nhm + ih]) % imag_pow_period];
+                        std::complex<FPTYPE> *pvkb = vkb_in + static_cast<std::int64_t>(jkb) * npwx;
 #ifdef _OPENMP
 #pragma omp for
 #endif
                         for (int ig = 0; ig < npw; ig++)
                         {
-                            pvkb[ig] = vkb1[static_cast<std::int64_t>(ih) * npw + ig] * sk[static_cast<std::int64_t>(iat) * npw + ig] * pref;
+                            pvkb[ig] = vkb1[static_cast<std::int64_t>(ih) * npw + ig] *
+                                       sk[static_cast<std::int64_t>(iat) * npw + ig] * pref;
                         }
                         ++jkb;
                     } // end ih
                     iat++;
                 } // end ia
-            }     // enddo
+            } // enddo
 #ifdef _OPENMP
         }
 #endif

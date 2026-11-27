@@ -33,7 +33,9 @@ void matrix::init(const int nrows, const int ncols)
     set_new_handler(matrixAlloc);
 
     if (nr * nc == 0)
+    {
         c = NULL;
+    }
     else
     {
         c = new double[nrows * ncols]();
@@ -52,23 +54,22 @@ void matrix::freemem(void)
 }
 
 // constructor with sizes
-matrix::matrix(const int nrows, const int ncols)
-{
-    this->init(nrows, ncols);
-}
+matrix::matrix(const int nrows, const int ncols) { this->init(nrows, ncols); }
 
 //******************
 //
 // Copy constructor
 //
 //******************
-matrix::matrix(const matrix& m1)
+matrix::matrix(const matrix &m1)
 {
     init(m1.nr, m1.nc);
     // hermetian = m1.hermetian;
     //  Copy over m1 contents
     for (int i = 0; i < nr * nc; i++)
+    {
         c[i] = m1.c[i];
+    }
 }
 
 //*************
@@ -76,10 +77,7 @@ matrix::matrix(const matrix& m1)
 // destructor
 //
 //*************
-matrix::~matrix()
-{
-    this->freemem();
-}
+matrix::~matrix() { this->freemem(); }
 
 //******************************
 // reallocate memory for matrix
@@ -96,33 +94,39 @@ void matrix::create(const int nrow, const int ncol)
 /* Assignment:  nonstandard in that it returns void.  To make it standard,
  * replace void -> matrix and uncomment the return *this; */
 
-void matrix::operator=(const matrix& m1)
+void matrix::operator=(const matrix &m1)
 {
     for (int i = 0; i < nr * nc; i++)
+    {
         c[i] = m1.c[i];
+    }
 }
 
 /* Adding matrices, as a friend */
-matrix operator+(const matrix& m1, const matrix& m2)
+matrix operator+(const matrix &m1, const matrix &m2)
 {
     assert(m1.nr == m2.nr);
     assert(m2.nc == m2.nc);
 
     matrix tm(m1);
     for (int i = 0; i < m1.nr * m1.nc; i++)
+    {
         tm.c[i] += m2.c[i];
+    }
     return tm;
 }
 
 /* Subtracting matrices, as a friend */
-matrix operator-(const matrix& m1, const matrix& m2)
+matrix operator-(const matrix &m1, const matrix &m2)
 {
     assert(m1.nr == m2.nr);
     assert(m2.nc == m2.nc);
 
     matrix tm(m1);
     for (int i = 0; i < m1.nr * m1.nc; i++)
+    {
         tm.c[i] -= m2.c[i];
+    }
     return tm;
 }
 
@@ -131,7 +135,7 @@ matrix operator-(const matrix& m1, const matrix& m2)
 // Multiplying matrices, as a friend
 //
 // *************************************
-matrix operator*(const matrix& m1, const matrix& m2)
+matrix operator*(const matrix &m1, const matrix &m2)
 {
     assert(m1.nr == m2.nr);
     assert(m2.nc == m2.nc);
@@ -157,32 +161,38 @@ matrix operator*(const matrix& m1, const matrix& m2)
 }
 
 /* Scale a matrix */
-matrix operator*(const double& s, const matrix& m)
+matrix operator*(const double &s, const matrix &m)
 {
     matrix sm(m);
     for (int i = 0; i < m.nr * m.nc; i++)
+    {
         sm.c[i] *= s;
+    }
     return sm;
 }
 
 /* matrix * double */
-matrix operator*(const matrix& m, const double& s)
+matrix operator*(const matrix &m, const double &s)
 {
     matrix sm(m);
     for (int i = 0; i < m.nr * m.nc; i++)
+    {
         sm.c[i] *= s;
+    }
     return sm;
 }
 
 /* Scale a matrix in place */
-void matrix::operator*=(const double& s)
+void matrix::operator*=(const double &s)
 {
     for (int i = 0; i < nc * nr; i++)
+    {
         c[i] *= s;
+    }
 }
 
 /* Accumulate to a matrix in place */
-void matrix::operator+=(const matrix& m)
+void matrix::operator+=(const matrix &m)
 {
     if (nr != m.nr || nc != m.nc)
     {
@@ -190,11 +200,13 @@ void matrix::operator+=(const matrix& m)
         abort();
     }
     for (int i = 0; i < nc * nr; i++)
+    {
         c[i] += m.c[i];
+    }
 }
 
 /* decumulate to a matrix in place */
-void matrix::operator-=(const matrix& m)
+void matrix::operator-=(const matrix &m)
 {
     if (nr != m.nr || nc != m.nc)
     {
@@ -202,7 +214,9 @@ void matrix::operator-=(const matrix& m)
         abort();
     }
     for (int i = 0; i < nc * nr; i++)
+    {
         c[i] -= m.c[i];
+    }
 }
 
 /* zero out the matrix */

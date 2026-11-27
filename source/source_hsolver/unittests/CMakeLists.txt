@@ -2,35 +2,77 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
-set(DAV_SUBSPACE_TEST_SOURCES test_diago_dav_subspace.cpp ../diago_dav_subspace.cpp)
+set(DAV_SUBSPACE_TEST_SOURCES test_diago_dav_subspace.cpp
+                              ../diago_dav_subspace.cpp)
 set(DAV_SUBSPACE_TEST_LIBS parameter base device container psi)
 if(ENABLE_MPI)
-  list(APPEND DAV_SUBSPACE_TEST_SOURCES ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp)
+  list(APPEND DAV_SUBSPACE_TEST_SOURCES ../diag_hs_para.cpp
+       ../diago_pxxxgvx.cpp ../diago_scalapack.cpp)
   if(ENABLE_ELPA)
     list(APPEND DAV_SUBSPACE_TEST_SOURCES ../diago_elpa.cpp)
     list(APPEND DAV_SUBSPACE_TEST_LIBS genelpa ELPA::ELPA)
   endif()
 endif()
-AddTest(
+addtest(
   TARGET MODULE_HSOLVER_dav_subspace
   LIBS ${DAV_SUBSPACE_TEST_LIBS}
-  SOURCES ${DAV_SUBSPACE_TEST_SOURCES}
-)
+  SOURCES ${DAV_SUBSPACE_TEST_SOURCES})
 if(ENABLE_MPI)
-  add_test(NAME MODULE_HSOLVER_dav_subspace_parallel
+  add_test(
+    NAME MODULE_HSOLVER_dav_subspace_parallel
+    COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:MODULE_HSOLVER_dav_subspace>
+      --gtest_filter=DavSubspaceTest/0.*:DavSubspace.* ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_HSOLVER_dav_subspace_parallel
+                       PROPERTIES PROCESSORS 2 TIMEOUT 120)
+endif()
+
+set(LOBPCG_TEST_SOURCES
+    ../diago_lobpcg.cpp ../lobpcg_subspace.cpp ../lobpcg_recovery.cpp
+    ../dense_eigensolver.cpp ../module_linalg/linear_algebra.cpp
+    ../../source_basis/module_pw/test/test_tool.cpp)
+addtest(
+  TARGET MODULE_HSOLVER_lobpcg
+  LIBS parameter base psi device container
+  SOURCES test_diago_lobpcg.cpp test_dense_eigensolver.cpp
+          ${LOBPCG_TEST_SOURCES})
+set_tests_properties(MODULE_HSOLVER_lobpcg PROPERTIES TIMEOUT 180)
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_HSOLVER_lobpcg_mpi2
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
-      $<TARGET_FILE:MODULE_HSOLVER_dav_subspace> --gtest_filter=DavSubspaceTest/0.*:DavSubspace.* ${MPIEXEC_POSTFLAGS})
-  set_tests_properties(MODULE_HSOLVER_dav_subspace_parallel PROPERTIES PROCESSORS 2 TIMEOUT 120)
+            $<TARGET_FILE:MODULE_HSOLVER_lobpcg> ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_HSOLVER_lobpcg_mpi2 PROPERTIES PROCESSORS 2
+                                                             TIMEOUT 180)
 endif()
 
 if(USE_CUDA OR USE_ROCM)
-  AddTest(
+  addtest(
+    TARGET MODULE_HSOLVER_lobpcg_gpu
+    KEEP_FEATURE_DEFINITIONS __CUDA __ROCM
+    LIBS parameter base psi device container
+    SOURCES test_diago_lobpcg.cpp ${LOBPCG_TEST_SOURCES}
+            test_dense_eigensolver.cpp
+            ../module_linalg/unittests/test_linear_algebra.cpp)
+  set_tests_properties(MODULE_HSOLVER_lobpcg_gpu PROPERTIES SKIP_RETURN_CODE 77)
+  if(ENABLE_MPI)
+    add_test(
+      NAME MODULE_HSOLVER_lobpcg_gpu_mpi2
+      COMMAND
+        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+        $<TARGET_FILE:MODULE_HSOLVER_lobpcg_gpu> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(
+      MODULE_HSOLVER_lobpcg_gpu_mpi2 PROPERTIES PROCESSORS 2 TIMEOUT 180
+                                                SKIP_RETURN_CODE 77)
+  endif()
+  addtest(
     TARGET MODULE_HSOLVER_dav_subspace_gpu
     LIBS ${DAV_SUBSPACE_TEST_LIBS}
     SOURCES ${DAV_SUBSPACE_TEST_SOURCES}
-    KEEP_FEATURE_DEFINITIONS __CUDA __ROCM
-  )
-  target_compile_definitions(MODULE_HSOLVER_dav_subspace_gpu PRIVATE ABACUS_DAV_GPU_TEST)
+    KEEP_FEATURE_DEFINITIONS __CUDA __ROCM)
+  target_compile_definitions(MODULE_HSOLVER_dav_subspace_gpu
+                             PRIVATE ABACUS_DAV_GPU_TEST)
 endif()
 
 if(ENABLE_MPI)
@@ -97,6 +139,12 @@ if(ENABLE_MPI)
             ../hsolver_lcaopw.cpp
             ../diago_bpcg.cpp
             ../diago_dav_subspace.cpp
+            ../diago_lobpcg.cpp
+            ../lobpcg_subspace.cpp
+            ../lobpcg_recovery.cpp
+            ../dense_eigensolver.cpp
+            ../diago_params.cpp
+            ../module_linalg/linear_algebra.cpp
             ../diag_const_nums.cpp
             ../diago_iter_assist.cpp
             ../para_lin_tf.cpp
@@ -119,15 +167,47 @@ if(ENABLE_MPI)
       addtest(
         TARGET MODULE_HSOLVER_LCAO
         LIBS parameter ELPA::ELPA base genelpa psi device
-        SOURCES test_diago_lcao.cpp ../diago_elpa.cpp ../diago_elpa_native.cpp
-                ../diago_scalapack.cpp ../diago_lapack.cpp ${_dsp_cpack_fallback_src})
+        SOURCES test_diago_lcao.cpp
+                ../diago_elpa.cpp
+                ../diago_elpa_native.cpp
+                ../module_linalg/matrix_block_ops.cpp
+                ../diago_scalapack.cpp
+                ../diago_lapack.cpp
+                ${_dsp_cpack_fallback_src})
     else()
       addtest(
         TARGET MODULE_HSOLVER_LCAO
         LIBS parameter base psi device
-        SOURCES test_diago_lcao.cpp ../diago_scalapack.cpp ../diago_lapack.cpp ${_dsp_cpack_fallback_src})
+        SOURCES test_diago_lcao.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
+                ${_dsp_cpack_fallback_src})
     endif()
 
+    set(lcao_sk_cut_test_sources
+        test_diag_sk_cut.cpp
+        ../diag_sk_cut.cpp
+        ../diag_lcao.cpp
+        ../module_linalg/overlap_spectrum.cpp
+        ../module_linalg/matrix_block_ops.cpp
+        ../diago_scalapack.cpp
+        ../diago_lapack.cpp
+        ${_dsp_cpack_fallback_src})
+    set(lcao_sk_cut_test_libs parameter base psi device)
+    if(TARGET ELPA::ELPA)
+      list(APPEND lcao_sk_cut_test_sources ../diago_elpa.cpp
+           ../diago_elpa_native.cpp)
+      list(APPEND lcao_sk_cut_test_libs ELPA::ELPA genelpa)
+    endif()
+    addtest(
+      TARGET MODULE_HSOLVER_LCAO_sk_cut
+      LIBS ${lcao_sk_cut_test_libs}
+      SOURCES ${lcao_sk_cut_test_sources})
+    add_test(
+      NAME MODULE_HSOLVER_LCAO_sk_cut_parallel
+      COMMAND
+        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+        $<TARGET_FILE:MODULE_HSOLVER_LCAO_sk_cut> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(MODULE_HSOLVER_LCAO_sk_cut_parallel
+                         PROPERTIES PROCESSORS 4)
     if(TARGET PEXSI::PEXSI)
       addtest(
         TARGET MODULE_HSOLVER_LCAO_PEXSI

@@ -11,13 +11,14 @@
 
 using namespace ModuleBase;
 
-void projgen(const int l,
-             const int nr,
-             const double* r,
-             const double* chi,
-             const double rcut,
-             const int nbes,
-             std::vector<double>& alpha)
+void projgen(
+    const int l,
+    const int nr,
+    const double *r,
+    const double *chi,
+    const double rcut,
+    const int nbes,
+    std::vector<double> &alpha)
 {
     assert(rcut < r[nr - 1]);
     assert(std::is_sorted(r, r + nr));
@@ -36,9 +37,9 @@ void projgen(const int l,
     std::vector<double> z(nbes);
     std::vector<double> w(nbes);
 
-    std::transform(theta.begin(), theta.end(), z.begin(), [rcut, l](double theta_p) {
-        return 0.5 * std::pow(rcut, 3) * std::pow(Sphbes::sphbesj(l + 1, theta_p), 2);
-    });
+    std::transform(
+        theta.begin(), theta.end(), z.begin(),
+        [rcut, l](double theta_p) { return 0.5 * std::pow(rcut, 3) * std::pow(Sphbes::sphbesj(l + 1, theta_p), 2); });
 
     // r^2 * chi (independent from p)
     std::vector<double> tmp(nr_proj);
@@ -49,9 +50,9 @@ void projgen(const int l,
 
     for (int p = 0; p < nbes; ++p)
     {
-        std::transform(r, r + nr_proj, tmp.begin(), integrand.begin(), [theta, p, rcut, l](double r_i, double tmp_i) {
-            return tmp_i * Sphbes::sphbesj(l, theta[p] * r_i / rcut);
-        });
+        std::transform(
+            r, r + nr_proj, tmp.begin(), integrand.begin(), [theta, p, rcut, l](double r_i, double tmp_i)
+            { return tmp_i * Sphbes::sphbesj(l, theta[p] * r_i / rcut); });
         w[p] = Integral::simpson(nr_proj, integrand.data(), &dr[1]);
     }
 
@@ -59,9 +60,8 @@ void projgen(const int l,
     std::vector<double> c(nbes, 0.0);
     std::transform(w.begin(), w.end(), z.begin(), c.begin(), [](double w_p, double z_p) { return w_p * w_p / z_p; });
     double prefac = 1.0 / std::sqrt(std::accumulate(c.begin(), c.end(), 0.0));
-    std::transform(w.begin(), w.end(), z.begin(), c.begin(), [prefac](double w_p, double z_p) {
-        return prefac * w_p / z_p;
-    });
+    std::transform(
+        w.begin(), w.end(), z.begin(), c.begin(), [prefac](double w_p, double z_p) { return prefac * w_p / z_p; });
 
     // new radial function
     alpha.resize(nr_proj);
@@ -74,4 +74,3 @@ void projgen(const int l,
         }
     }
 }
-

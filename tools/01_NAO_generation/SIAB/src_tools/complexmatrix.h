@@ -12,7 +12,7 @@ class ComplexMatrix
 {
 
   public:
-    complex<double>* c;
+    complex<double> *c;
     int nr;
     int nc;
     int size;
@@ -25,56 +25,55 @@ class ComplexMatrix
     //===================
     // Copy constructor
     //==================
-    inline ComplexMatrix(const ComplexMatrix& m1);
+    inline ComplexMatrix(const ComplexMatrix &m1);
     inline ~ComplexMatrix();
 
     //============
     // Operators
     //============
-    complex<double>& operator()(const int i, const int j)
+    complex<double> &operator()(const int i, const int j)
     {
         return c[nc * i + j]; // mohan modify in-line 2007-10-1
     }
-    const std::complex<double>& operator()(const int i, const int j) const
+    const std::complex<double> &operator()(const int i, const int j) const
     {
         return c[nc * i + j]; // mohan modify in-line 2007-10-13
     }
 
-    friend ComplexMatrix operator+(const ComplexMatrix& m1, const ComplexMatrix& m2);
-    friend ComplexMatrix operator-(const ComplexMatrix& m1, const ComplexMatrix& m2);
-    friend ComplexMatrix operator*(const ComplexMatrix& m1, const ComplexMatrix& m2);
-    friend ComplexMatrix multiply_special(const char Symmetry,
-                                          const char Side,
-                                          const char Uplo,
-                                          const ComplexMatrix& m1,
-                                          const ComplexMatrix& m2);
-    friend ComplexMatrix operator*(const std::complex<double>& s, const ComplexMatrix& m);
-    friend ComplexMatrix operator*(const ComplexMatrix& m, const std::complex<double>& s);
-    friend ComplexMatrix operator*(const double& s, const ComplexMatrix& m);
-    friend ComplexMatrix operator*(const ComplexMatrix& m, const double& s);
-    inline ComplexMatrix& operator=(const ComplexMatrix& m);
-    inline ComplexMatrix& operator*=(const std::complex<double>& s);
-    inline ComplexMatrix& operator+=(const ComplexMatrix& m);
-    inline ComplexMatrix& operator-=(const ComplexMatrix& m);
+    friend ComplexMatrix operator+(const ComplexMatrix &m1, const ComplexMatrix &m2);
+    friend ComplexMatrix operator-(const ComplexMatrix &m1, const ComplexMatrix &m2);
+    friend ComplexMatrix operator*(const ComplexMatrix &m1, const ComplexMatrix &m2);
+    friend ComplexMatrix multiply_special(
+        const char Symmetry,
+        const char Side,
+        const char Uplo,
+        const ComplexMatrix &m1,
+        const ComplexMatrix &m2);
+    friend ComplexMatrix operator*(const std::complex<double> &s, const ComplexMatrix &m);
+    friend ComplexMatrix operator*(const ComplexMatrix &m, const std::complex<double> &s);
+    friend ComplexMatrix operator*(const double &s, const ComplexMatrix &m);
+    friend ComplexMatrix operator*(const ComplexMatrix &m, const double &s);
+    inline ComplexMatrix &operator=(const ComplexMatrix &m);
+    inline ComplexMatrix &operator*=(const std::complex<double> &s);
+    inline ComplexMatrix &operator+=(const ComplexMatrix &m);
+    inline ComplexMatrix &operator-=(const ComplexMatrix &m);
 
-    inline ComplexMatrix& add(const ComplexMatrix& m1, const ComplexMatrix& m2);
-    inline ComplexMatrix& minus(const ComplexMatrix& m1, const ComplexMatrix& m2);
-    inline ComplexMatrix& multiply(const ComplexMatrix& m1, const ComplexMatrix& m2);
-    inline ComplexMatrix& multiply_special(const char Symmetry,
-                                           const char Side,
-                                           const char Uplo,
-                                           const ComplexMatrix& m1,
-                                           const ComplexMatrix& m2);
+    inline ComplexMatrix &add(const ComplexMatrix &m1, const ComplexMatrix &m2);
+    inline ComplexMatrix &minus(const ComplexMatrix &m1, const ComplexMatrix &m2);
+    inline ComplexMatrix &multiply(const ComplexMatrix &m1, const ComplexMatrix &m2);
+    inline ComplexMatrix &multiply_special(
+        const char Symmetry,
+        const char Side,
+        const char Uplo,
+        const ComplexMatrix &m1,
+        const ComplexMatrix &m2);
 
     //==================
     // member function:
     //==================
     inline void create(const int nrow, const int ncol);
     inline void zero_out(void);
-    static int& getMCount(void)
-    {
-        return mCount;
-    }
+    static int &getMCount(void) { return mCount; }
     inline void set_as_identity_matrix(void);
 
   private:
@@ -83,38 +82,45 @@ class ComplexMatrix
     inline void init(const int nrows, const int ncols);
 };
 
-inline std::complex<double> trace(const ComplexMatrix& m);
+inline std::complex<double> trace(const ComplexMatrix &m);
 // mohan add 2008-7-1
-inline double abs2_row(const ComplexMatrix& m, const int ir);
+inline double abs2_row(const ComplexMatrix &m, const int ir);
 // mohan add 2008-7-1
-inline double abs2_column(const ComplexMatrix& m, const int ic);
-inline double abs2(const ComplexMatrix& m);
-inline double abs2(const int nmat, ComplexMatrix** m);
-inline double abs2_triangle_matrix(const char Uplo, ComplexMatrix& m);
+inline double abs2_column(const ComplexMatrix &m, const int ic);
+inline double abs2(const ComplexMatrix &m);
+inline double abs2(const int nmat, ComplexMatrix **m);
+inline double abs2_triangle_matrix(const char Uplo, ComplexMatrix &m);
 
-inline ComplexMatrix transpose(const ComplexMatrix& m, const bool& conjugate);
+inline ComplexMatrix transpose(const ComplexMatrix &m, const bool &conjugate);
 
-inline void scale_accumulate(const std::complex<double>& s, const ComplexMatrix& min, ComplexMatrix& mout);
+inline void scale_accumulate(const std::complex<double> &s, const ComplexMatrix &min, ComplexMatrix &mout);
 
-inline void scale_accumulate(const int& nmat, const std::complex<double>& s, ComplexMatrix** min, ComplexMatrix** mout);
+inline void scale_accumulate(
+    const int &nmat,
+    const std::complex<double> &s,
+    ComplexMatrix **min,
+    ComplexMatrix **mout);
 
-inline void scaled_sum(const std::complex<double>& s1,
-                       const ComplexMatrix& m1,
-                       const std::complex<double>& s2,
-                       const ComplexMatrix& m2,
-                       ComplexMatrix& mout);
+inline void scaled_sum(
+    const std::complex<double> &s1,
+    const ComplexMatrix &m1,
+    const std::complex<double> &s2,
+    const ComplexMatrix &m2,
+    ComplexMatrix &mout);
 
-inline void scaled_sum(const int& nmat,
-                       const std::complex<double>& s1,
-                       ComplexMatrix** m1,
-                       const std::complex<double>& s2,
-                       ComplexMatrix** m2,
-                       ComplexMatrix** mout);
+inline void scaled_sum(
+    const int &nmat,
+    const std::complex<double> &s1,
+    ComplexMatrix **m1,
+    const std::complex<double> &s2,
+    ComplexMatrix **m2,
+    ComplexMatrix **mout);
 
-inline ComplexMatrix multiply_special(const char Symmetry,
-                                      const char Side,
-                                      const char Uplo,
-                                      const ComplexMatrix& m1,
-                                      const ComplexMatrix& m2);
+inline ComplexMatrix multiply_special(
+    const char Symmetry,
+    const char Side,
+    const char Uplo,
+    const ComplexMatrix &m1,
+    const ComplexMatrix &m2);
 
 #endif

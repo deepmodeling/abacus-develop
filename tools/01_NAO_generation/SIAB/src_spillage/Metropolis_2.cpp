@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 
-void Metropolis::preprocess_all_temperature(SpillageStep& Level)
+void Metropolis::preprocess_all_temperature(SpillageStep &Level)
 {
     this->nchi = Level.nchi;
 
@@ -72,7 +72,7 @@ void Metropolis::update_t(void)
     return;
 }
 
-void Metropolis::change_accept_rate(size_t istep, SpillageStep& Level)
+void Metropolis::change_accept_rate(size_t istep, SpillageStep &Level)
 {
     // Here is the part about changing Metropolis algorithm's accept rate.
     // we want to calculate the accept rate every 'ACCEPTANCE_STEPS' steps.
@@ -163,7 +163,7 @@ void Metropolis::init_kin_states()
     }
 }
 
-void Metropolis::init_temperature_kinetic(size_t itemperature, SpillageStep& Level)
+void Metropolis::init_temperature_kinetic(size_t itemperature, SpillageStep &Level)
 {
     // set the initial temperature and kinetic energy value.
     if (0 == itemperature)
@@ -177,7 +177,7 @@ void Metropolis::init_temperature_kinetic(size_t itemperature, SpillageStep& Lev
             const int L = Level.wayc[ic].L;
             const int N = Level.wayc[ic].N;
 
-            double* c4_last = new double[Level.ne];
+            double *c4_last = new double[Level.ne];
             for (int ie2 = 0; ie2 < Level.ne; ie2++)
             {
                 c4_last[ie2] = input.Coef.C4_old(T, L, N, ie2);
@@ -207,7 +207,7 @@ void Metropolis::init_temperature_kinetic(size_t itemperature, SpillageStep& Lev
     }
 }
 
-void Metropolis::norm_C4(size_t istep, SpillageStep& Level, size_t nsteps_now)
+void Metropolis::norm_C4(size_t istep, SpillageStep &Level, size_t nsteps_now)
 {
     // because we choose c4 randomly between -0.1~0.1
     // so we need to normalize the set of c4 after a few
@@ -231,15 +231,11 @@ void Metropolis::norm_C4(size_t istep, SpillageStep& Level, size_t nsteps_now)
         // but the spillage will not change.
         // (because we just normalize the wavefunctions).
 
-        Calculate_C4::norm_ic(input.Coef.C4,
-                              input.Coef.accept_rate, // Peize Lin update 2015-12-24
-                              input.Coef.ntype,
-                              input.Coef.lmax,
-                              input.Coef.nmax,
-                              input.Coef.enumber,
-                              input.Coef.tolerence,
-                              input.Coef.rcut,
-                              dr);
+        Calculate_C4::norm_ic(
+            input.Coef.C4,
+            input.Coef.accept_rate, // Peize Lin update 2015-12-24
+            input.Coef.ntype, input.Coef.lmax, input.Coef.nmax, input.Coef.enumber, input.Coef.tolerence,
+            input.Coef.rcut, dr);
 
         // get new set of C4, so we copy the set of C4
         // to C4_old. This will also not affect the
@@ -265,7 +261,9 @@ void Metropolis::small_jql()
     // can use only small part of Jlq.
     // mohan add BLOCK_NE_MIN 2009-08-27
     if ((this->info.ie < BLOCK_NE_MIN) || (this->info.ie >= BLOCK_NE))
+    {
         throw Small_Jlq();
+    }
 }
 
 void Metropolis::trial_c4()
@@ -284,7 +282,7 @@ void Metropolis::trial_c4()
     input.Coef.trial_c4(T, L, N, ie);
 }
 
-double Metropolis::cal_spillage(SpillageStep& Level)
+double Metropolis::cal_spillage(SpillageStep &Level)
 {
     const int ie = this->info.ie;
     const int ic = this->info.ic;
@@ -295,9 +293,9 @@ double Metropolis::cal_spillage(SpillageStep& Level)
     return input.SV.cal_defined_value(1);
 }
 
-double Metropolis::cal_kinetic_energy(SpillageStep& Level)
+double Metropolis::cal_kinetic_energy(SpillageStep &Level)
 {
-    double* c4tmp = new double[Level.ne];
+    double *c4tmp = new double[Level.ne];
 
     const int T = this->info.T;
     const int L = this->info.L;
@@ -327,7 +325,7 @@ double Metropolis::cal_kinetic_energy(SpillageStep& Level)
     return value2;
 }
 
-void Metropolis::accept_process(SpillageStep& Level)
+void Metropolis::accept_process(SpillageStep &Level)
 {
     ++this->info.update_number;
 
@@ -397,7 +395,7 @@ void Metropolis::reject_process()
     input.Coef.go_back_c4(T, L, N, ie);
 }
 
-void Metropolis::ofs_1(size_t istep, SpillageStep& Level)
+void Metropolis::ofs_1(size_t istep, SpillageStep &Level)
 {
     if (0 == (istep % this->output_each_istep))
     {
@@ -442,7 +440,7 @@ void Metropolis::cout_1(size_t itemperature)
          << resetiosflags(ios::fixed) << resetiosflags(ios::showpoint) << endl;
 }
 
-void Metropolis::cout_2(size_t itemperature, SpillageStep& Level)
+void Metropolis::cout_2(size_t itemperature, SpillageStep &Level)
 {
     //-------------------------------------------
     // it's about minimizing kinetic energy.

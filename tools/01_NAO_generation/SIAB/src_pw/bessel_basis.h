@@ -18,10 +18,10 @@ class Bessel_Basis
     ~Bessel_Basis();
 
     // used for a specific group of C4 coefficients.
-    void init(const double& dk = 0.01, const double& dr = 0.01);
+    void init(const double &dk = 0.01, const double &dr = 0.01);
 
     // get value from interpolation
-    double Polynomial_Interpolation2(const int& l, const int& ie, const double& gnorm) const;
+    double Polynomial_Interpolation2(const int &l, const int &ie, const double &gnorm) const;
 
     realArray TableOne;
 
@@ -30,15 +30,16 @@ class Bessel_Basis
     double Dk;
 
     // init table, used for output overlap Q.
-    void init_TableOne(const bool smooth_in,
-                       const double& sigma_in,
-                       const double& ecut,
-                       const double& rcut,
-                       const double& dr,
-                       const double& dk,
-                       const int& lmax,
-                       const int& ecut_number,
-                       const double& tolerence);
+    void init_TableOne(
+        const bool smooth_in,
+        const double &sigma_in,
+        const double &ecut,
+        const double &rcut,
+        const double &dr,
+        const double &dk,
+        const int &lmax,
+        const int &ecut_number,
+        const double &tolerence);
 };
 
 #endif

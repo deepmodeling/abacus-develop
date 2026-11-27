@@ -32,7 +32,7 @@ class timer
     // NAME : print
     // NAME : print_all
     //==========================================================
-    static void tick(const string& class_name_in, const string& name_in);
+    static void tick(const string &class_name_in, const string &name_in);
 
     static void start();
     static void finish();
@@ -42,7 +42,7 @@ class timer
 
     static void print_all();
     static long double print_until_now();
-    static double print(const string& name_in);
+    static double print(const string &name_in);
 
   private:
     //==========================================================
@@ -60,11 +60,11 @@ class timer
     static int n_clock;
     static int n_now;
     static int start_flag;
-    static double* cpu_start;
-    static double* cpu_second;
-    static string* name;
-    static string* class_name;
-    static int* calls;
+    static double *cpu_start;
+    static double *cpu_second;
+    static string *name;
+    static string *class_name;
+    static int *calls;
 
     //==========================================================
     // MEMBER FUNCTIONS :

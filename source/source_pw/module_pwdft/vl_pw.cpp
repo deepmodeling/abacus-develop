@@ -1,80 +1,66 @@
 #include "vl_pw.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/libm/libm.h"
-#include "source_base/truncated_func.h"
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
+#include "source_base/truncated_func.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
 
-pseudopot_cell_vl::pseudopot_cell_vl()
-{
-    numeric = nullptr;
-}
+pseudopot_cell_vl::pseudopot_cell_vl() { numeric = nullptr; }
 
-pseudopot_cell_vl::~pseudopot_cell_vl()
-{
-    delete[] numeric;
-}
+pseudopot_cell_vl::~pseudopot_cell_vl() { delete[] numeric; }
 
 // This routine computes the fourier coefficient of the local
 // potential vloc(ig,it) for each type of atom
-void pseudopot_cell_vl::init_vloc(const UnitCell& ucell,
-                                  const ModulePW::PW_Basis* rho_basis)
+void pseudopot_cell_vl::init_vloc(const UnitCell &ucell, const ModulePW::PW_Basis *rho_basis)
 {
-    ModuleBase::TITLE("pseudopot_cell_vl","init_vloc");
-    ModuleBase::timer::start("ppcell_vl","init_vloc");
+    ModuleBase::TITLE("pseudopot_cell_vl", "init_vloc");
+    ModuleBase::timer::start("ppcell_vl", "init_vloc");
 
     std::vector<double> vloc1d(rho_basis->ngg, 0.0);
 
-    this->allocate(ucell,rho_basis->ngg);
-    
-    for (int it = 0; it < ucell.ntype; it++) 
+    this->allocate(ucell, rho_basis->ngg);
+
+    for (int it = 0; it < ucell.ntype; it++)
     {
-        const Atom* atom = &ucell.atoms[it];
+        const Atom *atom = &ucell.atoms[it];
 
         std::fill(vloc1d.begin(), vloc1d.end(), 0.0);
 
         this->zp[it] = atom->ncpp.zv;
 
         // compute V_loc(G) for a given type of atom
-        if(atom->coulomb_potential)
+        if (atom->coulomb_potential)
         {
-            this->vloc_coulomb(ucell,this->zp[it], vloc1d.data(), rho_basis);
+            this->vloc_coulomb(ucell, this->zp[it], vloc1d.data(), rho_basis);
         }
-        else if(numeric[it]==true)
+        else if (numeric[it] == true)
         {
             this->vloc_of_g(
-                    atom->ncpp.msh, // after cutoff
-                    atom->ncpp.rab.data(),
-                      atom->ncpp.r.data(),
-                    atom->ncpp.vloc_at.data(), // local potential in real space radial form.
-                      this->zp[it],
-                    vloc1d.data(),
-                    ucell,
-                    rho_basis);
+                atom->ncpp.msh, // after cutoff
+                atom->ncpp.rab.data(), atom->ncpp.r.data(),
+                atom->ncpp.vloc_at.data(), // local potential in real space radial form.
+                this->zp[it], vloc1d.data(), ucell, rho_basis);
         }
         else
         {
-            ModuleBase::WARNING_QUIT("init_vloc","not available now.");
+            ModuleBase::WARNING_QUIT("init_vloc", "not available now.");
         }
 
-        if(it>=0 && it<this->vloc.nr && this->vloc.nc>=0)
+        if (it >= 0 && it < this->vloc.nr && this->vloc.nc >= 0)
         {
             std::copy(vloc1d.begin(), vloc1d.end(), &this->vloc(it, 0));
         }
     }
 
-
-    ModuleBase::timer::end("ppcell_vl","init_vloc");
+    ModuleBase::timer::end("ppcell_vl", "init_vloc");
     return;
 }
 
-
-void pseudopot_cell_vl::allocate(const UnitCell& ucell,
-                                 const int ngg)
+void pseudopot_cell_vl::allocate(const UnitCell &ucell, const int ngg)
 {
-    ModuleBase::TITLE("pseudopot_cell_vl","allocate");
+    ModuleBase::TITLE("pseudopot_cell_vl", "allocate");
 
     this->vloc.create(ucell.ntype, ngg);
 
@@ -83,8 +69,8 @@ void pseudopot_cell_vl::allocate(const UnitCell& ucell,
     ModuleBase::GlobalFunc::ZEROS(numeric, ucell.ntype);
 
     for (int it = 0; it < ucell.ntype; it++)
-    { 
-        this->numeric[it] = true; 
+    {
+        this->numeric[it] = true;
     }
 
     // mohan change global variable 'npsx' to local variable,
@@ -96,10 +82,11 @@ void pseudopot_cell_vl::allocate(const UnitCell& ucell,
     return;
 }
 
-void pseudopot_cell_vl::vloc_coulomb(const UnitCell& ucell,
-                                     const double& zp_in, 
-                                     double* vloc_1d, 
-                                     const ModulePW::PW_Basis* rho_basis) const
+void pseudopot_cell_vl::vloc_coulomb(
+    const UnitCell &ucell,
+    const double &zp_in,
+    double *vloc_1d,
+    const ModulePW::PW_Basis *rho_basis) const
 {
     int igl0 = 0;
     // start from |G|=0 or not.
@@ -132,16 +119,16 @@ void pseudopot_cell_vl::vloc_coulomb(const UnitCell& ucell,
 !
 !>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
-
 // Here we always have numeric form, i.e. numeric=ture
-void pseudopot_cell_vl::vloc_of_g(const int& msh,
-                                  const double* rab,
-                                  const double* r,
-                                  const double* vloc_at,
-                                  const double& zp_in,
-                                  double* vloc_1d,
-                                  const UnitCell& ucell,
-                                  const ModulePW::PW_Basis* rho_basis) const
+void pseudopot_cell_vl::vloc_of_g(
+    const int &msh,
+    const double *rab,
+    const double *r,
+    const double *vloc_at,
+    const double &zp_in,
+    double *vloc_1d,
+    const UnitCell &ucell,
+    const ModulePW::PW_Basis *rho_basis) const
 {
     //----------------------------------------------------------------
     //    This routine computes the Fourier transform of the local
@@ -156,30 +143,30 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
     //    The local pseudopotential of the US case is always in
     //    numerical form, expressed in Ry units.
     // ----------------------------------------------------------------
-    int igl0=0;// start from |G|=0 or not.
+    int igl0 = 0; // start from |G|=0 or not.
 
     // Pseudopotentials in numerical form (Vloc_at) contain the local part
     // in order to perform the Fourier transform, a term erf(r)/r is
     // subtracted in real space and added again in G space
 
-    assert(msh>0);
+    assert(msh > 0);
 
     std::vector<double> aux1(msh);
 
     // (1)
-    if(rho_basis->gg_uniq[0] < 1.0e-8)
+    if (rho_basis->gg_uniq[0] < 1.0e-8)
     {
         std::vector<double> aux(msh);
         // first the g=0 term
-        for (int ir=0; ir<msh; ir++)
+        for (int ir = 0; ir < msh; ir++)
         {
             // This is the |G| = 0 component of the local
             // potential giving rise to the so-called
             // "alpha*Z" term in the energy.
-            aux[ir] = r [ir] * (r [ir] * vloc_at [ir] + zp_in * ModuleBase::e2);
-            //aux[ir] = r [ir] * (r [ir] * vloc_at [ir] );
+            aux[ir] = r[ir] * (r[ir] * vloc_at[ir] + zp_in * ModuleBase::e2);
+            // aux[ir] = r [ir] * (r [ir] * vloc_at [ir] );
         }
-        ModuleBase::Integral::Simpson_Integral(msh, aux.data(), rab, vloc_1d[0] );
+        ModuleBase::Integral::Simpson_Integral(msh, aux.data(), rab, vloc_1d[0]);
         igl0 = 1;
     }
     else
@@ -190,76 +177,75 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
     // (2) here the |G|>0 terms, we first compute the part of the integrand func
     // indipendent of |G| in real space
     double fac = zp_in * ModuleBase::e2;
-    for (int ir = 0;ir < msh;ir++)  
+    for (int ir = 0; ir < msh; ir++)
     {
-        aux1 [ir] = r[ir] * vloc_at [ir] + fac * erf(r[ir]);
-    } 
+        aux1[ir] = r[ir] * vloc_at[ir] + fac * erf(r[ir]);
+    }
 
     // here we perform the integral, after multiplying for the |G|
     // dependent part
 #ifdef _OPENMP
 #pragma omp parallel
-{
+    {
 #endif
-    std::vector<double> aux(msh);
+        std::vector<double> aux(msh);
 
 #ifdef _OPENMP
 #pragma omp for
 #endif
-    for (int ig = igl0;ig < rho_basis->ngg;ig++)
-    {
-        double gx2= rho_basis->gg_uniq[ig] * ucell.tpiba2;
-        double gx = std::sqrt(gx2);
-        for (int ir = 0;ir < msh;ir++)
+        for (int ig = igl0; ig < rho_basis->ngg; ig++)
         {
-            aux [ir] = aux1 [ir] * ModuleBase::libm::sin(gx * r [ir]) / gx;
-        }
-        ModuleBase::Integral::Simpson_Integral(msh, aux.data(), rab, vloc_1d[ig] );
-        vloc_1d[ig] -= fac *  ModuleBase::truncated_exp(- gx2 * 0.25)/ gx2;
-    } // enddo
+            double gx2 = rho_basis->gg_uniq[ig] * ucell.tpiba2;
+            double gx = std::sqrt(gx2);
+            for (int ir = 0; ir < msh; ir++)
+            {
+                aux[ir] = aux1[ir] * ModuleBase::libm::sin(gx * r[ir]) / gx;
+            }
+            ModuleBase::Integral::Simpson_Integral(msh, aux.data(), rab, vloc_1d[ig]);
+            vloc_1d[ig] -= fac * ModuleBase::truncated_exp(-gx2 * 0.25) / gx2;
+        } // enddo
 
-    const double d_fpi_omega = ModuleBase::FOUR_PI/ucell.omega;//mohan add 2008-06-04
-
+        const double d_fpi_omega = ModuleBase::FOUR_PI / ucell.omega; // mohan add 2008-06-04
 
 #ifdef _OPENMP
 #pragma omp for
 #endif
-    for (int ig = 0;ig < rho_basis->ngg; ig++)
-    {
-        vloc_1d[ig] *= d_fpi_omega;
-    }
+        for (int ig = 0; ig < rho_basis->ngg; ig++)
+        {
+            vloc_1d[ig] *= d_fpi_omega;
+        }
 
 #ifdef _OPENMP
-}
+    }
 #endif
 
     return;
 } // end subroutine vloc_of_g
 
-
-void pseudopot_cell_vl::print_vloc(const UnitCell& ucell,
-                                   const ModulePW::PW_Basis* rho_basis,
-                                   const bool& out_element_info,
-                                   const std::string& global_out_dir) const
+void pseudopot_cell_vl::print_vloc(
+    const UnitCell &ucell,
+    const ModulePW::PW_Basis *rho_basis,
+    const bool &out_element_info,
+    const std::string &global_out_dir) const
 {
-    if(GlobalV::MY_RANK!=0)
+    if (GlobalV::MY_RANK != 0)
     {
-        return; //mohan fix bug 2011-10-13
+        return; // mohan fix bug 2011-10-13
     }
 
     bool check_vl = out_element_info;
 
-    if(check_vl)
+    if (check_vl)
     {
-        for(int it=0; it<ucell.ntype; it++)
+        for (int it = 0; it < ucell.ntype; it++)
         {
-            std::stringstream ss ;
-            ss << global_out_dir << ucell.atoms[it].label << "/v_loc_g.txt" ;
-            std::ofstream ofs_vg( ss.str().c_str() );
-            for(int ig=0;ig<rho_basis->ngg;ig++)
+            std::stringstream ss;
+            ss << global_out_dir << ucell.atoms[it].label << "/v_loc_g.txt";
+            std::ofstream ofs_vg(ss.str().c_str());
+            for (int ig = 0; ig < rho_basis->ngg; ig++)
             {
-                ofs_vg << std::setw(15) << rho_basis->gg_uniq [ig] * ucell.tpiba2 
-                       << std::setw(15) << this->vloc(it, ig) << std::endl;
+                ofs_vg << std::setw(15) << rho_basis->gg_uniq[ig] * ucell.tpiba2 << std::setw(15) << this->vloc(it, ig)
+                       << std::endl;
             }
             ofs_vg.close();
         }

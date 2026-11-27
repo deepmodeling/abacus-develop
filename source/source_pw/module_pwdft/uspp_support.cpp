@@ -8,14 +8,15 @@
 namespace pw
 {
 
-void validate_uspp_support(const bool use_uspp,
-                           const std::string& basis_type,
-                           const std::string& esolver_type,
-                           const int nspin,
-                           const int xc_func_type,
-                           const bool berry_phase,
-                           const bool towannier90,
-                           const bool cal_cond)
+void validate_uspp_support(
+    const bool use_uspp,
+    const std::string &basis_type,
+    const std::string &esolver_type,
+    const int nspin,
+    const int xc_func_type,
+    const bool berry_phase,
+    const bool towannier90,
+    const bool cal_cond)
 {
     if (!use_uspp)
     {
@@ -44,7 +45,8 @@ void validate_uspp_support(const bool use_uspp,
     }
     if (xc_func_type != 1 && xc_func_type != 2)
     {
-        violations.push_back("XC functional type=" + std::to_string(xc_func_type) + " (only LDA and GGA are supported)");
+        violations.push_back(
+            "XC functional type=" + std::to_string(xc_func_type) + " (only LDA and GGA are supported)");
     }
     if (berry_phase)
     {

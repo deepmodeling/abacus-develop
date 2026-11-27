@@ -1,9 +1,9 @@
 #include "dfpt_test_tool.h"
+#include "source_base/complexmatrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
-#include "source_base/complexmatrix.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_dfpt/dfpt_write_dyn.h"
 
@@ -55,7 +55,7 @@ class DFPTWriteDynTest : public ::testing::Test
     }
 
     /// install an explicit q list (Gamma-first or not) into qlist_
-    void set_qvecs(const std::vector<ModuleBase::Vector3<double>>& qvecs)
+    void set_qvecs(const std::vector<ModuleBase::Vector3<double>> &qvecs)
     {
         qlist_.kvec_d = qvecs;
         qlist_.nkstot = static_cast<int>(qvecs.size());
@@ -93,7 +93,7 @@ class DFPTWriteDynTest : public ::testing::Test
         }
     }
 
-    std::string read_file(const std::string& path) const
+    std::string read_file(const std::string &path) const
     {
         std::ifstream in(path);
         std::stringstream ss;
@@ -105,8 +105,7 @@ class DFPTWriteDynTest : public ::testing::Test
 TEST_F(DFPTWriteDynTest, GammaOnlyPolarRecordsAndInjectedLog)
 {
     // Gamma-first list [Gamma, X]; compute_q0 on, LO-TO not consulted
-    set_qvecs({ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-               ModuleBase::Vector3<double>(0.5, 0.0, 0.0)});
+    set_qvecs({ModuleBase::Vector3<double>(0.0, 0.0, 0.0), ModuleBase::Vector3<double>(0.5, 0.0, 0.0)});
     data_.set_dynmat_raw(0, make_raw());
     data_.set_dynmat_raw(1, make_raw());
     set_polar_tensors();
@@ -155,17 +154,16 @@ TEST_F(DFPTWriteDynTest, NonzeroRankWritesNothing)
 
 TEST_F(DFPTWriteDynTest, GammaFirstOrderingAccepted)
 {
-    set_qvecs({ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-               ModuleBase::Vector3<double>(0.0, 0.5, 0.5),
-               ModuleBase::Vector3<double>(0.25, 0.25, 0.25)});
+    set_qvecs(
+        {ModuleBase::Vector3<double>(0.0, 0.0, 0.0), ModuleBase::Vector3<double>(0.0, 0.5, 0.5),
+            ModuleBase::Vector3<double>(0.25, 0.25, 0.25)});
     EXPECT_NO_THROW(ModuleDFPT::validate_q_ordering(qlist_, true));
 }
 
 TEST_F(DFPTWriteDynTest, NonFirstGammaRejectedWhenComputeQ0)
 {
     // [X, Gamma]: the q0 pipeline would run at the nonzero-q index 0
-    set_qvecs({ModuleBase::Vector3<double>(0.5, 0.0, 0.0),
-               ModuleBase::Vector3<double>(0.0, 0.0, 0.0)});
+    set_qvecs({ModuleBase::Vector3<double>(0.5, 0.0, 0.0), ModuleBase::Vector3<double>(0.0, 0.0, 0.0)});
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ModuleDFPT::validate_q_ordering(qlist_, true), ::testing::ExitedWithCode(1), "");
     const std::string first_diag = testing::internal::GetCapturedStdout();
@@ -183,9 +181,9 @@ TEST_F(DFPTWriteDynTest, DuplicateGammaRejectedWhenComputeQ0)
 {
     // [Gamma, X, Gamma]: the duplicate at index 2 would silently miss the
     // polar tensors while the first entry carries them
-    set_qvecs({ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-               ModuleBase::Vector3<double>(0.5, 0.0, 0.0),
-               ModuleBase::Vector3<double>(0.0, 0.0, 0.0)});
+    set_qvecs(
+        {ModuleBase::Vector3<double>(0.0, 0.0, 0.0), ModuleBase::Vector3<double>(0.5, 0.0, 0.0),
+            ModuleBase::Vector3<double>(0.0, 0.0, 0.0)});
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ModuleDFPT::validate_q_ordering(qlist_, true), ::testing::ExitedWithCode(1), "");
     const std::string dup_diag = testing::internal::GetCapturedStdout();
@@ -196,12 +194,11 @@ TEST_F(DFPTWriteDynTest, ArbitraryOrderingAllowedWhenComputeQ0Off)
 {
     // plain phonon runs keep full freedom: [X, Gamma] and duplicates are
     // legal when the polar pipeline is disabled
-    set_qvecs({ModuleBase::Vector3<double>(0.5, 0.0, 0.0),
-               ModuleBase::Vector3<double>(0.0, 0.0, 0.0)});
+    set_qvecs({ModuleBase::Vector3<double>(0.5, 0.0, 0.0), ModuleBase::Vector3<double>(0.0, 0.0, 0.0)});
     EXPECT_NO_THROW(ModuleDFPT::validate_q_ordering(qlist_, false));
 
-    set_qvecs({ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-               ModuleBase::Vector3<double>(0.5, 0.0, 0.0),
-               ModuleBase::Vector3<double>(0.0, 0.0, 0.0)});
+    set_qvecs(
+        {ModuleBase::Vector3<double>(0.0, 0.0, 0.0), ModuleBase::Vector3<double>(0.5, 0.0, 0.0),
+            ModuleBase::Vector3<double>(0.0, 0.0, 0.0)});
     EXPECT_NO_THROW(ModuleDFPT::validate_q_ordering(qlist_, false));
 }

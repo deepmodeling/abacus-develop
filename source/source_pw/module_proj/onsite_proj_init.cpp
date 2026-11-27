@@ -1,19 +1,19 @@
-#include <cassert>
-#include <numeric>
-#include <fstream>
 #include <algorithm>
-#include <map>
-#include <tuple>
+#include <cassert>
 #include <cmath>
+#include <fstream>
+#include <map>
+#include <numeric>
+#include <tuple>
 
+#include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_out/orb_io.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
+#include "source_basis/module_nao/smoothgen.h"
 #include "source_pw/module_proj/onsite_proj.h"
 #include "source_pw/module_proj/onsite_proj_print.h"
 #include "source_pw/module_proj/radial_proj.h"
-#include "source_basis/module_nao/smoothgen.h"
-#include "source_base/kernels/math_kernel_op.h"
-#include "source_base/tool_quit.h"
-#include "source_base/timer.h"
 
 /**
  * ===============================================================================================
@@ -83,22 +83,23 @@
  * // be needed if the memory is not enough.
  */
 
-template<typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir,
-        const UnitCell* ucell_in,
-        const psi::Psi<std::complex<T>, Device>& psi,
-        const K_Vectors& kv,
-        const ModulePW::PW_Basis_K& pw_basis, // level1: the plane wave basis, need ik
-        Structure_Factor& sf,                 // level2: the structure factor calculator
-        const double onsite_radius,
-        const int nq,
-        const double dq,
-        const ModuleBase::matrix& wg,
-        const ModuleBase::matrix& ekb)
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::init(
+    const std::string &orbital_dir,
+    const UnitCell *ucell_in,
+    const psi::Psi<std::complex<T>, Device> &psi,
+    const K_Vectors &kv,
+    const ModulePW::PW_Basis_K &pw_basis, // level1: the plane wave basis, need ik
+    Structure_Factor &sf,                 // level2: the structure factor calculator
+    const double onsite_radius,
+    const int nq,
+    const double dq,
+    const ModuleBase::matrix &wg,
+    const ModuleBase::matrix &ekb)
 {
     this->device = base_device::get_device_type(this->ctx);
 
-    if(!this->initialed)
+    if (!this->initialed)
     {
         this->ucell = ucell_in;
         this->ntype = ucell_in->ntype;
@@ -110,7 +111,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         std::vector<std::string> orb_files(ntype);
         std::vector<int> nproj(ntype);
         int sum_nproj = 0;
-        for(int it=0; it<ntype; ++it)
+        for (int it = 0; it < ntype; ++it)
         {
             orb_files[it] = ucell->orbital_fn[it];
             nproj[it] = ucell->atoms[it].nwl;
@@ -118,9 +119,9 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         }
         this->lproj.resize(sum_nproj);
         int index = 0;
-        for(int it=0; it<ntype; ++it)
+        for (int it = 0; it < ntype; ++it)
         {
-            for(int il=0; il<nproj[it]; ++il)
+            for (int il = 0; il < nproj[it]; ++il)
             {
                 this->lproj[index++] = il;
             }
@@ -131,22 +132,17 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         this->it2ia.resize(this->ntype);
         this->iat_nh.resize(this->ucell->nat);
         int iat = 0;
-        for(int it = 0; it < it2ia.size(); it++)
+        for (int it = 0; it < it2ia.size(); it++)
         {
             it2ia[it].resize(this->ucell->atoms[it].na);
             std::iota(it2ia[it].begin(), it2ia[it].end(), 0);
-            for(int ia = 0; ia < it2ia[it].size(); ia++)
+            for (int ia = 0; ia < it2ia[it].size(); ia++)
             {
                 iat_nh[iat++] = nproj[it] * nproj[it];
             }
         }
 
-        this->init_proj(orbital_dir,
-                        orb_files,
-                        nproj,
-                        lproj,
-                        iproj,
-                        onsite_r);
+        this->init_proj(orbital_dir, orb_files, nproj, lproj, iproj, onsite_r);
 
         ModuleBase::timer::start("OnsiteProj", "cubspl_tabulate");
         // STAGE 0 - making the interpolation table
@@ -155,10 +151,11 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         // [in] rgrid, projs, lproj, it2ia, it2iproj, nq, dq
         RadialProjection::build_backward_map(it2iproj, lproj, irow2it_, irow2iproj_, irow2m_);
         RadialProjection::build_forward_map(it2ia, it2iproj, lproj, itiaiprojm2irow_);
-        RadialProjection::build_sbt_tab(nproj, rgrid, projs, lproj, nq, dq, ucell_in->omega, psi.get_npol(), tab, nhtol);
+        RadialProjection::build_sbt_tab(
+            nproj, rgrid, projs, lproj, nq, dq, ucell_in->omega, psi.get_npol(), tab, nhtol);
         // For being compatible with present cal_force and cal_stress framework
         // uncomment the following code block if you want to use the Onsite_Proj_tools
-        if(this->tab_atomic_ == nullptr)
+        if (this->tab_atomic_ == nullptr)
         {
             this->tot_nproj = itiaiprojm2irow_.size();
             this->npwx_ = this->pw_basis_->npwk_max;
@@ -176,13 +173,14 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
     }
 }
 
-template<typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbital_dir,
-        const std::vector<std::string>& orb_files,
-        const std::vector<int>& nproj,  // for each type, the number of projectors
-        const std::vector<int>& lproj,  // angular momentum of projectors within the type (l of zeta function)
-        const std::vector<int>& iproj,  // index of projectors within the type (izeta)
-        const std::vector<double>& onsite_r)
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::init_proj(
+    const std::string &orbital_dir,
+    const std::vector<std::string> &orb_files,
+    const std::vector<int> &nproj, // for each type, the number of projectors
+    const std::vector<int> &lproj, // angular momentum of projectors within the type (l of zeta function)
+    const std::vector<int> &iproj, // index of projectors within the type (izeta)
+    const std::vector<double> &onsite_r)
 {
     // extract the information from ucell
     const int ntype = nproj.size();
@@ -199,12 +197,12 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
     int idx = 0;
     int nr = -1;
     double dr = -1.0;
-    for(int it = 0; it < ntype; ++it)
+    for (int it = 0; it < ntype; ++it)
     {
         const int nproj_it = nproj[it];
         this->it2iproj[it].resize(nproj_it);
         print::print_proj_status(it, nproj_it);
-        if(nproj_it == 0)
+        if (nproj_it == 0)
         {
             continue;
         }
@@ -217,7 +215,7 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         double ecut = -1.0;
         int nr_ = -1;
         double dr_ = -1.0;
-        std::vector<int> nzeta; // number of radials for each l
+        std::vector<int> nzeta;                   // number of radials for each l
         std::vector<std::vector<double>> radials; // radials arranged in serial
         ModuleIO::read_abacus_orb(ifs, elem, ecut, nr_, dr_, nzeta, radials);
         if (nr_ < 2 || !(dr_ > 0.0) || radials.empty())
@@ -230,13 +228,13 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         assert(nr_ != -1);
         assert(dr_ != -1.0);
 #endif
-        nr = std::max(nr, nr_); // the maximal nr
+        nr = std::max(nr, nr_);          // the maximal nr
         assert(dr == -1.0 || dr == dr_); // the dr should be the same for all types
         dr = (dr == -1.0) ? dr_ : dr;
         rgrid.resize(nr_);
         std::iota(rgrid.begin(), rgrid.end(), 0);
-        std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r_i) { r_i *= dr; });
-        for(int ip = 0; ip < nproj_it; ++ip)
+        std::for_each(rgrid.begin(), rgrid.end(), [dr](double &r_i) { r_i *= dr; });
+        for (int ip = 0; ip < nproj_it; ++ip)
         {
             if (!(onsite_r[idx] > 0.0) || onsite_r[idx] >= (nr_ - 1) * dr_)
             {
@@ -253,14 +251,14 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         }
     }
     // do zero padding
-    if(nr != -1)
+    if (nr != -1)
     {
-        std::for_each(projs.begin(), projs.end(), [nr](std::vector<double>& proj) { proj.resize(nr, 0.0); });
+        std::for_each(projs.begin(), projs.end(), [nr](std::vector<double> &proj) { proj.resize(nr, 0.0); });
     }
     // generate the rgrid
     this->rgrid.resize(nr);
     std::iota(rgrid.begin(), rgrid.end(), 0);
-    std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r_i) { r_i *= dr; });
+    std::for_each(rgrid.begin(), rgrid.end(), [dr](double &r_i) { r_i *= dr; });
 }
 
 // explicit method instantiation
@@ -285,51 +283,47 @@ void projectors::OnsiteProjector<T, Device>::ensure_range(double momentum, doubl
 }
 
 template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::ensure_range(double, double);
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::init(
-    const std::string&,
-    const UnitCell*,
-    const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>&,
-    const K_Vectors&,
-    const ModulePW::PW_Basis_K&,
-    Structure_Factor&,
+template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::init(
+    const std::string &,
+    const UnitCell *,
+    const psi::Psi<std::complex<double>, base_device::DEVICE_CPU> &,
+    const K_Vectors &,
+    const ModulePW::PW_Basis_K &,
+    Structure_Factor &,
     const double,
     const int,
     const double,
-    const ModuleBase::matrix&,
-    const ModuleBase::matrix&);
+    const ModuleBase::matrix &,
+    const ModuleBase::matrix &);
 
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::init_proj(
-    const std::string&,
-    const std::vector<std::string>&,
-    const std::vector<int>&,
-    const std::vector<int>&,
-    const std::vector<int>&,
-    const std::vector<double>&);
+template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::init_proj(
+    const std::string &,
+    const std::vector<std::string> &,
+    const std::vector<int> &,
+    const std::vector<int> &,
+    const std::vector<int> &,
+    const std::vector<double> &);
 
 #if ((defined __CUDA) || (defined __ROCM))
 template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::ensure_range(double, double);
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::init(
-    const std::string&,
-    const UnitCell*,
-    const psi::Psi<std::complex<double>, base_device::DEVICE_GPU>&,
-    const K_Vectors&,
-    const ModulePW::PW_Basis_K&,
-    Structure_Factor&,
+template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::init(
+    const std::string &,
+    const UnitCell *,
+    const psi::Psi<std::complex<double>, base_device::DEVICE_GPU> &,
+    const K_Vectors &,
+    const ModulePW::PW_Basis_K &,
+    Structure_Factor &,
     const double,
     const int,
     const double,
-    const ModuleBase::matrix&,
-    const ModuleBase::matrix&);
+    const ModuleBase::matrix &,
+    const ModuleBase::matrix &);
 
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::init_proj(
-    const std::string&,
-    const std::vector<std::string>&,
-    const std::vector<int>&,
-    const std::vector<int>&,
-    const std::vector<int>&,
-    const std::vector<double>&);
+template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::init_proj(
+    const std::string &,
+    const std::vector<std::string> &,
+    const std::vector<int> &,
+    const std::vector<int> &,
+    const std::vector<int> &,
+    const std::vector<double> &);
 #endif
