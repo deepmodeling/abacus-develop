@@ -12,18 +12,15 @@ addtest(
           ../../../../source_cell/parallel_kpoints.cpp)
 addtest(
   TARGET MODULE_RI_EXX_SYMMETRY_abf_rotation
-  LIBS base ${math_libs} device symmetry neighbor parameter
-  SOURCES test_symm_rotation_r_abf.cpp
-          ../symm_rotation.cpp
+  LIBS base device symmetry neighbor parameter
+  SOURCES test_symm_rotation_r_abf.cpp ../symm_rotation.cpp
           ../../../../source_basis/module_ao/parallel_orbitals.cpp)
 addtest(
   TARGET MODULE_RI_EXX_SYMMETRY_nspin4_restore
-  LIBS base ${math_libs} device symmetry neighbor parameter
-  SOURCES test_symm_rotation_r_nspin4.cpp
-          ../symm_rotation.cpp
+  LIBS base device symmetry neighbor parameter
+  SOURCES test_symm_rotation_r_nspin4.cpp ../symm_rotation.cpp
           ../../../../source_basis/module_ao/parallel_orbitals.cpp)
 addtest(
   TARGET MODULE_RI_EXX_SYMMETRY_symrot_writer
   LIBS base device symmetry neighbor parameter
-  SOURCES test_symm_rotation_r_out.cpp
-          ../symm_rot_out.cpp)
+  SOURCES test_symm_rotation_r_out.cpp ../symm_rot_out.cpp)
