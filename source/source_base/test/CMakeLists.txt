@@ -265,4 +265,3 @@ if(ENABLE_GOOGLEBENCH)
     LIBS parameter
     SOURCES perf_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp)
 endif()
-
