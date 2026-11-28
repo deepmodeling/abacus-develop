@@ -22,10 +22,7 @@ class psi_init_nao : public psi_base<T>
     bool params_prepared_ = false;
 
   public:
-    psi_init_nao()
-    {
-        this->method_ = "nao";
-    };
+    psi_init_nao() { this->method_ = "nao"; };
     ~psi_init_nao() {};
 
     /**
@@ -41,82 +38,51 @@ class psi_init_nao : public psi_base<T>
      *
      * @see initialize()
      */
-    void prepare_params(const int& nqx, const double& dq, const int& nspin, const std::string& orbital_dir);
+    void prepare_params(
+        const int &nqx,
+        const double &dq,
+        const int &nspin,
+        const std::string &orbital_dir);
 
-    virtual void initialize(const Structure_Factor* sf,         //< structure factor
-                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
-                            const UnitCell* p_ucell,            //< unit cell
-                            const std::vector<int>& ik2iktot,   //< ik2iktot: local->global k-point mapping
-                            const int& random_seed,             //< random seed
-                            const int& rank,                    //< MPI rank
-                            const int& npol,                    //< npol
-                            const int& nbands) override;        //< nbands
+    virtual void initialize(
+        const Structure_Factor *sf,         //< structure factor
+        const ModulePW::PW_Basis_K *pw_wfc, //< planewave basis
+        const UnitCell *p_ucell,            //< unit cell
+        const std::vector<int> &ik2iktot,   //< ik2iktot: local->global k-point mapping
+        const int &random_seed,             //< random seed
+        const int &rank,                    //< MPI rank
+        const int &npol,                    //< npol
+        const int &nbands) override;        //< nbands
 
-    void read_external_orbs(const std::string* orbital_files, const int& rank);
+    void read_external_orbs(const std::string *orbital_files, const int &rank);
 
     virtual void tabulate() override;
 
-    virtual void init_psig(T* psig, const int& ik) override;
+    virtual void init_psig(T *psig, const int &ik) override;
 
-    std::vector<std::string> external_orbs() const
-    {
-        return orbital_files_;
-    }
+    std::vector<std::string> external_orbs() const { return orbital_files_; }
 
-    std::vector<std::vector<int>> nr() const
-    {
-        return nr_;
-    }
+    std::vector<std::vector<int>> nr() const { return nr_; }
 
-    std::vector<int> nr(const int& itype) const
-    {
-        return nr_[itype];
-    }
+    std::vector<int> nr(const int &itype) const { return nr_[itype]; }
 
-    int nr(const int& itype, const int& ichi) const
-    {
-        return nr_[itype][ichi];
-    }
+    int nr(const int &itype, const int &ichi) const { return nr_[itype][ichi]; }
 
-    std::vector<std::vector<std::vector<double>>> chi() const
-    {
-        return chi_;
-    }
+    std::vector<std::vector<std::vector<double>>> chi() const { return chi_; }
 
-    std::vector<std::vector<double>> chi(const int& itype) const
-    {
-        return chi_[itype];
-    }
+    std::vector<std::vector<double>> chi(const int &itype) const { return chi_[itype]; }
 
-    std::vector<double> chi(const int& itype, const int& ichi) const
-    {
-        return chi_[itype][ichi];
-    }
+    std::vector<double> chi(const int &itype, const int &ichi) const { return chi_[itype][ichi]; }
 
-    double chi(const int& itype, const int& ichi, const int& ir) const
-    {
-        return chi_[itype][ichi][ir];
-    }
+    double chi(const int &itype, const int &ichi, const int &ir) const { return chi_[itype][ichi][ir]; }
 
-    std::vector<std::vector<std::vector<double>>> rgrid() const
-    {
-        return rgrid_;
-    }
+    std::vector<std::vector<std::vector<double>>> rgrid() const { return rgrid_; }
 
-    std::vector<std::vector<double>> rgrid(const int& itype) const
-    {
-        return rgrid_[itype];
-    }
+    std::vector<std::vector<double>> rgrid(const int &itype) const { return rgrid_[itype]; }
 
-    std::vector<double> rgrid(const int& itype, const int& ichi) const
-    {
-        return rgrid_[itype][ichi];
-    }
+    std::vector<double> rgrid(const int &itype, const int &ichi) const { return rgrid_[itype][ichi]; }
 
-    double rgrid(const int& itype, const int& ichi, const int& ir) const
-    {
-        return rgrid_[itype][ichi][ir];
-    }
+    double rgrid(const int &itype, const int &ichi, const int &ir) const { return rgrid_[itype][ichi][ir]; }
 
   protected:
     /// @brief allocate memory for overlap table

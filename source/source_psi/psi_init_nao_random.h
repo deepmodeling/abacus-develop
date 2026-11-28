@@ -19,6 +19,6 @@ class psi_init_nao_random : public psi_init_nao<T>
     };
     ~psi_init_nao_random() {};
 
-    virtual void init_psig(T* psig, const int& ik) override;
+    virtual void init_psig(T *psig, const int &ik) override;
 };
 #endif

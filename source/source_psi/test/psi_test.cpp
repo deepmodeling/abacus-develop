@@ -7,9 +7,9 @@ TEST(PsiLargeOffsets, ThreeDimensionalAccess)
 {
     // No zero-initialization: the test touches only one page of this 12 GiB buffer.
     std::unique_ptr<float[]> storage(new float[3221225472ULL]);
-    float* const data = storage.get();
+    float *const data = storage.get();
     data[2684354567ULL] = 42.0f;
-    for (const bool k_first: {true, false})
+    for (const bool k_first : {true, false})
     {
         const int nk = k_first ? 3 : 2;
         const int nbands = k_first ? 2 : 3;
@@ -58,9 +58,9 @@ TEST(PsiLargeOffsets, ThreeDimensionalAccess)
 TEST(PsiLargeOffsets, TwoDimensionalAccess)
 {
     std::unique_ptr<float[]> storage(new float[3221225472ULL]);
-    float* const data = storage.get();
+    float *const data = storage.get();
     data[2147483655ULL] = 24.0f;
-    for (const bool k_first: {true, false})
+    for (const bool k_first : {true, false})
     {
         const int nk = k_first ? 1 : 3;
         const int nbands = k_first ? 3 : 1;
@@ -79,20 +79,20 @@ class TestPsi : public ::testing::Test
     const int inbasis = 10;
     std::vector<int> ngk = {10, 10, 10, 10};
 
-    const psi::Psi<std::complex<double>>* psi_object31
-        = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, true);
-    const psi::Psi<double>* psi_object32 = new psi::Psi<double>(ink, inbands, inbasis, ngk, true);
-    const psi::Psi<std::complex<float>>* psi_object33
-        = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, true);
-    const psi::Psi<float>* psi_object34 = new psi::Psi<float>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<std::complex<double>> *psi_object31 =
+        new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<double> *psi_object32 = new psi::Psi<double>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<std::complex<float>> *psi_object33 =
+        new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<float> *psi_object34 = new psi::Psi<float>(ink, inbands, inbasis, ngk, true);
 };
 
 TEST_F(TestPsi, get_val)
 {
-    psi::Psi<std::complex<double>>* psi_object11 = new psi::Psi<std::complex<double>>();
-    psi::Psi<double>* psi_object12 = new psi::Psi<double>();
-    psi::Psi<std::complex<float>>* psi_object13 = new psi::Psi<std::complex<float>>();
-    psi::Psi<float>* psi_object14 = new psi::Psi<float>();
+    psi::Psi<std::complex<double>> *psi_object11 = new psi::Psi<std::complex<double>>();
+    psi::Psi<double> *psi_object12 = new psi::Psi<double>();
+    psi::Psi<std::complex<float>> *psi_object13 = new psi::Psi<std::complex<float>>();
+    psi::Psi<float> *psi_object14 = new psi::Psi<float>();
 
     EXPECT_EQ(psi_object11->get_nk(), 1);
     EXPECT_EQ(psi_object11->get_nbands(), 1);
@@ -158,7 +158,7 @@ TEST_F(TestPsi, get_pointer_op_zero_complex_double)
     EXPECT_EQ((*psi_object31)(2).real(), 2);
     EXPECT_EQ((*psi_object31)(2).imag(), 2);
     // zero
-    psi::Psi<std::complex<double>>* psi_object6 = new psi::Psi<std::complex<double>>(*psi_object31);
+    psi::Psi<std::complex<double>> *psi_object6 = new psi::Psi<std::complex<double>>(*psi_object31);
     psi_object6->zero_out();
     EXPECT_EQ((*psi_object6)(0, 1, 2).real(), 0);
     EXPECT_EQ((*psi_object6)(0, 1, 2).imag(), 0);
@@ -169,7 +169,7 @@ TEST_F(TestPsi, get_pointer_op_zero_complex_double)
     EXPECT_EQ(psi_object31->get_psi_bias(), 0);
 
     std::vector<int> temp(ink, inbasis);
-    psi::Psi<std::complex<double>>* psi_temp = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, temp, true);
+    psi::Psi<std::complex<double>> *psi_temp = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, temp, true);
     psi_temp->fix_k(0);
     EXPECT_EQ(psi_object31->get_current_nbas(), inbasis);
     delete psi_temp;
@@ -202,7 +202,7 @@ TEST_F(TestPsi, get_pointer_op_zero_complex_float)
     EXPECT_EQ((*psi_object33)(2).real(), 2);
     EXPECT_EQ((*psi_object33)(2).imag(), 2);
     // zero
-    psi::Psi<std::complex<float>>* psi_object6 = new psi::Psi<std::complex<float>>(*psi_object33);
+    psi::Psi<std::complex<float>> *psi_object6 = new psi::Psi<std::complex<float>>(*psi_object33);
     psi_object6->zero_out();
     EXPECT_EQ((*psi_object6)(0, 1, 2).real(), 0);
     EXPECT_EQ((*psi_object6)(0, 1, 2).imag(), 0);
@@ -231,7 +231,7 @@ TEST_F(TestPsi, get_pointer_op_zero_double)
     EXPECT_EQ((*psi_object32)(2, 2), 22);
     EXPECT_EQ((*psi_object32)(2), 2);
     // zero
-    psi::Psi<double>* psi_object6 = new psi::Psi<double>(*psi_object32);
+    psi::Psi<double> *psi_object6 = new psi::Psi<double>(*psi_object32);
     psi_object6->zero_out();
     EXPECT_EQ((*psi_object6)(0, 1, 2), 0);
     delete psi_object6;
@@ -259,7 +259,7 @@ TEST_F(TestPsi, get_pointer_op_zero_float)
     EXPECT_EQ((*psi_object34)(2, 2), 22);
     EXPECT_EQ((*psi_object34)(2), 2);
     // zero
-    psi::Psi<float>* psi_object6 = new psi::Psi<float>(*psi_object34);
+    psi::Psi<float> *psi_object6 = new psi::Psi<float>(*psi_object34);
     psi_object6->zero_out();
     EXPECT_EQ((*psi_object6)(0, 1, 2), 0);
     delete psi_object6;
@@ -273,7 +273,7 @@ TEST_F(TestPsi, size)
     EXPECT_EQ(psi_object34->size(), ink * inbands * inbasis);
 
     // cover all lines in size func
-    psi::Psi<std::complex<double>>* psi_object1 = new psi::Psi<std::complex<double>>();
+    psi::Psi<std::complex<double>> *psi_object1 = new psi::Psi<std::complex<double>>();
     EXPECT_EQ(psi_object1->size(), 0);
 }
 
@@ -311,12 +311,12 @@ TEST_F(TestPsi, range)
 
 TEST_F(TestPsi, band_first)
 {
-    const psi::Psi<std::complex<double>>* psi_band_c64
-        = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, false);
-    const psi::Psi<double>* psi_band_64 = new psi::Psi<double>(ink, inbands, inbasis, ngk, false);
-    const psi::Psi<std::complex<float>>* psi_band_c32
-        = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, false);
-    const psi::Psi<float>* psi_band_32 = new psi::Psi<float>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<std::complex<double>> *psi_band_c64 =
+        new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<double> *psi_band_64 = new psi::Psi<double>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<std::complex<float>> *psi_band_c32 =
+        new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<float> *psi_band_32 = new psi::Psi<float>(ink, inbands, inbasis, ngk, false);
 
     // set values: cover 4 different cases
     for (int ib = 0; ib < inbands; ++ib)
@@ -391,20 +391,20 @@ TEST_F(TestPsi, band_first)
 #if __UT_USE_CUDA || __UT_USE_ROCM
 TEST_F(TestPsi, Range)
 {
-    psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_object3_gpu1
-        = new psi::Psi<std::complex<double>, base_device::DEVICE_GPU>(*psi_object31);
+    psi::Psi<std::complex<double>, base_device::DEVICE_GPU> *psi_object3_gpu1 =
+        new psi::Psi<std::complex<double>, base_device::DEVICE_GPU>(*psi_object31);
     delete psi_object3_gpu1;
 
-    psi::Psi<double, base_device::DEVICE_GPU>* psi_object3_gpu2
-        = new psi::Psi<double, base_device::DEVICE_GPU>(*psi_object32);
+    psi::Psi<double, base_device::DEVICE_GPU> *psi_object3_gpu2 =
+        new psi::Psi<double, base_device::DEVICE_GPU>(*psi_object32);
     delete psi_object3_gpu2;
 
-    psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* psi_object3_gpu3
-        = new psi::Psi<std::complex<float>, base_device::DEVICE_GPU>(*psi_object33);
+    psi::Psi<std::complex<float>, base_device::DEVICE_GPU> *psi_object3_gpu3 =
+        new psi::Psi<std::complex<float>, base_device::DEVICE_GPU>(*psi_object33);
     delete psi_object3_gpu3;
 
-    psi::Psi<float, base_device::DEVICE_GPU>* psi_object3_gpu4
-        = new psi::Psi<float, base_device::DEVICE_GPU>(*psi_object34);
+    psi::Psi<float, base_device::DEVICE_GPU> *psi_object3_gpu4 =
+        new psi::Psi<float, base_device::DEVICE_GPU>(*psi_object34);
     delete psi_object3_gpu4;
 }
 #endif // __UT_USE_CUDA || __UT_USE_ROCM

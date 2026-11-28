@@ -32,12 +32,11 @@ We need not only read and import, but also distribute here
 */
 
 // free function, not needed to be a member of psi_init_nao
-void normalize(const std::vector<double>& r, std::vector<double>& flz)
+void normalize(const std::vector<double> &r, std::vector<double> &flz)
 {
     std::vector<double> flz2r2(r.size());
-    std::transform(r.begin(), r.end(), flz.begin(), flz2r2.begin(), [](double r, double flz) {
-        return flz * flz * r * r;
-    });
+    std::transform(
+        r.begin(), r.end(), flz.begin(), flz2r2.begin(), [](double r, double flz) { return flz * flz * r * r; });
     double dr = r[1] - r[0];
     double norm = ModuleBase::Integral::simpson(r.size(), flz2r2.data(), dr);
     norm = sqrt(norm);
@@ -45,7 +44,11 @@ void normalize(const std::vector<double>& r, std::vector<double>& flz)
 }
 
 template <typename T>
-void psi_init_nao<T>::prepare_params(const int& nqx, const double& dq, const int& nspin, const std::string& orbital_dir)
+void psi_init_nao<T>::prepare_params(
+    const int &nqx,
+    const double &dq,
+    const int &nspin,
+    const std::string &orbital_dir)
 {
     this->nqx_ = nqx;
     this->dq_ = dq;
@@ -55,7 +58,7 @@ void psi_init_nao<T>::prepare_params(const int& nqx, const double& dq, const int
 }
 
 template <typename T>
-void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const int& rank)
+void psi_init_nao<T>::read_external_orbs(const std::string *orbital_files, const int &rank)
 {
     ModuleBase::timer::start("psi_init_nao", "read_external_orbs");
 
@@ -112,17 +115,20 @@ void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const
         const int nchi = std::accumulate(nzeta.begin(), nzeta.end(), 0);
         // nr_
         this->nr_[it].resize(nchi);
-        std::for_each(this->nr_[it].begin(), this->nr_[it].end(), [nr](int& numr) { numr = nr; });
+        std::for_each(this->nr_[it].begin(), this->nr_[it].end(), [nr](int &numr) { numr = nr; });
         // rgrid_
         this->rgrid_[it].resize(nchi);
-        std::for_each(this->rgrid_[it].begin(), this->rgrid_[it].end(), [nr, dr](std::vector<double>& rgrid) {
-            rgrid.resize(nr);
-            std::iota(rgrid.begin(), rgrid.end(), 0);
-            std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r) { r = r * dr; });
-        });
+        std::for_each(
+            this->rgrid_[it].begin(), this->rgrid_[it].end(),
+            [nr, dr](std::vector<double> &rgrid)
+            {
+                rgrid.resize(nr);
+                std::iota(rgrid.begin(), rgrid.end(), 0);
+                std::for_each(rgrid.begin(), rgrid.end(), [dr](double &r) { r = r * dr; });
+            });
         // chi_
         this->chi_[it].resize(nchi);
-        std::for_each(this->chi_[it].begin(), this->chi_[it].end(), [nr](std::vector<double>& chi) { chi.resize(nr); });
+        std::for_each(this->chi_[it].begin(), this->chi_[it].end(), [nr](std::vector<double> &chi) { chi.resize(nr); });
         for (int ichi = 0; ichi < nchi; ichi++)
         {
             std::copy(radials[ichi].begin(), radials[ichi].end(), this->chi_[it][ichi].begin());
@@ -151,22 +157,23 @@ void psi_init_nao<T>::allocate_ao_table()
     }
     if (nzeta_max == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_init_nao<T>::psi_init_nao",
-                                 "there is not ANY numerical atomic orbital read in present system, quit.");
+        ModuleBase::WARNING_QUIT(
+            "psi_init_nao<T>::psi_init_nao", "there is not ANY numerical atomic orbital read in present system, quit.");
     }
     // allocate a map (it, l, izeta) -> i, should allocate memory of ntype * lmax * nzeta_max
     this->projmap_.create(ntype, lmaxmax + 1, nzeta_max);
 }
 
 template <typename T>
-void psi_init_nao<T>::initialize(const Structure_Factor* sf,
-                                 const ModulePW::PW_Basis_K* pw_wfc,
-                                 const UnitCell* p_ucell,
-                                 const std::vector<int>& ik2iktot,
-                                 const int& random_seed,
-                                 const int& rank,
-                                 const int& npol,
-                                 const int& nbands)
+void psi_init_nao<T>::initialize(
+    const Structure_Factor *sf,
+    const ModulePW::PW_Basis_K *pw_wfc,
+    const UnitCell *p_ucell,
+    const std::vector<int> &ik2iktot,
+    const int &random_seed,
+    const int &rank,
+    const int &npol,
+    const int &nbands)
 {
     ModuleBase::timer::start("psi_init_nao", "initialize");
 
@@ -219,7 +226,7 @@ void psi_init_nao<T>::tabulate()
     // a uniformed qgrid
     std::vector<double> qgrid(this->nqx_);
     std::iota(qgrid.begin(), qgrid.end(), 0);
-    std::for_each(qgrid.begin(), qgrid.end(), [this](double& q) { q = q * this->dq_; });
+    std::for_each(qgrid.begin(), qgrid.end(), [this](double &q) { q = q * this->dq_; });
 
     // only when needed, allocate memory for cubspl_
     if (this->cubspl_.get())
@@ -250,13 +257,9 @@ void psi_init_nao<T>::tabulate()
         {
             for (int izeta = 0; izeta < this->p_ucell_->atoms[it].l_nchi[l]; izeta++)
             {
-                sbt_.direct(l,
-                            this->nr_[it][ic],
-                            this->rgrid_[it][ic].data(),
-                            this->chi_[it][ic].data(),
-                            this->nqx_,
-                            qgrid.data(),
-                            Jlfq.data());
+                sbt_.direct(
+                    l, this->nr_[it][ic], this->rgrid_[it][ic].data(), this->chi_[it][ic].data(), this->nqx_,
+                    qgrid.data(), Jlfq.data());
                 this->cubspl_->add(Jlfq.data());
                 this->projmap_(it, l, izeta) = i++; // index it
                 ++ic;
@@ -267,7 +270,7 @@ void psi_init_nao<T>::tabulate()
 }
 
 template <typename T>
-void psi_init_nao<T>::init_psig(T* psig, const int& ik)
+void psi_init_nao<T>::init_psig(T *psig, const int &ik)
 {
     ModuleBase::timer::start("psi_init_nao", "init_psig");
     assert(ik >= 0);
@@ -298,7 +301,7 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
         for (int ia = 0; ia < this->p_ucell_->atoms[it].na; ia++)
         {
             /* HERE LOOP OVER ALL ATOMS */
-            std::complex<double>* sk = this->sf_->get_sk(ik, it, ia, this->pw_wfc_);
+            std::complex<double> *sk = this->sf_->get_sk(ik, it, ia, this->pw_wfc_);
             int ic = 0; // ic is a flatten index of chi, therefore it is defined here.
             for (int L = 0; L < this->p_ucell_->atoms[it].nwl + 1; L++)
             {
@@ -361,8 +364,8 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         psig[(ibasis + 2 * L + 1) * 2 * npwk_max + ig] = this->template cast_to_T<T>(
                                             (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup);
-                                        psig[((ibasis + 2 * L + 1) * 2 + 1) * npwk_max + ig]
-                                            = this->template cast_to_T<T>(
+                                        psig[((ibasis + 2 * L + 1) * 2 + 1) * npwk_max + ig] =
+                                            this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown);
                                     }
                                     ibasis++;
@@ -380,8 +383,8 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
 #pragma omp parallel for
                             for (int ig = 0; ig < npw; ig++)
                             {
-                                psig[ibasis * npwk_max + ig]
-                                    = this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * Jlfq[ig]);
+                                psig[ibasis * npwk_max + ig] =
+                                    this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * Jlfq[ig]);
                             }
                             ++ibasis;
                         }

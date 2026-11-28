@@ -19,16 +19,17 @@ class psi_init_atomic_random : public psi_init_atomic<T>
     }
     ~psi_init_atomic_random() {};
 
-    virtual void initialize(const Structure_Factor* sf,
-                            const ModulePW::PW_Basis_K* pw_wfc,
-                            const UnitCell* p_ucell,
-                            const std::vector<int>& ik2iktot,
-                            const int& random_seed,
-                            const int& rank,
-                            const int& npol,
-                            const int& nbands) override;
+    virtual void initialize(
+        const Structure_Factor *sf,
+        const ModulePW::PW_Basis_K *pw_wfc,
+        const UnitCell *p_ucell,
+        const std::vector<int> &ik2iktot,
+        const int &random_seed,
+        const int &rank,
+        const int &npol,
+        const int &nbands) override;
 
-    virtual void init_psig(T* psig, const int& ik) override;
+    virtual void init_psig(T *psig, const int &ik) override;
 
   private:
 };

@@ -23,15 +23,15 @@ namespace
 void print_welcome_banner()
 {
 #ifdef VERSION
-    const char* version = VERSION;
+    const char *version = VERSION;
 #else
-    const char* version = "unknown";
+    const char *version = "unknown";
 #endif
 #ifdef COMMIT_INFO
 #include "commit.h"
-    const char* commit = COMMIT;
+    const char *commit = COMMIT;
 #else
-    const char* commit = "unknown";
+    const char *commit = "unknown";
 #endif
     std::cout << std::endl
               << "                     ▄████▄ █████▄ ▄████▄ ▄█████ ██  ██ ▄█████ " << std::endl
@@ -54,7 +54,7 @@ void print_welcome_banner()
 }
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     // Finish all CLI validation before acquiring MPI or FFTW resources.
     // Informational flags keep their existing early-exit precedence.
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
         ModuleIO::parse_args(argc, argv);
         cli = ModuleIO::parse_command_line(argc, argv);
     }
-    catch (const std::exception& error)
+    catch (const std::exception &error)
     {
         std::cerr << "Command line error: " << error.what() << std::endl;
         ModuleIO::print_help(argv[0]);

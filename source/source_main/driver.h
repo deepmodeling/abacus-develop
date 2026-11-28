@@ -21,14 +21,14 @@ class Driver
      * The selected INPUT path is passed explicitly without global state.
      * Parsed variables are reserved for PART II and are not applied here.
      */
-    void init(const ModuleIO::CommandLineArgs& cli);
+    void init(const ModuleIO::CommandLineArgs &cli);
 
   private:
     /**
      * @brief Print the start information.
      *
      */
-    void print_start_info(const std::string& input_card);
+    void print_start_info(const std::string &input_card);
     /**
      * @brief Reading the parameters and split the MPI world.
      * This function read the parameter in "INPUT", "STRU" etc,
@@ -36,14 +36,14 @@ class Driver
      *
      * The selected INPUT path is forwarded to ReadInput here.
      */
-    void reading(const ModuleIO::CommandLineArgs& cli);
+    void reading(const ModuleIO::CommandLineArgs &cli);
 
     /**
      * @brief An interface function.
      * This function calls "this->driver_run()" to do calculation,
      * and log the time and  memory consumed during calculation.
      */
-    void atomic_world(const ModuleIO::CommandLineArgs& cli);
+    void atomic_world(const ModuleIO::CommandLineArgs &cli);
 
     // the actual calculations
     void driver_run();

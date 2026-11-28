@@ -19,14 +19,15 @@
 #endif
 
 template <typename T>
-void psi_base<T>::initialize(const Structure_Factor* sf,
-                             const ModulePW::PW_Basis_K* pw_wfc,
-                             const UnitCell* p_ucell,
-                             const std::vector<int>& ik2iktot,
-                             const int& random_seed,
-                             const int& rank,
-                             const int& npol,
-                             const int& nbands)
+void psi_base<T>::initialize(
+    const Structure_Factor *sf,
+    const ModulePW::PW_Basis_K *pw_wfc,
+    const UnitCell *p_ucell,
+    const std::vector<int> &ik2iktot,
+    const int &random_seed,
+    const int &rank,
+    const int &npol,
+    const int &nbands)
 {
     this->sf_ = sf;
     this->pw_wfc_ = pw_wfc;
@@ -37,7 +38,12 @@ void psi_base<T>::initialize(const Structure_Factor* sf,
 }
 
 template <typename T>
-void psi_base<T>::random_t(T* psi, const int iw_start, const int iw_end, const int ik, const int mode)
+void psi_base<T>::random_t(
+    T *psi,
+    const int iw_start,
+    const int iw_end,
+    const int ik,
+    const int mode)
 {
     ModuleBase::timer::start("psi_init", "random_t");
     assert(mode <= 1);
@@ -67,7 +73,7 @@ void psi_base<T>::random_t(T* psi, const int iw_start, const int iw_end, const i
         for (int iw = iw_start; iw < iw_end; iw++)
         {
             // get the starting memory address of iw band
-            T* psi_slice = &(psi[iw * npwk_max * npol]);
+            T *psi_slice = &(psi[iw * npwk_max * npol]);
             for (int ipol = 0; ipol < npol; ++ipol)
             {
                 // loop over all fft (x,y), but actually loop over all sticks
@@ -143,7 +149,7 @@ void psi_base<T>::random_t(T* psi, const int iw_start, const int iw_end, const i
     {
         for (int iw = iw_start; iw < iw_end; iw++)
         {
-            T* psi_slice = &(psi[iw * npwk_max * npol]); // get the memory to write directly. For nspin 4, nbasis*2
+            T *psi_slice = &(psi[iw * npwk_max * npol]); // get the memory to write directly. For nspin 4, nbasis*2
             // donot use openmp here, because the random number generator is not thread-safe
             for (int ig = 0; ig < ng; ig++)
             {
@@ -170,7 +176,7 @@ void psi_base<T>::random_t(T* psi, const int iw_start, const int iw_end, const i
     {
         for (int iw = iw_start; iw < iw_end; iw++)
         {
-            T* psi_slice = &(psi[iw * npwk_max * npol]);
+            T *psi_slice = &(psi[iw * npwk_max * npol]);
             for (int ipol = 0; ipol < npol; ipol++)
             {
 #ifdef _OPENMP
@@ -191,7 +197,7 @@ void psi_base<T>::random_t(T* psi, const int iw_start, const int iw_end, const i
 
 #ifdef __MPI
 template <typename T>
-void psi_base<T>::stick_to_pool(Real* stick, const int& ir, Real* out) const
+void psi_base<T>::stick_to_pool(Real *stick, const int &ir, Real *out) const
 {
     ModuleBase::timer::start("psi_init", "stick_to_pool");
     MPI_Status ierror;
