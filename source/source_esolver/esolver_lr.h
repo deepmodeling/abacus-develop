@@ -141,14 +141,12 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     LCAO_Orbitals orb_;                            ///< numerical atomic orbital data for single-point evaluation
     std::vector<std::complex<double>> velocity_mo; ///< store the velocity matrix elements in MO basis
 
-    /// @brief allocate and set the inital value of X
-    void setup_eigenvectors_X();
-
     /// @brief read in the ground state wave function, band energy and occupation
     virtual void read_ks_wfc();
     /// @brief  read in the ground state charge density
     void read_ks_chg(Charge &chg);
 
+    /// Build the LR kernel potentials (overridden by BSE).
     virtual void init_pot(const Charge &chg_gs);
 
     /// @brief check the legality of the input parameters
@@ -158,9 +156,8 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     void reset_dim_spin();
 
     ///========================== for gradient calculation =========================
-    void init_pot_groundstate(const Charge &chg_gs);
-    /// Borrow the geometry-dependent objects `LR::Core` needs for the force path.
-    LR::Refs<T> make_refs() const;
+    /// Borrow the geometry-dependent objects `LR::Core` needs.
+    LR::Refs<T> make_refs();
 
 #ifdef __EXX
     /// Tdata of Exx_LRI is same as T, for the reason, see operator_lr_exx.h

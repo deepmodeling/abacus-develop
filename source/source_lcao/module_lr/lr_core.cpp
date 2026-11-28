@@ -20,6 +20,7 @@
 #include "source_lcao/module_lr/hamilt_casida.h"
 #include "source_lcao/module_lr/hamilt_ulr.h"
 #include "source_lcao/module_lr/hsolver_lrtd.h"
+#include "source_lcao/module_lr/kernel_pots.h"
 #include "source_lcao/module_lr/lr_amp.h"
 #include "source_lcao/module_lr/lr_density.h"
 #include "source_lcao/module_lr/lr_dm.h"
@@ -347,6 +348,42 @@ void Core<T>::solve(double* ekb, const int istep)
                             this->amp.nloc, this->dim.nstates);
             }
         }
+    }
+}
+
+template <typename T>
+void Core<T>::setup_x()
+{
+    ModuleBase::TITLE("LR::Core", "setup_x");
+    XAmp<T> amp = LR::setup_x<T>(this->amp.para_c, this->dim.nocc, this->dim.nvirt, this->dim.npairs, this->gs.eig,
+                                 this->dim.nstates, this->dim.nk, this->dim.nspin, this->dim.openshell,
+                                 this->refs.inp->lr_solver == "spectrum", *this->refs.log);
+    this->amp.x = std::move(amp.x);
+    this->amp.para_x = std::move(amp.para_x);
+    this->amp.nloc = amp.nloc;
+}
+
+template <typename T>
+void Core<T>::init_pot(const Charge& chg_gs)
+{
+    this->pot.pot.assign(this->dim.nspin, nullptr);
+    if (this->refs.inp->ri_hartree_benchmark != "none")
+    {
+        return;
+    }
+    const Parallel_Grid& grid = *this->refs.pgrid;
+    auto prepared = LR::prepare_lr_potentials(*this->refs.inp, *this->refs.xc_kernel, *this->refs.rho,
+                                              *this->refs.ucell, chg_gs, grid, this->dim.nspin, this->dim.openshell);
+    this->pot.pot = std::move(prepared.pot);
+    if (this->refs.inp->cal_force)
+    {
+        ModuleBase::TITLE("LR::Core", "init_pot_gs");
+        this->pot.gs_pot.refresh(*this->refs.inp, *this->refs.xc_kernel, *this->refs.ucell, this->refs.rhod,
+                                 this->refs.rho, grid, chg_gs, *this->refs.sfac, *this->refs.vloc,
+                                 *this->refs.solvent, this->refs.refresh_sfac, this->refs.has_float_data);
+        this->pot.pot_hxc_gs = LR::prepare_gs_potential(*this->refs.inp, *this->refs.xc_kernel, *this->refs.rho,
+                                                        *this->refs.ucell, chg_gs, grid, this->dim.nspin,
+                                                        this->dim.openshell, prepared);
     }
 }
 
@@ -709,6 +746,10 @@ template void Core<double>::solve(double*, int);
 template void Core<std::complex<double>>::solve(double*, int);
 template void Core<double>::output(const ModuleBase::matrix&);
 template void Core<std::complex<double>>::output(const ModuleBase::matrix&);
+template void Core<double>::setup_x();
+template void Core<std::complex<double>>::setup_x();
+template void Core<double>::init_pot(const Charge&);
+template void Core<std::complex<double>>::init_pot(const Charge&);
 
 template std::vector<ModuleBase::matrix> Core<double>::cal_force(int, const ModuleBase::matrix&, int);
 template std::vector<ModuleBase::matrix> Core<std::complex<double>>::cal_force(int, const ModuleBase::matrix&, int);

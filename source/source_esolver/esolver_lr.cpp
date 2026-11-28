@@ -6,7 +6,6 @@
 #include "source_lcao/module_lr/zeq_solver.h"
 #include <algorithm>
 #include <iomanip>
-#include "source_lcao/module_lr/kernel_pots.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_lr/lr_dim.h"
 #include <type_traits>
@@ -93,7 +92,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     }
 
     // allocate 2-particle state and setup 2d division
-    this->setup_eigenvectors_X();
+    this->lr_.setup_x();
     this->pelec->ekb.create(this->lr_.dim.nspin, this->lr_.dim.nstates);
 
     // solve the TDA eigenproblem (or read its states back under `lr_solver = spectrum`)
@@ -177,37 +176,11 @@ void ModuleESolver::ESolver_LR<T, TR>::reset_dim_spin()
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge &chg_gs)
 {
-    this->lr_.pot.pot.assign(this->lr_.dim.nspin, nullptr);
-    if (this->inp_->ri_hartree_benchmark != "none")
-    {
-        return;
-    }
-    const auto &grid = pgrid();
-    auto prepared =
-        LR::prepare_lr_potentials(*this->inp_, xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, grid, this->lr_.dim.nspin, this->lr_.dim.openshell);
-    this->lr_.pot.pot = std::move(prepared.pot);
-    if (this->inp_->cal_force)
-    {
-        this->init_pot_groundstate(chg_gs);
-        this->lr_.pot.pot_hxc_gs = LR::prepare_gs_potential(
-            *this->inp_, xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, grid, this->lr_.dim.nspin, this->lr_.dim.openshell, prepared);
-    }
+    this->lr_.init_pot(chg_gs);
 }
 
 // LR orbital distributions, excitation amplitudes, and ground-state file input.
 
-
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
-{
-    ModuleBase::TITLE("ESolver_LR", "setup_eigenvectors_X");
-    LR::XAmp<T> amp = LR::setup_x<T>(this->lr_.amp.para_c, this->lr_.dim.nocc, this->lr_.dim.nvirt, this->lr_.dim.npairs, this->lr_.gs.eig, this->lr_.dim.nstates,
-                                     this->lr_.dim.nk, this->lr_.dim.nspin, this->lr_.dim.openshell, this->inp_->lr_solver == "spectrum",
-                                     this->ofs_running_);
-    this->lr_.amp.x = std::move(amp.x);
-    this->lr_.amp.para_x = std::move(amp.para_x);
-    this->lr_.amp.nloc = amp.nloc;
-}
 
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
@@ -230,15 +203,6 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge &chg_gs)
 
 
 ///========================= excited-state geometry relaxation =========================
-
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge &chg_gs)
-{
-    ModuleBase::TITLE("ESolver_LR", "init_pot_gs");
-    this->lr_.pot.gs_pot.refresh(*this->inp_, this->xc_kernel, *this->ucell_, this->pw_rhod, this->pw_rho, pgrid(), chg_gs,
-                          this->sfac(), this->vloc(), this->solvent, !this->ks_, PARAM.globalv.has_float_data);
-}
-
 
 template <typename T, typename TR>
 double ModuleESolver::ESolver_LR<T, TR>::cal_energy()
@@ -387,7 +351,7 @@ void ModuleESolver::ESolver_LR<T, TR>::bind_ground_state_aliases_()
 }
 
 template <typename T, typename TR>
-LR::Refs<T> ModuleESolver::ESolver_LR<T, TR>::make_refs() const
+LR::Refs<T> ModuleESolver::ESolver_LR<T, TR>::make_refs()
 {
     LR::Refs<T> refs;
     refs.ucell = this->ucell_;
@@ -405,6 +369,9 @@ LR::Refs<T> ModuleESolver::ESolver_LR<T, TR>::make_refs() const
     refs.in_dir = &this->in_dir;
     refs.out_dir = &this->out_dir;
     refs.xc_kernel = &this->xc_kernel;
+    refs.refresh_sfac = !this->ks_;
+    refs.has_float_data = PARAM.globalv.has_float_data;
+    refs.solvent = &this->solvent;
     refs.my_rank = this->my_rank_;
     refs.pv_all = this->ks_ ? &this->ks_->pv : &this->lr_.gs.para_mat_all;
 #ifdef __EXX
@@ -473,8 +440,9 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell &ucell, cons
     }
 #endif
 
-    refresh_from_ks_(ucell);
+    // bind before the refresh: `refresh_from_ks_` builds the potentials, which read `Refs`
     this->lr_.bind(this->make_refs());
+    refresh_from_ks_(ucell);
     this->ks_initialized_ = true;
 }
 
@@ -569,6 +537,8 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
 
     this->set_dim();
     this->lr_.setup_file_layout(this->kv, *this->ucell_, *this->inp_);
+    // bind before the potentials are built: `init_pot` reads `Refs`
+    this->lr_.bind(this->make_refs());
 
     // read the ground state info
     // now ModuleIO::read_wfc_nao needs `Parallel_Orbitals` and can only read all the bands
@@ -638,7 +608,6 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
     // else
 #endif
     // ModuleBase::Ylm::set_coefficients() is deprecated
-    this->lr_.bind(this->make_refs());
 }
 
 template class ModuleESolver::ESolver_LR<double, double>;

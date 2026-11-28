@@ -20,6 +20,8 @@ class Grid_Driver;
 class Structure_Factor;
 class TwoCenterBundle;
 class pseudopot_cell_vl;
+class Charge;
+class surchem;
 #ifdef __EXX
 template <typename Tdata>
 class Exx_LRI;
@@ -102,10 +104,11 @@ struct Refs
     const K_Vectors* kv = nullptr;
     Grid_Driver* gd = nullptr;
     const std::vector<double>* orb_cutoff = nullptr;
-    const ModulePW::PW_Basis* rho = nullptr;
-    const ModulePW::PW_Basis* rhod = nullptr;
+    ModulePW::PW_Basis* rho = nullptr;
+    ModulePW::PW_Basis* rhod = nullptr;
     pseudopot_cell_vl* vloc = nullptr;
     Structure_Factor* sfac = nullptr;
+    surchem* solvent = nullptr;
     const TwoCenterBundle* tcb = nullptr;
     const Input_para* inp = nullptr;
     std::ofstream* log = nullptr;
@@ -113,6 +116,9 @@ struct Refs
     const std::string* in_dir = nullptr;
     const std::string* out_dir = nullptr;
     const std::string* xc_kernel = nullptr;
+    /// The file (`lr`) path owns `sf`/`vloc`; on `ks-lr` the ground-state solver refreshed them.
+    bool refresh_sfac = true;
+    bool has_float_data = false;
     int my_rank = 0;
     /// The layout `gs.psi_all` is distributed by: the KS solver's `pv`, or `gs.para_mat_all`.
     const Parallel_Orbitals* pv_all = nullptr;
@@ -155,6 +161,10 @@ struct Core
     void solve(double* ekb, int istep);
     /// Electron-hole densities, the absorption spectrum and the per-state gradients after the run.
     void output(const ModuleBase::matrix& ekb);
+    /// Allocate the excitation amplitudes and fill their initial guess.
+    void setup_x();
+    /// Build the LR kernel potentials (and the ground-state one used by the force path) on `chg_gs`.
+    void init_pot(const Charge& chg_gs);
 
     /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
     /// restricts it to that one state; -1 does all `nstates`.
