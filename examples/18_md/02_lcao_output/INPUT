@@ -35,6 +35,5 @@ md_tfreq               1
 md_tchain              1
 
 dft_functional       hse
-restart_save           1
 
 out_app_flag          0

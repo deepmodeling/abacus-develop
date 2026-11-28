@@ -12,6 +12,8 @@ cal_force         1
 cal_stress        1
 #Parameters (3.Basis)
 basis_type        lcao
+init_chg          file
+read_file_dir     ./
 #kspacing                0.06
 #Parameters (4.Smearing)
 smearing_method   gauss
@@ -26,10 +28,6 @@ pseudo_rcut       10.0
 
 pseudo_dir        ../../PP_ORB
 orbital_dir       ../../PP_ORB
-
-#restart_save		1
-restart_load      1
-read_file_dir     ./
 
 bx                2
 by                2

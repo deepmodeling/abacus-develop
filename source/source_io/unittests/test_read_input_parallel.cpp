@@ -359,8 +359,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.td_edm, 0);
     EXPECT_DOUBLE_EQ(param.inp.cell_factor, 1.2);
     EXPECT_EQ(param.inp.out_mul, 0);
-    EXPECT_FALSE(param.inp.restart_save);
-    EXPECT_FALSE(param.inp.restart_load);
     EXPECT_FALSE(param.inp.test_skip_ewald);
     EXPECT_EQ(param.inp.dft_plus_u, 0);
     EXPECT_FALSE(param.inp.yukawa_potential);

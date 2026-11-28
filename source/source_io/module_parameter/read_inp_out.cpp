@@ -1357,7 +1357,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output Hexx(R) CSR matrix for EXX restart";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to write the exact-exchange Hamiltonian matrix Hexx(R) in CSR text format, together with the EXX energy embedded in the file header, into OUT.${suffix}/HexxR_{is}.csr (one file per spin channel). This output replaces the legacy restart_save mechanism and is the counterpart read back by init_exx = file. It only takes effect for LCAO calculations with exact exchange (dft_functional / xc_functional selects a hybrid functional), and is written only after the first SCF loop (i.e. when two_level_step > 0 or istep > 0) to avoid persisting an incomplete exchange matrix.";
+        item.description = "Whether to write the exact-exchange Hamiltonian matrix Hexx(R) in CSR text format, together with the EXX energy embedded in the file header, into OUT.${suffix}/HexxR_{is}.csr (one file per spin channel). This output is the counterpart read back by init_exx = file. It only takes effect for LCAO calculations with exact exchange (dft_functional / xc_functional selects a hybrid functional), and is written only after the first SCF loop (i.e. when two_level_step > 0 or istep > 0) to avoid persisting an incomplete exchange matrix.";
         item.default_value = "False";
         item.unit = "";
         read_sync_bool(input.out_mat_exx);
@@ -1693,21 +1693,6 @@ For more information, refer to the documentation of out_mat_r, out_hsr, out_mat_
         item.default_value = "False";
         item.unit = "";
         read_sync_bool(input.out_element_info);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("restart_save");
-        item.annotation = "print to disk every step for restart";
-        item.category = "Output information";
-        item.type = "Boolean";
-        item.description = R"(Whether to save charge density files per ionic step, which are used to restart calculations. According to the value of read_file_dir:
-* auto: These files are saved in folder OUT.{read_file_dir}/restart/.
-
-If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or rpa==True), the Hexx(R) files for each processor will also be saved in the above folder, which can be read in EXX calculation with restart_load==True.)";
-        item.default_value = "False";
-        item.unit = "";
-        item.set_availability("basis_type==lcao");
-        read_sync_bool(input.restart_save);
         this->add_item(item);
     }
     {

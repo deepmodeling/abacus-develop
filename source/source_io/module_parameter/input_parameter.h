@@ -65,7 +65,6 @@ struct Input_para
     std::string pseudo_dir = "";        ///< directory of pseudopotential
     std::string orbital_dir = "";       ///< directory of orbital file
     std::string read_file_dir = "auto"; ///< directory of files for reading
-    bool restart_load = false;
     std::string wannier_card = "none";              ///< input card for wannier functions.
     int mem_saver = 0;                              ///< 1: save psi when nscf calculation.
     int diago_proc = 0;                             ///< the number of procs used to diag. mohan add 2012-01-13
@@ -531,7 +530,6 @@ struct Input_para
     bool out_current_k = false;              ///< output tddft current for all k points
     bool out_vecpot = false;                 ///< output the vector potential or not
     std::vector<int> cal_symm_repr = {0, 3}; ///< output the symmetry representation matrix
-    bool restart_save = false;               ///< restart //Peize Lin add 2020-04-04
     bool rpa = false;                        ///< rpa calculation
     bool rpa_out_vel = false;                ///< whether to output velocity matrix for librpa
     std::string rpa_outdir = "OUT.librpa";   ///< output directory for librpa

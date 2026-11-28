@@ -1624,18 +1624,6 @@ LOBPCG supports 0 and 2. On CUDA, LOBPCG option 0 uses cuSOLVER on the GPU.)";
         };
         this->add_item(item);
     }
-    {
-        Input_Item item("restart_load");
-        item.annotation = "restart from disk";
-        item.category = "Input files";
-        item.type = "Boolean";
-        item.description = "If restart_save is set to true and an electronic iteration is finished, calculations can be "
-                          "restarted from the charge density file, which are saved in the former calculation.";
-        item.default_value = "False";
-        item.set_availability("basis_type==lcao");
-        read_sync_bool(input.restart_load);
-        this->add_item(item);
-    }
 }
 
 } // namespace ModuleIO
