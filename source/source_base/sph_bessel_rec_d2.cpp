@@ -15,6 +15,53 @@ namespace ModuleBase
 
 std::vector<Sph_Bessel_Recursive::D2> Sph_Bessel_Recursive_Pool::D2::sb_pool;
 
+Sph_Bessel_Recursive::D2::D2()
+{
+    cache_mutex_ = std::make_shared<std::mutex>();
+}
+
+void Sph_Bessel_Recursive::D2::rebuild_workspace() const
+{
+    if (!jlx.empty())
+    {
+        return;
+    }
+    // Replay only requests that expanded the cache, preserving both the ragged
+    // shape and the original order of the small-argument and recursive formulas.
+    for (const std::array<std::size_t, 3>& request : requests_)
+    {
+        const int l_size = request[0] + 1;
+        cal_jlx_0(l_size, request[1], request[2]);
+        cal_jlx_smallx(l_size, request[1], request[2]);
+        cal_jlx_recursive(l_size, request[1], request[2]);
+    }
+}
+
+const std::vector<std::vector<std::vector<double>>>& Sph_Bessel_Recursive::D2::get_jlx() const
+{
+    std::mutex& cache_mutex = *cache_mutex_;
+    const std::lock_guard<std::mutex> lock(cache_mutex);
+    rebuild_workspace();
+    return jlx;
+}
+
+std::size_t Sph_Bessel_Recursive::D2::release_workspace()
+{
+    std::mutex& cache_mutex = *cache_mutex_;
+    const std::lock_guard<std::mutex> lock(cache_mutex);
+    std::size_t bytes = 0;
+    for (const std::vector<std::vector<double>>& angular : jlx)
+    {
+        for (const std::vector<double>& row : angular)
+        {
+            bytes += row.capacity() * sizeof(double);
+        }
+    }
+    std::vector<std::vector<std::vector<double>>> empty;
+    jlx.swap(empty);
+    return bytes;
+}
+
 void Sph_Bessel_Recursive::D2::set_dx( const double dx_in )
 {
     if(finish_set_dx && dx_in!=dx)	
@@ -30,14 +77,32 @@ const std::vector<std::vector<std::vector<double>>> & Sph_Bessel_Recursive::D2::
 {
     if(lmax<0)
         throw std::invalid_argument("Sph_Bessel_Recursive::jlx l<0");
+    std::mutex& cache_mutex = *cache_mutex_;
+    const std::lock_guard<std::mutex> lock(cache_mutex);
+    rebuild_workspace();
+    bool covered = false;
+    for (const std::array<std::size_t, 3>& request : requests_)
+    {
+        if (request[0] >= static_cast<std::size_t>(lmax)
+            && request[1] >= ix1_size && request[2] >= ix2_size)
+        {
+            covered = true;
+            break;
+        }
+    }
     cal_jlx_0( lmax+1, ix1_size, ix2_size );
     cal_jlx_smallx( lmax+1, ix1_size, ix2_size );
     cal_jlx_recursive( lmax+1, ix1_size, ix2_size );
+    if (!covered)
+    {
+        const std::array<std::size_t, 3> request = {static_cast<std::size_t>(lmax), ix1_size, ix2_size};
+        requests_.push_back(request);
+    }
     ModuleBase::Memory::record("ORB::Jl(x)", sizeof(double) * (lmax+1) * ix1_size * ix2_size);
     return jlx;
 }
 
-void Sph_Bessel_Recursive::D2::cal_jlx_0( const int l_size, const size_t ix1_size, const size_t ix2_size )
+void Sph_Bessel_Recursive::D2::cal_jlx_0( const int l_size, const size_t ix1_size, const size_t ix2_size ) const
 {
     if(jlx.size() < static_cast<size_t>(l_size))
         jlx.resize(l_size);
@@ -54,7 +119,7 @@ void Sph_Bessel_Recursive::D2::cal_jlx_0( const int l_size, const size_t ix1_siz
     }
 }
 
-void Sph_Bessel_Recursive::D2::cal_jlx_smallx( const int l_size, const size_t ix1_size, const size_t ix2_size )
+void Sph_Bessel_Recursive::D2::cal_jlx_smallx( const int l_size, const size_t ix1_size, const size_t ix2_size ) const
 {
     if(jlx.size() < static_cast<size_t>(l_size))
         jlx.resize(l_size);
@@ -81,7 +146,7 @@ void Sph_Bessel_Recursive::D2::cal_jlx_smallx( const int l_size, const size_t ix
     }	
 }
 
-void Sph_Bessel_Recursive::D2::cal_jlx_recursive( const int l_size, const size_t ix1_size, const size_t ix2_size )
+void Sph_Bessel_Recursive::D2::cal_jlx_recursive( const int l_size, const size_t ix1_size, const size_t ix2_size ) const
 {
     if(jlx.size() < static_cast<size_t>(l_size))
         jlx.resize(l_size);
