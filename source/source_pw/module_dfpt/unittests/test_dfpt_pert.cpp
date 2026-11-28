@@ -271,6 +271,150 @@ TEST_F(DFPTPertSerialTest, BuildVkbL0MatchesIndependentSimpson)
     }
 }
 
+namespace
+{
+
+// Reconfigure the fixture atom with a third l = 2 projector so the
+// d-channel (m = -2..2) rows of the projector tables are live: the
+// shared fixture pseudo stops at l = 1, which is exactly why the
+// m = +2 gradient factor bug had no test coverage.
+void make_nc_atom_with_d_channel(UnitCell &ucell)
+{
+    dfpt_test::make_nc_atom(ucell);
+    Atom &at = ucell.atoms[0];
+    pseudo &p = at.ncpp;
+    p.nbeta = 3;
+    p.lll = {0, 1, 2};
+    p.nh = 9;
+    p.betar.create(3, 121);
+    for (int i = 0; i < 121; ++i)
+    {
+        const double r = p.r[i];
+        p.betar(0, i) = std::exp(-std::pow(r - 1.0, 2) / (2.0 * 0.3 * 0.3));
+        p.betar(1, i) = std::exp(-std::pow(r - 1.2, 2) / (2.0 * 0.35 * 0.35));
+        p.betar(2, i) = std::exp(-std::pow(r - 0.9, 2) / (2.0 * 0.4 * 0.4));
+    }
+    p.dion.create(3, 3);
+    p.dion(0, 0) = 0.8;
+    p.dion(0, 1) = 0.15;
+    p.dion(1, 0) = -0.25;
+    p.dion(1, 1) = 1.1;
+    p.dion(2, 2) = 0.6;
+}
+
+} // namespace
+
+TEST_F(DFPTPertSerialTest, BuildVkbDkMatchesCentralDifference)
+{
+    // QE-style value/gradient consistency lock: the analytic k-derivative
+    // of every projector row (angular gradient table + radial difference +
+    // structure phase) must equal the central difference of build_vkb
+    // itself on a shifted gk list. A hardcoded gradient entry that
+    // disagrees with its own value table (the m = +2 factor bug this test
+    // regression-locks) fails here at the full amplitude of the channel.
+    make_nc_atom_with_d_channel(ucell_);
+    const int npwk = pw_wfc_.npwk[0];
+    std::vector<ModuleBase::Vector3<double>> gk(npwk);
+    for (int ig = 0; ig < npwk; ++ig)
+    {
+        gk[ig] = pw_wfc_.getgpluskcar(0, ig);
+    }
+    std::vector<std::vector<std::complex<double>>> vkb;
+    pert_.build_vkb(0, 0, gk, vkb);
+    ASSERT_EQ(vkb.size(), 9u); // l=0: 1, l=1: 3, l=2: 5 rows
+
+    const double delta = 1.0e-5;
+    for (int dir = 0; dir < 3; ++dir)
+    {
+        std::vector<ModuleBase::Vector3<double>> gk_plus(npwk);
+        std::vector<ModuleBase::Vector3<double>> gk_minus(npwk);
+        for (int ig = 0; ig < npwk; ++ig)
+        {
+            gk_plus[ig] = gk[ig];
+            gk_minus[ig] = gk[ig];
+            gk_plus[ig][dir] += delta;
+            gk_minus[ig][dir] -= delta;
+        }
+        std::vector<std::vector<std::complex<double>>> vkb_plus;
+        std::vector<std::vector<std::complex<double>>> vkb_minus;
+        pert_.build_vkb(0, 0, gk_plus, vkb_plus);
+        pert_.build_vkb(0, 0, gk_minus, vkb_minus);
+        std::vector<std::vector<std::complex<double>>> dvkb;
+        pert_.build_vkb_dk(0, 0, dir, gk, vkb, dvkb);
+        ASSERT_EQ(dvkb.size(), 9u);
+        for (int mu = 0; mu < 9; ++mu)
+        {
+            for (int ig = 0; ig < npwk; ++ig)
+            {
+                const std::complex<double> fd = (vkb_plus[mu][ig] - vkb_minus[mu][ig]) / (2.0 * delta);
+                const double scale = std::max(1.0, std::abs(fd));
+                EXPECT_NEAR(dvkb[mu][ig].real(), fd.real(), 1.0e-6 * scale);
+                EXPECT_NEAR(dvkb[mu][ig].imag(), fd.imag(), 1.0e-6 * scale);
+            }
+        }
+    }
+}
+
+TEST_F(DFPTPertSerialTest, BuildVkbL2MatchesIndependentHarmonics)
+{
+    // Independent value lock for the d block: the m = +2 row against the
+    // textbook real harmonic Y_{2,2} and an independent spherical Bessel
+    // j2, mirroring the l = 0 Simpson lock for the s block.
+    make_nc_atom_with_d_channel(ucell_);
+    const int npwk = pw_wfc_.npwk[0];
+    std::vector<ModuleBase::Vector3<double>> gk(npwk);
+    for (int ig = 0; ig < npwk; ++ig)
+    {
+        gk[ig] = pw_wfc_.getgpluskcar(0, ig);
+    }
+    std::vector<std::vector<std::complex<double>>> vkb;
+    pert_.build_vkb(0, 0, gk, vkb);
+    ASSERT_EQ(vkb.size(), 9u);
+
+    const pseudo &p = ucell_.atoms[0].ncpp;
+    const double dx = p.rab[0];
+    const double pref = ModuleBase::FOUR_PI / std::sqrt(ucell_.omega);
+    auto simpson = [&](const std::function<double(int)> &f, int n)
+    {
+        double s = f(0) + f(n - 1);
+        for (int i = 1; i < n - 1; ++i)
+        {
+            s += f(i) * ((i % 2 == 1) ? 4.0 : 2.0);
+        }
+        return s * dx / 3.0;
+    };
+    auto j2 = [](double x)
+    {
+        if (x < 1.0e-12)
+        {
+            return 0.0;
+        }
+        return (3.0 / (x * x * x) - 1.0 / x) * std::sin(x) - 3.0 * std::cos(x) / (x * x);
+    };
+
+    for (int ig = 0; ig < npwk; ++ig)
+    {
+        const double gnorm = std::sqrt(gk[ig] * gk[ig]) * ucell_.tpiba;
+        auto f2 = [&](int i) { return p.betar(2, i) * j2(gnorm * p.r[i]) * p.r[i]; };
+        const double vq = pref * simpson(f2, p.msh);
+        const double gmag = std::sqrt(gk[ig] * gk[ig]);
+        if (gmag < 1.0e-10)
+        {
+            continue; // degenerate direction guard, exercised elsewhere
+        }
+        const double nx = gk[ig].x / gmag;
+        const double ny = gk[ig].y / gmag;
+        // the l = 2 block occupies mu = 4..8; the m-walk m=3 -> mr=+2 lands
+        // on mu = 7, the (x^2 - y^2) channel of the real harmonic
+        const double y22 = 0.25 * std::sqrt(15.0 / ModuleBase::PI) * (nx * nx - ny * ny);
+        const double arg = -ModuleBase::TWO_PI * (gk[ig] * tau_);
+        const std::complex<double> phase(std::cos(arg), std::sin(arg));
+        const std::complex<double> expect = -1.0 * y22 * vq * phase; // (-i)^2 = -1
+        EXPECT_NEAR(vkb[7][ig].real(), expect.real(), 1.0e-9 * std::max(1.0, std::abs(expect)));
+        EXPECT_NEAR(vkb[7][ig].imag(), expect.imag(), 1.0e-9 * std::max(1.0, std::abs(expect)));
+    }
+}
+
 TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
 {
     dfpt_test::make_nc_atom(ucell_);
