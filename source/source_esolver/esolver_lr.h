@@ -183,7 +183,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     std::vector<std::string> spin_types;
 
     std::unique_ptr<ModuleGint::GintInfo> gint_info_ = nullptr;
-    void set_gint();
 
     /// @brief variables for parallel distribution of KS orbitals
     Parallel_Blkcyclic paraC_;
