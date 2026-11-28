@@ -14,7 +14,6 @@
 #include "source_io/module_output/cube_io.h"
 #include "chg_rhog_io.h"
 #include "source_io/module_wf/read_wf2rho_pw.h"
-#include "source_io/module_restart/restart.h"
 #include "source_cell/klist.h"
 #include "source_base/module_parallel/para_world.h"
 #include "source_base/module_parallel/para_tag.h"
@@ -313,56 +312,6 @@ void init_rho_atomic_and_tau(Charge& chr,
     }
 }
 
-/**
- * @brief Load charge density from the restart disk cache if requested.
- *
- * Charge members accessed: chr.rho, chr.nspin.
- *
- * @param chr [inout] Charge object supplying rho buffer
- * @param rhopw [in] plane-wave basis supplying the local real-space grid size
- * @param restart [inout] restart manager
- * @param readin_dir [in] fallback cube-file directory
- * @param rank [in] this processor's rank for palgrid reads
- * @param ofs_running [inout] running log stream
- */
-void load_rho_from_restart(Charge& chr,
-                           const ModulePW::PW_Basis& rhopw,
-                           const UnitCell& ucell,
-                           const Parallel_Grid& pgrid,
-                           Restart& restart,
-                           const std::string& readin_dir,
-                           const int rank,
-                           std::ostream& ofs_running)
-{
-    const int nspin = chr.nspin;
-
-    // Peize Lin add 2020.04.04
-    if (restart.info_load.load_charge && !restart.info_load.load_charge_finish)
-    {
-        for (int is = 0; is < nspin; ++is)
-        {
-            try
-            {
-                restart.load_disk("charge", is, rhopw.nrxx, chr.rho[is]);
-            }
-            catch (const std::exception& e)
-            {
-                // try to load from the output of `out_chg`
-                std::stringstream ssc;
-                ssc << readin_dir << "chgs" << is + 1 << ".cube";
-                ModuleIO::read_vdata_palgrid(pgrid,
-                                             rank,
-                                             ofs_running,
-                                             ssc.str(),
-                                             chr.rho[is],
-                                             ucell.nat);
-                ofs_running << " Read in electron density: " << ssc.str() << std::endl;
-            }
-        }
-        restart.info_load.load_charge_finish = true;
-    }
-}
-
 } // anonymous namespace
 
 // ---------------------------------------------------------------------------
@@ -439,9 +388,6 @@ void init_rho(Charge& chr,
     init_rho_atomic_and_tau(chr, rhopw, ucell, strucFac, ucell.omega,
                             init_chg, cfg.meta_gga, read_error, read_kin_error,
                             atomic_rho_cfg);
-
-    load_rho_from_restart(chr, rhopw, ucell, pgrid, GlobalC::restart,
-                          readin_dir, rank, GlobalV::ofs_running);
 
     if (init_chg == "wfc")
     {

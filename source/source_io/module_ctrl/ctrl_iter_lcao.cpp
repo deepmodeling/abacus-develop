@@ -1,12 +1,11 @@
 #include "ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 
-#include "source_base/global_variable.h" // use GlobalC
+#include "source_base/global_variable.h" // use GlobalV
 #include "source_hamilt/module_xc/exx_info.h"
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/lcao_deepks.h"
 #include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
-#include "source_io/module_restart/restart.h"
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
@@ -38,16 +37,6 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_iter_lcao");
-
-    // save charge density
-    // Peize Lin add 2020.04.04
-    if (GlobalC::restart.info_save.save_charge)
-    {
-        for (int is = 0; is < inp.nspin; ++is)
-        {
-            GlobalC::restart.save_disk("charge", is, chr.nrxx, chr.rho[is]);
-        }
-    }
 
 #ifdef __EXX
     bool cal_exx = exx_info.info_global.cal_exx;
