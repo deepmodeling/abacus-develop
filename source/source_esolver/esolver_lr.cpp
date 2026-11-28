@@ -582,7 +582,7 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int isp
     ModuleBase::timer::start("ESolver_LR", "solve_zvector_eqation");
     // `Z_vector_equation` treats X and Z as `nst` independent blocks of `nloc_per_state_z_`,
     // and the blocks need not be eigenvectors of the Casida equation in the order the
-    // diagonalizer returned them -- `cal_grad_matrix_degenerate` feeds it linear combinations.
+    // diagonalizer returned them -- `build_mpl_` feeds it linear combinations.
     // X arrives already widened into the Z window (`Xz`), which spans every virtual band the
     // ground state produced rather than the `nvirt` window X was solved in -- the Brillouin
     // condition the Z-vector enforces holds in EVERY occupied-virtual rotation. The padded
@@ -685,7 +685,7 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force_and_grad_matrix_(const int ispi
     this->multiplet_lvc_.erase(
         std::remove_if(
             this->multiplet_lvc_.begin(), this->multiplet_lvc_.end(),
-            [ispin](const MultipletLVC &m) { return m.ispin == ispin; }),
+            [ispin](const LR::MplLvc &m) { return m.ispin == ispin; }),
         this->multiplet_lvc_.end());
     // The per-state gradients above are the diagonal of the degenerate-subspace gradient matrix in
     // whatever basis the eigensolver returned, so inside a multiplet only their trace means
@@ -709,115 +709,33 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force_and_grad_matrix_(const int ispi
         {
             diag.push_back(forces[ist]);
         }
-        MultipletLVC lvc;
-        lvc.ispin = ispin;
-        lvc.states = group;
-        double lo = omega[group.front()];
-        double hi = omega[group.front()];
-        double sum = 0.0;
-        for (const int ist : group)
-        {
-            lo = std::min(lo, omega[ist]);
-            hi = std::max(hi, omega[ist]);
-            sum += omega[ist];
-        }
-        lvc.omega0 = sum / static_cast<double>(group.size());
-        lvc.omega_spread = hi - lo;
-        lvc.g = this->cal_grad_matrix_degenerate(ispin, group, diag, ofs);
-        this->multiplet_lvc_.push_back(lvc);
+        this->multiplet_lvc_.push_back(this->build_mpl_(ispin, group, diag, ofs));
     }
 }
 
 template <typename T, typename TR>
-std::vector<std::vector<ModuleBase::matrix>> ModuleESolver::ESolver_LR<T, TR>::cal_grad_matrix_degenerate(
-    const int ispin,
-    const std::vector<int> &group,
-    const std::vector<ModuleBase::matrix> &diag,
-    std::ofstream &ofs)
+LR::MplLvc ModuleESolver::ESolver_LR<T, TR>::build_mpl_(const int ispin,
+                                                        const std::vector<int> &group,
+                                                        const std::vector<ModuleBase::matrix> &diag,
+                                                        std::ofstream &ofs)
 {
-    ModuleBase::TITLE("ESolver_LR", "cal_grad_matrix_degenerate");
-    ModuleBase::timer::start("ESolver_LR", "cal_grad_matrix_degenerate");
-    const int d = static_cast<int>(group.size());
-    assert(d >= 2);
-    assert(diag.size() == group.size());
-    const std::vector<std::pair<int, int>> pairs = LR::degenerate_pairs(d);
-    const int nloc_g = this->nloc_per_state_z_;
-    const int ekb_off = this->openshell ? 0 : ispin * this->nstates;
-
-    // 1. the multiplet's members, each widened into the Z window
+    ModuleBase::TITLE("ESolver_LR", "build_mpl_");
+    ModuleBase::timer::start("ESolver_LR", "build_mpl_");
+    // The multiplet's members, each widened into the Z window
     const ct::Tensor Xz = this->pad_group_to_z_(ispin, group);
-    std::vector<double> omega_member(d);
-    for (int k = 0; k < d; ++k)
+    const int ekb_off = this->openshell ? 0 : ispin * this->nstates;
+    std::vector<double> omega(group.size());
+    for (size_t k = 0; k < group.size(); ++k)
     {
-        omega_member[k] = this->pelec->ekb.c[ekb_off + group[k]];
+        omega[k] = this->pelec->ekb.c[ekb_off + group[k]];
     }
-
-    // 2. the two preconditions of route (A2), reported rather than enforced: the combinations
-    //    $X_\pm$ are normalized eigenvectors only if the members are orthonormal, and the gradient
-    //    is a single quadratic form only if they share one $\Omega$. An accidental near-degeneracy
-    //    passes the grouping threshold but fails the second, and its `omega_spread` says so.
-    double max_ovlp_err = 0.0;
-    for (int k = 0; k < d; ++k)
-    {
-        for (int l = k; l < d; ++l)
-        {
-            const T *const xk = Xz.template data<T>() + static_cast<size_t>(k) * nloc_g;
-            const T *const xl = Xz.template data<T>() + static_cast<size_t>(l) * nloc_g;
-            T loc = static_cast<T>(0);
-            for (int i = 0; i < nloc_g; ++i)
-            {
-                loc += LR_Util::get_conj(xk[i]) * xl[i];
-            }
-            Parallel_Reduce::reduce_all(loc);
-            const double ref = (k == l) ? 1.0 : 0.0;
-            max_ovlp_err = std::max(max_ovlp_err, std::abs(loc - ref));
-        }
-    }
-    const double omega_max = *std::max_element(omega_member.begin(), omega_member.end());
-    const double omega_min = *std::min_element(omega_member.begin(), omega_member.end());
-    const double omega_spread = omega_max - omega_min;
-    // one $\Omega$ for every combination: the members share it up to `omega_spread`, and the mean
-    // is the neutral choice for a vector that belongs to no single member
-    double omega_sum = 0.0;
-    for (const double omega : omega_member)
-    {
-        omega_sum += omega;
-    }
-    const double omega_mean = omega_sum / static_cast<double>(d);
-    ofs << " Degenerate multiplet of " << d << " states, Omega = " << omega_mean << " Ry, spread = " << omega_spread
-        << " Ry, max |<X_k|X_l> - delta_kl| = " << max_ovlp_err << std::endl;
-    // Dimensionless diagnostic tolerance for the orthonormality needed by X_plus.
-    // This warning does not change the multiplet or the computed gradient.
-    const double orthonormality_warn_tol = 1e-6;
-    if (max_ovlp_err > orthonormality_warn_tol)
-    {
-        ofs << " WARNING: this multiplet's eigenvectors are not orthonormal to"
-            << " tolerance " << orthonormality_warn_tol
-            << " (dimensionless overlap error); (X_k+X_l)/sqrt(2) may not be normalized"
-            << " and the assembled gradient matrix may consequently be inaccurate." << std::endl;
-    }
-
-    // 3. the $d(d-1)/2$ combinations $X_+=(X_k+X_l)/\sqrt2$, all in one Z-vector solve
-    const int npair = static_cast<int>(pairs.size());
-    ct::Tensor Xp = LR_Util::newTensor<T>({npair, nloc_g});
-    Xp.zero();
-    for (int ip = 0; ip < npair; ++ip)
-    {
-        LR::combine_normalized(
-            Xz.template data<T>() + static_cast<size_t>(pairs[ip].first) * nloc_g,
-            Xz.template data<T>() + static_cast<size_t>(pairs[ip].second) * nloc_g, static_cast<size_t>(nloc_g),
-            Xp.template data<T>() + static_cast<size_t>(ip) * nloc_g);
-    }
-    const std::vector<double> omega_pair(npair, omega_mean);
-    const std::vector<ModuleBase::matrix> plus = this->openshell
-                                                     ? this->cal_force_openshell_Xz(Xp, omega_pair, group[0])
-                                                     : this->cal_force_Xz(ispin, Xp, omega_pair, group[0]);
-
-    // 4. $G_{kl}=\mathcal F[X_+]-\tfrac12(G_{kk}+G_{ll})$
-    const std::vector<std::vector<ModuleBase::matrix>> g = LR::assemble_grad_matrix(diag, plus, pairs);
-    print_grad_matrix(g, group, (*this->ucell_), ofs);
-    ModuleBase::timer::end("ESolver_LR", "cal_grad_matrix_degenerate");
-    return g;
+    // The module owns everything but the Z-vector solve, which stays behind this callback.
+    const LR::MplEval eval = [this, ispin](const ct::Tensor &x, const std::vector<double> &w, const int label) {
+        return this->openshell ? this->cal_force_openshell_Xz(x, w, label) : this->cal_force_Xz(ispin, x, w, label);
+    };
+    LR::MplLvc mpl = LR::build_mpl<T>(Xz, omega, diag, this->nloc_per_state_z_, ispin, group, *this->ucell_, eval, ofs);
+    ModuleBase::timer::end("ESolver_LR", "build_mpl_");
+    return mpl;
 }
 
 template <typename T, typename TR>
@@ -1081,102 +999,12 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_jt_force_(
     // off-diagonal elements are assembled here -- d(d-1)/2 further Z-vector solves on top of the
     // d diagonal ones already in `diag`.
     const std::vector<int> &group = this->target_.group();
-    const int d = static_cast<int>(group.size());
-    const std::vector<std::vector<ModuleBase::matrix>> g =
-        this->cal_grad_matrix_degenerate(this->target_.ispin(), group, diag, ofs);
-    const int nat = diag[0].nr;
-    const int ncoord = nat * 3;
-    // flatten to the layout `find_jt_direction` takes: one d x d block per nuclear coordinate.
-    // FORCES go in, not gradients, so the direction that comes back points downhill.
-    std::vector<double> gflat(static_cast<size_t>(ncoord) * d * d, 0.0);
-    for (int iat = 0; iat < nat; ++iat)
-    {
-        for (int ixyz = 0; ixyz < 3; ++ixyz)
-        {
-            const int a = iat * 3 + ixyz;
-            for (int k = 0; k < d; ++k)
-            {
-                for (int l = 0; l < d; ++l)
-                {
-                    gflat[static_cast<size_t>(a) * d * d + k * d + l] = g[k][l](iat, ixyz);
-                }
-            }
-        }
-    }
-    const LR::JTDirection jt = LR::find_jt_direction(gflat, ncoord, d);
+    LR::JtForce jt = LR::eval_jt_force(this->build_mpl_(this->target_.ispin(), group, diag, ofs).g, ofs);
     const int channel = this->openshell ? 0 : this->target_.ispin();
-    const T *const amplitudes = this->X[channel].template data<T>();
-    this->target_.save_mixed(amplitudes, this->nloc_per_state, jt.mixing);
-    std::vector<double> jt_part;
-    const std::vector<double> sym = LR::split_symmetric_part(gflat, ncoord, d, jt.mixing, jt_part);
-
-    const double fac = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
-    ofs << " lr_degen_mode=jt: descending the steepest branch of the multiplet." << std::endl
-        << "   |F| of that branch  = " << jt.slope * fac << " eV/Angstrom" << std::endl
-        << "   mixing v            =";
-    for (int k = 0; k < d; ++k)
-    {
-        ofs << " " << jt.mixing[k];
-    }
-    ofs << std::endl
-        << "   starts agreeing     = " << jt.restarts_agreeing << " of " << (d + (1 << (d - 1))) << " (iterations "
-        << jt.iterations << ")" << std::endl;
-    // The two halves matter separately: the symmetric part is common to the whole multiplet and
-    // only relaxes the geometry, while the remainder is what actually breaks the degeneracy. At a
-    // stationary point of the average surface the first is zero and the whole force is Jahn-Teller.
-    double nsym = 0.0;
-    double njt = 0.0;
-    for (int a = 0; a < ncoord; ++a)
-    {
-        nsym += sym[a] * sym[a];
-        njt += jt_part[a] * jt_part[a];
-    }
-    ofs << "   |symmetric part|    = " << std::sqrt(nsym) * fac
-        << " eV/Angstrom (common to the"
-           " multiplet; relaxes the geometry without splitting it)"
-        << std::endl
-        << "   |Jahn-Teller part|  = " << std::sqrt(njt) * fac
-        << " eV/Angstrom (the symmetry-"
-           "breaking remainder)"
-        << std::endl;
-    if (std::sqrt(njt) < 1e-8)
-    {
-        ofs << " WARNING: the symmetry-breaking part vanishes -- every branch of this multiplet has"
-               " the same gradient, so there is no Jahn-Teller direction to descend here. This is the"
-               " expected outcome for a linear molecule, where the effect is second order"
-               " (Renner-Teller) and no first-order term exists."
-            << std::endl;
-    }
-    ofs << " NOTE: this is the first-order DIRECTION only. The distortion amplitude also needs the"
-           " harmonic term, and the step norm is Cartesian rather than mass-weighted."
-        << std::endl;
-
-    // The force handed back is that of the descending branch, q(v) with v the optimal mixing --
-    // i.e. the branch's own gradient, which is what a relaxation must follow. Once a step has
-    // split the multiplet, `resolve_group` finds no group and the ordinary single-state path
-    // takes over, so this mode is self-limiting by construction.
-    ModuleBase::matrix f(nat, 3);
-    for (int iat = 0; iat < nat; ++iat)
-    {
-        for (int ixyz = 0; ixyz < 3; ++ixyz)
-        {
-            const int a = iat * 3 + ixyz;
-            f(iat, ixyz) = sym[a] + jt_part[a];
-        }
-    }
-    return f;
-}
-
-template <typename T, typename TR>
-ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::MultipletLVC::average_force() const
-{
-    assert(!this->g.empty());
-    std::vector<ModuleBase::matrix> diag;
-    for (int k = 0; k < this->dim(); ++k)
-    {
-        diag.push_back(this->g[k][k]);
-    }
-    return average_forces(diag);
+    this->target_.save_mixed(this->X[channel].template data<T>(), this->nloc_per_state, jt.mixing);
+    // The returned force is the descending branch's own gradient; once a step splits the
+    // multiplet `resolve_group` finds no group and the single-state path takes over.
+    return jt.force;
 }
 
 // Initialize LR from an embedded KS solver or standalone ground-state files.

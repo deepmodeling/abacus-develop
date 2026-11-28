@@ -19,6 +19,7 @@
 #include "source_lcao/module_lr/hamilt_casida.h"
 #include "source_lcao/module_lr/potentials/lr_gs_pot.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
+#include "source_lcao/module_lr/lr_mpl.h"
 #include "source_lcao/module_lr/lr_relax.h"
 #include "source_lcao/module_lr/state_track.h"
 #ifdef __EXX
@@ -255,7 +256,7 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// The blocks of `Xz` need not be the eigenvectors the Casida diagonalizer returned. Any
     /// normalized vector inside a degenerate multiplet is an eigenvector with the same
     /// `omega`, so passing a linear combination is what turns the per-state gradient into the
-    /// full degenerate-subspace gradient matrix; see `cal_grad_matrix_degenerate` and
+    /// full degenerate-subspace gradient matrix; see `build_mpl_` and
     /// `grad_degen.h`.
     ///
     /// @param omega        excitation energy of each block (Ry); its size sets the block count
@@ -268,29 +269,14 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// open-shell counterpart of `cal_force_Xz`
     std::vector<ModuleBase::matrix> cal_force_openshell_Xz(
         const ct::Tensor &Xz, const std::vector<double> &omega, const int label_begin);
-    /// @brief The linear vibronic coupling (LVC) data of one degenerate multiplet.
-    ///
-    /// $H(\delta R)=\Omega_0\mathbb{1}+\sum_{A\alpha}\delta R_{A\alpha}G^{(A\alpha)}$ is the
-    /// complete first-order description of a degeneracy, and $G$ is its parameter set. Kept as
-    /// one object rather than as loose force matrices because the excited-state relaxation and
-    /// (later) non-adiabatic dynamics need exactly the same data: near a degeneracy the correct
-    /// propagation is on this coupled $d\times d$ model, not on an adiabatic gradient.
-    struct MultipletLVC
-    {
-        int ispin = 0;             ///< which spin channel (index into `spin_types`)
-        std::vector<int> states;   ///< the multiplet's state indices, ascending
-        double omega0 = 0.0;       ///< the common excitation energy (Ry)
-        double omega_spread = 0.0; ///< max - min over the members (Ry); 0 if exact
-        /// G[k][l], symmetric, each a (nat, 3) force matrix -- i.e. the 3N matrices of d x d
-        std::vector<std::vector<ModuleBase::matrix>> g;
-        int dim() const { return static_cast<int>(states.size()); }
-        /// $\operatorname{Tr}G/d$: the one smooth, basis-independent 3N vector field the
-        /// multiplet has. Following it preserves the symmetric configuration.
-        ModuleBase::matrix average_force() const;
-    };
+    /// @brief The linear vibronic coupling (LVC) data of one degenerate multiplet: see
+    ///        `LR::MplLvc`. Kept as one object rather than as loose force matrices because the
+    ///        excited-state relaxation and (later) non-adiabatic dynamics need exactly the same
+    ///        data: near a degeneracy the correct propagation is on this coupled $d\times d$
+    ///        model, not on an adiabatic gradient.
     /// LVC data of every multiplet found at this geometry, rebuilt on each call of
     /// `cal_force_and_grad_matrix_`. Empty unless `lr_degen_thr > 0`.
-    std::vector<MultipletLVC> multiplet_lvc_;
+    std::vector<LR::MplLvc> multiplet_lvc_;
     /// The LR half of the force for the current geometry, following whichever surface
     /// `lr_degen_mode` selects. `ofs` receives the note when that is not a single state.
     ModuleBase::matrix cal_lr_force_relax_(std::ofstream &ofs);
@@ -313,22 +299,13 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     ///
     /// Fills `multiplet_lvc_`.
     void cal_force_and_grad_matrix_(const int ispin, std::ofstream &ofs);
-    /// @brief The gradient matrix of one degenerate multiplet,
-    ///        $G^{(A\alpha)}_{kl}=\langle X_k|\partial A/\partial R_{A\alpha}|X_l\rangle$.
-    ///
-    /// At a degeneracy no single state has a gradient vector -- the branch slopes along a
-    /// displacement $u$ are the eigenvalues of $\sum_{A\alpha}u_{A\alpha}G^{(A\alpha)}$, whose
-    /// eigenvectors depend on $u$ -- so this whole matrix, not its diagonal, is the first-order
-    /// information. It is obtained from the polarization identity
-    /// $G_{kl}=\mathcal F[(X_k{+}X_l)/\sqrt2]-\tfrac12(G_{kk}+G_{ll})$, which needs no new
-    /// physics. `grad_degen.h` derives why that is exact.
+    /// @brief Wrap one multiplet's Z-window members and per-state forces into
+    ///        `LR::build_mpl`, which owns the polarization identity and the diagnostics.
     ///
     /// @param group  state indices of the multiplet, from `LR::group_degenerate_states`
-    /// @param diag   their per-state gradients, i.e. $G_{kk}$, already computed by `cal_force`
+    /// @param diag   their per-state forces, i.e. $G_{kk}$, already computed by `cal_force`
     /// @param ofs    log stream the matrix and the precondition diagnostics are written to
-    /// @return  G[k][l], symmetric, each entry a (nat, 3) force matrix
-    std::vector<std::vector<ModuleBase::matrix>> cal_grad_matrix_degenerate(
-        const int ispin,
+    LR::MplLvc build_mpl_(const int ispin,
         const std::vector<int> &group,
         const std::vector<ModuleBase::matrix> &diag,
         std::ofstream &ofs);
