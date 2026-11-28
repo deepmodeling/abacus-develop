@@ -68,7 +68,15 @@ void dm_from_cusolver(Diag_Cusolver_gvd* solver, const double* weights, const in
         const int* descriptor = layout.desc();
         const int* descriptor_end = descriptor + 9;
         std::copy(descriptor, descriptor_end, distributed_desc);
-        Cpdgemr2d(n, n, host_dm, 1, 1, full_desc, distributed_dm, 1, 1, distributed_desc, context);
+        // Bound ScaLAPACK's temporary packing buffers to one column block.
+        const int block_size = layout.nb();
+        for (int column = 0; column < n; column += block_size)
+        {
+            const int columns = std::min(block_size, n - column);
+            const int first = column + 1;
+            Cpdgemr2d(n, columns, host_dm, 1, first, full_desc,
+                      distributed_dm, 1, first, distributed_desc, context);
+        }
     }
     ModuleBase::timer::end("HSolverLCAO", "dm_from_cusolver");
 }
