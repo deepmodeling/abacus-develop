@@ -15,9 +15,9 @@ void ReadInput::item_output()
         item.annotation = "print information every few ionic steps";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis, and periodic structure files (when out_stru is positive) is printed every n ionic steps."
+        item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every n ionic steps. In MD, periodic structure frames are controlled by the optional second value of out_stru."
                           "\n\nThis parameter only controls how often a write happens, not how many files are kept: with out_app_flag = 0 each write overwrites the same fixed filename, with out_app_flag = 1 records are appended to one fixed filename, and with out_app_flag = 2 each written step gets its own g{step} file."
-                          "\n\nIn molecular dynamics calculations, positive out_freq_ion selects periodic structure frames starting at the first step. Zero disables periodic frames; STRU_FINAL or STRU_FINAL.cif is still written when out_stru is positive. MD checkpoints STRU_restart and Restart_md.txt follow md_restartfreq independently."
+                          "\n\nIn molecular dynamics calculations, out_freq_ion does not control periodic structure frames. The optional second value of out_stru sets that cadence (default 1). MD writes STRU_FINAL or STRU_FINAL.cif when out_stru is positive. Checkpoints STRU_restart and Restart_md.txt follow md_restartfreq independently."
                           "\n\nFor DFT+U calculations with out_occ_mat = 1, a separate occupation-matrix file occ_matg{geom_step}.txt is created for every output ionic step. The converged (or final, if not converged) electronic step is always recorded in that file; when out_freq_elec is set smaller than scf_nmax, additional electronic steps are appended as separate sections, each labelled only with the electronic-step number."
                           "\n\nIn RT-TDDFT calculations, this parameter counts completed electronic evolution steps (`STEP OF ELECTRON EVOLVE`) instead, because one ionic step contains `estep_per_md` electronic steps. To write once per ionic step, set it to `estep_per_md`.";
         item.default_value = "0";
@@ -523,16 +523,17 @@ The LDOS is evaluated once after all ionic steps finish; the cube header records
         Input_Item item("out_stru");
         item.annotation = "output the structure files per ion step";
         item.category = "Output information";
-        item.type = "Integer";
-        item.description = "Controls ordinary structure output in scf/nscf/relax/cell-relax and md calculations. Files are written to OUT.{suffix}/, or to STRUC/ when out_app_flag=2. The relaxation header records version, time, energy and stress; MD frames use a one-based \"# MD step N\" marker. In relax, STRU_NOW is overwritten each step, STRU_FINAL is written at completion, and positive out_freq_ion selects additional periodic files when out_app_flag is 1 or 2. In MD, STRU_FINAL or STRU_FINAL.cif is written at completion and positive out_freq_ion selects periodic frames for all three output modes. For scf/nscf only STRU_FINAL (or STRU_FINAL.cif) is written.\n\n"
+        item.type = R"(Integer \[Integer\](optional))";
+        item.description = "The first integer controls ordinary structure output in scf/nscf/relax/cell-relax and md calculations. Files are written to OUT.{suffix}/, or to STRUC/ when out_app_flag=2. The optional second integer controls the periodic MD structure-frame interval and defaults to 1. In MD, for example, 'out_stru 1 5' writes a STRU frame every 5 steps, while 'out_stru 1 0' disables periodic frames but still writes STRU_FINAL. The final STRU (or STRU_FINAL.cif) is written when out_stru is positive; STRU_restart and Restart_md.txt follow md_restartfreq independently. For relax, STRU_NOW is overwritten each step, STRU_FINAL is written at completion, and positive out_freq_ion selects additional periodic files when out_app_flag is 1 or 2. For scf/nscf only STRU_FINAL (or STRU_FINAL.cif) is written.\n\n"
                           "    - 0: No ordinary structure files are output. MD restart checkpoints remain controlled by md_restartfreq.\n"
-                          "    - 1: ABACUS STRU format files are output. In relax/cell-relax the latest structure is written to STRU_NOW (overwritten each step), periodic STRU files are written when out_freq_ion is positive and out_app_flag is 1 or 2, and the final structure is written to STRU_FINAL. For scf/nscf only STRU_FINAL is written. In MD, positive out_freq_ion selects periodic STRU files in modes 0, 1 and 2; STRU_FINAL is always written at completion. Mode 1 appends one structure block per selected step to fixed-name STRU.\n"
-                          "    - 2: CIF format files are output. In relax/cell-relax, STRU_NOW.cif is overwritten each step and STRU_FINAL.cif is written at completion; periodic CIF files are written with positive out_freq_ion when out_app_flag is 1 or 2. In MD, positive out_freq_ion selects periodic CIF files for all three modes and STRU_FINAL.cif is written at completion. Mode 2 writes numbered STRU{istep}.cif files; modes 0 and 1 overwrite one STRU.cif on each selected step. CIF contains geometry but no per-atom forces or velocities. MD restart checkpoints remain ABACUS STRU files.\n"
-                          "[NOTE] MD writes STRU_FINAL or STRU_FINAL.cif at the end when out_stru is positive. With out_freq_ion>0 it also writes periodic frames from the first step. For ABACUS STRU, out_app_flag=0 overwrites STRU, mode 1 appends marked frames to STRU, and mode 2 writes numbered STRU{istep} files under STRUC/. With out_freq_ion=0 only the final structure is written. MD does not write STRU_NOW. Ordinary MD STRU structures include forces in eV/Angstrom and velocities in atomic units; STRU_restart keeps velocities but omits forces, and is written with Restart_md.txt according to md_restartfreq even when out_stru=0.\n"
+                          "    - 1: ABACUS STRU format files are output. In relax/cell-relax the latest structure is written to STRU_NOW (overwritten each step), periodic STRU files are written when out_freq_ion is positive and out_app_flag is 1 or 2, and the final structure is written to STRU_FINAL. For scf/nscf only STRU_FINAL is written. In MD, the optional second integer selects periodic STRU frames and defaults to every step. Mode 1 appends one structure block per selected step to fixed-name STRU.\n"
+                          "    - 2: CIF format files are output. In relax/cell-relax, STRU_NOW.cif is overwritten each step and STRU_FINAL.cif is written at completion; periodic CIF files are written with positive out_freq_ion when out_app_flag is 1 or 2. In MD, the optional second integer selects periodic CIF frames and defaults to every step. Mode 2 writes numbered STRU{istep}.cif files; modes 0 and 1 overwrite one STRU.cif on each selected step. CIF contains geometry but no per-atom forces or velocities. MD restart checkpoints remain ABACUS STRU files.\n"
+                          "[NOTE] For MD with out_stru > 0, STRU_FINAL or STRU_FINAL.cif is written at the end. The optional second integer defaults to 1; set it to 0 to disable periodic structure frames while keeping the final structure. For ABACUS STRU, out_app_flag=0 overwrites STRU, mode 1 appends marked frames to STRU, and mode 2 writes numbered STRU{istep} files under STRUC/. MD does not write STRU_NOW. Ordinary MD STRU structures include forces in eV/Angstrom and velocities in atomic units; STRU_restart keeps velocities but omits forces, and is written with Restart_md.txt according to md_restartfreq even when out_stru=0.\n"
                           "[NOTE] For backward compatibility, true/false (case insensitive) are accepted and converted to 1/0.";
         item.default_value = "1";
         item.unit = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
             const std::string val = FmtCore::lower(item.str_values[0]);
             if (val == "true" || val == "t" || val == "yes" || val == "y" || val == "on" || val == ".true.")
             {
@@ -566,6 +567,11 @@ The LDOS is evaluated once after all ionic steps finish; the cube header records
                         "out_stru must be one of 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
                 }
             }
+            para.input.out_freq_stru = 1;
+            if (count == 2)
+            {
+                para.input.out_freq_stru = std::stoi(item.str_values[1]);
+            }
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             // For scf/nscf/get_s/get_pchg/get_wf the default is no structure
@@ -585,6 +591,10 @@ The LDOS is evaluated once after all ionic steps finish; the cube header records
             }
         };
         sync_int(input.out_stru);
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            item.final_value << para.input.out_stru << " " << para.input.out_freq_stru;
+        };
+        add_int_bcast(input.out_freq_stru);
         this->add_item(item);
     }
     {

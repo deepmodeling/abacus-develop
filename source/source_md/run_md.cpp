@@ -102,7 +102,7 @@ void md_line(
         }
     };
 
-    const int output_freq = param_in.inp.out_freq_ion;
+    const int output_freq = param_in.inp.out_freq_stru;
     const int restart_freq = param_in.mdp.md_restartfreq;
     const std::string stru_out_dir = param_in.globalv.global_stru_dir;
     const std::string restart_stru = param_in.globalv.global_out_dir + "STRU_restart";
@@ -139,7 +139,7 @@ void md_line(
         const int md_step = mdrun->step_ + mdrun->step_rst_;
         /// Mark the final ionic step on the cell passed to the solver. The
         /// output module then writes the final snapshot even when this step is
-        /// off the out_freq_ion cadence or its SCF did not converge.
+        /// off the out_stru cadence or its SCF did not converge.
         const bool is_final_step = is_last_step(md_step, param_in.mdp.md_nstep);
         if (mdcell.has_backing_unitcell())
         {

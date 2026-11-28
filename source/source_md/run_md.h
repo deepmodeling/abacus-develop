@@ -23,9 +23,9 @@ namespace Run_MD
 inline bool is_cadence_step(const int current_step, const int freq) { return freq > 0 && current_step % freq == 0; }
 
 /// Periodic structure output is independent of the MD restart cadence.
-inline bool is_structure_output_step(const int current_step, const int out_freq_ion, const bool out_stru)
+inline bool is_structure_output_step(const int current_step, const int out_freq_stru, const bool out_stru)
 {
-    return out_stru && is_cadence_step(current_step, out_freq_ion);
+    return out_stru && is_cadence_step(current_step, out_freq_stru);
 }
 
 /// Returns true when `current_step` is the final ionic step of the run.

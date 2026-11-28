@@ -67,6 +67,7 @@ foreach(
         out_dmk_zero_precision
         out_hsk_zero_precision
         out_mat_tk_zero_precision
+        out_stru_negative_frequency
         valid)
   if(input_case STREQUAL "unsupported_libxc_cuda" AND ENABLE_LIBXC_CUDA)
     continue()

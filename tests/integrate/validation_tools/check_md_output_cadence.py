@@ -8,12 +8,15 @@ import tempfile
 
 
 def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected,
-             thermo_freq=1, legacy_stru_dir=False):
+             thermo_freq=1, legacy_stru_dir=False, out_stru_freq=None):
     with tempfile.TemporaryDirectory(prefix="abacus-md-cadence-") as scratch:
         work = Path(scratch)
         shutil.copyfile(fixture / "STRU", work / "STRU")
         input_text = (fixture / "INPUT").read_text()
-        input_text = input_text.replace("out_stru 0", "out_stru " + str(out_stru))
+        out_stru_value = str(out_stru)
+        if out_stru_freq is not None:
+            out_stru_value += " " + str(out_stru_freq)
+        input_text = input_text.replace("out_stru 0", "out_stru " + out_stru_value)
         input_text = input_text.replace("out_freq_ion 2", "out_freq_ion " + str(out_freq_ion))
         input_text = input_text.replace("out_app_flag 0", "out_app_flag " + str(out_app_flag))
         input_text += "\ncal_stress 1\n"
@@ -43,8 +46,8 @@ def run_case(executable, fixture, out_stru, out_freq_ion, out_app_flag, expected
         frames = {path.name for path in structure_dir.glob("STRU*") if path.is_file()}
         frames.discard("STRU_restart")
         if frames != expected:
-            raise AssertionError("out_stru={}, out_freq_ion={}, out_app_flag={} produced {}, expected {}\n{}".format(
-                out_stru, out_freq_ion, out_app_flag, sorted(frames), sorted(expected), result.stdout))
+            raise AssertionError("out_stru={} {}, out_freq_ion={}, out_app_flag={} produced {}, expected {}\n{}".format(
+                out_stru, out_stru_freq, out_freq_ion, out_app_flag, sorted(frames), sorted(expected), result.stdout))
         restart = output / "Restart_md.txt"
         if not restart.is_file() or restart.stat().st_size == 0:
             raise AssertionError("Missing MD restart for out_stru={}".format(out_stru))
@@ -127,20 +130,25 @@ def main():
     parser.add_argument("fixture", type=Path)
     args = parser.parse_args()
     run_case(args.executable, args.fixture, 0, 2, 0, set())
-    run_case(args.executable, args.fixture, 1, 0, 0, {"STRU_FINAL"})
-    run_case(args.executable, args.fixture, 1, 0, 1, {"STRU_FINAL"})
-    run_case(args.executable, args.fixture, 1, 0, 2, {"STRU_FINAL"})
-    run_case(args.executable, args.fixture, 1, 2, 0, {"STRU", "STRU_FINAL"})
-    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"})
-    run_case(args.executable, args.fixture, 1, 2, 2, {"STRU1", "STRU3", "STRU5", "STRU_FINAL"})
-    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"}, thermo_freq=3)
-    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"}, thermo_freq=0)
-    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU_FINAL"}, legacy_stru_dir=True)
-    run_case(args.executable, args.fixture, 2, 0, 1, {"STRU_FINAL.cif"})
-    run_case(args.executable, args.fixture, 2, 2, 0, {"STRU.cif", "STRU_FINAL.cif"})
-    run_case(args.executable, args.fixture, 2, 2, 1, {"STRU.cif", "STRU_FINAL.cif"})
+    run_case(args.executable, args.fixture, 1, 0, 0, {"STRU_FINAL"}, out_stru_freq=0)
+    run_case(args.executable, args.fixture, 1, 0, 1, {"STRU_FINAL"}, out_stru_freq=0)
+    run_case(args.executable, args.fixture, 1, 0, 2, {"STRU_FINAL"}, out_stru_freq=0)
+    run_case(args.executable, args.fixture, 1, 2, 0, {"STRU", "STRU_FINAL"}, out_stru_freq=2)
+    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"}, out_stru_freq=2)
+    run_case(args.executable, args.fixture, 1, 2, 2,
+             {"STRU1", "STRU3", "STRU5", "STRU_FINAL"}, out_stru_freq=2)
+    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"}, thermo_freq=3, out_stru_freq=2)
+    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU", "STRU_FINAL"}, thermo_freq=0, out_stru_freq=2)
+    run_case(args.executable, args.fixture, 1, 2, 1, {"STRU_FINAL"}, legacy_stru_dir=True, out_stru_freq=2)
+    run_case(args.executable, args.fixture, 2, 0, 1, {"STRU_FINAL.cif"}, out_stru_freq=0)
+    run_case(args.executable, args.fixture, 2, 2, 0, {"STRU.cif", "STRU_FINAL.cif"}, out_stru_freq=2)
+    run_case(args.executable, args.fixture, 2, 2, 1, {"STRU.cif", "STRU_FINAL.cif"}, out_stru_freq=2)
     run_case(args.executable, args.fixture, 2, 2, 2,
-             {"STRU1.cif", "STRU3.cif", "STRU5.cif", "STRU_FINAL.cif"})
+             {"STRU1.cif", "STRU3.cif", "STRU5.cif", "STRU_FINAL.cif"}, out_stru_freq=2)
+    run_case(args.executable, args.fixture, 1, 0, 2,
+             {"STRU1", "STRU3", "STRU5", "STRU_FINAL"}, out_stru_freq=2)
+    run_case(args.executable, args.fixture, 1, 0, 2,
+             {"STRU1", "STRU2", "STRU3", "STRU4", "STRU5", "STRU_FINAL"})
     run_legacy_restart_case(args.executable, args.fixture)
 
 
