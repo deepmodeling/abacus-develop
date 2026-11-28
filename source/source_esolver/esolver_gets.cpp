@@ -205,7 +205,7 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
                                this->pv,
                                orb_,
                                global_matrix_dir,
-                               this->inp_->out_mat_p);
+                               *this->inp_);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");

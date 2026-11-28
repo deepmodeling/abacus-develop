@@ -800,7 +800,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                pv,
                                orb,
                                global_mat_dir,
-                               inp.out_mat_p);
+                               inp);
     }
 
     //------------------------------------------------------------------

@@ -8,7 +8,7 @@
 #include "source_cell/unitcell.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/input_parameter.h"
 #include "source_lcao/module_momentum_op/velocity_op.h"
 
 #include "hsr_writer.h"
@@ -52,12 +52,12 @@ void calculate(const int istep,
                const Parallel_Orbitals& pv,
                const LCAO_Orbitals& orb,
                const std::string& output_dir,
-               const std::vector<int>& out_mat_p)
+               const Input_para& inp)
 {
     ModuleBase::TITLE("Momentum_op", "calculate");
     ModuleBase::timer::start("Momentum_op", "calculate");
 
-    if (out_mat_p.empty() || out_mat_p[0] == 0)
+    if (inp.out_mat_p.empty() || inp.out_mat_p[0] == 0)
     {
         ModuleBase::timer::end("Momentum_op", "calculate");
         return;
@@ -65,7 +65,6 @@ void calculate(const int istep,
 
     // --- Convert the two-center bundle into the legacy LCAO_Orbitals layout ---
     LCAO_Orbitals lcao_orb;
-    const Input_para& inp = PARAM.inp;
     two_center_bundle.to_LCAO_Orbitals(lcao_orb,
                                        inp.lcao_ecut,
                                        inp.lcao_dk,
@@ -105,8 +104,8 @@ void calculate(const int istep,
         = "p = -i nabla + i [V_nl, r], Hermitian operator in the local atomic basis; "
           "only the scalar (npol = 1) block is written.";
 
-    const int precision = out_mat_p.size() > 1 ? out_mat_p[1] : 8;
-    const int out_app_flag = PARAM.inp.out_app_flag;
+    const int precision = inp.out_mat_p.size() > 1 ? inp.out_mat_p[1] : 8;
+    const int out_app_flag = inp.out_app_flag;
 
     for (int c = 0; c < 3; ++c)
     {

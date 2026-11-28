@@ -2,8 +2,8 @@
 #define MOMENTUM_OP_MAT_H
 
 #include <string>
-#include <vector>
 
+struct Input_para;
 class UnitCell;
 class Grid_Driver;
 class Parallel_Orbitals;
@@ -34,7 +34,7 @@ namespace Momentum_op
  * @param pv               parallel orbitals for 2D block-cyclic distribution
  * @param orb              local atomic orbital descriptor
  * @param output_dir       directory prefix for the output files (e.g. "MAT/")
- * @param out_mat_p        {switch, precision} INPUT parameter vector
+ * @param inp              INPUT parameters, including out_mat_p and out_app_flag
  */
 void calculate(const int istep,
                const UnitCell& ucell,
@@ -43,7 +43,7 @@ void calculate(const int istep,
                const Parallel_Orbitals& pv,
                const LCAO_Orbitals& orb,
                const std::string& output_dir,
-               const std::vector<int>& out_mat_p);
+               const Input_para& inp);
 
 } // namespace Momentum_op
 
