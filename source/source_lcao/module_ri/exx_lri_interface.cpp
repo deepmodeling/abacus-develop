@@ -392,23 +392,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
     if (PARAM.inp.out_mat_exx && (this->two_level_step > 0 || istep > 0)
         && (!this->info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
     {
-        ////////// for Add_Hexx_Type::k
-        /*
-        hamilt::HS_Matrix_K<TK> Hexxk_save(&this->pv, 1);
-        for (int ik = 0; ik < this->kv.get_nks(); ++ik) {
-            Hexxk_save.set_zero_hk();
-
-            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(&Hexxk_save,
-                                                                         nullptr,
-                                                                         this->kv);
-
-            opexx_save.contributeHk(ik);
-
-            GlobalC::restart.save_disk("Hexx",
-                                       ik,
-                                       this->pv.size(),
-                                       Hexxk_save.get_hk());
-        }*/
         ////////// for Add_Hexx_Type:R
         const std::string restart_HR_path = PARAM.globalv.global_out_dir + "HexxR";
         ModuleIO::write_Hexxs_csr(restart_HR_path, ucell, this->get_Hexxs(), elec.f_en.exx);

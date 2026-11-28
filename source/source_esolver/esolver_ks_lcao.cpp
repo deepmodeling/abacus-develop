@@ -34,7 +34,6 @@
 #include "source_io/module_output/print_info.h"
 #include "source_io/module_output/write_orb_info.h"
 #include "source_io/module_parameter/input_parameter.h"
-#include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_lcao/lcao_set.h"             // mohan add 20251111
 #include "source_lcao/module_rdmft/rdmft.h"
 #include "source_lcao/module_rt/td_info.h" // TD_info for init_dm config

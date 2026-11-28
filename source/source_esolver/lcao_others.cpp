@@ -12,7 +12,6 @@
 #include "source_io/module_chgpot/get_pchg_lcao.h"
 #include "source_io/module_hs/hsr_legacy.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_io/module_wf/get_wf_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/lcao_domain.h"

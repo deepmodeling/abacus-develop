@@ -16,7 +16,6 @@
 #include "source_estate/module_charge/chg_tools.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/setup_deepks.h" // use deepks, mohan add 2025-10-10
 
