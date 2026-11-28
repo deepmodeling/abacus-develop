@@ -1,5 +1,5 @@
-#ifndef ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_TDDFT_H
-#define ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_TDDFT_H
+#ifndef ABACUS_SOURCE_ESOLVER_ESOLVER_LR_H
+#define ABACUS_SOURCE_ESOLVER_ESOLVER_LR_H
 
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver_fp.h"
@@ -347,4 +347,4 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
 };
 } // namespace ModuleESolver
 
-#endif // ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_TDDFT_H
+#endif // ABACUS_SOURCE_ESOLVER_ESOLVER_LR_H

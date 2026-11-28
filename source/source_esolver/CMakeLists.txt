@@ -21,8 +21,7 @@ if(ENABLE_LCAO)
     objects
     esolver_ks_lcao.cpp
     esolver_ks_lcao_tddft.cpp
-    esolver_lr_init.cpp
-    esolver_lr_lcao_tddft.cpp
+    esolver_lr.cpp
     esolver_gets.cpp
     lcao_others.cpp
     esolver_dm2rho.cpp

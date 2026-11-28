@@ -455,7 +455,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.sc_scf_thr, 1e-3);
     EXPECT_EQ(param.inp.sc_drop_thr, 1e-3);
     EXPECT_EQ(param.inp.lr_nstates, 1);
-    // nocc is resolved from ground-state spin populations after SCF (see esolver_lr_lcao_tddft.cpp),
+    // nocc is resolved from ground-state spin populations after SCF (see esolver_lr.cpp),
     // not at INPUT-parse time, so a run with no explicit `nocc` keeps its raw unresolved default here.
     EXPECT_EQ(param.inp.nocc, -1);
     EXPECT_EQ(param.inp.nvirt, 1);

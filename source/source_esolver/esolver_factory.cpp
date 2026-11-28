@@ -16,7 +16,7 @@
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #include "esolver_ks_lcaopw.h"
-#include "esolver_lr_lcao_tddft.h"
+#include "esolver_lr.h"
 #ifdef __EXX
 #include "esolver_lr_lcao_bse.h"
 #endif
