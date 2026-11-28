@@ -1,22 +1,23 @@
 #ifndef STO_DOS
 #define STO_DOS
 #include "source_estate/elecstate.h"
-#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_che.h"
 #include "source_pw/module_stodft/sto_func.h"
+#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_wf.h"
 
 template <typename FPTYPE, typename Device>
 class Sto_DOS
 {
   public:
-    Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
-            K_Vectors* p_kv_in,
-            elecstate::ElecState* p_elec_in,
-            psi::Psi<std::complex<double>>* p_psi_in,
-            hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-            StoChe<FPTYPE, Device>& stoche,
-            Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in);
+    Sto_DOS(
+        ModulePW::PW_Basis_K *p_wfcpw_in,
+        K_Vectors *p_kv_in,
+        elecstate::ElecState *p_elec_in,
+        psi::Psi<std::complex<double>> *p_psi_in,
+        hamilt::Hamilt<std::complex<double>> *p_hamilt_in,
+        StoChe<FPTYPE, Device> &stoche,
+        Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU> *p_stowf_in);
     ~Sto_DOS();
 
     /**
@@ -31,14 +32,15 @@ class Sto_DOS
      * @param dos_emax_ev Emax input for DOS
      * @param dos_scale dos_scale input for DOS
      */
-    void decide_param(const int& dos_nche,
-                      const double& emin_sto,
-                      const double& emax_sto,
-                      const bool& dos_setemin,
-                      const bool& dos_setemax,
-                      const double& dos_emin_ev,
-                      const double& dos_emax_ev,
-                      const double& dos_scale);
+    void decide_param(
+        const int &dos_nche,
+        const double &emin_sto,
+        const double &emax_sto,
+        const bool &dos_setemin,
+        const bool &dos_setemax,
+        const double &dos_emin_ev,
+        const double &dos_emax_ev,
+        const double &dos_scale);
     /**
      * @brief Calculate DOS using stochastic wavefunctions
      *
@@ -55,17 +57,17 @@ class Sto_DOS
     int method_sto = 1;                              ///< method for sDFT
     double emax = 0.0;                               ///< maximum energy
     double emin = 0.0;                               ///< minimum energy
-    ModulePW::PW_Basis_K* p_wfcpw = nullptr;         ///< pointer to the plane wave basis
-    K_Vectors* p_kv = nullptr;                       ///< pointer to the k vectors
-    elecstate::ElecState* p_elec = nullptr;          ///< pointer to the electronic state
-    psi::Psi<std::complex<double>>* p_psi = nullptr; ///< pointer to the wavefunction
-    hamilt::Hamilt<std::complex<double>>* p_hamilt;  ///< pointer to the Hamiltonian
+    ModulePW::PW_Basis_K *p_wfcpw = nullptr;         ///< pointer to the plane wave basis
+    K_Vectors *p_kv = nullptr;                       ///< pointer to the k vectors
+    elecstate::ElecState *p_elec = nullptr;          ///< pointer to the electronic state
+    psi::Psi<std::complex<double>> *p_psi = nullptr; ///< pointer to the wavefunction
+    hamilt::Hamilt<std::complex<double>> *p_hamilt;  ///< pointer to the Hamiltonian
 
-    Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf
-        = nullptr;            ///< pointer to the stochastic wavefunctions
+    Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU> *p_stowf =
+        nullptr;              ///< pointer to the stochastic wavefunctions
     Sto_Func<double> stofunc; ///< functions
 
-    StoHamiltPW<std::complex<double>>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
+    StoHamiltPW<std::complex<double>> *p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
 };
 
 #endif // STO_DOS

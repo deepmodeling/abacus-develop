@@ -12,46 +12,44 @@ Sto_DOS<FPTYPE, Device>::~Sto_DOS()
 }
 
 template <typename FPTYPE, typename Device>
-Sto_DOS<FPTYPE, Device>::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
-                                 K_Vectors* p_kv_in,
-                                 elecstate::ElecState* p_elec_in,
-                                 psi::Psi<std::complex<double>>* p_psi_in,
-                                 hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-                                 StoChe<FPTYPE, Device>& stoche,
-                                 Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in)
+Sto_DOS<FPTYPE, Device>::Sto_DOS(
+    ModulePW::PW_Basis_K *p_wfcpw_in,
+    K_Vectors *p_kv_in,
+    elecstate::ElecState *p_elec_in,
+    psi::Psi<std::complex<double>> *p_psi_in,
+    hamilt::Hamilt<std::complex<double>> *p_hamilt_in,
+    StoChe<FPTYPE, Device> &stoche,
+    Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU> *p_stowf_in)
 {
     this->p_wfcpw = p_wfcpw_in;
     this->p_kv = p_kv_in;
     this->p_elec = p_elec_in;
     this->p_psi = p_psi_in;
     this->p_hamilt = p_hamilt_in;
-    this->p_hamilt_sto = static_cast<StoHamiltPW<std::complex<double>>*>(p_hamilt_in);
+    this->p_hamilt_sto = static_cast<StoHamiltPW<std::complex<double>> *>(p_hamilt_in);
     this->p_stowf = p_stowf_in;
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
     this->method_sto = stoche.method_sto;
-    this->stofunc.set_E_range((double*)&stoche.emin_sto, (double*)&stoche.emax_sto);
+    this->stofunc.set_E_range((double *)&stoche.emin_sto, (double *)&stoche.emax_sto);
 }
 
 template <typename FPTYPE, typename Device>
-void Sto_DOS<FPTYPE, Device>::decide_param(const int& dos_nche,
-                                           const double& emin_sto,
-                                           const double& emax_sto,
-                                           const bool& dos_setemin,
-                                           const bool& dos_setemax,
-                                           const double& dos_emin_ev,
-                                           const double& dos_emax_ev,
-                                           const double& dos_scale)
+void Sto_DOS<FPTYPE, Device>::decide_param(
+    const int &dos_nche,
+    const double &emin_sto,
+    const double &emax_sto,
+    const bool &dos_setemin,
+    const bool &dos_setemax,
+    const double &dos_emin_ev,
+    const double &dos_emax_ev,
+    const double &dos_scale)
 {
     this->dos_nche = dos_nche;
     check_che_op<FPTYPE, Device>()(
-        this->dos_nche,
-        emin_sto,
-        emax_sto,
-        this->nbands_sto,
-        this->p_kv,
-        reinterpret_cast<Stochastic_WF<std::complex<FPTYPE>, Device>*>(this->p_stowf),
-        reinterpret_cast<StoHamiltPW<std::complex<FPTYPE>, Device>*>(this->p_hamilt_sto));
+        this->dos_nche, emin_sto, emax_sto, this->nbands_sto, this->p_kv,
+        reinterpret_cast<Stochastic_WF<std::complex<FPTYPE>, Device> *>(this->p_stowf),
+        reinterpret_cast<StoHamiltPW<std::complex<FPTYPE>, Device> *>(this->p_hamilt_sto));
     if (dos_setemax)
     {
         this->emax = dos_emax_ev;
@@ -113,7 +111,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         const int npw = p_kv->ngk[ik];
         const int nchipk = this->p_stowf->nchip[ik];
 
-        std::complex<double>* pchi;
+        std::complex<double> *pchi;
         if (PARAM.inp.nbands > 0)
         {
             p_stowf->chiortho->fix_k(ik);
@@ -124,11 +122,9 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
             p_stowf->chi0->fix_k(ik);
             pchi = p_stowf->chi0->get_pointer();
         }
-        auto hchi_norm = std::bind(&StoHamiltPW<std::complex<double>>::hPsi_norm,
-                                   p_hamilt_sto,
-                                   std::placeholders::_1,
-                                   std::placeholders::_2,
-                                   std::placeholders::_3);
+        auto hchi_norm = std::bind(
+            &StoHamiltPW<std::complex<double>>::hPsi_norm, p_hamilt_sto, std::placeholders::_1, std::placeholders::_2,
+            std::placeholders::_3);
         if (this->method_sto == 1)
         {
             che.tracepolyA(hchi_norm, pchi, npw, npwx, nchipk);
@@ -154,9 +150,9 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
                     start_nchipk = ipart * nchipk_new;
                 }
                 ModuleBase::GlobalFunc::ZEROS(allorderchi.data(), nchipk_new * npwx * dos_nche);
-                std::complex<double>* tmpchi = pchi + start_nchipk * npwx;
+                std::complex<double> *tmpchi = pchi + start_nchipk * npwx;
                 che.calpolyvec_complex(hchi_norm, tmpchi, allorderchi.data(), npw, npwx, nchipk_new);
-                double* vec_all = (double*)allorderchi.data();
+                double *vec_all = (double *)allorderchi.data();
                 int LDA = npwx * nchipk_new * 2;
                 int M = npwx * nchipk_new * 2;
                 BlasConnector::gemm(normal, trans, N, N, M, kweight, vec_all, LDA, vec_all, LDA, one, spolyv.data(), N);
@@ -200,7 +196,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         {
             for (int ik = 0; ik < nk; ++ik)
             {
-                double* en = &(this->p_elec->ekb(ik, 0));
+                double *en = &(this->p_elec->ekb(ik, 0));
                 for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
                 {
                     tmpks += this->stofunc.gauss(en[ib]) * p_kv->wk[ik] / 2;
@@ -219,10 +215,10 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
             const int norder = dos_nche;
             double last_coef = che.coef_real[norder - 1];
             double last_spolyv = spolyv[norder * norder - 1];
-            tmperror = last_coef
-                       * (BlasConnector::dot(norder, che.coef_real, 1, spolyv.data() + norder * (norder - 1), 1)
-                          + BlasConnector::dot(norder, che.coef_real, 1, spolyv.data() + norder - 1, norder)
-                          - last_coef * last_spolyv);
+            tmperror =
+                last_coef * (BlasConnector::dot(norder, che.coef_real, 1, spolyv.data() + norder * (norder - 1), 1) +
+                                BlasConnector::dot(norder, che.coef_real, 1, spolyv.data() + norder - 1, norder) -
+                                last_coef * last_spolyv);
         }
 
         if (ie % n10 == n10 - 1)
@@ -239,7 +235,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
     MPI_Allreduce(MPI_IN_PLACE, ks_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
     Parallel_Reduce::reduce_all(sto_dos.data(), ndos);
     Parallel_Reduce::reduce_all(error.data(), ndos);
-    #endif
+#endif
     if (GlobalV::MY_RANK == 0)
     {
         std::string dosfile = PARAM.globalv.global_out_dir + "dos_sdft.txt";
@@ -248,9 +244,8 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         double sum = 0;
 
         ofsdos << ndos << " # number of points" << std::endl;
-        ofsdos << "#" << std::setw(19) << "energy(eV)"
-            << std::setw(20) << "dos(eV^-1)" << std::setw(20) << "sum"
-            << std::setw(20) << "error(eV^-1)" << std::endl;
+        ofsdos << "#" << std::setw(19) << "energy(eV)" << std::setw(20) << "dos(eV^-1)" << std::setw(20) << "sum"
+               << std::setw(20) << "error(eV^-1)" << std::endl;
         for (int ie = 0; ie < ndos; ++ie)
         {
             double tmperror = 2.0 * std::abs(error[ie]);

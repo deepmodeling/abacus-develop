@@ -19,7 +19,7 @@ void KEDF_vW::set_para(double dV, double vw_weight)
  * @param pw_rho pw basis
  * @return the energy of vW KEDF
  */
-double KEDF_vW::get_energy(double** pphi, ModulePW::PW_Basis* pw_rho)
+double KEDF_vW::get_energy(double **pphi, ModulePW::PW_Basis *pw_rho)
 {
     const int nspin = PARAM.inp.nspin;
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
@@ -76,7 +76,11 @@ double KEDF_vW::get_energy(double** pphi, ModulePW::PW_Basis* pw_rho)
  * @param pw_rho pw basis
  * @return the energy density of vW KEDF
  */
-double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_Basis* pw_rho)
+double KEDF_vW::get_energy_density(
+    double **pphi,
+    int is,
+    int ir,
+    ModulePW::PW_Basis *pw_rho)
 {
     const int nspin = PARAM.inp.nspin;
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
@@ -98,8 +102,8 @@ double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_B
     this->laplacian_phi(tempPhi, LapPhi, pw_rho);
 
     double energyDen = 0.; // in Ry
-    energyDen
-        = 0.5 * tempPhi[is][ir] * LapPhi[is][ir] * this->vw_weight_ * 2.; // vw_weight * 2 to convert Hartree to Ry
+    energyDen =
+        0.5 * tempPhi[is][ir] * LapPhi[is][ir] * this->vw_weight_ * 2.; // vw_weight * 2 to convert Hartree to Ry
 
     return energyDen;
 }
@@ -107,12 +111,12 @@ double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_B
 /**
  * @brief Get the positive definite energy density of vW KEDF
  * \f[ \tau_{vW} = |\nabla \phi|^2 / 2 \f]
- * 
+ *
  * @param pphi sqrt(rho)
  * @param pw_rho pw basis
  * @param rtau_vw rtau_vw => rtau_vw + tau_vw
  */
-void KEDF_vW::tau_vw(const double* const* pphi, ModulePW::PW_Basis* pw_rho, double* rtau_vw)
+void KEDF_vW::tau_vw(const double *const *pphi, ModulePW::PW_Basis *pw_rho, double *rtau_vw)
 {
     std::vector<double> abs_phi = std::vector<double>(pw_rho->nrxx, 0.);
 
@@ -128,7 +132,7 @@ void KEDF_vW::tau_vw(const double* const* pphi, ModulePW::PW_Basis* pw_rho, doub
         std::vector<std::complex<double>> recip_nabla_phi(pw_rho->npw, 0.);
 
         pw_rho->real2recip(abs_phi.data(), recip_phi.data());
-        
+
         std::complex<double> img(0.0, 1.0);
         for (int j = 0; j < 3; ++j)
         {
@@ -158,7 +162,7 @@ void KEDF_vW::tau_vw(const double* const* pphi, ModulePW::PW_Basis* pw_rho, doub
  * @param pw_rho pw basis
  * @param rpotential potential * 2 * phi => potential * 2 * phi + V_{vW} * 2 * phi
  */
-void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
+void KEDF_vW::vw_potential(const double *const *pphi, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::TITLE("KEDF_vW", "vw_potential");
     ModuleBase::timer::start("KEDF_vW", "vw_potential");
@@ -232,7 +236,7 @@ void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho
  * @param pphi pphi^2 = rho
  * @param pw_rho pw_basis
  */
-void KEDF_vW::get_stress(const double* const* pphi, ModulePW::PW_Basis* pw_rho)
+void KEDF_vW::get_stress(const double *const *pphi, ModulePW::PW_Basis *pw_rho)
 {
     const int nspin = PARAM.inp.nspin;
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
@@ -267,8 +271,8 @@ void KEDF_vW::get_stress(const double* const* pphi, ModulePW::PW_Basis* pw_rho)
             {
                 for (int ik = 0; ik < pw_rho->npw; ++ik)
                 {
-                    ggrecipPhi[is][ik]
-                        = -recipPhi[is][ik] * pw_rho->gcar[ik][alpha] * pw_rho->gcar[ik][beta] * pw_rho->tpiba2;
+                    ggrecipPhi[is][ik] =
+                        -recipPhi[is][ik] * pw_rho->gcar[ik][alpha] * pw_rho->gcar[ik][beta] * pw_rho->tpiba2;
                 }
                 pw_rho->recip2real(ggrecipPhi[is].data(), ggPhi.data());
                 for (int ir = 0; ir < pw_rho->nrxx; ++ir)
@@ -277,8 +281,8 @@ void KEDF_vW::get_stress(const double* const* pphi, ModulePW::PW_Basis* pw_rho)
                 }
             }
             Parallel_Reduce::reduce_all(this->stress(alpha, beta));
-            this->stress(alpha, beta)
-                *= -1. * this->vw_weight_ * 2. / pw_rho->nxyz; // vw_weight * 2 to convert Hartree to Ry
+            this->stress(alpha, beta) *=
+                -1. * this->vw_weight_ * 2. / pw_rho->nxyz; // vw_weight * 2 to convert Hartree to Ry
         }
     }
     for (int alpha = 1; alpha < 3; ++alpha)
@@ -297,9 +301,8 @@ void KEDF_vW::get_stress(const double* const* pphi, ModulePW::PW_Basis* pw_rho)
  * @param [out] rLapPhi - Laplacian phi
  * @param [in] pw_rho pw basis
  */
-void KEDF_vW::laplacian_phi(const std::vector<std::vector<double>>& pphi,
-                            std::vector<std::vector<double>>& rLapPhi,
-                            ModulePW::PW_Basis* pw_rho)
+void KEDF_vW::laplacian_phi(
+    const std::vector<std::vector<double>> &pphi, std::vector<std::vector<double>> &rLapPhi, ModulePW::PW_Basis *pw_rho)
 {
     const int nspin = PARAM.inp.nspin;
     std::vector<std::vector<std::complex<double>>> recipPhi(nspin);

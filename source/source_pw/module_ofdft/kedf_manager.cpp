@@ -12,11 +12,10 @@
  * @param nelec number of electrons in the unit cell
  */
 void KEDF_Manager::init(
-    const Input_para& inp,
-    ModulePW::PW_Basis* pw_rho,
+    const Input_para &inp,
+    ModulePW::PW_Basis *pw_rho,
     const double dV,
-    const double nelec
-)
+    const double nelec)
 {
     this->of_kinetic_ = inp.of_kinetic;
     this->init_tf(inp, pw_rho, dV);
@@ -30,15 +29,11 @@ void KEDF_Manager::init(
 #endif
 }
 
-void KEDF_Manager::init_tf(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV)
+void KEDF_Manager::init_tf(const Input_para &inp, ModulePW::PW_Basis *pw_rho, double dV)
 {
     //! Thomas-Fermi (TF) KEDF, TF+ KEDF, Wang-Teter (WT) KEDF, and XWM KEDF
-    if (this->of_kinetic_ == "tf"
-     || this->of_kinetic_ == "tf+"
-     || this->of_kinetic_ == "wt"
-     || this->of_kinetic_ == "ext-wt"
-     || this->of_kinetic_ == "ml"
-     || this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "ml" || this->of_kinetic_ == "xwm")
     {
         if (this->tf_ == nullptr)
         {
@@ -48,12 +43,12 @@ void KEDF_Manager::init_tf(const Input_para& inp, ModulePW::PW_Basis* pw_rho, do
     }
 }
 
-void KEDF_Manager::init_vw(const Input_para& inp, double dV)
+void KEDF_Manager::init_vw(const Input_para &inp, double dV)
 {
     //! vW, TF+, WT, XWM, and LKT KEDFs
-    if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt"
-        || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
+    if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt" ||
+        this->of_kinetic_ == "ml")
     {
         if (this->vw_ == nullptr)
         {
@@ -63,7 +58,11 @@ void KEDF_Manager::init_vw(const Input_para& inp, double dV)
     }
 }
 
-void KEDF_Manager::init_wt(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec)
+void KEDF_Manager::init_wt(
+    const Input_para &inp,
+    ModulePW::PW_Basis *pw_rho,
+    double dV,
+    double nelec)
 {
     //! Wang-Teter KEDF
     if (this->of_kinetic_ == "wt")
@@ -72,21 +71,17 @@ void KEDF_Manager::init_wt(const Input_para& inp, ModulePW::PW_Basis* pw_rho, do
         {
             this->wt_ = new KEDF_WT();
         }
-        this->wt_->set_para(dV,
-                            inp.of_wt_alpha,
-                            inp.of_wt_beta,
-                            nelec,
-                            inp.of_tf_weight,
-                            inp.of_vw_weight,
-                            inp.of_wt_rho0,
-                            inp.of_hold_rho0,
-                            inp.of_read_kernel,
-                            inp.of_kernel_file,
-                            pw_rho);
+        this->wt_->set_para(
+            dV, inp.of_wt_alpha, inp.of_wt_beta, nelec, inp.of_tf_weight, inp.of_vw_weight, inp.of_wt_rho0,
+            inp.of_hold_rho0, inp.of_read_kernel, inp.of_kernel_file, pw_rho);
     }
 }
 
-void KEDF_Manager::init_extwt(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec)
+void KEDF_Manager::init_extwt(
+    const Input_para &inp,
+    ModulePW::PW_Basis *pw_rho,
+    double dV,
+    double nelec)
 {
     //! Extended Wang-Teter KEDF
     if (this->of_kinetic_ == "ext-wt")
@@ -95,18 +90,16 @@ void KEDF_Manager::init_extwt(const Input_para& inp, ModulePW::PW_Basis* pw_rho,
         {
             this->extwt_ = new KEDF_ExtWT();
         }
-        this->extwt_->set_para(dV,
-                               inp.of_wt_alpha,
-                               inp.of_wt_beta,
-                               nelec,
-                               inp.of_tf_weight,
-                               inp.of_vw_weight,
-                               inp.of_extwt_kappa,
-                               pw_rho);
+        this->extwt_->set_para(
+            dV, inp.of_wt_alpha, inp.of_wt_beta, nelec, inp.of_tf_weight, inp.of_vw_weight, inp.of_extwt_kappa, pw_rho);
     }
 }
 
-void KEDF_Manager::init_xwm(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec)
+void KEDF_Manager::init_xwm(
+    const Input_para &inp,
+    ModulePW::PW_Basis *pw_rho,
+    double dV,
+    double nelec)
 {
     //! Xu-Wang-Ma KEDF
     if (this->of_kinetic_ == "xwm")
@@ -115,12 +108,12 @@ void KEDF_Manager::init_xwm(const Input_para& inp, ModulePW::PW_Basis* pw_rho, d
         {
             this->xwm_ = new KEDF_XWM();
         }
-        this->xwm_->set_para(dV, inp.of_xwm_rho_ref, inp.of_xwm_kappa, nelec,
-                            inp.of_tf_weight, inp.of_vw_weight, pw_rho);
+        this->xwm_->set_para(
+            dV, inp.of_xwm_rho_ref, inp.of_xwm_kappa, nelec, inp.of_tf_weight, inp.of_vw_weight, pw_rho);
     }
 }
 
-void KEDF_Manager::init_lkt(const Input_para& inp, double dV)
+void KEDF_Manager::init_lkt(const Input_para &inp, double dV)
 {
     //! LKT KEDF
     if (this->of_kinetic_ == "lkt")
@@ -134,7 +127,11 @@ void KEDF_Manager::init_lkt(const Input_para& inp, double dV)
 }
 
 #ifdef __MLALGO
-void KEDF_Manager::init_ml(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec)
+void KEDF_Manager::init_ml(
+    const Input_para &inp,
+    ModulePW::PW_Basis *pw_rho,
+    double dV,
+    double nelec)
 {
     if (this->of_kinetic_ == "ml")
     {
@@ -143,43 +140,15 @@ void KEDF_Manager::init_ml(const Input_para& inp, ModulePW::PW_Basis* pw_rho, do
             this->ml_ = new KEDF_ML();
         }
         this->ml_->set_para(
-            pw_rho->nrxx,
-            dV,
-            nelec,
-            inp.of_tf_weight,
-            inp.of_vw_weight,
-            inp.of_ml_chi_p,
-            inp.of_ml_chi_q,
-            inp.of_ml_chi_xi,
-            inp.of_ml_chi_pnl,
-            inp.of_ml_chi_qnl,
-            inp.of_ml_nkernel,
-            inp.of_ml_kernel,
-            inp.of_ml_kernel_scaling,
-            inp.of_ml_yukawa_alpha,
-            inp.of_ml_kernel_file,
-            inp.of_ml_gamma,
-            inp.of_ml_p,
-            inp.of_ml_q,
-            inp.of_ml_tanhp,
-            inp.of_ml_tanhq,
-            inp.of_ml_gammanl,
-            inp.of_ml_pnl,
-            inp.of_ml_qnl,
-            inp.of_ml_xi,
-            inp.of_ml_tanhxi,
-            inp.of_ml_tanhxi_nl,
-            inp.of_ml_tanh_pnl,
-            inp.of_ml_tanh_qnl,
-            inp.of_ml_tanhp_nl,
-            inp.of_ml_tanhq_nl,
-            inp.of_ml_device,
-            pw_rho,
-            GlobalV::ofs_running);
+            pw_rho->nrxx, dV, nelec, inp.of_tf_weight, inp.of_vw_weight, inp.of_ml_chi_p, inp.of_ml_chi_q,
+            inp.of_ml_chi_xi, inp.of_ml_chi_pnl, inp.of_ml_chi_qnl, inp.of_ml_nkernel, inp.of_ml_kernel,
+            inp.of_ml_kernel_scaling, inp.of_ml_yukawa_alpha, inp.of_ml_kernel_file, inp.of_ml_gamma, inp.of_ml_p,
+            inp.of_ml_q, inp.of_ml_tanhp, inp.of_ml_tanhq, inp.of_ml_gammanl, inp.of_ml_pnl, inp.of_ml_qnl,
+            inp.of_ml_xi, inp.of_ml_tanhxi, inp.of_ml_tanhxi_nl, inp.of_ml_tanh_pnl, inp.of_ml_tanh_qnl,
+            inp.of_ml_tanhp_nl, inp.of_ml_tanhq_nl, inp.of_ml_device, pw_rho, GlobalV::ofs_running);
     }
 }
 #endif
-
 
 /**
  * @brief [Interface to kedf]
@@ -191,25 +160,24 @@ void KEDF_Manager::init_ml(const Input_para& inp, ModulePW::PW_Basis* pw_rho, do
  * @param [out] rpot rpot => (rpot + kietic potential) * 2 * pphi
  */
 void KEDF_Manager::get_potential(
-    const double* const* prho,
-    const double* const* pphi,
-    ModulePW::PW_Basis* pw_rho,
-    ModuleBase::matrix& rpot
-)
+    const double *const *prho,
+    const double *const *pphi,
+    ModulePW::PW_Basis *pw_rho,
+    ModuleBase::matrix &rpot)
 {
     ModuleBase::TITLE("KEDF_Manager", "get_potential");
     ModuleBase::timer::start("KEDF_Manager", "get_potential");
 
 #ifdef __MLALGO
     // for ML KEDF test
-    if (PARAM.inp.of_ml_local_test) this->ml_->localTest(prho, pw_rho);
+    if (PARAM.inp.of_ml_local_test)
+    {
+        this->ml_->localTest(prho, pw_rho);
+    }
 #endif
 
-    if (this->of_kinetic_ == "tf" 
-        || this->of_kinetic_ == "tf+" 
-        || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt" 
-        || this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
     {
         this->tf_->tf_potential(prho, rpot);
     }
@@ -242,13 +210,9 @@ void KEDF_Manager::get_potential(
         }
     }
 
-    if (this->of_kinetic_ == "vw" 
-        || this->of_kinetic_ == "tf+" 
-        || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt"
-        || this->of_kinetic_ == "xwm" 
-        || this->of_kinetic_ == "lkt" 
-        || this->of_kinetic_ == "ml")
+    if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt" ||
+        this->of_kinetic_ == "ml")
     {
         this->vw_->vw_potential(pphi, pw_rho, rpot);
     }
@@ -277,22 +241,15 @@ double KEDF_Manager::get_energy() const
 
     double kinetic_energy = 0.0;
 
-    if (this->of_kinetic_ == "tf" 
-        || this->of_kinetic_ == "tf+" 
-        || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt" 
-        || this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
     {
         kinetic_energy += this->tf_->tf_energy;
     }
 
-    if (this->of_kinetic_ == "vw" 
-        || this->of_kinetic_ == "tf+" 
-        || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt"
-        || this->of_kinetic_ == "xwm" 
-        || this->of_kinetic_ == "lkt" 
-        || this->of_kinetic_ == "ml")
+    if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt" ||
+        this->of_kinetic_ == "ml")
     {
         kinetic_energy += this->vw_->vw_energy;
     }
@@ -323,8 +280,8 @@ double KEDF_Manager::get_energy() const
         if (this->ml_->ml_energy >= this->tf_->tf_energy)
         {
             GlobalV::ofs_running << " WARNING: ML >= TF" << std::endl;
-            GlobalV::ofs_running << " ML Term = " << this->ml_->ml_energy 
-            << " Ry, TF Term = " << this->tf_->tf_energy << " Ry." << std::endl;
+            GlobalV::ofs_running << " ML Term = " << this->ml_->ml_energy << " Ry, TF Term = " << this->tf_->tf_energy
+                                 << " Ry." << std::endl;
         }
     }
 #endif
@@ -344,11 +301,10 @@ double KEDF_Manager::get_energy() const
  * @param [out] rtau kinetic energy density
  */
 void KEDF_Manager::get_energy_density(
-    const double* const* prho,
-    const double* const* pphi,
-    ModulePW::PW_Basis* pw_rho,
-    double** rtau
-)
+    const double *const *prho,
+    const double *const *pphi,
+    ModulePW::PW_Basis *pw_rho,
+    double **rtau)
 {
     ModuleBase::TITLE("KEDF_Manager", "get_energy_density");
     ModuleBase::timer::start("KEDF_Manager", "get_energy_density");
@@ -358,20 +314,13 @@ void KEDF_Manager::get_energy_density(
         rtau[0][ir] = 0.0;
     }
 
-    if (this->of_kinetic_ == "tf" 
-        || this->of_kinetic_ == "tf+" 
-        || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt" 
-        || this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
     {
         this->tf_->tau_tf(prho, rtau[0]);
     }
-    if (this->of_kinetic_ == "vw" 
-        || this->of_kinetic_ == "tf+" 
-        || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt"
-        || this->of_kinetic_ == "xwm" 
-        || this->of_kinetic_ == "lkt")
+    if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt")
     {
         this->vw_->tau_vw(pphi, pw_rho, rtau[0]);
     }
@@ -398,7 +347,7 @@ void KEDF_Manager::get_energy_density(
 /**
  * @brief [Interface to kedf]
  * Calculate the stress of kedf
- * 
+ *
  * @param [in] omega Volume of the unit cell
  * @param [in] prho charge density
  * @param [in] pphi phi^2 = rho
@@ -407,11 +356,10 @@ void KEDF_Manager::get_energy_density(
  */
 void KEDF_Manager::get_stress(
     const double omega,
-    const double* const* prho,
-    const double* const* pphi,
-    ModulePW::PW_Basis* pw_rho,
-    ModuleBase::matrix& kinetic_stress_
-)
+    const double *const *prho,
+    const double *const *pphi,
+    ModulePW::PW_Basis *pw_rho,
+    ModuleBase::matrix &kinetic_stress_)
 {
     ModuleBase::TITLE("KEDF_Manager", "get_stress");
     ModuleBase::timer::start("KEDF_Manager", "get_stress");
@@ -424,22 +372,15 @@ void KEDF_Manager::get_stress(
         }
     }
 
-    if (this->of_kinetic_ == "tf" 
-        || this->of_kinetic_ == "tf+" 
-        || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt" 
-        || this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
     {
         this->tf_->get_stress(omega);
         kinetic_stress_ += this->tf_->stress;
     }
 
-    if (this->of_kinetic_ == "vw" 
-        || this->of_kinetic_ == "tf+" 
-        || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt"
-        || this->of_kinetic_ == "xwm" 
-        || this->of_kinetic_ == "lkt")
+    if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt")
     {
         this->vw_->get_stress(pphi, pw_rho);
         kinetic_stress_ += this->vw_->stress;
@@ -476,20 +417,17 @@ void KEDF_Manager::get_stress(
     ModuleBase::timer::end("KEDF_Manager", "get_stress");
 }
 
-void KEDF_Manager::record_energy(
-    std::vector<std::string> &titles,
-    std::vector<double> &energies_Ry
-)
+void KEDF_Manager::record_energy(std::vector<std::string> &titles, std::vector<double> &energies_Ry)
 {
-    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
     {
         titles.push_back("TF KEDF");
         energies_Ry.push_back(this->tf_->tf_energy);
     }
-    if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "ext-wt"
-        || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
+    if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" ||
+        this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt" ||
+        this->of_kinetic_ == "ml")
     {
         titles.push_back("vW KEDF");
         energies_Ry.push_back(this->vw_->vw_energy);
@@ -524,11 +462,7 @@ void KEDF_Manager::record_energy(
 }
 
 // In future, this function should be extended to other KEDFs.
-void KEDF_Manager::generate_ml_target(
-    const double * const *prho,
-    ModulePW::PW_Basis *pw_rho,
-    const double *veff
-)
+void KEDF_Manager::generate_ml_target(const double *const *prho, ModulePW::PW_Basis *pw_rho, const double *veff)
 {
 #ifdef __MLALGO
     this->ml_->gen_training_data(prho, pw_rho, veff);

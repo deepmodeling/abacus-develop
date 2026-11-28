@@ -1,16 +1,18 @@
+#include "source_pw/module_rt/unittests/td_test_utils.h"
 #include "source_base/parallel_global.h"
 #include "source_cell/read_pp.h"
-#include "source_pw/module_rt/unittests/td_test_utils.h"
 
 #include <cmath>
 #include <utility>
 
-static_assert(noexcept(std::swap(std::declval<Input_para&>(), std::declval<Input_para&>())),
-              "Test input installation and restoration must not throw.");
-static_assert(noexcept(std::swap(std::declval<System_para&>(), std::declval<System_para&>())),
-              "Test system installation and restoration must not throw.");
+static_assert(
+    noexcept(std::swap(std::declval<Input_para &>(), std::declval<Input_para &>())),
+    "Test input installation and restoration must not throw.");
+static_assert(
+    noexcept(std::swap(std::declval<System_para &>(), std::declval<System_para &>())),
+    "Test system installation and restoration must not throw.");
 
-TestParameters::TestParameters(Parameter& target) : target_(target)
+TestParameters::TestParameters(Parameter &target) : target_(target)
 {
     input_.nspin = 4;
     input_.noncolin = true;
@@ -35,9 +37,7 @@ TestParameters::~TestParameters() noexcept
 
 namespace td_test
 {
-Observables::Observables() : parameters_(PARAM)
-{
-}
+Observables::Observables() : parameters_(PARAM) {}
 
 void Observables::SetUp()
 {
@@ -54,7 +54,7 @@ void Observables::SetUp()
     cell_.omega = std::pow(cell_.lat0, 3) * cell_.latvec.Det();
     cell_.tpiba = ModuleBase::TWO_PI / cell_.lat0;
     cell_.tpiba2 = cell_.tpiba * cell_.tpiba;
-    for (const ModuleBase::Vector3<double>& position: cell_.atoms[0].taud)
+    for (const ModuleBase::Vector3<double> &position : cell_.atoms[0].taud)
     {
         cell_.atoms[0].tau.push_back(position * cell_.latvec);
     }
@@ -65,9 +65,9 @@ void Observables::SetUp()
     std::string type = "upf201";
     const std::string filename = std::string(TD_TEST_PP_DIR) + "/Fe.upf";
     ASSERT_EQ(reader.init_pseudo_reader(filename, type, cell_.atoms[0].ncpp), 0);
-    Atom_pseudo& atom_pp = cell_.atoms[0].ncpp;
+    Atom_pseudo &atom_pp = cell_.atoms[0].ncpp;
     atom_pp.nh = 0;
-    for (const int l: atom_pp.lll)
+    for (const int l : atom_pp.lll)
     {
         atom_pp.nh += 2 * l + 1;
     }
@@ -117,19 +117,16 @@ void Observables::SetUp()
     }
 }
 
-void Observables::TearDown()
-{
-    pp_.release_memory();
-}
+void Observables::TearDown() { pp_.release_memory(); }
 
-Vector Observables::projectors(const ModuleBase::Vector3<double>& a)
+Vector Observables::projectors(const ModuleBase::Vector3<double> &a)
 {
     Vector beta(pp_.nkb * basis_.npwk_max);
     pp_.getvnl<double, Device>(nullptr, cell_, 0, a, beta.data());
     return beta;
 }
 
-Vector Observables::nonlocal(const Vector& beta, const Vector& x, int atom) const
+Vector Observables::nonlocal(const Vector &beta, const Vector &x, int atom) const
 {
     // Explicit beta D beta-adjoint action in Hartree units, independent of the production contraction kernels.
     const int npw = basis_.npwk[0];
@@ -166,7 +163,7 @@ Vector Observables::nonlocal(const Vector& beta, const Vector& x, int atom) cons
     return y;
 }
 
-Vector Observables::hamiltonian(const ModuleBase::Vector3<double>& a, const Vector& x)
+Vector Observables::hamiltonian(const ModuleBase::Vector3<double> &a, const Vector &x)
 {
     const Vector beta = projectors(a);
     Vector y(x.size(), 0.0);
@@ -190,9 +187,10 @@ Vector Observables::hamiltonian(const ModuleBase::Vector3<double>& a, const Vect
     return y;
 }
 
-Vector pauli(const Vector& x, int axis)
+Vector pauli(const Vector &x, int axis)
 {
-    const Complex matrices[3][4] = {{0.0, 1.0, 1.0, 0.0}, {0.0, Complex(0, -1), Complex(0, 1), 0.0}, {1.0, 0.0, 0.0, -1.0}};
+    const Complex matrices[3][4] = {
+        {0.0, 1.0, 1.0, 0.0}, {0.0, Complex(0, -1), Complex(0, 1), 0.0}, {1.0, 0.0, 0.0, -1.0}};
     const int npw = x.size() / 2;
     Vector y(x.size(), 0.0);
     for (int s = 0; s < 2; ++s)
@@ -208,7 +206,7 @@ Vector pauli(const Vector& x, int axis)
     return y;
 }
 
-Complex inner(const Vector& x, const Vector& y)
+Complex inner(const Vector &x, const Vector &y)
 {
     Complex value(0);
     for (size_t i = 0; i < x.size(); ++i)
@@ -219,7 +217,7 @@ Complex inner(const Vector& x, const Vector& y)
 }
 } // namespace td_test
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int nproc = 1;
     int nthread = 1;

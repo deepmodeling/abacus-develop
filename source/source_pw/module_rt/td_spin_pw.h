@@ -15,7 +15,7 @@
 namespace pw
 {
 /** @brief Periodic nearest-atom labels on the local charge grid, in global atom order. */
-std::vector<int> td_voronoi_pw(const UnitCell& cell, const ModulePW::PW_Basis& grid);
+std::vector<int> td_voronoi_pw(const UnitCell &cell, const ModulePW::PW_Basis &grid);
 
 /** @brief Endpoint magnetism with reusable device workspaces and position-aware caches. */
 template <typename Real, typename Device>
@@ -23,12 +23,12 @@ class TDSpinPW
 {
   private:
     using Complex = std::complex<Real>;
-    const UnitCell* cell_ = nullptr;
-    const ModulePW::PW_Basis* grid_ = nullptr;
-    const ModulePW::PW_Basis_K* basis_ = nullptr;
-    const K_Vectors* kv_ = nullptr;
-    Structure_Factor* sf_ = nullptr;
-    pseudopot_cell_vnl* pp_ = nullptr;
+    const UnitCell *cell_ = nullptr;
+    const ModulePW::PW_Basis *grid_ = nullptr;
+    const ModulePW::PW_Basis_K *basis_ = nullptr;
+    const K_Vectors *kv_ = nullptr;
+    Structure_Factor *sf_ = nullptr;
+    pseudopot_cell_vnl *pp_ = nullptr;
     std::string mag_partition_;
     std::string orbital_dir_;
     double onsite_radius_ = 0.0;
@@ -45,15 +45,17 @@ class TDSpinPW
     double q_bound_ = 0.0;
 
     void sync_positions();
-    void density(const elecstate::ElecState& state, TDSpinResultPW* result);
-    void soc(const psi::Psi<Complex, Device>& psi,
-             const ModuleBase::matrix& weights,
-             const ModuleBase::Vector3<double>& a,
-             TDSpinResultPW* result);
-    void onsite(const psi::Psi<Complex, Device>& psi,
-                const elecstate::ElecState& state,
-                const ModuleBase::Vector3<double>& a,
-                TDSpinResultPW* result);
+    void density(const elecstate::ElecState &state, TDSpinResultPW *result);
+    void soc(
+        const psi::Psi<Complex, Device> &psi,
+        const ModuleBase::matrix &weights,
+        const ModuleBase::Vector3<double> &a,
+        TDSpinResultPW *result);
+    void onsite(
+        const psi::Psi<Complex, Device> &psi,
+        const elecstate::ElecState &state,
+        const ModuleBase::Vector3<double> &a,
+        TDSpinResultPW *result);
 
   public:
     /** @brief Bind once; dependencies outlive this object and retain their cell and layout.
@@ -63,18 +65,20 @@ class TDSpinPW
      * @param onsite_radius Onsite projector cutoff in Bohr.
      * @param calc_torque Whether to calculate XC and SOC spin torques.
      */
-    void initialize(const UnitCell& cell,
-                    const ModulePW::PW_Basis& grid,
-                    const ModulePW::PW_Basis_K& basis,
-                    const K_Vectors& kv,
-                    Structure_Factor& sf,
-                    pseudopot_cell_vnl& pp,
-                    const std::string& mag_partition,
-                    const std::string& orbital_dir,
-                    double onsite_radius,
-                    bool calc_torque);
+    void initialize(
+        const UnitCell &cell,
+        const ModulePW::PW_Basis &grid,
+        const ModulePW::PW_Basis_K &basis,
+        const K_Vectors &kv,
+        Structure_Factor &sf,
+        pseudopot_cell_vnl &pp,
+        const std::string &mag_partition,
+        const std::string &orbital_dir,
+        double onsite_radius,
+        bool calc_torque);
     /** @brief Sample all ranks and restore the k cursor; coordinate changes invalidate geometric caches. */
-    TDSpinResultPW calculate(const psi::Psi<Complex, Device>& psi, const elecstate::ElecState& state, const ModuleBase::Vector3<double>& a);
+    TDSpinResultPW calculate(
+        const psi::Psi<Complex, Device> &psi, const elecstate::ElecState &state, const ModuleBase::Vector3<double> &a);
 };
 } // namespace pw
 #endif

@@ -11,7 +11,7 @@
 
 class TestKEDFManager : public ::testing::Test
 {
-protected:
+  protected:
     void SetUp() override
     {
         const double length = ModuleBase::TWO_PI;
@@ -47,24 +47,21 @@ protected:
         return tf_coefficient * integral;
     }
 
-    double analytic_vw_energy() const
-    {
-        return volume * amplitude * amplitude / 2.0;
-    }
+    double analytic_vw_energy() const { return volume * amplitude * amplitude / 2.0; }
 
-    void check_wt(const Input_para& inp)
+    void check_wt(const Input_para &inp)
     {
-        const double* density[] = {rho.data()};
-        const double* wave[] = {phi.data()};
-        double* mutable_wave[] = {phi.data()};
+        const double *density[] = {rho.data()};
+        const double *wave[] = {phi.data()};
+        double *mutable_wave[] = {phi.data()};
         KEDF_TF tf;
         KEDF_vW vw;
         KEDF_WT wt;
         tf.set_para(basis.nrxx, dV, inp.of_tf_weight);
         vw.set_para(dV, inp.of_vw_weight);
-        wt.set_para(dV, inp.of_wt_alpha, inp.of_wt_beta, nelec,
-                    inp.of_tf_weight, inp.of_vw_weight, inp.of_wt_rho0,
-                    inp.of_hold_rho0, inp.of_read_kernel, inp.of_kernel_file, &basis);
+        wt.set_para(
+            dV, inp.of_wt_alpha, inp.of_wt_beta, nelec, inp.of_tf_weight, inp.of_vw_weight, inp.of_wt_rho0,
+            inp.of_hold_rho0, inp.of_read_kernel, inp.of_kernel_file, &basis);
         const double tf_energy = tf.get_energy(density);
         const double vw_energy = vw.get_energy(mutable_wave, &basis);
         const double wt_energy = wt.get_energy(density, &basis);
@@ -117,8 +114,8 @@ TEST_F(TestKEDFManager, InitTFOnly)
     Input_para inp;
     inp.of_kinetic = "tf";
     manager.init(inp, &basis, dV, nelec);
-    const double* density[] = {rho.data()};
-    const double* wave[] = {phi.data()};
+    const double *density[] = {rho.data()};
+    const double *wave[] = {phi.data()};
     ModuleBase::matrix potential(1, basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -147,8 +144,8 @@ TEST_F(TestKEDFManager, InitVWOnly)
     Input_para inp;
     inp.of_kinetic = "vw";
     manager.init(inp, &basis, dV, nelec);
-    const double* density[] = {rho.data()};
-    const double* wave[] = {phi.data()};
+    const double *density[] = {rho.data()};
+    const double *wave[] = {phi.data()};
     ModuleBase::matrix potential(1, basis.nrxx);
     manager.get_potential(density, wave, &basis, potential);
     const double energy = analytic_vw_energy();
@@ -168,8 +165,8 @@ TEST_F(TestKEDFManager, InitTFPlusCombinesTFAndVW)
     inp.of_kinetic = "tf+";
     inp.of_vw_weight = 1.0 / 9.0;
     manager.init(inp, &basis, dV, nelec);
-    const double* density[] = {rho.data()};
-    const double* wave[] = {phi.data()};
+    const double *density[] = {rho.data()};
+    const double *wave[] = {phi.data()};
     ModuleBase::matrix potential(1, basis.nrxx);
     manager.get_potential(density, wave, &basis, potential);
     const double tf_energy = analytic_tf_energy();
@@ -204,7 +201,7 @@ TEST_F(TestKEDFManager, InitWTAndReinitializeWithChangedParameters)
 
 TEST_F(TestKEDFManager, WeightedEnergyMatchesConservedDensityDerivative)
 {
-    const char* kinetics[] = {"tf", "wt"};
+    const char *kinetics[] = {"tf", "wt"};
     const double weights[] = {1.0, 1.1};
     const double step = 1e-4;
     std::vector<double> direction(basis.nrxx);
@@ -228,8 +225,8 @@ TEST_F(TestKEDFManager, WeightedEnergyMatchesConservedDensityDerivative)
             inp.of_kinetic = kinetic;
             inp.of_tf_weight = weight;
             manager.init(inp, &basis, dV, nelec);
-            const double* density[] = {rho.data()};
-            const double* wave[] = {phi.data()};
+            const double *density[] = {rho.data()};
+            const double *wave[] = {phi.data()};
             ModuleBase::matrix gradient(1, basis.nrxx);
             manager.get_potential(density, wave, &basis, gradient);
             double product = 0.0;
@@ -250,8 +247,8 @@ TEST_F(TestKEDFManager, WeightedEnergyMatchesConservedDensityDerivative)
                     perturbed_rho[ir] = rho[ir] + sign * step * direction[ir];
                     perturbed_phi[ir] = std::sqrt(perturbed_rho[ir]);
                 }
-                const double* perturbed_density[] = {perturbed_rho.data()};
-                const double* perturbed_wave[] = {perturbed_phi.data()};
+                const double *perturbed_density[] = {perturbed_rho.data()};
+                const double *perturbed_wave[] = {perturbed_phi.data()};
                 ModuleBase::matrix perturbed_gradient(1, basis.nrxx);
                 manager.get_potential(perturbed_density, perturbed_wave, &basis, perturbed_gradient);
                 energies[sign_index] = manager.get_energy();

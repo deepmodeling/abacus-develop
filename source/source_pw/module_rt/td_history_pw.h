@@ -22,10 +22,14 @@ struct TDElecSnap
 };
 
 /** @brief Copy energy, band expectations and density without advancing orbital history. */
-TDElecSnap capture_td(const elecstate::fenergy& energy, const ModuleBase::matrix& eigenvalues, const Charge& charge);
+TDElecSnap capture_td(const elecstate::fenergy &energy, const ModuleBase::matrix &eigenvalues, const Charge &charge);
 
 /** @brief Restore electronic data on the unchanged density grid and refresh its mixing backup. */
-void restore_td(const TDElecSnap& state, elecstate::fenergy& energy, ModuleBase::matrix& eigenvalues, Charge& charge);
+void restore_td(
+    const TDElecSnap &state,
+    elecstate::fenergy &energy,
+    ModuleBase::matrix &eigenvalues,
+    Charge &charge);
 
 /** @brief Accepted endpoint wavefunctions and potential snapshots. */
 template <typename T, typename Device>
@@ -33,20 +37,17 @@ class TDHistoryPW
 {
   public:
     /** @brief Prepare storage after the potential grids have been updated. */
-    void prepare(const elecstate::Potential& potential);
+    void prepare(const elecstate::Potential &potential);
 
     /** @brief Borrow the immutable accepted left-endpoint potential. */
-    const typename GetTypeReal<T>::type* left_potential() const;
-    unsigned long long generation() const
-    {
-        return generation_;
-    }
+    const typename GetTypeReal<T>::type *left_potential() const;
+    unsigned long long generation() const { return generation_; }
 
     /** @brief Save the accepted endpoint; the caller owns the convergence decision. */
-    void save(const psi::Psi<T, Device>& current, elecstate::Potential& potential);
+    void save(const psi::Psi<T, Device> &current, elecstate::Potential &potential);
 
     /** @brief Access the fixed origin of every corrector solve in the next step. */
-    const psi::Psi<T, Device>& previous() const;
+    const psi::Psi<T, Device> &previous() const;
 
   private:
     using Real = typename GetTypeReal<T>::type;

@@ -2,35 +2,36 @@
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/fs_kin_tools.h"
-#include "source_pw/module_pwdft/fs_nonlocal_tools.h"
 #include "source_cell/stru_fac.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_pwdft/fs_kin_tools.h"
+#include "source_pw/module_pwdft/fs_nonlocal_tools.h"
 
 template <typename FPTYPE, typename Device>
-void Sto_Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
-                                               const bool domag,
-                                               const bool domag_z,
-                                               const int gga_grad,
-                                               const bool gamma_only_pw,
-                                               ModuleBase::matrix& sigmatot,
-                                               const elecstate::ElecState& elec,
-                                               ModulePW::PW_Basis* rho_basis,
-                                               ModuleSymmetry::Symmetry* p_symm,
-                                               Structure_Factor* p_sf,
-                                               K_Vectors* p_kv,
-                                               ModulePW::PW_Basis_K* wfc_basis,
-                                               const psi::Psi <std::complex<FPTYPE>, Device>& psi_in,
-                                               const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
-                                               const Charge* const chr,
-                                               const pseudopot_cell_vl* locpp,
-                                               const pseudopot_cell_vnl* nlpp,
-                                               UnitCell& ucell_in)
+void Sto_Stress_PW<FPTYPE, Device>::cal_stress(
+    const int nspin,
+    const bool domag,
+    const bool domag_z,
+    const int gga_grad,
+    const bool gamma_only_pw,
+    ModuleBase::matrix &sigmatot,
+    const elecstate::ElecState &elec,
+    ModulePW::PW_Basis *rho_basis,
+    ModuleSymmetry::Symmetry *p_symm,
+    Structure_Factor *p_sf,
+    K_Vectors *p_kv,
+    ModulePW::PW_Basis_K *wfc_basis,
+    const psi::Psi<std::complex<FPTYPE>, Device> &psi_in,
+    const Stochastic_WF<std::complex<FPTYPE>, Device> &stowf,
+    const Charge *const chr,
+    const pseudopot_cell_vl *locpp,
+    const pseudopot_cell_vnl *nlpp,
+    UnitCell &ucell_in)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
     ModuleBase::timer::start("Sto_Stress_PW", "cal_stress");
-    const ModuleBase::matrix& wg = elec.wg;
+    const ModuleBase::matrix &wg = elec.wg;
     this->ucell = &ucell_in;
     sigmatot.create(3, 3);
     ModuleBase::matrix sigmaxc(3, 3);
@@ -55,15 +56,14 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
     {
         sigmaxc(i, i) = -(elec.f_en.etxc - elec.f_en.vtxc) / this->ucell->omega;
     }
-    this->stress_gga(ucell_in, sigmaxc, rho_basis, chr,
-        nspin, domag, domag_z, gga_grad);
+    this->stress_gga(ucell_in, sigmaxc, rho_basis, chr, nspin, domag, domag_z, gga_grad);
 
     // local contribution
     this->stress_loc(ucell_in, sigmaloc, rho_basis, locpp->vloc, p_sf, true, chr);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, ucell_in, p_sf, true, locpp->numeric, chr,
-        nspin, domag, domag_z, gga_grad, gamma_only_pw);
+    this->stress_cc(
+        sigmaxcc, rho_basis, ucell_in, p_sf, true, locpp->numeric, chr, nspin, domag, domag_z, gga_grad, gamma_only_pw);
 
     // nonlocal
     this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, *nlpp, ucell_in, psi_in, stowf);
@@ -72,9 +72,9 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
     {
         for (int jpol = 0; jpol < 3; ++jpol)
         {
-            sigmatot(ipol, jpol) = sigmakin(ipol, jpol) + sigmahar(ipol, jpol) + sigmanl(ipol, jpol)
-                                   + sigmaxc(ipol, jpol) + sigmaxcc(ipol, jpol) + sigmaewa(ipol, jpol)
-                                   + sigmaloc(ipol, jpol);
+            sigmatot(ipol, jpol) = sigmakin(ipol, jpol) + sigmahar(ipol, jpol) + sigmanl(ipol, jpol) +
+                                   sigmaxc(ipol, jpol) + sigmaxcc(ipol, jpol) + sigmaewa(ipol, jpol) +
+                                   sigmaloc(ipol, jpol);
         }
     }
 
@@ -107,13 +107,14 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
 }
 
 template <typename FPTYPE, typename Device>
-void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
-                                                   const ModuleBase::matrix& wg,
-                                                   ModuleSymmetry::Symmetry* p_symm,
-                                                   K_Vectors* p_kv,
-                                                   ModulePW::PW_Basis_K* wfc_basis,
-                                                   const psi::Psi<std::complex<FPTYPE>, Device>& psi,
-                                                   const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
+void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(
+    ModuleBase::matrix &sigma,
+    const ModuleBase::matrix &wg,
+    ModuleSymmetry::Symmetry *p_symm,
+    K_Vectors *p_kv,
+    ModulePW::PW_Basis_K *wfc_basis,
+    const psi::Psi<std::complex<FPTYPE>, Device> &psi,
+    const Stochastic_WF<std::complex<FPTYPE>, Device> &stowf)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "stress_kin");
     ModuleBase::timer::start("Sto_Stress_PW", "stress_kin");
@@ -145,16 +146,17 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
 }
 
 template <typename FPTYPE, typename Device>
-void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
-                                                  const ModuleBase::matrix& wg,
-                                                  Structure_Factor* p_sf,
-                                                  ModuleSymmetry::Symmetry* p_symm,
-                                                  K_Vectors* p_kv,
-                                                  ModulePW::PW_Basis_K* wfc_basis,
-                                                  const pseudopot_cell_vnl& nlpp,
-                                                  const UnitCell& ucell,
-                                                  const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
-                                                  const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
+void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(
+    ModuleBase::matrix &sigma,
+    const ModuleBase::matrix &wg,
+    Structure_Factor *p_sf,
+    ModuleSymmetry::Symmetry *p_symm,
+    K_Vectors *p_kv,
+    ModulePW::PW_Basis_K *wfc_basis,
+    const pseudopot_cell_vnl &nlpp,
+    const UnitCell &ucell,
+    const psi::Psi<std::complex<FPTYPE>, Device> &psi_in,
+    const Stochastic_WF<std::complex<FPTYPE>, Device> &stowf)
 {
     ModuleBase::TITLE("Sto_Stress_Func", "stres_nl");
     const int nkb = nlpp.nkb;
@@ -165,7 +167,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
 
     ModuleBase::timer::start("Sto_Stress_Func", "stres_nl");
 
-    int* nchip = stowf.nchip;
+    int *nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
     int nksbands = psi_in.get_nbands();
     if (!PARAM.globalv.ks_run)
@@ -174,7 +176,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
     }
 
     // allocate memory for the stress
-    FPTYPE* stress_device = nullptr;
+    FPTYPE *stress_device = nullptr;
     resmem_var_op()(stress_device, 9);
     setmem_var_op()(stress_device, 0, 9);
     std::vector<FPTYPE> sigmanlc(9, 0.0);

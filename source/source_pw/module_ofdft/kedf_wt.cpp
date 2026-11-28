@@ -22,17 +22,18 @@
  * @param kernel_file
  * @param pw_rho pw_basis
  */
-void KEDF_WT::set_para(double dV,
-                       double alpha,
-                       double beta,
-                       double nelec,
-                       double tf_weight,
-                       double vw_weight,
-                       double of_wt_rho0,
-                       bool of_hold_rho0,
-                       bool read_kernel,
-                       std::string kernel_file,
-                       ModulePW::PW_Basis* pw_rho)
+void KEDF_WT::set_para(
+    double dV,
+    double alpha,
+    double beta,
+    double nelec,
+    double tf_weight,
+    double vw_weight,
+    double of_wt_rho0,
+    bool of_hold_rho0,
+    bool read_kernel,
+    std::string kernel_file,
+    ModulePW::PW_Basis *pw_rho)
 {
     this->dV_ = dV;
     // this->weightWT = weightWT;
@@ -52,16 +53,19 @@ void KEDF_WT::set_para(double dV,
     this->kf_ = std::pow(3. * std::pow(ModuleBase::PI, 2) * this->rho0_, 1. / 3.);
     this->tkf_ = 2. * this->kf_;
 
-    this->wt_coef_
-        = 5. / (9. * this->alpha_ * this->beta_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 5. / 3.));
+    this->wt_coef_ =
+        5. / (9. * this->alpha_ * this->beta_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 5. / 3.));
 
     this->kernel_.resize(pw_rho->npw);
 
-    if (read_kernel) {
+    if (read_kernel)
+    {
         this->read_kernel(kernel_file, pw_rho);
-    } else {
+    }
+    else
+    {
         this->fill_kernel(tf_weight, vw_weight, pw_rho);
-}
+    }
 }
 
 /**
@@ -72,13 +76,14 @@ void KEDF_WT::set_para(double dV,
  * @param pw_rho pw basis
  * @return the energy of WT KEDF
  */
-double KEDF_WT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho)
+double KEDF_WT::get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rho)
 {
     const int nspin = PARAM.inp.nspin;
-    double** kernelRhoBeta = new double*[nspin];
-    for (int is = 0; is < nspin; ++is) {
+    double **kernelRhoBeta = new double *[nspin];
+    for (int is = 0; is < nspin; ++is)
+    {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
-}
+    }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double energy = 0.; // in Ry
@@ -123,13 +128,18 @@ double KEDF_WT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho
  * @param pw_rho pw basis
  * @return the energy density of WT KEDF
  */
-double KEDF_WT::get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho)
+double KEDF_WT::get_energy_density(
+    const double *const *prho,
+    int is,
+    int ir,
+    ModulePW::PW_Basis *pw_rho)
 {
     const int nspin = PARAM.inp.nspin;
-    double** kernelRhoBeta = new double*[nspin];
-    for (int is = 0; is < nspin; ++is) {
+    double **kernelRhoBeta = new double *[nspin];
+    for (int is = 0; is < nspin; ++is)
+    {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
-}
+    }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double result = this->c_tf_ * std::pow(prho[is][ir], this->alpha_) * kernelRhoBeta[is][ir];
@@ -145,18 +155,19 @@ double KEDF_WT::get_energy_density(const double* const* prho, int is, int ir, Mo
 /**
  * @brief Get the kinetic energy of WT KEDF, and add it onto rtau_wt
  * \f[ \tau_{WT} = c_{TF} * \rho^\alpha * \int{W(r - r') * \rho^\beta dr'} \f]
- * 
+ *
  * @param prho charge density
  * @param pw_rho pw basis
  * @param rtau_wt rtau_wt => rtau_wt + tau_wt
  */
-void KEDF_WT::tau_wt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_wt)
+void KEDF_WT::tau_wt(const double *const *prho, ModulePW::PW_Basis *pw_rho, double *rtau_wt)
 {
     const int nspin = PARAM.inp.nspin;
-    double** kernelRhoBeta = new double*[nspin];
-    for (int is = 0; is < nspin; ++is) {
+    double **kernelRhoBeta = new double *[nspin];
+    for (int is = 0; is < nspin; ++is)
+    {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
-}
+    }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     if (nspin == 1)
@@ -188,31 +199,33 @@ void KEDF_WT::tau_wt(const double* const* prho, ModulePW::PW_Basis* pw_rho, doub
  * @param pw_rho pw basis
  * @param rpotential rpotential => rpotential + V_{WT}
  */
-void KEDF_WT::wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
+void KEDF_WT::wt_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     const int nspin = PARAM.inp.nspin;
     ModuleBase::TITLE("KEDF_WT", "wt_potential");
     ModuleBase::timer::start("KEDF_WT", "wt_potential");
 
-    double** kernelRhoBeta = new double*[nspin];
-    for (int is = 0; is < nspin; ++is) {
+    double **kernelRhoBeta = new double *[nspin];
+    for (int is = 0; is < nspin; ++is)
+    {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
-}
+    }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
-    double** kernelRhoAlpha = new double*[nspin];
-    for (int is = 0; is < nspin; ++is) {
+    double **kernelRhoAlpha = new double *[nspin];
+    for (int is = 0; is < nspin; ++is)
+    {
         kernelRhoAlpha[is] = new double[pw_rho->nrxx];
-}
+    }
     this->multi_kernel(prho, kernelRhoAlpha, this->alpha_, pw_rho);
 
     for (int is = 0; is < nspin; ++is)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            rpotential(is, ir) += this->c_tf_
-                                  * (this->alpha_ * std::pow(prho[is][ir], this->alpha_ - 1.) * kernelRhoBeta[is][ir]
-                                     + this->beta_ * std::pow(prho[is][ir], this->beta_ - 1.) * kernelRhoAlpha[is][ir]);
+            rpotential(is, ir) +=
+                this->c_tf_ * (this->alpha_ * std::pow(prho[is][ir], this->alpha_ - 1.) * kernelRhoBeta[is][ir] +
+                                  this->beta_ * std::pow(prho[is][ir], this->beta_ - 1.) * kernelRhoAlpha[is][ir]);
         }
     }
 
@@ -257,7 +270,7 @@ void KEDF_WT::wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho
  * @param pw_rho pw basis
  * @param vw_weight the weight of vW KEDF
  */
-void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, double vw_weight)
+void KEDF_WT::get_stress(const double *const *prho, ModulePW::PW_Basis *pw_rho, double vw_weight)
 {
     const int nspin = PARAM.inp.nspin;
     const bool gamma_only = PARAM.globalv.gamma_only_pw;
@@ -274,9 +287,9 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
         mult = 2. / 3.;
     }
 
-    std::complex<double>** recipRhoAlpha = new std::complex<double>*[nspin];
-    std::complex<double>** recipRhoBeta = new std::complex<double>*[nspin];
-    double* tempRho = new double[pw_rho->nrxx];
+    std::complex<double> **recipRhoAlpha = new std::complex<double> *[nspin];
+    std::complex<double> **recipRhoBeta = new std::complex<double> *[nspin];
+    double *tempRho = new double[pw_rho->nrxx];
     for (int is = 0; is < nspin; ++is)
     {
         recipRhoAlpha[is] = new std::complex<double>[pw_rho->npw];
@@ -319,7 +332,6 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
                     {
                         this->stress(a, b) += diff * coef;
                     }
-
                 }
             }
         }
@@ -333,17 +345,17 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
 
             if (gamma_only)
             {
-                this->stress(a, b) *= -std::pow(ModuleBase::PI, 2)
-                                      / (this->alpha_ * this->beta_ * this->kf_
-                                         * std::pow(this->rho0_, this->alpha_ + this->beta_ - 2.))
-                                      * 2.; // multiply by 2 to convert Hartree to Ry
+                this->stress(a, b) *=
+                    -std::pow(ModuleBase::PI, 2) /
+                    (this->alpha_ * this->beta_ * this->kf_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 2.)) *
+                    2.; // multiply by 2 to convert Hartree to Ry
             }
             else
             {
-                this->stress(a, b) *= -std::pow(ModuleBase::PI, 2)
-                                      / (2. * this->alpha_ * this->beta_ * this->kf_
-                                         * std::pow(this->rho0_, this->alpha_ + this->beta_ - 2.))
-                                      * 2.; // multiply by 2 to convert Hartree to Ry
+                this->stress(a, b) *= -std::pow(ModuleBase::PI, 2) /
+                                      (2. * this->alpha_ * this->beta_ * this->kf_ *
+                                          std::pow(this->rho0_, this->alpha_ + this->beta_ - 2.)) *
+                                      2.; // multiply by 2 to convert Hartree to Ry
             }
         }
     }
@@ -396,29 +408,44 @@ double KEDF_WT::wt_kernel(double eta, double tf_weight, double vw_weight)
     {
         double eta2 = eta * eta;
         double invEta2 = 1. / eta2;
-        double LindG = 3. * (1. - vw_weight) * eta2
-                        -tf_weight-0.6
-                        + invEta2 * (-0.13714285714285712
-                        + invEta2 * (-6.39999999999999875E-2
-                        + invEta2 * (-3.77825602968460128E-2
-                        + invEta2 * (-2.51824061652633074E-2
-                        + invEta2 * (-1.80879839616166146E-2
-                        + invEta2 * (-1.36715733124818332E-2
-                        + invEta2 * (-1.07236045520990083E-2
-                        + invEta2 * (-8.65192783339199453E-3
-                        + invEta2 * (-7.1372762502456763E-3
-                        + invEta2 * (-5.9945117538835746E-3
-                        + invEta2 * (-5.10997527675418131E-3
-                        + invEta2 * (-4.41060829979912465E-3
-                        + invEta2 * (-3.84763737842981233E-3
-                        + invEta2 * (-3.38745061493813488E-3
-                        + invEta2 * (-3.00624946457977689E-3)))))))))))))));
+        double LindG =
+            3. * (1. - vw_weight) * eta2 - tf_weight - 0.6 +
+            invEta2 *
+                (-0.13714285714285712 +
+                    invEta2 *
+                        (-6.39999999999999875E-2 +
+                            invEta2 *
+                                (-3.77825602968460128E-2 +
+                                    invEta2 *
+                                        (-2.51824061652633074E-2 +
+                                            invEta2 *
+                                                (-1.80879839616166146E-2 +
+                                                    invEta2 *
+                                                        (-1.36715733124818332E-2 +
+                                                            invEta2 *
+                                                                (-1.07236045520990083E-2 +
+                                                                    invEta2 *
+                                                                        (-8.65192783339199453E-3 +
+                                                                            invEta2 *
+                                                                                (-7.1372762502456763E-3 +
+                                                                                    invEta2 *
+                                                                                        (-5.9945117538835746E-3 +
+                                                                                            invEta2 *
+                                                                                                (-5.10997527675418131E-3 +
+                                                                                                    invEta2 *
+                                                                                                        (-4.41060829979912465E-3 +
+                                                                                                            invEta2 *
+                                                                                                                (-3.84763737842981233E-3 +
+                                                                                                                    invEta2 *
+                                                                                                                        (-3.38745061493813488E-3 +
+                                                                                                                            invEta2 *
+                                                                                                                                (-3.00624946457977689E-3)))))))))))))));
         return LindG;
     }
     else
     {
-        return 1. / (0.5 + 0.25 * (1. - eta * eta) / eta * log((1 + eta) / std::abs(1 - eta)))
-               - 3. * vw_weight * eta * eta - tf_weight;
+        return 1. / (0.5 + 0.25 * (1. - eta * eta) / eta * log((1 + eta) / std::abs(1 - eta))) -
+               3. * vw_weight * eta * eta - tf_weight;
     }
 }
 
@@ -446,9 +473,9 @@ double KEDF_WT::diff_linhard(double eta, double vw_weight)
     else
     {
         double eta2 = eta * eta;
-        return ((eta2 + 1.) * 0.25 / eta2 * log(std::abs((1. + eta) / (1. - eta))) - 0.5 / eta)
-                   / std::pow((0.5 + 0.25 * (1. - eta2) * log((1. + eta) / std::abs(1. - eta)) / eta), 2)
-               - 6. * eta * vw_weight;
+        return ((eta2 + 1.) * 0.25 / eta2 * log(std::abs((1. + eta) / (1. - eta))) - 0.5 / eta) /
+                   std::pow((0.5 + 0.25 * (1. - eta2) * log((1. + eta) / std::abs(1. - eta)) / eta), 2) -
+               6. * eta * vw_weight;
     }
 }
 
@@ -460,17 +487,22 @@ double KEDF_WT::diff_linhard(double eta, double vw_weight)
  * @param [in] exponent the exponent of rho
  * @param [in] pw_rho pw_basis
  */
-void KEDF_WT::multi_kernel(const double* const* prho, double** rkernel_rho, double exponent, ModulePW::PW_Basis* pw_rho)
+void KEDF_WT::multi_kernel(
+    const double *const *prho,
+    double **rkernel_rho,
+    double exponent,
+    ModulePW::PW_Basis *pw_rho)
 {
     const int nspin = PARAM.inp.nspin;
 #ifdef __CUDA
-    if (pw_rho->get_device() == "gpu") {
+    if (pw_rho->get_device() == "gpu")
+    {
         this->multi_kernel_gpu(prho, rkernel_rho, nspin, exponent, pw_rho);
         return;
     }
 #endif
 
-    std::complex<double>** recipkernelRho = new std::complex<double>*[nspin];
+    std::complex<double> **recipkernelRho = new std::complex<double> *[nspin];
     for (int is = 0; is < nspin; ++is)
     {
         recipkernelRho[is] = new std::complex<double>[pw_rho->npw];
@@ -500,7 +532,7 @@ void KEDF_WT::multi_kernel(const double* const* prho, double** rkernel_rho, doub
  * @param vw_weight
  * @param pw_rho pw_basis
  */
-void KEDF_WT::fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis* pw_rho)
+void KEDF_WT::fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis *pw_rho)
 {
     double eta = 0.;
     for (int ig = 0; ig < pw_rho->npw; ++ig)
@@ -517,14 +549,15 @@ void KEDF_WT::fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis
  * @param file_name the name of the kernel file
  * @param pw_rho pw basis
  */
-void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho)
+void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis *pw_rho)
 {
     std::ifstream ifs(file_name.c_str(), std::ios::in);
 
     GlobalV::ofs_running << "Read WT kernel from " << file_name << std::endl;
-    if (!ifs) {
+    if (!ifs)
+    {
         ModuleBase::WARNING_QUIT("kedf_wt.cpp", "The kernel file of WT KEDF not found");
-}
+    }
 
     int kineType = 0;
     double kF_in = 0.;
@@ -537,8 +570,8 @@ void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho)
     ifs >> rho0_in;
     ifs >> nq_in;
 
-    double* eta_in = new double[nq_in];
-    double* w0_in = new double[nq_in];
+    double *eta_in = new double[nq_in];
+    double *w0_in = new double[nq_in];
 
     for (int iq = 0; iq < nq_in; ++iq)
     {
@@ -559,11 +592,15 @@ void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho)
         eta = sqrt(pw_rho->gg[ig]) * pw_rho->tpiba / this->tkf_;
         maxEta = std::max(eta, maxEta);
 
-        if (eta <= eta_in[0]) {
+        if (eta <= eta_in[0])
+        {
             this->kernel_[ig] = w0_in[0];
-        } else if (eta > maxEta_in) {
+        }
+        else if (eta > maxEta_in)
+        {
             this->kernel_[ig] = w0_in[nq_in - 1];
-        } else
+        }
+        else
         {
             ind1 = 1;
             ind2 = nq_in;
@@ -586,9 +623,10 @@ void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho)
         }
     }
 
-    if (maxEta > maxEta_in) {
+    if (maxEta > maxEta_in)
+    {
         ModuleBase::WARNING("kedf_wt.cpp", "Please increase the maximal eta value in KEDF kernel file");
-}
+    }
 
     delete[] eta_in;
     delete[] w0_in;

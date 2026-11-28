@@ -22,7 +22,7 @@ TEST_F(Observables, CurrentsMatchPauliAndHamiltonianDerivative)
     const double epsilon = 1e-4;
     for (int band = 0; band < psi_->get_nbands(); ++band)
     {
-        const Complex* data = psi_->get_pointer() + band * n;
+        const Complex *data = psi_->get_pointer() + band * n;
         const Vector x(data, data + n);
         Vector vx(3 * n);
         velocity.act(psi_.get(), 2, x.data(), vx.data(), false);

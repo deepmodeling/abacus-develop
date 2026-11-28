@@ -18,19 +18,20 @@ class StoHamiltPW : public hamilt::HamiltPW<T, Device>
      * @param emin_in Emin of the Hamiltonian
      * @param emax_in Emax of the Hamiltonian
      */
-    StoHamiltPW(elecstate::Potential* pot_in,
-                ModulePW::PW_Basis_K* wfc_basis,
-                K_Vectors* p_kv,
-                pseudopot_cell_vnl* nlpp,
-                const UnitCell* ucell,
-                const int& npol,
-                Real* emin_in,
-                Real* emax_in);
+    StoHamiltPW(
+        elecstate::Potential *pot_in,
+        ModulePW::PW_Basis_K *wfc_basis,
+        K_Vectors *p_kv,
+        pseudopot_cell_vnl *nlpp,
+        const UnitCell *ucell,
+        const int &npol,
+        Real *emin_in,
+        Real *emax_in);
     /**
      * @brief Destroy the StoHamiltPW object
      *
      */
-    ~StoHamiltPW(){};
+    ~StoHamiltPW() {};
 
     /**
      * @brief Calculate \hat{H}|psi>
@@ -39,7 +40,7 @@ class StoHamiltPW : public hamilt::HamiltPW<T, Device>
      * @param hpsi output wave function
      * @param nbands number of bands
      */
-    void hPsi(const T* psi_in, T* hpsi, const int& nbands = 1);
+    void hPsi(const T *psi_in, T *hpsi, const int &nbands = 1);
 
     /**
      * @brief Calculate \hat{H}|psi> and normalize it
@@ -48,15 +49,15 @@ class StoHamiltPW : public hamilt::HamiltPW<T, Device>
      * @param hpsi output wave function
      * @param nbands number of bands
      */
-    void hPsi_norm(const T* psi_in, T* hpsi, const int& nbands = 1);
+    void hPsi_norm(const T *psi_in, T *hpsi, const int &nbands = 1);
 
-    Real* emin = nullptr; ///< Emin of the Hamiltonian
-    Real* emax = nullptr; ///< Emax of the Hamiltonian
+    Real *emin = nullptr; ///< Emin of the Hamiltonian
+    Real *emax = nullptr; ///< Emax of the Hamiltonian
 
   private:
     int npwk_max = 0;      ///< maximum number of plane waves
     int npol = 0;          ///< number of polarizations
-    std::vector<int>& ngk; ///< number of G vectors
+    std::vector<int> &ngk; ///< number of G vectors
 };
 
 #endif

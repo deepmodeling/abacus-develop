@@ -16,28 +16,26 @@ class TDEkineticPW : public OperatorPW<T, Device>
 
   public:
     /** @brief Bind the vector potential in Hartree atomic units before init(). */
-    void set_A_ha(const ModuleBase::Vector3<double>& A)
-    {
-        A_ha_ = A;
-    }
-    TDEkineticPW(const ModulePW::PW_Basis_K* wfc_basis_in);
+    void set_A_ha(const ModuleBase::Vector3<double> &A) { A_ha_ = A; }
+    TDEkineticPW(const ModulePW::PW_Basis_K *wfc_basis_in);
 
     virtual ~TDEkineticPW();
 
     void init(const int ik) override;
 
-    virtual void act(const int nbands,
-                     const int nbasis,
-                     const int npol,
-                     const T* tmpsi_in,
-                     T* tmhpsi,
-                     const int ngk_ik = 0,
-                     const bool is_first_node = false) const override;
+    virtual void act(
+        const int nbands,
+        const int nbasis,
+        const int npol,
+        const T *tmpsi_in,
+        T *tmhpsi,
+        const int ngk_ik = 0,
+        const bool is_first_node = false) const override;
 
   private:
-    const ModulePW::PW_Basis_K* wfc_basis = nullptr;
+    const ModulePW::PW_Basis_K *wfc_basis = nullptr;
     ModuleBase::Vector3<double> A_ha_;
-    Device* ctx = {};
+    Device *ctx = {};
     ct::Tensor factor_;
 };
 

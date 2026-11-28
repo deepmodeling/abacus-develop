@@ -9,7 +9,7 @@
 
 class TestKEDFVW : public ::testing::Test
 {
-protected:
+  protected:
     void SetUp() override
     {
         // A cubic cell of side 2*pi makes the fundamental z wave number one.
@@ -51,12 +51,12 @@ TEST_F(TestKEDFVW, PeriodicEnergyMatchesAnalyticIntegral)
 {
     // In Ry, E = weight * integral(phi * (-laplacian(phi)))
     //          = weight * volume * amplitude^2 / 2 for wave number one.
-    double* input[] = {phi.data()};
+    double *input[] = {phi.data()};
     const double expected = weight * volume * amplitude * amplitude / 2.0;
     EXPECT_NEAR(kedf.get_energy(input, &basis), expected, 1e-10);
     EXPECT_NEAR(kedf.vw_energy, expected, 1e-10);
 
-    for (double& value : phi)
+    for (double &value : phi)
     {
         value = -value;
     }
@@ -65,12 +65,12 @@ TEST_F(TestKEDFVW, PeriodicEnergyMatchesAnalyticIntegral)
 
 TEST_F(TestKEDFVW, PeriodicEnergyDensityMatchesNegativeLaplacian)
 {
-    double* input[] = {phi.data()};
+    double *input[] = {phi.data()};
     const int ir = 0;
     const double expected = weight * phi[ir] * amplitude * cosine[ir];
     EXPECT_NEAR(kedf.get_energy_density(input, 0, ir, &basis), expected, 1e-10);
 
-    for (double& value : phi)
+    for (double &value : phi)
     {
         value = -value;
     }
@@ -79,7 +79,7 @@ TEST_F(TestKEDFVW, PeriodicEnergyDensityMatchesNegativeLaplacian)
 
 TEST_F(TestKEDFVW, PeriodicPotentialAccumulatesAndChangesSign)
 {
-    const double* input[] = {phi.data()};
+    const double *input[] = {phi.data()};
     ModuleBase::matrix potential(1, basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -105,7 +105,7 @@ TEST_F(TestKEDFVW, PeriodicPotentialAccumulatesAndChangesSign)
 
 TEST_F(TestKEDFVW, PeriodicStressHasOnlyLongitudinalComponent)
 {
-    const double* input[] = {phi.data()};
+    const double *input[] = {phi.data()};
     const double expected = weight * amplitude * amplitude;
     kedf.get_stress(input, &basis);
     for (int i = 0; i < 3; ++i)
@@ -122,7 +122,7 @@ TEST_F(TestKEDFVW, PeriodicStressHasOnlyLongitudinalComponent)
             }
         }
     }
-    for (double& value : phi)
+    for (double &value : phi)
     {
         value = -value;
     }

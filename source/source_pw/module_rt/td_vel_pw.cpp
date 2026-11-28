@@ -11,7 +11,11 @@
 namespace pw
 {
 template <typename Real, typename Device>
-void TDVelPW<Real, Device>::initialize(const UnitCell& cell, const ModulePW::PW_Basis_K& basis, const K_Vectors& kv, pseudopot_cell_vnl& pp)
+void TDVelPW<Real, Device>::initialize(
+    const UnitCell &cell,
+    const ModulePW::PW_Basis_K &basis,
+    const K_Vectors &kv,
+    pseudopot_cell_vnl &pp)
 {
     if (cell_ != nullptr)
     {
@@ -24,10 +28,11 @@ void TDVelPW<Real, Device>::initialize(const UnitCell& cell, const ModulePW::PW_
 }
 
 template <typename Real, typename Device>
-TDVelResultPW TDVelPW<Real, Device>::calculate(const psi::Psi<Complex, Device>& psi,
-                                               const elecstate::ElecState& state,
-                                               const ModuleBase::Vector3<double>& a,
-                                               const CurrentRequest& request)
+TDVelResultPW TDVelPW<Real, Device>::calculate(
+    const psi::Psi<Complex, Device> &psi,
+    const elecstate::ElecState &state,
+    const ModuleBase::Vector3<double> &a,
+    const CurrentRequest &request)
 {
     ModuleBase::timer::start("TDVelPW", "calculate");
     if (cell_ == nullptr)
@@ -64,16 +69,18 @@ TDVelResultPW TDVelPW<Real, Device>::calculate(const psi::Psi<Complex, Device>& 
     const std::int64_t capacity = std::max<std::int64_t>(1, vel_size);
     const std::int64_t dot_size = std::max(1, ncols);
     // Default tensors contain one CPU float element; capacity alone does not establish a usable buffer.
-    if (vpsi_.NumElements() < capacity || vpsi_.data_type() != ct::DataTypeToEnum<Complex>::value || vpsi_.device_type() != device)
+    if (vpsi_.NumElements() < capacity || vpsi_.data_type() != ct::DataTypeToEnum<Complex>::value ||
+        vpsi_.device_type() != device)
     {
         vpsi_ = ct::Tensor(ct::DataTypeToEnum<Complex>::value, device, {capacity});
     }
-    if (dots_.NumElements() < dot_size || dots_.data_type() != ct::DataTypeToEnum<Complex>::value || dots_.device_type() != device)
+    if (dots_.NumElements() < dot_size || dots_.data_type() != ct::DataTypeToEnum<Complex>::value ||
+        dots_.device_type() != device)
     {
         dots_ = ct::Tensor(ct::DataTypeToEnum<Complex>::value, device, {dot_size});
     }
-    Complex* vpsi = vpsi_.template data<Complex>();
-    Complex* dots = dots_.template data<Complex>();
+    Complex *vpsi = vpsi_.template data<Complex>();
+    Complex *dots = dots_.template data<Complex>();
     diag_.resize(ncols);
     if (request.spin_current)
     {
@@ -88,7 +95,7 @@ TDVelResultPW TDVelPW<Real, Device>::calculate(const psi::Psi<Complex, Device>& 
     for (int ik = 0; ik < basis_->nks; ++ik)
     {
         psi.fix_k(ik);
-        const Complex* data = psi.get_pointer();
+        const Complex *data = psi.get_pointer();
         const int npw = basis_->npwk[ik];
         if (vel_size > 0)
         {
@@ -103,7 +110,7 @@ TDVelResultPW TDVelPW<Real, Device>::calculate(const psi::Psi<Complex, Device>& 
         }
         for (int id = 0; id < 3; ++id)
         {
-            const Complex* component = vpsi + id * comp_size;
+            const Complex *component = vpsi + id * comp_size;
             // Each spin component is one npwx-strided column; reuse its diagonal product for both currents.
             hsolver::linear_op<Complex, Device>().dot(npwx, npw, ncols, data, component, dots);
             CopyToHost()(diag_.data(), dots, ncols);
@@ -145,8 +152,8 @@ TDVelResultPW TDVelPW<Real, Device>::calculate(const psi::Psi<Complex, Device>& 
                 for (int left = 0; left < 2; ++left)
                 {
                     const int right = 1 - left;
-                    const Complex* bra = data + left * npwx;
-                    const Complex* ket = component + right * npwx;
+                    const Complex *bra = data + left * npwx;
+                    const Complex *ket = component + right * npwx;
                     hsolver::linear_op<Complex, Device>().dot(ld_psi, npw, nbands, bra, ket, dots);
                     CopyToHost()(cross_.data(), dots, nbands);
                     const double sign = left == 0 ? 1.0 : -1.0;
@@ -172,7 +179,7 @@ TDVelResultPW TDVelPW<Real, Device>::calculate(const psi::Psi<Complex, Device>& 
     {
         const std::int64_t remaining = k_size - offset;
         const int count = static_cast<int>(std::min(max_chunk, remaining));
-        double* chunk = result.per_k.data() + offset;
+        double *chunk = result.per_k.data() + offset;
         Parallel_Reduce::reduce_all(chunk, count);
         offset += count;
     }
@@ -180,15 +187,15 @@ TDVelResultPW TDVelPW<Real, Device>::calculate(const psi::Psi<Complex, Device>& 
     {
         Parallel_Reduce::reduce_all(result.spin.data(), 9);
     }
-    for (double& value: result.total)
+    for (double &value : result.total)
     {
         value /= cell_->omega;
     }
-    for (double& value: result.per_k)
+    for (double &value : result.per_k)
     {
         value /= cell_->omega;
     }
-    for (double& value: result.spin)
+    for (double &value : result.spin)
     {
         value /= cell_->omega;
     }

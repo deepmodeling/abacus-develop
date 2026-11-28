@@ -23,7 +23,7 @@ TEST_F(Observables, SOCTorqueMatchesCommutator)
             double expected = 0;
             for (int band = 0; band < psi_->get_nbands(); ++band)
             {
-                const Complex* data = psi_->get_pointer() + band * n;
+                const Complex *data = psi_->get_pointer() + band * n;
                 const Vector x(data, data + n);
                 const Vector sx = pauli(x, axis);
                 const Vector hx = nonlocal(beta, x, atom);
@@ -64,7 +64,8 @@ TEST_F(Observables, DensityMomentsAndPeriodicVoronoi)
                     for (int k = -3; k <= 3; ++k)
                     {
                         const ModuleBase::Vector3<double> image(i, j, k);
-                        const ModuleBase::Vector3<double> delta = (point - cell_.atoms[0].taud[atom] + image) * cell_.latvec;
+                        const ModuleBase::Vector3<double> delta =
+                            (point - cell_.atoms[0].taud[atom] + image) * cell_.latvec;
                         const double distance = delta.norm2();
                         if (distance < best - 1e-12)
                         {

@@ -11,11 +11,15 @@
 #include "source_pw/module_stodft/sto_wf.h"
 
 // mock for module_sdft
-template <typename REAL> Sto_Func<REAL>::Sto_Func() {}
+template <typename REAL>
+Sto_Func<REAL>::Sto_Func()
+{
+}
 template class Sto_Func<double>;
 
 // mock of Stochastic_WF
-template <typename T, typename Device> Stochastic_WF<T, Device>::Stochastic_WF()
+template <typename T, typename Device>
+Stochastic_WF<T, Device>::Stochastic_WF()
 {
     chiortho = nullptr;
     chi0 = nullptr;
@@ -23,7 +27,8 @@ template <typename T, typename Device> Stochastic_WF<T, Device>::Stochastic_WF()
     nchip = nullptr;
 }
 
-template <typename T, typename Device> Stochastic_WF<T, Device>::~Stochastic_WF()
+template <typename T, typename Device>
+Stochastic_WF<T, Device>::~Stochastic_WF()
 {
     delete[] chi0;
     delete[] shchi;
@@ -31,7 +36,10 @@ template <typename T, typename Device> Stochastic_WF<T, Device>::~Stochastic_WF(
     delete[] nchip;
 }
 
-template <typename T, typename Device> void Stochastic_WF<T, Device>::init(K_Vectors *p_kv, const int npwx_in) {}
+template <typename T, typename Device>
+void Stochastic_WF<T, Device>::init(K_Vectors *p_kv, const int npwx_in)
+{
+}
 
 // mock diago_hs_para
 namespace hsolver
@@ -92,18 +100,23 @@ template void diago_hs_para<std::complex<float>>(
 
 } // namespace hsolver
 
-template <> void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init_rho_data() {}
+template <>
+void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init_rho_data()
+{
+}
 
 template class StoChe<double>;
 
-template <typename T, typename Device> Stochastic_Iter<T, Device>::Stochastic_Iter()
+template <typename T, typename Device>
+Stochastic_Iter<T, Device>::Stochastic_Iter()
 {
     change = false;
     mu0 = 0;
     method = 2;
 }
 
-template <typename T, typename Device> Stochastic_Iter<T, Device>::~Stochastic_Iter() {};
+template <typename T, typename Device>
+Stochastic_Iter<T, Device>::~Stochastic_Iter() {};
 
 template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::init(
@@ -150,14 +163,16 @@ void Stochastic_Iter<T, Device>::calPn(const int &ik, Stochastic_WF<T, Device> &
     return;
 }
 
-template <typename T, typename Device> void Stochastic_Iter<T, Device>::itermu(int iter, elecstate::ElecState *pes)
+template <typename T, typename Device>
+void Stochastic_Iter<T, Device>::itermu(int iter, elecstate::ElecState *pes)
 {
     // do something to verify this function has been called
     pes->f_en.eband += 1.2;
     return;
 }
 
-template <typename T, typename Device> void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device> &stowf)
+template <typename T, typename Device>
+void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device> &stowf)
 {
     // do something to verify this function has been called
     stowf.nchip_max++;
@@ -268,15 +283,7 @@ template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(
 class TestStoHSolverPW : public ::testing::Test
 {
   public:
-    TestStoHSolverPW()
-        : elecstate_test(
-              nullptr,
-              nullptr,
-              nullptr,
-              nullptr,
-              nullptr,
-              nullptr,
-              nullptr)
+    TestStoHSolverPW() : elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
     {
         stoche.nche = 8;
         stoche.method_sto = 1;
@@ -286,30 +293,11 @@ class TestStoHSolverPW : public ::testing::Test
     K_Vectors kv;
     StoChe<double> stoche;
     StoHamiltPW<std::complex<double>> *p_hamilt_sto = nullptr;
-    StoHSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d{
-        &kv,
-        &pwbk,
-        stowf,
-        stoche,
-        p_hamilt_sto,
-        "scf",
-        "pw",
-        "cg",
-        false,
-        1,
-        hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+    StoHSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d{&kv, &pwbk, stowf, stoche, p_hamilt_sto, "scf",
+        "pw", "cg", false, 1, hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
         hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
         hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
-        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-        0,
-        false,
-        4,
-        "hard",
-        0,
-        0,
-        false,
-        true,
-        1};
+        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace, 0, false, 4, "hard", 0, 0, false, true, 1};
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 
@@ -419,11 +407,7 @@ int main(int argc, char **argv)
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 
-    MPI_Comm_split(
-        MPI_COMM_WORLD,
-        0,
-        1,
-        &BP_WORLD);
+    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &BP_WORLD);
     int result = RUN_ALL_TESTS();
 
     MPI_Comm_free(&BP_WORLD);
