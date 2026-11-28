@@ -33,35 +33,19 @@ elseif(INPUT_CASE STREQUAL "invalid_dependency")
   set(expected_manual "input-main.html#nspin")
 elseif(INPUT_CASE STREQUAL "unsupported_libxc_cuda")
   string(APPEND contents "device gpu\ndevice_xc gpu\n")
-  set(expected
-      "device_xc gpu requires ABACUS built with -DENABLE_LIBXC_CUDA=ON.")
+  set(expected "device_xc gpu requires ABACUS built with -DENABLE_LIBXC_CUDA=ON.")
   set(expected_manual "input-main.html#device-xc")
-elseif(INPUT_CASE STREQUAL "invalid_device_dm")
-  string(APPEND contents "device_dm auto\n")
-  set(expected "Expected one String from {cpu, gpu}")
-  set(expected_manual "input-main.html#device-dm")
-elseif(INPUT_CASE STREQUAL "unsupported_device_dm")
-  string(APPEND contents "device gpu\ndevice_dm gpu\n")
-  set(expected
-      "device_dm gpu requires ABACUS built with CUDA, MPI and LCAO support")
-  set(expected_manual "input-main.html#device-dm")
 elseif(INPUT_CASE STREQUAL "out_dmk_zero_precision")
   string(APPEND contents "out_dmk 1 0\n")
-  set(expected
-      "Invalid INPUT parameter 'out_dmk': precision must be a positive integer."
-  )
+  set(expected "Invalid INPUT parameter 'out_dmk': precision must be a positive integer.")
   set(expected_manual "")
 elseif(INPUT_CASE STREQUAL "out_hsk_zero_precision")
   string(APPEND contents "out_hsk 1 0\n")
-  set(expected
-      "Invalid INPUT parameter 'out_hsk': precision must be a positive integer."
-  )
+  set(expected "Invalid INPUT parameter 'out_hsk': precision must be a positive integer.")
   set(expected_manual "")
 elseif(INPUT_CASE STREQUAL "out_mat_tk_zero_precision")
   string(APPEND contents "out_mat_tk 1 0\n")
-  set(expected
-      "Invalid INPUT parameter 'out_mat_tk': precision must be a positive integer."
-  )
+  set(expected "Invalid INPUT parameter 'out_mat_tk': precision must be a positive integer.")
   set(expected_manual "")
 elseif(INPUT_CASE STREQUAL "valid")
   string(APPEND contents "nspin 2\n")

@@ -22,7 +22,7 @@
 #include "source_hsolver/parallel_k2d.h"
 
 #if defined(__CUDA) && defined(__MPI)
-#include "dm_direct_pilot.h"
+#include "dm_cusolver.h"
 #endif
 
 #include <iostream>
@@ -38,31 +38,23 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
 								   Charge &chr,
                                    const int nspin,
                                    const double omega,
-                                   const bool skip_charge,
-                                   const std::string& device_dm)
+                                   const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
     ModuleBase::timer::start("HSolverLCAO", "solve");
 
     if (this->method != "pexsi")
     {
-        if (device_dm == "gpu")
-        {
-            if (this->overlap_cutoff > 0.0)
-            {
-                ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
-                                        "device_dm gpu requires lcao_sk_cut 0; select device_dm cpu "
-                                        "to use overlap regularization");
-            }
+        bool dm_ready = false;
 #if defined(__CUDA) && defined(__MPI)
-            const DirectConfig config = {this->method, this->kpar_lcao, nspin, skip_charge,
-                                         this->world_rank, this->nbands};
-            direct_gamma(hs, psi, pes, dm, this->ParaV, config);
-#else
-            ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "device_dm gpu requires CUDA and MPI support");
-#endif
+        if (this->use_gpu && this->overlap_cutoff == 0.0)
+        {
+            const CusolverDmConfig config = {this->method, this->kpar_lcao, nspin, skip_charge,
+                                            this->world_rank, this->nbands};
+            dm_ready = solve_with_gpu_dm(hs, psi, pes, dm, this->ParaV, config);
         }
-        else
+#endif
+        if (!dm_ready)
         {
 #ifdef __MPI
 #ifdef __CUDA

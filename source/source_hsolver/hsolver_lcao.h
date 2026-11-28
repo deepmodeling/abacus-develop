@@ -1,8 +1,6 @@
 #ifndef HSOLVERLCAO_H
 #define HSOLVERLCAO_H
 
-#include <string>
-
 #include "source_estate/elecstate.h"
 #include "source_hsolver/hs_matrix.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -38,8 +36,7 @@ class HSolverLCAO
 			   Charge &chr, // charge density
 			   const int nspin,
                const double omega, // current cell volume (ucell.omega), NOT rhopw->omega
-			   const bool skip_charge,
-               const std::string& device_dm);
+			   const bool skip_charge);
 
   private:
     void hamiltSolvePsiK(ModuleBase::MatrixBlock<TK>& hk,

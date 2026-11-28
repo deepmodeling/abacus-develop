@@ -53,10 +53,10 @@ We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/devel
 
 ## Gamma density matrix on GPU
 
-Use `device_dm` in INPUT to select where the real FP64 LCAO density matrix is
-constructed. The default is `cpu`, including when `device gpu` is selected.
-A CUDA/MPI/LCAO build includes GPU DM without a separate CMake option or
-runtime environment variable. For example:
+Real FP64 Gamma LCAO calculations automatically construct the density matrix on
+GPU when using `device gpu`, `ks_solver cusolver`, `nspin 1`, `kpar 1` and
+`lcao_sk_cut 0`. This requires a CUDA/MPI/LCAO build and charge updates on one
+node with one visible GPU per rank. No additional INPUT or CMake option is needed:
 
 ```text
 basis_type  lcao
@@ -65,35 +65,29 @@ ks_solver   cusolver
 gamma_only  1
 nspin       1
 kpar        1
-device_dm   gpu
 ```
 
-Run one or more MPI ranks on one node with one visible GPU per rank. GPU DM
-supports Kohn-Sham SCF, relaxation and MD charge updates. Other configurations
-are rejected when GPU DM is explicitly selected.
-Keep `lcao_sk_cut 0` (the default); overlap regularization requires `device_dm cpu`.
+Other configurations, including complex wavefunctions and overlap
+regularization, use the existing CPU density-matrix path.
 
 To combine GPU DM with GPU EXX and Libxc, use one MPI rank and one GPU with
 `device_exx gpu` and `device_xc gpu`. The build must also enable the corresponding
 LibRI and Libxc CUDA backends.
 
-A CUDA or cuBLAS error during GPU DM stops the run with a nonzero exit status.
-The diagnostic identifies the failing operation, matrix and band counts, and
-applicable allocation/transfer byte count. To choose CPU DM, set `device_dm cpu`
-in INPUT and rerun. The selected eigensolver still performs diagonalization;
-this change does not reduce cuSOLVER's own GPU memory requirements.
+A CUDA or cuBLAS error during GPU DM stops the run with a nonzero exit status
+and identifies the failing operation, matrix size and band count. For CPU
+execution, select `device cpu` and a CPU eigensolver such as `scalapack_gvx`.
 
-Both DM devices use the same full/partial eigensolver selection described
-below. The partial solve requests indices 1 through `nbands` with
-`cusolverDnDsygvdx`; it still needs dense N-by-N device buffers. GPU DM retains
-device eigenvectors until occupations and DM are ready. Host eigenvectors
-remain available, and the device DM is downloaded for existing CPU consumers.
+The full/partial eigensolver selection described below is unchanged. Retained
+eigenvectors and the calculated occupations form `D = C diag(f) C^T` with FP64
+cuBLAS. DM reuses the eigensolver's device buffers; one MPI rank also uses the
+existing host arrays directly. Distributed runs reuse the H gather buffer for
+DM. Host eigenvectors remain available, and DM is downloaded for existing CPU
+consumers.
 
-Compare CPU and GPU DM using the same eigensolver and MPI/thread layout.
 Faster DM construction may provide little overall speedup when EXX dominates
-the calculation. Host buffers and matrix redistribution still add overhead,
-including with one MPI rank. GPU EXX has separate memory requirements;
-selecting `device_dm cpu` does not resolve an allocation failure in GPU EXX.
+the calculation. Distributed runs still incur matrix redistribution costs.
+GPU EXX has separate memory requirements.
 
 ## Known limitations
 PW basis:

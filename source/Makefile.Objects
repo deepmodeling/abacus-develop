@@ -566,7 +566,7 @@ OBJS_HSOLVER_LCAO=hsolver_lcao.o\
 
 ifeq ($(GPU), CUDA)
 ifeq ($(MPI), ON)
-OBJS_HSOLVER_LCAO += dm_direct_pilot.o
+OBJS_HSOLVER_LCAO += dm_cusolver.o
 endif
 endif
 

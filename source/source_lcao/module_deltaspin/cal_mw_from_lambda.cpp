@@ -108,15 +108,14 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         // =============================================================
         psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
         hamilt::Hamilt<std::complex<double>>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
-        const Input_para& input = PARAM.inp;
-        const bool use_gpu = input.device == "gpu";
+        const auto& input = PARAM.inp;
         hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV,
                                                              input.ks_solver,
                                                              PARAM.globalv.kpar_lcao,
                                                              PARAM.globalv.nlocal,
                                                              input.nbands,
                                                              input.nelec,
-                                                             use_gpu,
+                                                             input.device == "gpu",
                                                              GlobalV::NPROC,
                                                              GlobalV::MY_RANK,
                                                              input.lcao_sk_cut);
@@ -135,8 +134,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         // omega is unused here because skip_charge=true; rhopw->omega is passed only to satisfy the
         // signature and would be stale in NPT anyway (see Charge::renormalize_rho).
         hamilt::HamiltHSMatrix<std::complex<double>> hs(hamilt_t);
-        hsolver_t.solve(hs, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->state_.nspin_, this->pelec->charge->rhopw->omega, true,
-                        input.device_dm);
+        hsolver_t.solve(hs, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->state_.nspin_, this->pelec->charge->rhopw->omega, true);
         // Note: although update_lambda() modifies lambda in-place above,
         // solve() unconditionally recomputes DM and DMR (via dm_from_psi +
         // cal_dmr) from the psi obtained by diagonalizing with the new

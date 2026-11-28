@@ -542,15 +542,6 @@ std::string ReadInput::prepare_input(Parameter& param)
     }
 #endif
 
-#if !defined(__CUDA) || !defined(__MPI) || !defined(__LCAO)
-    // Reject before rank zero probes for a GPU; read_parameters broadcasts this error.
-    if (param.inp.device_dm == "gpu")
-    {
-        return "device_dm gpu requires ABACUS built with CUDA, MPI and LCAO support.\nSee "
-               + input_manual_link("device_dm") + "\n";
-    }
-#endif
-
     InputValues supplied_values;
     for (const Input_Item* item : this->readvalue_items)
     {

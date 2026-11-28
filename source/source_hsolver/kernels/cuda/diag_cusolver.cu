@@ -2,6 +2,7 @@
 
 #include "source_base/module_device/device_check.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -136,7 +137,6 @@ void Diag_Cusolver_gvd::release_eigenvectors()
     weighted_vectors_ = nullptr;
     density_workspace_ = nullptr;
     occupations_ = nullptr;
-    workspace_elements_ = 0;
     rows_ = 0;
     bands_ = 0;
 }
@@ -175,7 +175,10 @@ bool Diag_Cusolver_gvd::solve_subset(
         return false;
     }
     check_status(status, "Dsygvdx workspace query", n, nbands);
-    const std::size_t work_bytes = sizeof(double) * static_cast<std::size_t>(lwork);
+    const std::size_t density_elements = retain_vectors ? static_cast<std::size_t>(n) * n : 0;
+    const std::size_t solver_elements = static_cast<std::size_t>(lwork);
+    const std::size_t work_elements = std::max(solver_elements, density_elements);
+    const std::size_t work_bytes = sizeof(double) * work_elements;
     const auto alloc_status = cudaMalloc(&device.work, work_bytes);
     if (alloc_status == cudaErrorMemoryAllocation)
     {
@@ -209,7 +212,6 @@ bool Diag_Cusolver_gvd::solve_subset(
         weighted_vectors_ = device.s;
         density_workspace_ = device.work;
         occupations_ = device.eigenvalues;
-        workspace_elements_ = static_cast<std::size_t>(lwork);
         rows_ = n;
         bands_ = nbands;
         device.h = nullptr;
@@ -250,7 +252,10 @@ void Diag_Cusolver_gvd::solve_full(
     auto status = cusolverDnDsygvd_bufferSize(
         handle_, problem_type, job, triangle, n, device.h, n, device.s, n, device.eigenvalues, &lwork);
     check_status(status, "Dsygvd workspace query", n, nbands);
-    const std::size_t work_bytes = sizeof(double) * static_cast<std::size_t>(lwork);
+    const std::size_t density_elements = retain_vectors ? static_cast<std::size_t>(n) * n : 0;
+    const std::size_t solver_elements = static_cast<std::size_t>(lwork);
+    const std::size_t work_elements = std::max(solver_elements, density_elements);
+    const std::size_t work_bytes = sizeof(double) * work_elements;
     CHECK_CUDA(cudaMalloc(&device.work, work_bytes));
     status = cusolverDnDsygvd(
         handle_, problem_type, job, triangle, n, device.h, n, device.s, n, device.eigenvalues, device.work, lwork,
@@ -265,7 +270,6 @@ void Diag_Cusolver_gvd::solve_full(
         weighted_vectors_ = device.s;
         density_workspace_ = device.work;
         occupations_ = device.eigenvalues;
-        workspace_elements_ = static_cast<std::size_t>(lwork);
         rows_ = n;
         bands_ = nbands;
         device.h = nullptr;
@@ -313,8 +317,7 @@ void density_error(std::string& error, const char* stage, const char* detail, co
     message << "Direct GPU density matrix failed during " << stage << ": " << detail
             << " (code=" << code << ", n=" << rows << ", bands=" << bands;
     if (bytes != 0) message << ", requested_bytes=" << bytes;
-    message << "). Rerun with device_dm cpu in INPUT to construct the density matrix on CPU; "
-            << "cuSOLVER diagonalization will still use the GPU.";
+    message << "). For CPU execution, rerun with device cpu and a CPU ks_solver such as scalapack_gvx.";
     error = message.str();
 }
 
@@ -366,12 +369,6 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
     const std::size_t matrix_elements = static_cast<std::size_t>(rows_) * rows_;
     const std::size_t matrix_bytes = sizeof(double) * matrix_elements;
     const std::size_t weight_bytes = sizeof(double) * static_cast<std::size_t>(bands);
-    if (workspace_elements_ < matrix_elements)
-    {
-        density_error(error, "reuse cuSOLVER workspace", "workspace is smaller than the density matrix",
-                      -1, rows_, bands, matrix_bytes);
-        return false;
-    }
     // Reuse the completed solve's workspace and eigenvalue storage without new device arrays.
     double* device_density = density_workspace_;
     double* device_weights = occupations_;

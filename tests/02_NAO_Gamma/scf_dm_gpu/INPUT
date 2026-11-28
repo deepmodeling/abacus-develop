@@ -4,7 +4,6 @@ calculation scf
 gamma_only 1
 device gpu
 ks_solver cusolver
-device_dm gpu
 nbands 4
 latname sc
 ecutwfc 25.0

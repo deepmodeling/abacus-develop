@@ -1,7 +1,6 @@
 #ifndef DIAG_CUSOLVER_CUH
 #define DIAG_CUSOLVER_CUH
 
-#include <cstddef>
 #include <complex>
 #include <string>
 
@@ -57,7 +56,6 @@ class Diag_Cusolver_gvd
     double* weighted_vectors_ = nullptr;
     double* density_workspace_ = nullptr;
     double* occupations_ = nullptr;
-    std::size_t workspace_elements_ = 0;
     int rows_ = 0;
     int bands_ = 0;
     cusolverDnHandle_t handle_ = nullptr;

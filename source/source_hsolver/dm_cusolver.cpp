@@ -1,4 +1,4 @@
-#include "dm_direct_pilot.h"
+#include "dm_cusolver.h"
 #include "kernels/cuda/diag_cusolver.cuh"
 #include "source_base/module_device/device.h"
 #include "source_base/module_external/blacs_connector.h"
@@ -17,16 +17,20 @@ namespace hsolver
 {
 namespace
 {
-bool direct_supported(const int context, const int kpoints, const DirectConfig& config)
+bool gpu_dm_supported(const int context, const int kpoints, const CusolverDmConfig& config)
 {
+    if (config.method != "cusolver" || config.kpar != 1 || config.nspin != 1
+        || kpoints != 1 || config.skip_charge)
+    {
+        return false;
+    }
     const base_device::DeviceContext& device_context = base_device::DeviceContext::instance();
     int unsupported_rank = device_context.get_device_count() != 1
                            || device_context.get_local_rank() != config.world_rank;
     char scope = 'A';
     char topology = ' ';
     Cigsum2d(context, &scope, &topology, 1, 1, &unsupported_rank, 1, -1, -1);
-    return config.method == "cusolver" && config.kpar == 1 && config.nspin == 1
-           && kpoints == 1 && !config.skip_charge && unsupported_rank == 0;
+    return unsupported_rank == 0;
 }
 
 void dm_from_cusolver(Diag_Cusolver_gvd* solver, const double* weights, const int bands,
@@ -71,22 +75,20 @@ void dm_from_cusolver(Diag_Cusolver_gvd* solver, const double* weights, const in
 }
 }
 
-void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecState* state,
+bool solve_with_gpu_dm(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecState* state,
                   module_dm::DensityMatrix<double, double>& density, const Parallel_Orbitals* orbitals,
-                  const DirectConfig& config)
+                  const CusolverDmConfig& config)
 {
-    ModuleBase::timer::start("HSolverLCAO", "direct_gamma");
+    ModuleBase::timer::start("HSolverLCAO", "solve_with_gpu_dm");
     const int bands = config.bands;
     const Parallel_Blkcyclic& layout = orbitals->para_2d();
     const int context = layout.ictxt();
     const int kpoints = wave.get_nk();
-    const bool supported = direct_supported(context, kpoints, config);
+    const bool supported = gpu_dm_supported(context, kpoints, config);
     if (!supported)
     {
-        ModuleBase::WARNING_QUIT("direct_gamma",
-                                "device_dm gpu requires real Gamma FP64 LCAO with ks_solver cusolver, "
-                                "nspin 1, kpar 1, charge updates, MPI ranks on one node and "
-                                "one visible GPU per rank; select device_dm cpu in INPUT otherwise");
+        ModuleBase::timer::end("HSolverLCAO", "solve_with_gpu_dm");
+        return false;
     }
     const int n = layout.nrglb();
     const bool root = layout.irproc() == 0 && layout.icproc() == 0;
@@ -166,14 +168,15 @@ void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     Diag_Cusolver_gvd* retained = solver.get();
     const double* weights = &state->wg(0, 0);
     dm_from_cusolver(retained, weights, bands, host_dm, dm_pointer, layout);
-    ModuleBase::timer::end("HSolverLCAO", "direct_gamma");
+    ModuleBase::timer::end("HSolverLCAO", "solve_with_gpu_dm");
+    return true;
 }
 
-void direct_gamma(HSMatrix<std::complex<double>>&, psi::Psi<std::complex<double>>&,
+bool solve_with_gpu_dm(HSMatrix<std::complex<double>>&, psi::Psi<std::complex<double>>&,
                   elecstate::ElecState*, module_dm::DensityMatrix<std::complex<double>, double>&,
-                  const Parallel_Orbitals*, const DirectConfig&)
+                  const Parallel_Orbitals*, const CusolverDmConfig&)
 {
-    ModuleBase::WARNING_QUIT("direct_gamma", "device_dm gpu requires real Gamma FP64 eigenvectors");
+    return false;
 }
 
 }

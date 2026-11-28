@@ -2,13 +2,13 @@
 #include "gtest/gtest.h"
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#include <limits>
 #include <memory>
 #include <string>
 
 namespace
 {
-int allocations_before_failure = -1;
+bool reject_allocations = false;
+int rejected_allocations = 0;
 cudaMemcpyKind failing_copy = cudaMemcpyDefault;
 bool fail_gemm = false;
 }
@@ -16,13 +16,11 @@ bool fail_gemm = false;
 extern "C" cudaError_t __real_cudaMalloc(void** pointer, std::size_t bytes);
 extern "C" cudaError_t __wrap_cudaMalloc(void** pointer, std::size_t bytes)
 {
-    if (allocations_before_failure == 0)
+    if (reject_allocations)
     {
-        allocations_before_failure = -1;
-        const std::size_t impossible_bytes = std::numeric_limits<std::size_t>::max();
-        return __real_cudaMalloc(pointer, impossible_bytes);
+        ++rejected_allocations;
+        return cudaErrorMemoryAllocation;
     }
-    if (allocations_before_failure > 0) --allocations_before_failure;
     return __real_cudaMalloc(pointer, bytes);
 }
 
@@ -67,7 +65,8 @@ protected:
 
     void TearDown() override
     {
-        allocations_before_failure = -1;
+        reject_allocations = false;
+        rejected_allocations = 0;
         failing_copy = cudaMemcpyDefault;
         fail_gemm = false;
         // The production caller terminates; consume injected errors between tests.
@@ -85,11 +84,7 @@ protected:
         EXPECT_NE(error.find(stage), std::string::npos) << error;
         EXPECT_NE(error.find(detail), std::string::npos) << error;
         EXPECT_NE(error.find("n=2, bands=2"), std::string::npos) << error;
-        if (stage.find("cudaMalloc") != std::string::npos)
-        {
-            EXPECT_NE(error.find("code=2"), std::string::npos) << error;
-        }
-        EXPECT_NE(error.find("device_dm cpu in INPUT"), std::string::npos) << error;
+        EXPECT_NE(error.find("device cpu"), std::string::npos) << error;
     }
 
     std::unique_ptr<Diag_Cusolver_gvd> solver;
@@ -97,14 +92,14 @@ protected:
 
 TEST_F(CusolverDensityFailure, ReusesSolverArraysWithoutDeviceAllocations)
 {
-    // Even an allocator that rejects every new request must permit the DM stage.
-    allocations_before_failure = 0;
+    // The DM stage must not allocate any new device arrays in the CUDA kernel code.
+    reject_allocations = true;
     const double weights[2] = {2.0, 0.125};
     double density[4] = {};
     std::string error;
     const bool success = solver->density_from_retained(2, weights, density, error);
     EXPECT_TRUE(success) << error;
-    EXPECT_EQ(allocations_before_failure, 0);
+    EXPECT_EQ(rejected_allocations, 0);
     EXPECT_DOUBLE_EQ(density[0], 2.0);
     EXPECT_DOUBLE_EQ(density[3], 0.125);
 }
