@@ -1042,33 +1042,6 @@ void warn_if_kernel_differs_from_gs(
 } // namespace
 #endif
 
-#ifdef __EXX
-template <>
-void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<double>> &exx_ks)
-{
-    ModuleBase::TITLE("ESolver_LR<double>", "share_exx_lri");
-    this->exx_lri = LR::make_lr_exx<double>(exx_ks, *this->ucell_, this->kv);
-}
-template <>
-void ModuleESolver::ESolver_LR<std::complex<double>>::share_exx_lri(
-    std::shared_ptr<Exx_LRI<std::complex<double>>> &exx_ks)
-{
-    ModuleBase::TITLE("ESolver_LR<complex>", "share_exx_lri");
-    this->exx_lri = LR::make_lr_exx<std::complex<double>>(exx_ks, *this->ucell_, this->kv);
-}
-template <>
-void ModuleESolver::ESolver_LR<std::complex<double>>::share_exx_lri(std::shared_ptr<Exx_LRI<double>> &exx_ks)
-{
-    this->exx_lri = LR::make_lr_exx<std::complex<double>>(exx_ks, *this->ucell_, this->kv);
-}
-template <>
-void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>> &exx_ks)
-{
-    this->exx_lri = LR::make_lr_exx<double>(exx_ks, *this->ucell_, this->kv);
-}
-#endif
-
-
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell &basecell, const Input_para &inp)
 {
@@ -1304,11 +1277,11 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell &ucell)
         }
         else if (ks_sol.exx_nao.exd)
         {
-            this->share_exx_lri(ks_sol.exx_nao.exd->exx_ptr);
+            this->exx_lri = LR::make_lr_exx<T>(ks_sol.exx_nao.exd->exx_ptr, ucell, this->kv);
         }
         else if (ks_sol.exx_nao.exc)
         {
-            this->share_exx_lri(ks_sol.exx_nao.exc->exx_ptr);
+            this->exx_lri = LR::make_lr_exx<T>(ks_sol.exx_nao.exc->exx_ptr, ucell, this->kv);
         }
     }
 #endif

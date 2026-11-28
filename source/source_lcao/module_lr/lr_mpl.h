@@ -20,7 +20,6 @@ struct MplLvc
     double omega_spread = 0.0; ///< max - min over the members (Ry); 0 if exact
     /// G[k][l], symmetric, each a (nat, 3) force matrix
     std::vector<std::vector<ModuleBase::matrix>> g;
-    int dim() const { return static_cast<int>(states.size()); }
 };
 
 /// Evaluate the forces of a batch of Z-window vectors: (vectors, omega, label) -> forces.

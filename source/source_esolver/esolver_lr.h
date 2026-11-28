@@ -313,10 +313,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
 #ifdef __EXX
     /// Tdata of Exx_LRI is same as T, for the reason, see operator_lr_exx.h
     std::shared_ptr<Exx_LRI<T>> exx_lri = nullptr;
-    /// share the ground-state solver's Exx_LRI. It is shared, not stolen: the KS solver
-    /// keeps using it on the next ionic step.
-    void share_exx_lri(std::shared_ptr<Exx_LRI<double>> &);
-    void share_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>> &);
     Exx_Info exx_info;
 #endif
 };

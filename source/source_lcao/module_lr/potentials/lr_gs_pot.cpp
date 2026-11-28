@@ -60,11 +60,6 @@ void GsPot::refresh(const Input_para& inp, const std::string& xc_kernel, const U
     }
 }
 
-elecstate::Potential* GsPot::pot() const
-{
-    return pot_.get();
-}
-
 elecstate::Potential* GsPot::pot_hartree() const
 {
     return pot_hartree_.get();

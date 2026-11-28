@@ -39,7 +39,6 @@ class GsPot
                  Structure_Factor& sf, pseudopot_cell_vl& vloc, surchem& solvent, bool refresh_sfac,
                  bool has_float_data);
 
-    elecstate::Potential* pot() const;
     elecstate::Potential* pot_hartree() const;
 
   private:
