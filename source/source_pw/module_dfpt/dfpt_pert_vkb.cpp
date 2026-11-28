@@ -113,8 +113,8 @@ void grad_l2(
         grad[2] = -c2 * x;
         return;
     case 2:
-        grad[0] = 2.0 * c20 * x;
-        grad[1] = -2.0 * c20 * y;
+        grad[0] = c2 * x;
+        grad[1] = -c2 * y;
         return;
     }
 }
