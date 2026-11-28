@@ -33,7 +33,8 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         int &iter,
         const int istep,
         bool &conv_esolver,
-		const double &scf_ene_thr);
+		const double &scf_ene_thr,
+		std::ofstream &ofs_running);
 
 }
 #endif

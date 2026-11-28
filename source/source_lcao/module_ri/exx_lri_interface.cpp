@@ -7,6 +7,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_hs/hs_sparse_io.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_base/module_out/csr_reader.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"
@@ -391,7 +392,8 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
         const double& scf_ene_thr,
         int& iter,
         const int istep,
-        bool& conv_esolver)
+        bool& conv_esolver,
+        std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_iter_finish");
     if (PARAM.inp.out_mat_exx && (this->two_level_step > 0 || istep > 0)
@@ -417,6 +419,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
         ////////// for Add_Hexx_Type:R
         const std::string restart_HR_path = PARAM.globalv.global_out_dir + "HexxR";
         ModuleIO::write_Hexxs_csr(restart_HR_path, ucell, this->get_Hexxs(), elec.f_en.exx);
+        ModuleIO::write_matrix_notice(ofs_running, "Hexx(R)", restart_HR_path + "_0.csr");
     }
 
     if (this->info_global.cal_exx && conv_esolver)

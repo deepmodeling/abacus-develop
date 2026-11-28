@@ -886,25 +886,26 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
 #ifdef __EXX
     //------------------------------------------------------------------
-    //! 15) Output Hexx matrix in LCAO basis
-    // (see `out_chg` in docs/advanced/input_files/input-main.md)
+    //! 15) Output Hexx(R) matrix in LCAO basis for EXX restart
+    // (see `out_mat_exx` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
     bool cal_exx = exx_info.info_global.cal_exx;
     bool real_number = exx_info.info_ri.real_number;
 
-    if (inp.out_chg[0])
+    if (inp.out_mat_exx)
     {
         if (cal_exx && inp.calculation != "nscf") // Peize Lin add if 2022.11.14
         {
             const std::string file_name_exx = global_out_dir + "HexxR";
             if (real_number)
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exd->get_Hexxs(), 0.0);
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exd->get_Hexxs(), pelec->f_en.exx);
             }
             else
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exc->get_Hexxs(), 0.0);
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exc->get_Hexxs(), pelec->f_en.exx);
             }
+            ModuleIO::write_matrix_notice(ofs_running, "Hexx(R)", file_name_exx + "_0.csr");
         }
     }
 

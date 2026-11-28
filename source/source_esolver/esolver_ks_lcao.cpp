@@ -681,7 +681,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
     ModuleIO::ctrl_iter_lcao<TK, TR>(
         ucell, *this->inp_, this->kv, this->pelec, *this->dmat.dm, this->pv, this->gd, this->psi, this->chr,
         this->p_chgmix, hamilt_lcao, this->orb_, this->deepks, this->exx_nao, this->exx_info_, iter, istep,
-        conv_esolver, this->scf_ene_thr);
+        conv_esolver, this->scf_ene_thr, GlobalV::ofs_running);
 }
 
 template <typename TK, typename TR>

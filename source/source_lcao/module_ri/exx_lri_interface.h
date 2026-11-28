@@ -143,7 +143,8 @@ public:
                          const double& scf_ene_thr,
                          int& iter,
                          const int istep,
-                         bool& conv_esolver);
+                         bool& conv_esolver,
+                         std::ofstream& ofs_running);
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(const UnitCell& ucell,
                             hamilt::Hamilt<T>& hamilt,
