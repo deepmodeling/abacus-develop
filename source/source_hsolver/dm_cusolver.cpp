@@ -34,7 +34,8 @@ bool gpu_dm_supported(const int context, const int kpoints, const CusolverDmConf
 }
 
 void dm_from_cusolver(Diag_Cusolver_gvd* solver, const double* weights, const int bands,
-                     double* host_dm, double* distributed_dm, const Parallel_Blkcyclic& layout)
+                     double* host_dm, double* distributed_dm, const Parallel_Blkcyclic& layout,
+                     int* full_desc)
 {
     ModuleBase::timer::start("HSolverLCAO", "dm_from_cusolver");
     const bool root = layout.irproc() == 0 && layout.icproc() == 0;
@@ -63,8 +64,6 @@ void dm_from_cusolver(Diag_Cusolver_gvd* solver, const double* weights, const in
     if (!serial)
     {
         const int n = layout.nrglb();
-        const int leading_dimension = layout.irproc() == 0 ? n : 1;
-        int full_desc[9] = {1, context, n, n, n, n, 0, 0, leading_dimension};
         int distributed_desc[9];
         const int* descriptor = layout.desc();
         const int* descriptor_end = descriptor + 9;
@@ -95,9 +94,17 @@ bool solve_with_gpu_dm(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::
     const bool serial = layout.nrproc() == 1 && layout.ncproc() == 1;
     const std::size_t matrix_size = static_cast<std::size_t>(n) * n;
     const std::size_t wave_size = static_cast<std::size_t>(n) * bands;
-    const int leading_dimension = layout.irproc() == 0 ? n : 1;
-    int full_desc[9] = {1, context, n, n, n, n, 0, 0, leading_dimension};
-    int wave_desc[9] = {1, context, n, bands, n, bands, 0, 0, leading_dimension};
+    const int block_size = layout.nb();
+    Parallel_Blkcyclic gathered_layout;
+    int gathered_context = -1;
+    if (!serial && root)
+    {
+        // A one-rank grid retains the original block size during redistribution.
+        gathered_layout.init(n, n, block_size, MPI_COMM_SELF, false);
+        gathered_context = gathered_layout.ictxt();
+    }
+    int full_desc[9] = {1, gathered_context, n, n, block_size, block_size, 0, 0, n};
+    int wave_desc[9] = {1, gathered_context, n, bands, block_size, block_size, 0, 0, n};
     int distributed_desc[9];
     int distributed_wave_desc[9];
     const int* matrix_descriptor = layout.desc();
@@ -126,9 +133,9 @@ bool solve_with_gpu_dm(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::
         const std::size_t root_wave_size = root ? wave_size : 1;
         h.resize(root_matrix_size);
         s.resize(root_matrix_size);
-        host_wave.resize(root_wave_size);
         Cpdgemr2d(n, n, hk.p, 1, 1, distributed_desc, h.data(), 1, 1, full_desc, context);
         Cpdgemr2d(n, n, sk.p, 1, 1, distributed_desc, s.data(), 1, 1, full_desc, context);
+        host_wave.resize(root_wave_size);
         h_pointer = h.data();
         s_pointer = s.data();
         host_wave_pointer = host_wave.data();
@@ -167,7 +174,7 @@ bool solve_with_gpu_dm(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::
     elecstate::calEBand(state->ekb, state->wg, state->f_en);
     Diag_Cusolver_gvd* retained = solver.get();
     const double* weights = &state->wg(0, 0);
-    dm_from_cusolver(retained, weights, bands, host_dm, dm_pointer, layout);
+    dm_from_cusolver(retained, weights, bands, host_dm, dm_pointer, layout, full_desc);
     ModuleBase::timer::end("HSolverLCAO", "solve_with_gpu_dm");
     return true;
 }
