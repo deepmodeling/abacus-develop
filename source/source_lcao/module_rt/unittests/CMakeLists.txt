@@ -32,11 +32,11 @@ addtest(
           ../../../source_cell/read_pp_vwr.cpp
           ../../../source_cell/read_pp_blps.cpp
           ../../../source_cell/ucell_io.cpp
-          ../../../source_lcao/module_momentum_op/pos_op_mat.cpp
-          ../../../source_lcao/module_momentum_op/pos_op_basis.cpp
-          ../../../source_lcao/module_momentum_op/pos_op_calc.cpp
-          ../../../source_lcao/module_momentum_op/pos_op_writer.cpp
+          ../../../source_lcao/module_op/pos_op_mat.cpp
+          ../../../source_lcao/module_op/pos_op_basis.cpp
+          ../../../source_lcao/module_op/pos_op_calc.cpp
+          ../../../source_lcao/module_op/pos_op_writer.cpp
           ../../../source_io/module_hs/lat_r_csr.cpp
-          ../../../source_lcao/module_momentum_op/pos_op_csr.cpp
+          ../../../source_lcao/module_op/pos_op_csr.cpp
           ../../../source_cell/soc.cpp
           ${SNAP_PSIBETA_CUDA_TEST_SOURCES})

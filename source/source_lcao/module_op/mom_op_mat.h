@@ -18,7 +18,7 @@ namespace Momentum_op
  * in the local atomic basis as three sparse R-space matrices (px, py, pz).
  *
  * The matrix elements are evaluated with the existing Velocity_op kernel from
- * module_momentum_op, which contains both the kinetic gradient term and the
+ * module_op, which contains both the kinetic gradient term and the
  * nonlocal-pseudopotential commutator term required for TDSE applications.
  *
  * The three Cartesian components are written as CSR files named

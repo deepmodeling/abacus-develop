@@ -178,8 +178,8 @@ namespace ModuleIO
         const ModuleBase::Vector3<double>& vR);
     
     // The calculation of <phi_i|Lx/Ly/Lz|phi_j> matrix elements is written to
-    // three real CSR files, lx_nao.csr, ly_nao.csr and lz_nao.csr (or
-    // lxg{istep+1}_nao.csr etc. when out_app_flag = 2). Each R block follows the
+    // three real CSR files, lrx_nao.csr, lry_nao.csr and lrz_nao.csr (or
+    // lrxg{istep+1}_nao.csr etc. when out_app_flag = 2). Each R block follows the
     // same self-describing header and CSR layout as the H(R)/S(R) output, so
     // the values are indexed by the global NAO orbital index (row) and column
     // index instead of the (it, ia, il, iz, im ...) tuple. Because the NAO
@@ -222,7 +222,7 @@ namespace ModuleIO
              * @brief Calculate and write <phi_i|Lx/Ly/Lz|phi_j> matrix elements.
              *
              * @param prefix the suffix of the output files (currently unused;
-             *               filenames are fixed as l{x,y,z}[g{step+1}]_nao.csr)
+             *               filenames are fixed as lr{x,y,z}[g{step+1}]_nao.csr)
              * @param outdir the output directory
              * @param ucell the unit cell object
              * @param pv the parallel orbital distribution, used for the global
@@ -231,9 +231,9 @@ namespace ModuleIO
              * @param rank the MPI rank
              * @param istep the ionic step index; -1 for single-point runs
              * @param out_app_flag append mode: with 1 the fixed filename
-             *              l{x,y,z}_nao.csr is reused and each step appends;
+             *              lr{x,y,z}_nao.csr is reused and each step appends;
              *              with 2 the filename carries `g{istep+1}`
-             *              (e.g., lxg1_nao.csr); with 0 the fixed filename is
+             *              (e.g., lrxg1_nao.csr); with 0 the fixed filename is
              *              overwritten at every write
              */
             void calculate(const std::string& prefix,

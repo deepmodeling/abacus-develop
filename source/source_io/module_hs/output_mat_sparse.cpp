@@ -1,6 +1,6 @@
 #include "output_mat_sparse.h"
 
-#include "source_lcao/module_momentum_op/pos_op_mat.h"
+#include "source_lcao/module_op/pos_op_mat.h"
 #include "source_base/fs_compat.h"
 #include "source_io/module_hs/hsr_legacy.h"
 #include "source_io/module_parameter/parameter.h"

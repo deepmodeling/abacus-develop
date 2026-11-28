@@ -9,9 +9,9 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_io/module_parameter/input_parameter.h"
-#include "source_lcao/module_momentum_op/velocity_op.h"
+#include "velocity_op.h"
 
-#include "hsr_writer.h"
+#include "source_io/module_hs/hsr_writer.h"
 
 #include <complex>
 #include <string>

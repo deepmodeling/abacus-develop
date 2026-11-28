@@ -29,7 +29,7 @@
 #include <mpi.h>
 #endif
 
-#include "source_io/module_hs/angmom_op_mat.h"
+#include "source_lcao/module_op/angmom_op_mat.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_basis/module_nao/radial_collection.h"
 #include "source_base/sph_bessel_tf.h"
@@ -618,9 +618,9 @@ TEST(AngmomOpAssembly, WritesThreeCsrFiles)
                      istep, out_app_flag);
 
     // All three components must have been written as separate CSR files.
-    const std::string lx_path = out_dir + "lx_nao.csr";
-    const std::string ly_path = out_dir + "ly_nao.csr";
-    const std::string lz_path = out_dir + "lz_nao.csr";
+    const std::string lx_path = out_dir + "lrx_nao.csr";
+    const std::string ly_path = out_dir + "lry_nao.csr";
+    const std::string lz_path = out_dir + "lrz_nao.csr";
     std::ifstream lx_fs(lx_path);
     std::ifstream ly_fs(ly_path);
     std::ifstream lz_fs(lz_path);

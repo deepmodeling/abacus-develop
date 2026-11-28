@@ -4,7 +4,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/read_pp.h"
 #include "source_cell/unitcell.h"
-#include "source_lcao/module_momentum_op/pos_op_mat.h"
+#include "source_lcao/module_op/pos_op_mat.h"
 #include "../../lcao_nonlocal_info.h"
 
 #ifdef __CUDA

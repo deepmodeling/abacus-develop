@@ -4,7 +4,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_psi/psi.h"
-#include "source_lcao/module_momentum_op/velocity_op.h"
+#include "source_lcao/module_op/velocity_op.h"
 #include "source_lcao/setup_exx.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "source_hamilt/module_xc/exx_info.h" // for Exx_Info

@@ -6,7 +6,7 @@
 #include "source_base/timer.h"
 #include "source_io/module_hs/hs_sparse_io_detail.h"
 #include "source_io/module_hs/lat_r_csr.h"
-#include "source_lcao/module_momentum_op/pos_op_csr.h"
+#include "source_lcao/module_op/pos_op_csr.h"
 #include "source_io/module_output/write_notice.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 

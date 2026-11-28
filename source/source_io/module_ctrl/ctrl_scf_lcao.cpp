@@ -15,8 +15,8 @@
 
 // functions
 #include "../module_unk/berryphase.h"                          // use berryphase
-#include "../module_hs/angmom_op_mat.h"                       // use Angmom_op()
-#include "../module_hs/mom_op_mat.h"                          // use Momentum_op::calculate()
+#include "source_lcao/module_op/angmom_op_mat.h"              // use Angmom_op()
+#include "source_lcao/module_op/mom_op_mat.h"                 // use Momentum_op::calculate()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
 #include "source_io/module_ml/io_npz.h"                       // use ModuleIO::output_mat_npz()
 #include "source_io/module_dhs/write_dh.h"                    // use ModuleIO::write_dH_components()

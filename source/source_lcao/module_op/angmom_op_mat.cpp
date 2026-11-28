@@ -12,7 +12,7 @@
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_io/module_hs/angmom_op_mat.h"
+#include "angmom_op_mat.h"
 #include "source_io/module_hs/hs_sparse_io.h"
 #include "source_io/module_hs/hs_sparse_io_detail.h"
 #include "source_io/module_output/write_notice.h"
@@ -489,7 +489,7 @@ void ModuleIO::Angmom_op::calculate(
                                   ucell,
                                   d);
 
-        const std::string prefix = std::string("l") + d;
+        const std::string prefix = std::string("lr") + d;
         const std::string name = ModuleIO::detail::make_sparse_R_filename(prefix,
                                                                           "",
                                                                           numbered,
