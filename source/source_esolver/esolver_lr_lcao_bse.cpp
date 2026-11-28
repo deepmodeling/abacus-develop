@@ -58,7 +58,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell &basecell, const Input_para
     LR_Util::setup_2d_division(this->lr_.gs.para_mat.para_2d(), 1, this->lr_.dim.nbasis, this->lr_.dim.nbasis);
 #ifdef __MPI
     this->lr_.gs.para_mat.set_wfc_and_mo_layouts(this->lr_.dim.nbasis, this->lr_.dim.nbands);
-    int err = this->lr_.gs.para_mat.set_wfc_and_mo_sizes(this->lr_.dim.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
+    int err = this->lr_.gs.para_mat.set_wfc_and_mo_sizes(this->lr_.dim.nbands, this->ofs_running_, this->ofs_warning_);
     this->lr_.gs.para_mat.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->lr_.dim.nbasis);
 #else
     this->lr_.gs.para_mat.nrow_bands = this->lr_.dim.nbasis;
