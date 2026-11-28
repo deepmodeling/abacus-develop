@@ -96,6 +96,13 @@ class DFPT_PW::Impl
     void run_q0_pre(int q_idx);
     double run_displacement_irrep_pass(int q_idx, int irrep);
     void run_q0_post(int q_idx);
+
+    /// Project the q=0 response tensors (epsilon_inf, Born charges) onto
+    /// the crystal point-group form after compute_born and before the ASR
+    /// family and the LO-TO term consume them (QE zstar_eu/symtensor +
+    /// dielec/symmatrix parity). No-op under nosym: the raw tensors stay
+    /// visible as the audit channel for cross-code comparisons.
+    void symmetrize_q0_tensors();
     void run_assemble(int q_idx);
 
     // ----- solve_displacement helpers (dfpt_pw_solve.cpp) -----
