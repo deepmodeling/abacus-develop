@@ -63,6 +63,7 @@ foreach(
         duplicate_string_eof
         invalid_value
         invalid_dependency
+        rvv10_lr_relax
         unsupported_libxc_cuda
         out_dmk_zero_precision
         out_hsk_zero_precision
@@ -101,6 +102,15 @@ addtest(
   LIBS parameter base device io_input
   SOURCES
     test_read_input_parallel.cpp
+    # io_input references stru_frame_io::extract_last_frame without linking cell.
+    ../../source_cell/stru_frame_io.cpp)
+
+addtest(
+  TARGET MODULE_IO_test_read_inp_model
+  LIBS parameter base device io_input
+  SOURCES
+    test_read_inp_model.cpp
+    ../../source_base/test/mpi_test_main.cpp
     # io_input references stru_frame_io::extract_last_frame without linking cell.
     ../../source_cell/stru_frame_io.cpp)
 

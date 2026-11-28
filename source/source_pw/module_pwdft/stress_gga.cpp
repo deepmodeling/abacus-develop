@@ -1,4 +1,5 @@
 #include "source_base/parallel_reduce.h"
+#include "source_hamilt/module_vdw/nonlocal_xc.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "stress_func.h"
 
@@ -16,6 +17,9 @@ void Stress_Func<FPTYPE, Device>::stress_gga(
 {
     ModuleBase::TITLE("Stress", "stress_gga");
     ModuleBase::timer::start("Stress", "stress_gga");
+    // rVV10 is added before the LDA return below; stress_gga is the XC stress hook of PW, LCAO, SDFT and OFDFT
+    const XCFunctionalParameters &xc_parameters = XC_Functional::get_runtime_parameters();
+    vdw::add_rvv10_stress(xc_parameters, *chr, sigma);
 
     int func_type = XC_Functional::get_func_type();
     if (func_type == 0 || func_type == 1)

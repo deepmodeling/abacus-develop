@@ -1,3 +1,7 @@
+# The targets in this directory compile xc_pot.cpp or libxc_pot.cpp against a
+# mocked PW basis, without the libvdwxc adapter.
+abacus_disable_feature_definitions(__LIBVDWXC)
+
 addtest(
   TARGET MODULE_HAMILT_RpaCutoffConfig
   LIBS parameter base device

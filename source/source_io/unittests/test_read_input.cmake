@@ -31,21 +31,35 @@ elseif(INPUT_CASE STREQUAL "invalid_dependency")
   string(APPEND contents "nspin 2\nnoncolin true\n")
   set(expected "Requires nspin==4")
   set(expected_manual "input-main.html#nspin")
+elseif(INPUT_CASE STREQUAL "rvv10_lr_relax")
+  # relax turns the forces on before the requirement of vdw_method rvv10 is
+  # checked, so LR-TDDFT relaxation is rejected without an explicit cal_force.
+  string(APPEND contents
+         "vdw_method rvv10\nesolver_type ks-lr\ncalculation relax\n")
+  set(expected "Requires esolver_type!=dfpt")
+  set(expected_manual "input-main.html#vdw-method")
 elseif(INPUT_CASE STREQUAL "unsupported_libxc_cuda")
   string(APPEND contents "device gpu\ndevice_xc gpu\n")
-  set(expected "device_xc gpu requires ABACUS built with -DENABLE_LIBXC_CUDA=ON.")
+  set(expected
+      "device_xc gpu requires ABACUS built with -DENABLE_LIBXC_CUDA=ON.")
   set(expected_manual "input-main.html#device-xc")
 elseif(INPUT_CASE STREQUAL "out_dmk_zero_precision")
   string(APPEND contents "out_dmk 1 0\n")
-  set(expected "Invalid INPUT parameter 'out_dmk': precision must be a positive integer.")
+  set(expected
+      "Invalid INPUT parameter 'out_dmk': precision must be a positive integer."
+  )
   set(expected_manual "")
 elseif(INPUT_CASE STREQUAL "out_hsk_zero_precision")
   string(APPEND contents "out_hsk 1 0\n")
-  set(expected "Invalid INPUT parameter 'out_hsk': precision must be a positive integer.")
+  set(expected
+      "Invalid INPUT parameter 'out_hsk': precision must be a positive integer."
+  )
   set(expected_manual "")
 elseif(INPUT_CASE STREQUAL "out_mat_tk_zero_precision")
   string(APPEND contents "out_mat_tk 1 0\n")
-  set(expected "Invalid INPUT parameter 'out_mat_tk': precision must be a positive integer.")
+  set(expected
+      "Invalid INPUT parameter 'out_mat_tk': precision must be a positive integer."
+  )
   set(expected_manual "")
 elseif(INPUT_CASE STREQUAL "valid")
   string(APPEND contents "nspin 2\n")

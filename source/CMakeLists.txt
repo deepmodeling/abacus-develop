@@ -69,6 +69,7 @@ set(_abacus_feature_definitions
     $<$<BOOL:${ENABLE_LIBXC_CUDA}>:ABACUS_LIBXC_CUDA>
     $<$<BOOL:${_libxc_requires_host_flag}>:ABACUS_LIBXC_REQUIRES_HOST_FLAG>
     $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
+    $<$<BOOL:${ENABLE_LIBVDWXC}>:__LIBVDWXC>
     $<$<BOOL:${ENABLE_NEP}>:__NEP>
     $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
@@ -172,9 +173,10 @@ if(USE_DSP)
     endif()
     list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
   else()
-    message(STATUS
-      "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
-      "eigensolver falls back to the configured LAPACK provider (zhegvx).")
+    message(
+      STATUS
+        "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
+        "eigensolver falls back to the configured LAPACK provider (zhegvx).")
   endif()
 endif()
 
@@ -416,6 +418,7 @@ foreach(
         ELPA::ELPA
         Libxc::xc
         dftd4::dftd4
+        libvdwxc::vdwxc
         DeePMD::deepmd_c
         DeePMD::deepmd_cc
         nep::nep_cpu

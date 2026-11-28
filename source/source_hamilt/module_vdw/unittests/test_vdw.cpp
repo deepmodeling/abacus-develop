@@ -943,6 +943,22 @@ TEST_F(vdwd4Test, EmptyAtomsAreExcludedForD4S)
 
 #endif // __DFTD4
 
+// rVV10 is part of the XC functional (nonlocal_xc.cpp), so make_vdw returns no pairwise correction;
+// without libvdwxc it stops with a rebuild hint
+TEST(vdwRvv10Test, MakeVdwHasNoPairwiseTerm)
+{
+    UnitCell ucell;
+    Input_para input;
+    input.vdw_method = "rvv10";
+#ifdef __LIBVDWXC
+    EXPECT_TRUE(vdw::make_vdw(ucell, input) == nullptr);
+#else
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(vdw::make_vdw(ucell, input), ::testing::ExitedWithCode(1), "");
+    testing::internal::GetCapturedStdout();
+#endif
+}
+
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
