@@ -20,6 +20,8 @@
 #include "source_lcao/module_lr/potentials/lr_gs_pot.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/lr_mpl.h"
+#include "source_lcao/module_lr/lr_core.h"
+#include "source_lcao/module_lr/lr_sforce.h"
 #include "source_lcao/module_lr/lr_zeq.h"
 #include "source_lcao/module_lr/lr_relax.h"
 #ifdef __EXX
@@ -103,11 +105,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// bind the aliases above; `ks_` must already be set (or null for the `lr` path)
     void bind_ground_state_aliases_();
 
-    // not to use ElecState because 2-particle state is quite different from 1-particle state.
-    // implement a independent one (ExcitedState) to pack physical properties if needed.
-    // put the components of ElecState here:
-    std::vector<std::shared_ptr<LR::PotHxcLR>> pot;
-
     // ground state info
 
     /// @brief ground state wave function
@@ -126,17 +123,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     ModuleBase::matrix wg_ks_all; /// occupation number of all bands of ground state
 
     // @brief only needed for force calculation
-    LR::GsPot gs_pot_;
-
-    std::shared_ptr<LR::PotHxcLR>
-        pot_hxc_gs; /// used in lr-grad, in the ground-state Hxc gradient term coming from dF/dC
-
-    /// @brief Excited state wavefunction (locc, lvirt are local size of nocc and nvirt in each process)
-    /// size of X: [neq][{nstate, nloc_per_state}], namely:
-    /// - [nspin][{nstates, nk* (locc* lvirt}] for close- shell,
-    /// -  [1][{nstates, nk * (locc[0] * lvirt[0]) + nk * (locc[1] * lvirt[1])}] for open-shell
-    std::vector<ct::Tensor> X;
-    int nloc_per_state = 1;
 
     std::vector<int> nocc;  ///< number of occupied orbitals for each spin used in the calculation
     int nocc_in = 1;        ///< nocc read from input (adjusted by nelec): max(spin-up, spindown)
@@ -170,24 +156,16 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// The followed state/multiplet. Seeded from `lr_target_state`, then re-chosen at every
     /// later step by cross-geometry group overlap; following a fixed index instead makes the
     /// force discontinuous as soon as two surfaces cross.
-    LR::RelaxTarget<T> target_;
-    double etot_gs_ = 0.0;        ///< ground-state total energy of the current step (Ry)
-    ModuleBase::matrix force_gs_; ///< ground-state force of the current step (Ry/Bohr, F = -dE/dR)
-    /// The LR part of the excited-state force, -d(Omega)/dR (Ry/Bohr).
-    ModuleBase::matrix lr_force_;
     /// Match the old subspace to current energy groups and refresh the single/group references.
     /// `ofs` receives the note when the followed root changes index, and the warning when
     /// no current root resembles the previous one.
     void follow_target_state_(std::ofstream &ofs);
 
-    std::vector<std::string> spin_types;
-
     std::unique_ptr<ModuleGint::GintInfo> gint_info_ = nullptr;
 
-    /// @brief variables for parallel distribution of KS orbitals
-    Parallel_Blkcyclic paraC_;
-    /// @brief variables for parallel distribution of excited states
-    std::vector<Parallel_Blkcyclic> paraX_;
+    /// LR solver state that is not part of the esolver interface.
+    LR::Core<T> lr_;
+
 
     // ---------------- the Z-vector (CPSCF) window ----------------
     // The Z-vector equation enforces the Brillouin condition in EVERY occupied-virtual
@@ -198,13 +176,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     // but span every virtual band the ground state produced (the input `nbands`), so the
     // window is widened by raising *nbands*, not `nvirt`. X keeps its own window, so Omega
     // -- and with it any finite-difference reference -- is untouched.
-    std::unique_ptr<psi::Psi<T>> psi_ks_z_;
-    ModuleBase::matrix eig_ks_z_;
-    Parallel_Blkcyclic paraC_z_;
-    std::vector<Parallel_Blkcyclic> paraX_z_;
-    std::vector<int> nvirt_z_;
-    int nbands_z_ = 0;
-    int nloc_per_state_z_ = 0;
     /// (re)build the Z window from `psi_ks_all_` / `eig_ks_all`. `desc_src` describes the
     /// source wavefunction's 2D layout; unused (and may be null) in a serial build.
     void fill_z_window_(const int *desc_src);
@@ -243,9 +214,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// restricts it to that one state: geometry relaxation follows a single state, and the
     /// Z-vector solve dominates the cost. -1 does all `nstates`.
     std::vector<ModuleBase::matrix> cal_force(const int ispin, const int istate_only = -1);
-    /// open-shell (spin-unrestricted) excited-state force: X holds [up | down] and every
-    /// density matrix has two independent channels
-    std::vector<ModuleBase::matrix> cal_force_openshell(const int istate_only = -1);
     /// @brief Gradients for excitation vectors supplied by the caller, already widened into
     ///        the Z window -- the two functions above are thin wrappers that widen the stored
     ///        eigenvectors and look up their `omega`.
@@ -253,7 +221,7 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// The blocks of `Xz` need not be the eigenvectors the Casida diagonalizer returned. Any
     /// normalized vector inside a degenerate multiplet is an eigenvector with the same
     /// `omega`, so passing a linear combination is what turns the per-state gradient into the
-    /// full degenerate-subspace gradient matrix; see `build_mpl_` and
+    /// full degenerate-subspace gradient matrix; see `LR::build_mpl` and
     /// `grad_degen.h`.
     ///
     /// @param omega        excitation energy of each block (Ry); its size sets the block count
@@ -266,14 +234,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// open-shell counterpart of `cal_force_Xz`
     std::vector<ModuleBase::matrix> cal_force_openshell_Xz(
         const ct::Tensor &Xz, const std::vector<double> &omega, const int label_begin);
-    /// @brief The linear vibronic coupling (LVC) data of one degenerate multiplet: see
-    ///        `LR::MplLvc`. Kept as one object rather than as loose force matrices because the
-    ///        excited-state relaxation and (later) non-adiabatic dynamics need exactly the same
-    ///        data: near a degeneracy the correct propagation is on this coupled $d\times d$
-    ///        model, not on an adiabatic gradient.
-    /// LVC data of every multiplet found at this geometry, rebuilt on each call of
-    /// `cal_force_and_grad_matrix_`. Empty unless `lr_degen_thr > 0`.
-    std::vector<LR::MplLvc> multiplet_lvc_;
     /// The LR half of the force for the current geometry, following whichever surface
     /// `lr_degen_mode` selects. `ofs` receives the note when that is not a single state.
     ModuleBase::matrix cal_lr_force_relax_(std::ofstream &ofs);
@@ -296,16 +256,8 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     ///
     /// Fills `multiplet_lvc_`.
     void cal_force_and_grad_matrix_(const int ispin, std::ofstream &ofs);
-    /// @brief Wrap one multiplet's Z-window members and per-state forces into
-    ///        `LR::build_mpl`, which owns the polarization identity and the diagnostics.
-    ///
-    /// @param group  state indices of the multiplet, from `LR::group_degenerate_states`
-    /// @param diag   their per-state forces, i.e. $G_{kk}$, already computed by `cal_force`
-    /// @param ofs    log stream the matrix and the precondition diagnostics are written to
-    LR::MplLvc build_mpl_(const int ispin,
-        const std::vector<int> &group,
-        const std::vector<ModuleBase::matrix> &diag,
-        std::ofstream &ofs);
+    /// Amplitudes and energies as `LR::StateCtx`, filled once per force evaluation.
+    LR::StateCtx<T> state_ctx_() const;
     void test_force();                               // test: reproduce the force of ground state
     module_dm::DensityMatrix<T, double> cal_dm_gs(); ///< ground-state density matrix
 

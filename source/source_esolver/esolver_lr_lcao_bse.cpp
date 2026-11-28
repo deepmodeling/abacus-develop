@@ -78,7 +78,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell &basecell, const Input_para
     }
 
     LR_Util::setup_2d_division(
-        this->paraC_, this->paraMat_.para_2d().nb(), this->nbasis, this->nbands
+        this->lr_.amp.para_c, this->paraMat_.para_2d().nb(), this->nbasis, this->nbands
 #ifdef __MPI
         ,
         this->paraMat_.para_2d().ictxt()
@@ -103,7 +103,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell &basecell, const Input_para
         this->gd(), inp.nspin, PARAM.globalv.gamma_only_local, PARAM.globalv.domag, inp.device == "gpu", inp.nstream));
     ModuleGint::Gint::set_gint_info(this->gint_info_.get());
 
-    this->pot.resize(this->nspin, nullptr);
+    this->lr_.pot.pot.resize(this->nspin, nullptr);
     if (this->inp_->lr_solver != "spectrum" && this->inp_->lr_solver != "plot")
     {
         this->mo_lri = LR_Util::make_unique<BSE::MolecularLRI<T>>(
@@ -154,8 +154,8 @@ void ESolver_BSE<T, TR>::runner(BaseCell &basecell, const int istep)
             this->lri_init();
             BSE::HamiltBSE<T> bse_matrix(
                 this->nspin, this->nbasis, this->nocc, this->nvirt, *this->ucell_, this->orb_cutoff_, this->gd(),
-                *this->psi_ks, *this->psi_ks_global, this->eig_gw, *this->mo_lri, this->pot[0], this->kv, this->paraX_,
-                this->paraC_, this->paraMat_, this->inp_->bse_spin_types, this->inp_->bse_tda,
+                *this->psi_ks, *this->psi_ks_global, this->eig_gw, *this->mo_lri, this->lr_.pot.pot[0], this->kv, this->lr_.amp.para_x,
+                this->lr_.amp.para_c, this->paraMat_, this->inp_->bse_spin_types, this->inp_->bse_tda,
                 this->inp_->bse_ri_hartree, this->inp_->bse_mem_save, this->inp_->bse_continue, this->inp_->out_bse_ab,
                 this->out_dir, this->in_dir, GlobalV::MY_RANK, GlobalV::NPROC, this->inp_->ri_hartree_benchmark);
 
@@ -186,7 +186,7 @@ void ESolver_BSE<T, TR>::runner(BaseCell &basecell, const int istep)
                 for (int is = 0; is < this->inp_->bse_spin_types.size(); ++is)
                 {
                     bse_matrix.tda_solver(
-                        is, this->nstates, &this->tda_ene[is * this->nstates], this->X[is].template data<T>());
+                        is, this->nstates, &this->tda_ene[is * this->nstates], this->lr_.amp.x[is].template data<T>());
 
                     std::cout << "eigenvalues: (Ry)" << std::endl;
                     int write_nstates = std::min(this->nstates, 20);
@@ -204,7 +204,7 @@ void ESolver_BSE<T, TR>::runner(BaseCell &basecell, const int istep)
                     {
                         write_tda_states(
                             this->inp_->bse_spin_types[is], &this->tda_ene[is * this->nstates],
-                            this->X[is].template data<T>(), this->nloc_per_state, this->nstates);
+                            this->lr_.amp.x[is].template data<T>(), this->lr_.amp.nloc, this->nstates);
                     }
                     malloc_trim(0);
                 }
@@ -233,7 +233,7 @@ void ESolver_BSE<T, TR>::runner(BaseCell &basecell, const int istep)
                         write_full_states(
                             this->inp_->bse_spin_types[is], &this->full_ene[is * this->nstates],
                             this->full_X[is].template data<T>(), this->full_Y[is].template data<T>(),
-                            this->nloc_per_state, this->nstates);
+                            this->lr_.amp.nloc, this->nstates);
                     }
                     malloc_trim(0);
                 }
@@ -278,8 +278,8 @@ void ESolver_BSE<T, TR>::runner(BaseCell &basecell, const int istep)
             for (int is = 0; is < this->inp_->bse_spin_types.size(); ++is)
             {
                 read_tda_states(
-                    this->inp_->bse_spin_types[is], &this->tda_ene[is * this->nstates], this->X[is].template data<T>(),
-                    this->nloc_per_state, this->nstates);
+                    this->inp_->bse_spin_types[is], &this->tda_ene[is * this->nstates], this->lr_.amp.x[is].template data<T>(),
+                    this->lr_.amp.nloc, this->nstates);
             }
         }
         if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "full")
@@ -288,16 +288,16 @@ void ESolver_BSE<T, TR>::runner(BaseCell &basecell, const int istep)
             {
                 read_full_states(
                     this->inp_->bse_spin_types[is], &this->full_ene[is * this->nstates],
-                    this->full_X[is].template data<T>(), this->full_Y[is].template data<T>(), this->nloc_per_state,
+                    this->full_X[is].template data<T>(), this->full_Y[is].template data<T>(), this->lr_.amp.nloc,
                     this->nstates);
                 // check whether |X|^2 - |Y|^2 = 1
                 for (int i = 0; i < this->nstates; ++i)
                 {
                     double norm_xy = 0.0;
-                    for (int j = 0; j < this->nloc_per_state; ++j)
+                    for (int j = 0; j < this->lr_.amp.nloc; ++j)
                     {
-                        norm_xy += std::norm(this->full_X[is].template data<T>()[i * this->nloc_per_state + j]) -
-                                   std::norm(this->full_Y[is].template data<T>()[i * this->nloc_per_state + j]);
+                        norm_xy += std::norm(this->full_X[is].template data<T>()[i * this->lr_.amp.nloc + j]) -
+                                   std::norm(this->full_Y[is].template data<T>()[i * this->lr_.amp.nloc + j]);
                     }
                     Parallel_Reduce::reduce_all(norm_xy);
                     if (std::abs(norm_xy - 1.0) > 1e-6)
@@ -334,14 +334,14 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell &basecell)
 
     if (this->inp_->lr_solver == "plot")
     {
-        for (int is = 0; is < this->X.size(); ++is)
+        for (int is = 0; is < this->lr_.amp.x.size(); ++is)
         {
             std::cout << "plot BSE exciton wavefunction for state: " << this->inp_->plot_istate
                       << ", spin type: " << this->inp_->bse_spin_types[is] << std::endl;
             LR_Util::ExcitonPlotter<T> eplot(
                 this->nspin, this->nbasis, this->nocc, this->nvirt, *this->psi_ks, *this->ucell_, this->kv, this->gd(),
-                this->orb_cutoff_, this->pgrid(), *this->pw_rho, this->paraX_, this->paraC_, this->paraMat_, output_dir,
-                &this->tda_ene[is * this->nstates], this->X[is].template data<T>(), false /*openshell*/, &this->orb_);
+                this->orb_cutoff_, this->pgrid(), *this->pw_rho, this->lr_.amp.para_x, this->lr_.amp.para_c, this->paraMat_, output_dir,
+                &this->tda_ene[is * this->nstates], this->lr_.amp.x[is].template data<T>(), false /*openshell*/, &this->orb_);
             const std::string plot_type = LR_Util::tolower(this->inp_->exciton_plot_type);
             const std::string plot_format = LR_Util::tolower(this->inp_->exciton_plot_format);
             const bool write_slice = (plot_format == "slice" || plot_format == "both");
@@ -408,7 +408,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell &basecell)
         {
             if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "tda")
             {
-                for (int is = 0; is < this->X.size(); ++is)
+                for (int is = 0; is < this->lr_.amp.x.size(); ++is)
                 {
                     const double *const energies = &this->tda_ene[is * this->nstates];
                     const std::string channel = this->inp_->bse_spin_types[is] + "_tda";
@@ -432,18 +432,18 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell &basecell)
             {
                 const int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
                 this->velocity_mo = LR_Util::cal_velocity_mo(
-                    *this->ucell_, this->gd(), this->tcb(), this->paraMat_, this->paraC_, this->kv, *this->psi_ks,
+                    *this->ucell_, this->gd(), this->tcb(), this->paraMat_, this->lr_.amp.para_c, this->kv, *this->psi_ks,
                     this->nk, nspin_tmp, this->nbasis, this->nocc, this->nvirt);
             }
             if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "tda")
             {
-                for (int is = 0; is < this->X.size(); ++is)
+                for (int is = 0; is < this->lr_.amp.x.size(); ++is)
                 {
                     LR::LR_Spectrum<T> spectrum(
                         this->nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks, *this->ucell_,
-                        this->kv, this->kv.wk, this->gd(), this->orb_cutoff_, this->tcb(), this->paraX_, this->paraC_,
+                        this->kv, this->kv.wk, this->gd(), this->orb_cutoff_, this->tcb(), this->lr_.amp.para_x, this->lr_.amp.para_c,
                         this->paraMat_, &this->tda_ene[is * this->nstates], this->eig_ks.c,
-                        this->X[is].template data<T>(), this->nstates, false /*openshell*/,
+                        this->lr_.amp.x[is].template data<T>(), this->nstates, false /*openshell*/,
                         LR_Util::tolower(this->inp_->abs_gauge), GlobalV::MY_RANK, output_dir);
                     if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
                     {
@@ -473,7 +473,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell &basecell)
                 {
                     LR::LR_Spectrum<T> spectrum(
                         this->nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks, *this->ucell_,
-                        this->kv, this->kv.wk, this->gd(), this->orb_cutoff_, this->tcb(), this->paraX_, this->paraC_,
+                        this->kv, this->kv.wk, this->gd(), this->orb_cutoff_, this->tcb(), this->lr_.amp.para_x, this->lr_.amp.para_c,
                         this->paraMat_, &this->full_ene[is * this->nstates], this->eig_ks.c,
                         this->full_X[is].template data<T>(), this->nstates, false /*openshell*/,
                         LR_Util::tolower(this->inp_->abs_gauge), GlobalV::MY_RANK, output_dir);
@@ -532,16 +532,16 @@ void ESolver_BSE<T, TR>::ipa_solver()
     {
         int sorted_index = indices[istate];
         int ik = sorted_index / (this->nocc[0] * this->nvirt[0]);
-        int loffset_X = (istate * this->nk + ik) * this->paraX_[0].size();
+        int loffset_X = (istate * this->nk + ik) * this->lr_.amp.para_x[0].size();
         int i = (sorted_index / this->nvirt[0]) % this->nocc[0];
         int a = sorted_index % this->nvirt[0];
-        int col_loc = this->paraX_[0].icloc(i);
-        int row_loc = this->paraX_[0].irloc(a);
+        int col_loc = this->lr_.amp.para_x[0].icloc(i);
+        int row_loc = this->lr_.amp.para_x[0].irloc(a);
         if (col_loc == -1 || row_loc == -1)
         {
             continue;
         }
-        this->X[0].template data<T>()[loffset_X + col_loc * this->paraX_[0].nrloc() + row_loc] = 1.0;
+        this->lr_.amp.x[0].template data<T>()[loffset_X + col_loc * this->lr_.amp.para_x[0].nrloc() + row_loc] = 1.0;
     }
     ModuleBase::timer::end("ESolver_BSE", "ipa_solver");
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "IPA solver");
@@ -697,13 +697,13 @@ void ESolver_BSE<T, TR>::init_pot(const Charge &chg_gs)
             this->inp_->lr_init_xc_kernel);
         // BSE multiplies its bare Coulomb matrix by the singlet factor in HamiltBSE.
         // S1_gs has weight one; S1 would apply that factor a second time on the grid path.
-        this->pot[0] =
+        this->lr_.pot.pot[0] =
             std::make_shared<LR::PotHxcLR>(kernel, *this->pw_rho, *this->ucell_, chg_gs.nrxx, this->nspin, ST::S1_gs);
         break;
     }
     // case 2:
-    //     this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, pgrid(), openshell ?
-    //     ST::S2_updown : ST::S2_singlet, this->inp_->lr_init_xc_kernel); this->pot[1] =
+    //     this->lr_.pot.pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, pgrid(), openshell ?
+    //     ST::S2_updown : ST::S2_singlet, this->inp_->lr_init_xc_kernel); this->lr_.pot.pot[1] =
     //     std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, pgrid(), openshell ? ST::S2_updown :
     //     ST::S2_triplet, this->inp_->lr_init_xc_kernel); break;
     default:
@@ -723,23 +723,23 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
             px, /*nb2d=*/1, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
             ,
-            this->paraC_.ictxt()
+            this->lr_.amp.para_c.ictxt()
 #endif
         );
-        this->paraX_.emplace_back(std::move(px));
+        this->lr_.amp.para_x.emplace_back(std::move(px));
     }
-    this->nloc_per_state =
-        this->nk * (this->openshell ? this->paraX_[0].size() + this->paraX_[1].size() : this->paraX_[0].size());
+    this->lr_.amp.nloc =
+        this->nk * (this->openshell ? this->lr_.amp.para_x[0].size() + this->lr_.amp.para_x[1].size() : this->lr_.amp.para_x[0].size());
 
     int n_spin_types = this->inp_->bse_spin_types.size();
     if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "tda")
     {
         BSE_Util::print_mem_estimate(
-            "TDA BSE eigen states", n_spin_types * static_cast<std::size_t>(this->nstates) * (1 + this->nloc_per_state),
+            "TDA BSE eigen states", n_spin_types * static_cast<std::size_t>(this->nstates) * (1 + this->lr_.amp.nloc),
             sizeof(T));
         this->tda_ene.resize(n_spin_types * this->nstates);
-        this->X.resize(n_spin_types, LR_Util::newTensor<T>({this->nstates, this->nloc_per_state}));
-        for (auto &x : this->X)
+        this->lr_.amp.x.resize(n_spin_types, LR_Util::newTensor<T>({this->nstates, this->lr_.amp.nloc}));
+        for (auto &x : this->lr_.amp.x)
         {
             x.zero();
         }
@@ -748,10 +748,10 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
     {
         BSE_Util::print_mem_estimate(
             "full BSE eigen states",
-            n_spin_types * static_cast<std::size_t>(this->nstates) * (1 + 2 * this->nloc_per_state), sizeof(T));
+            n_spin_types * static_cast<std::size_t>(this->nstates) * (1 + 2 * this->lr_.amp.nloc), sizeof(T));
         this->full_ene.resize(n_spin_types * this->nstates);
-        this->full_X.resize(n_spin_types, LR_Util::newTensor<T>({this->nstates, this->nloc_per_state}));
-        this->full_Y.resize(n_spin_types, LR_Util::newTensor<T>({this->nstates, this->nloc_per_state}));
+        this->full_X.resize(n_spin_types, LR_Util::newTensor<T>({this->nstates, this->lr_.amp.nloc}));
+        this->full_Y.resize(n_spin_types, LR_Util::newTensor<T>({this->nstates, this->lr_.amp.nloc}));
         for (auto &x : this->full_X)
         {
             x.zero();
