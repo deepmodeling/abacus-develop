@@ -37,7 +37,7 @@ struct Dim
 struct DimSrc
 {
     const Input_para* inp = nullptr;
-    int nlocal = 0;                             ///< PARAM.globalv.nlocal
+    int nlocal = 0;                             ///< number of local basis functions
     int nks = 0;                                ///< K_Vectors::get_nks()
     int nkstot = 0;                             ///< K_Vectors::get_nkstot()
     int rank = 0;                               ///< MPI rank in the world communicator
