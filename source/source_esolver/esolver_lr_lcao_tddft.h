@@ -248,9 +248,9 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
 
     /// @brief check the legality of the input parameters
     /// @brief set nocc, nvirt, nbasis, npairs and nstates
-    void set_dimension();
+    void set_dim();
     /// reset nocc, nvirt, npairs after read ground-state wavefunction when nspin=2
-    void reset_dim_spin2();
+    void reset_dim_spin();
 
     /// setup Parallel_Orbitals info. beyond Parallel_Blkcyclic
     void set_parallel_orbitals_band(Parallel_Orbitals &p, const int nbands_in);

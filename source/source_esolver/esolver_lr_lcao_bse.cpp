@@ -53,7 +53,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell &basecell, const Input_para
         LR::setup_2center_table(this->two_center_bundle_own_, ucell, *this->inp_);
     }
 
-    this->set_dimension();
+    this->set_dim();
     //  setup 2d-block distribution for AO-matrix and KS wfc
     LR_Util::setup_2d_division(this->paraMat_.para_2d(), 1, this->nbasis, this->nbasis);
 #ifdef __MPI
@@ -74,7 +74,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell &basecell, const Input_para
     {
         this->nupdown =
             LR_Util::spin_population_difference(this->pelec->wg, this->kv.para_k.kpar, this->kv.para_k.rank_in_pool);
-        this->reset_dim_spin2();
+        this->reset_dim_spin();
     }
 
     LR_Util::setup_2d_division(

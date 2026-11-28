@@ -162,7 +162,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell &ucell, cons
 
     LR::check_lr_parameters(*this->inp_, this->xc_kernel, this->nspin);
 
-    this->set_dimension();
+    this->set_dim();
 
     // KS and LR must use the same AO distribution, including its BLACS grid.
     const int ks_block_size = ks_sol.pv.para_2d().nb();
@@ -296,7 +296,7 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell &ucell)
         if (!this->ks_initialized_)
         {
             this->nupdown = nupdown_now;
-            reset_dim_spin2(); // shifts nocc/nvirt between the spin channels: must run exactly once
+            reset_dim_spin(); // shifts nocc/nvirt between the spin channels: must run exactly once
         }
         else if (nupdown_now != this->nupdown)
         {
@@ -331,7 +331,7 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell &ucell)
     // re-publishes in its `before_scf`; make sure it names the object we integrate on
     ModuleGint::Gint::set_gint_info(this->ks_->gint_info_.get());
 
-    // the Z-vector window: after `reset_dim_spin2`, so nocc/nvirt/openshell are final
+    // the Z-vector window: after `reset_dim_spin`, so nocc/nvirt/openshell are final
 #ifdef __MPI
     this->fill_z_window_(ks_sol.pv.desc_wfc);
 #else
@@ -389,7 +389,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
         LR::setup_2center_table(this->two_center_bundle_own_, ucell, *this->inp_);
     }
 
-    this->set_dimension();
+    this->set_dim();
     //  setup 2d-block distribution for AO-matrix and KS wfc
     LR_Util::setup_2d_division(this->paraMat_.para_2d(), 1, this->nbasis, this->nbasis);
     this->set_parallel_orbitals_band(this->paraMat_, this->nbands);
@@ -409,9 +409,9 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
     if (nspin == 2)
     {
         // Complete file populations were read before selecting the occupied window.
-        reset_dim_spin2();
+        reset_dim_spin();
     }
-    // the Z-vector window: after `reset_dim_spin2`, so nocc/nvirt/openshell are final
+    // the Z-vector window: after `reset_dim_spin`, so nocc/nvirt/openshell are final
 #ifdef __MPI
     this->fill_z_window_(paraMat_all_.desc_wfc);
 #else
