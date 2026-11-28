@@ -191,17 +191,24 @@ namespace ModuleIO
             options.threshold = sparse_threshold;
             options.binary = false;
             options.istep = -1;
-            options.reduce = true;
+            // Hexxs(R) is fully replicated on every rank, so its rows must NOT be
+            // summed across ranks; use reduce = false and let only rank 0 write.
+            options.reduce = false;
             options.csr_format = true;
             options.ucell = &ucell;
             options.nspin = static_cast<int>(Hexxs.size());
             options.ispin = is;
             options.description_suffix = eexx_ss.str();
-            ModuleIO::save_sparse(
-                calculate_RI_Tensor_sparse(sparse_threshold, Hexxs[is], ucell),
-                all_R_coor,
-                pv,
-                options);
+            // Only one rank writes the replicated matrix to avoid concurrent
+            // writes and duplicated (reduced) data.
+            if (GlobalV::DRANK == 0)
+            {
+                ModuleIO::save_sparse(
+                    calculate_RI_Tensor_sparse(sparse_threshold, Hexxs[is], ucell),
+                    all_R_coor,
+                    pv,
+                    options);
+            }
         }
     }
 
