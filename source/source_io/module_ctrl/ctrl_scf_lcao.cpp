@@ -892,20 +892,26 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     bool cal_exx = exx_info.info_global.cal_exx;
     bool real_number = exx_info.info_ri.real_number;
 
-    if (inp.out_mat_exx)
+    if (inp.out_mat_exx[0])
     {
         if (cal_exx && inp.calculation != "nscf") // Peize Lin add if 2022.11.14
         {
-            const std::string file_name_exx = global_out_dir + "HexxR";
             if (real_number)
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exd->get_Hexxs(), pelec->f_en.exx);
+                ModuleIO::write_Hexxs_csr(global_out_dir, ucell, exx_nao.exd->get_Hexxs(), pelec->f_en.exx,
+                                          inp.out_mat_exx[1], istep, inp.out_app_flag);
             }
             else
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exc->get_Hexxs(), pelec->f_en.exx);
+                ModuleIO::write_Hexxs_csr(global_out_dir, ucell, exx_nao.exc->get_Hexxs(), pelec->f_en.exx,
+                                          inp.out_mat_exx[1], istep, inp.out_app_flag);
             }
-            ModuleIO::write_matrix_notice(ofs_running, "Hexx(R)", file_name_exx + "_0.csr");
+            const bool numbered_exx = (istep >= 0) && (inp.out_app_flag == 2);
+            for (int is = 0; is < inp.nspin; ++is)
+            {
+                ModuleIO::write_matrix_notice(ofs_running, "Hexx(R)", is, inp.nspin,
+                                              global_out_dir + ModuleIO::exx_csr_filename(is, numbered_exx, istep));
+            }
         }
     }
 

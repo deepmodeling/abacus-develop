@@ -1,0 +1,38 @@
+Ionic_Step 1
+ # print Hexxs_0 matrix in real space Hexxs_0(R), E_exx = -1.770240187101573 Ry
+ 2 # number of spin directions
+ 1 # spin index
+ 6 # number of localized basis
+ 1 # number of Bravais lattice vector R
+
+ user_defined_lattice
+ 1
+ 6 0 0
+ 0 6 0
+ 0 0 6
+ H O
+ 2 1
+ Direct
+ 0.163216666665903 0.00703333333331102 0
+ 0.952233333333425 0.156216666666296 0
+ 0 0 0
+
+ #----------------------------------------------------------------------#
+ #                               CSR Format                             #
+ # The outer loop corresponds to the number of Bravais lattice vectors. #
+ # The first line contains the index of the Bravais lattice vector      #
+ # (Rx, Ry, Rz), followed by the number of non-zero elements.           #
+ # The subsequent lines consist of three blocks of data, which are      #
+ # values, column indices, row pointers.                                #
+ #----------------------------------------------------------------------#
+
+ 0 0 0 17
+ # CSR values
+ -1.0634539061785995e+00 -9.9675921161668035e-01 7.2393418579777746e-01 4.4862479973414769e-02 -9.9675921161668046e-01 -2.2357204102630366e+00
+ -3.7469449842375241e-02 -5.0654867273635308e-02 -1.8979248429135500e+00 7.2393418579777746e-01 -3.7469449842375269e-02 -1.5429661608661167e+00
+ -5.7127567612625815e-02 4.4862479973414832e-02 -5.0654867273635218e-02 -5.7127567612625808e-02 -1.5814806476776275e+00
+ # CSR column indices
+ 0 2 4 5 0 2 4 5 3 0 2 4 5 0 2 4
+ 5
+ # CSR row pointers
+ 0 4 4 8 9 13 17

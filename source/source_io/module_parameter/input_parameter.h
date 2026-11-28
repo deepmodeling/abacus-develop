@@ -495,7 +495,7 @@ struct Input_para
     std::vector<int> out_mat_vhk = {0, 8};    ///< output Hartree Vh(k) matrix
     std::vector<int> out_mat_vxck = {0, 8};   ///< output XC Vxc(k) matrix
     std::vector<int> out_mat_exxk = {0, 8};   ///< output exact-exchange Vexx(k) matrix
-    bool out_mat_exx = false;                 ///< output Hexx(R) CSR matrix for EXX restart
+    std::vector<int> out_mat_exx = {0, 16};   ///< output Hexx(R) CSR matrix for EXX restart; [0] flag, [1] precision
     std::vector<int> out_mat_h_vnl = {0, 8};  ///< legacy alias for out_mat_vnlk
     std::vector<int> out_mat_h_vl = {0, 8};   ///< legacy alias for out_mat_vlk
     std::vector<int> out_mat_h_vh = {0, 8};   ///< legacy alias for out_mat_vhk

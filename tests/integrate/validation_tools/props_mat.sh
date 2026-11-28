@@ -315,6 +315,20 @@ run_mat_props() {
   fi
 
   #-----------------------------------
+  # EXX restart Hexx(R) CSR files
+  #-----------------------------------
+  # Written by out_mat_exx. The checked-in references carry the same E_exx
+  # annotation as the output, so a numeric file comparison at 1e-8 suffices.
+  if ! test -z "$has_exx_csr" && [ "$has_exx_csr" == 1 ]; then
+    python3 $COMPARE_SCRIPT hrs1_exx.csr.ref OUT.autotest/hrs1_exx.csr 8
+    echo "CompareEXX1_pass $?" >> $props_result_file
+    if ! test -z "$nspin" && [ "$nspin" -eq 2 ]; then
+      python3 $COMPARE_SCRIPT hrs2_exx.csr.ref OUT.autotest/hrs2_exx.csr 8
+      echo "CompareEXX2_pass $?" >> $props_result_file
+    fi
+  fi
+
+  #-----------------------------------
   # H(R), S(R), and DM(R) matrices in NPZ format
   #-----------------------------------
   if { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
