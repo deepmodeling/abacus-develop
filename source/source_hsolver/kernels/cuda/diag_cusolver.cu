@@ -167,7 +167,7 @@ bool Diag_Cusolver_gvd::solve_subset(
     const double unused_bound = 0.0;
     int found = 0;
     int lwork = 0;
-    auto status = cusolverDnDsygvdx_bufferSize(
+    cusolverStatus_t status = cusolverDnDsygvdx_bufferSize(
         handle_, problem_type, job, CUSOLVER_EIG_RANGE_I, triangle, n, device.h, n, device.s, n, unused_bound,
         unused_bound, first, nbands, &found, device.eigenvalues, &lwork);
     if (subset_unsupported(status) || status == CUSOLVER_STATUS_ALLOC_FAILED)
@@ -179,7 +179,7 @@ bool Diag_Cusolver_gvd::solve_subset(
     const std::size_t solver_elements = static_cast<std::size_t>(lwork);
     const std::size_t work_elements = std::max(solver_elements, density_elements);
     const std::size_t work_bytes = sizeof(double) * work_elements;
-    const auto alloc_status = cudaMalloc(&device.work, work_bytes);
+    const cudaError_t alloc_status = cudaMalloc(&device.work, work_bytes);
     if (alloc_status == cudaErrorMemoryAllocation)
     {
         cudaGetLastError();
@@ -249,7 +249,7 @@ void Diag_Cusolver_gvd::solve_full(
     DeviceBuffers<double> device;
     device.upload(n, h, s);
     int lwork = 0;
-    auto status = cusolverDnDsygvd_bufferSize(
+    cusolverStatus_t status = cusolverDnDsygvd_bufferSize(
         handle_, problem_type, job, triangle, n, device.h, n, device.s, n, device.eigenvalues, &lwork);
     check_status(status, "Dsygvd workspace query", n, nbands);
     const std::size_t density_elements = retain_vectors ? static_cast<std::size_t>(n) * n : 0;
@@ -292,7 +292,7 @@ void Diag_Cusolver_gvd::solve_full(
     DeviceBuffers<cuDoubleComplex> device;
     device.upload(n, h, s);
     int lwork = 0;
-    auto status = cusolverDnZhegvd_bufferSize(
+    cusolverStatus_t status = cusolverDnZhegvd_bufferSize(
         handle_, problem_type, job, triangle, n, device.h, n, device.s, n, device.eigenvalues, &lwork);
     check_status(status, "Zhegvd workspace query", n, nbands);
     const std::size_t work_bytes = sizeof(cuDoubleComplex) * static_cast<std::size_t>(lwork);

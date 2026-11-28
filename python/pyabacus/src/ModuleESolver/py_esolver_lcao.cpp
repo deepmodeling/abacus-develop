@@ -76,7 +76,7 @@ py::array_t<double> PyChargeAccessor::get_rho() const
     std::vector<ssize_t> shape = {static_cast<ssize_t>(nspin_), static_cast<ssize_t>(nrxx_)};
 
     py::array_t<double> result = py::array_t<double>(shape);
-    auto buf = result.request();
+    py::buffer_info buf = result.request();
     double* ptr = static_cast<double*>(buf.ptr);
 
     // Copy data from either chr_ptr_ or rho_ptr_
@@ -115,7 +115,7 @@ py::array_t<std::complex<double>> PyChargeAccessor::get_rhog() const
     std::vector<ssize_t> shape = {static_cast<ssize_t>(nspin_), static_cast<ssize_t>(ngmc_)};
 
     py::array_t<std::complex<double>> result = py::array_t<std::complex<double>>(shape);
-    auto buf = result.request();
+    py::buffer_info buf = result.request();
     std::complex<double>* ptr = static_cast<std::complex<double>*>(buf.ptr);
 
     // Copy from Charge object (rhog is complex** with shape [nspin][ngmc])
@@ -141,7 +141,7 @@ py::array_t<double> PyChargeAccessor::get_rho_core() const
     std::vector<ssize_t> shape = {static_cast<ssize_t>(nrxx_)};
 
     py::array_t<double> result = py::array_t<double>(shape);
-    auto buf = result.request();
+    py::buffer_info buf = result.request();
     double* ptr = static_cast<double*>(buf.ptr);
 
     std::copy(chr_ptr_->rho_core, chr_ptr_->rho_core + nrxx_, ptr);
@@ -294,8 +294,8 @@ py::array_t<TK> PyHamiltonianAccessor<TK, TR>::get_Hk(int ik) const
     auto [nrow, ncol] = matrix_dims_[ik];
     std::vector<ssize_t> shape = {nrow, ncol};
 
-    auto result = py::array_t<TK>(shape);
-    auto buf = result.request();
+    py::array_t<TK> result = py::array_t<TK>(shape);
+    py::buffer_info buf = result.request();
     TK* ptr = static_cast<TK*>(buf.ptr);
 
     std::copy(hk_ptrs_[ik], hk_ptrs_[ik] + nrow * ncol, ptr);
@@ -319,8 +319,8 @@ py::array_t<TK> PyHamiltonianAccessor<TK, TR>::get_Sk(int ik) const
     auto [nrow, ncol] = matrix_dims_[ik];
     std::vector<ssize_t> shape = {nrow, ncol};
 
-    auto result = py::array_t<TK>(shape);
-    auto buf = result.request();
+    py::array_t<TK> result = py::array_t<TK>(shape);
+    py::buffer_info buf = result.request();
     TK* ptr = static_cast<TK*>(buf.ptr);
 
     std::copy(sk_ptrs_[ik], sk_ptrs_[ik] + nrow * ncol, ptr);
@@ -406,8 +406,8 @@ py::array_t<TK> PyDensityMatrixAccessor<TK, TR>::get_dmk(int ik) const
 
     std::vector<ssize_t> shape = {static_cast<ssize_t>(nrow_), static_cast<ssize_t>(ncol_)};
 
-    auto result = py::array_t<TK>(shape);
-    auto buf = result.request();
+    py::array_t<TK> result = py::array_t<TK>(shape);
+    py::buffer_info buf = result.request();
     TK* ptr = static_cast<TK*>(buf.ptr);
 
     std::copy(dmk_ptrs_[ik], dmk_ptrs_[ik] + nrow_ * ncol_, ptr);
@@ -602,8 +602,8 @@ template <typename TK, typename TR>
 py::array_t<double> PyESolverLCAO<TK, TR>::get_kvec_d(int ik) const
 {
     std::vector<ssize_t> shape = {3};
-    auto result = py::array_t<double>(shape);
-    auto buf = result.request();
+    py::array_t<double> result = py::array_t<double>(shape);
+    py::buffer_info buf = result.request();
     double* ptr = static_cast<double*>(buf.ptr);
     ptr[0] = ptr[1] = ptr[2] = 0.0;
     return result;

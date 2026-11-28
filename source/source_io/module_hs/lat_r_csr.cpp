@@ -47,10 +47,10 @@ void ModuleIO::save_lat_r(std::ofstream& ofs,
 
         if (!options.reduce || layout.irloc(row) >= 0)
         {
-            auto iter = XR.find(row);
+            typename SparseRBlock<T>::const_iterator iter = XR.find(row);
             if (iter != XR.end())
             {
-                for (auto &value : iter->second)
+                for (const std::pair<const std::size_t, T>& value : iter->second)
                 {
                     if (value.first >= static_cast<size_t>(nlocal))
                     {
@@ -101,7 +101,7 @@ void ModuleIO::save_lat_r(std::ofstream& ofs,
             {
                 ofs.write(reinterpret_cast<char*>(&col), sizeof(int));
             }
-            for (auto &i : indptr)
+            for (long long& i : indptr)
             {
                 ofs.write(reinterpret_cast<char *>(&i), sizeof(long long));
             }
@@ -114,7 +114,7 @@ void ModuleIO::save_lat_r(std::ofstream& ofs,
                 ofs << " " << col;
             }
             ofs << std::endl;
-            for (auto &i : indptr)
+            for (long long& i : indptr)
             {
                 ofs << " " << i;
             }
@@ -156,10 +156,10 @@ void ModuleIO::save_lat_r_csr(std::ofstream& ofs,
 
         if (!options.reduce || layout.irloc(row) >= 0)
         {
-            auto iter = XR.find(row);
+            typename SparseRBlock<T>::const_iterator iter = XR.find(row);
             if (iter != XR.end())
             {
-                for (const auto& value: iter->second)
+                for (const std::pair<const std::size_t, T>& value: iter->second)
                 {
                     if (value.first >= static_cast<size_t>(nlocal))
                     {

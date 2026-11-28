@@ -10,7 +10,7 @@ void save_HR(const hamilt::HContainer<TR>& hR, const std::string& filename,
              const Parallel_Orbitals& pv, const std::string& out_dir,
              const double sparse_thr, std::ostream& running_log)
 {
-    const auto all_R = sparse_format::get_R_range(hR);
+    const std::set<Abfs::Vector3_Order<int>> all_R = sparse_format::get_R_range(hR);
     ModuleIO::SparseRMatrix<TR> sparse_matrix;
     sparse_format::cal_HContainer(pv, sparse_thr, hR, sparse_matrix);
     ModuleIO::SparseWriteOptions options;
@@ -27,7 +27,7 @@ void save_DMR(const module_dm::DensityMatrix<TK, TR>& dm, const std::string& fil
               const Parallel_Orbitals& pv, const std::string& out_dir,
               const double sparse_thr, std::ostream& running_log)
 {
-    const auto& blocks = dm.get_dmr_vec();
+    const std::vector<hamilt::HContainer<TR>*>& blocks = dm.get_dmr_vec();
     for (std::size_t spin = 0; spin < blocks.size(); ++spin)
     {
         const std::string spin_filename = filename + "_s" + std::to_string(spin);

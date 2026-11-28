@@ -676,12 +676,10 @@ bool GpuDenseEigensolver::solve_generalized(const std::complex<double>* matrix,
     check_cuda(copy_info, "GPU GV status download");
     if (info > n && info <= 2 * static_cast<long long>(n))
     {
-
         return false;
     }
     if (info != 0 || (partial && found != wanted))
     {
-
         throw std::runtime_error("GPU GV failed: INFO=" + std::to_string(info) + ", found=" + std::to_string(found));
     }
     const std::size_t returned = static_cast<std::size_t>(n) * wanted;

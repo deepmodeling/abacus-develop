@@ -26,7 +26,6 @@ namespace LR
         const Parallel_Blkcyclic& pc_;
         const Parallel_Orbitals& pmat_;
         const bool openshell_;
-        std::vector<std::string> spintype_;
         /// cached aliases, read once here instead of at every call site below
         const int out_chg_precision_;
         const std::string global_out_dir_;
@@ -57,7 +56,7 @@ namespace LR
                                         std::ofstream& ofs_running);
 
         void output_eh_density_all_states(const T* const X, const int ispin, const int nstate,
-                                          std::ofstream& ofs_running);
+                                          const std::string& channel_label, std::ofstream& ofs_running);
     };
 
 }

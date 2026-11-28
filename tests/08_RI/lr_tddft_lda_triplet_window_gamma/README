@@ -1,0 +1,16 @@
+Real-Gamma scalar-triplet LDA window-response and density-output regression.
+All six AO-supported KS bands and four occupied orbitals are available;
+the Casida problem retains one virtual and discards the second. Dense LR/Z.
+The signed force reference comes independently from central differences of
+the same one-virtual excitation energies at +/-0.0005 Angstrom for every
+atom and Cartesian direction (fixed integer occupations, SCF threshold 1e-10).
+The 80 Ry grid and printed Ry energies (converted with Ry_to_eV=13.605698)
+give a maximum component difference of 1.7e-4 eV/Angstrom on the reference run.
+This exercises the AO window density, Z-source and direct-EDM force path.
+out_chg=1 must write two triplet-labelled electron-hole cubes, never singlet.
+The 1e-3 eV/Angstrom component/total tolerance accommodates printed-energy
+precision and finite-step error; it does not compare against a full-window model.
+lr_density.ref selects the electron-hole filename check; no separate ground-state
+charge-cube reference is needed. totalforceref is the absolute sum of the FD forces.
+Autotest clears this opted-in case's old LR electron-hole cubes before every run
+so stale expected or extra-channel files cannot mask missing output or cause failures.

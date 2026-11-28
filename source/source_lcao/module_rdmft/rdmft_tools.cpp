@@ -191,7 +191,7 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driv
     ModuleBase::timer::start("Veff", "initialize_HR");
 
     this->nspin = PARAM.inp.nspin;
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    const Parallel_Orbitals* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)

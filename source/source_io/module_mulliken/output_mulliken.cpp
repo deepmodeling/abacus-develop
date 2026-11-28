@@ -621,8 +621,8 @@ void Output_Mulliken<std::complex<double>>::cal_orbMulP()
     this->orbMulP_.create(this->nspin_, nlocal, true);
     for (size_t ik = 0; ik != this->isk_.size(); ++ik)
     {
-        auto p_Sk = this->output_sk_->get_Sk(ik);
-        auto p_DMk = this->output_dmk_->get_dmk(ik);
+        std::complex<double>* p_Sk = this->output_sk_->get_Sk(ik);
+        std::complex<double>* p_DMk = this->output_dmk_->get_dmk(ik);
         ModuleBase::ComplexMatrix mud(this->ParaV_->para_2d().ncloc(), this->ParaV_->para_2d().nrloc(), true);
 #ifdef __MPI
         const char T_char = 'T';
@@ -671,8 +671,8 @@ void Output_Mulliken<double>::cal_orbMulP()
     for (size_t is = 0; is != nspin; ++is)
     {
         ModuleBase::matrix mud;
-        auto p_Sk = this->output_sk_->get_Sk(is);
-        auto p_DMk = this->output_dmk_->get_dmk(is);
+        double* p_Sk = this->output_sk_->get_Sk(is);
+        double* p_DMk = this->output_dmk_->get_dmk(is);
         mud.create(this->ParaV_->para_2d().ncloc(), this->ParaV_->para_2d().nrloc());
 #ifdef __MPI
         const char T_char = 'T';

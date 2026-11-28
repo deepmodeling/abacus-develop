@@ -72,7 +72,7 @@ void DiagoCusolver<T>::diag(
     ModuleBase::timer::start("DiagoCusolver", "cusolver");
     ModuleBase::TITLE("DiagoCusolver", "diag");
 
-    const auto dimension = static_cast<std::size_t>(this->nlocal);
+    const std::size_t dimension = static_cast<std::size_t>(this->nlocal);
     if (this->nlocal <= 0 || this->nbands <= 0 || this->nbands > this->nlocal || h_mat.row != dimension ||
         h_mat.col != dimension || s_mat.row != dimension || s_mat.col != dimension ||
         psi.get_nbasis() != this->nlocal || psi.get_nbands() < this->nbands || !psi.get_k_first() ||

@@ -184,7 +184,8 @@ namespace LR
         module_dm::DensityMatrix<T, T>& dm_trans,
         const psi::Psi<T>& c, // preserve the caller's single-spin view
         std::weak_ptr<PotHxcLR> pot,
-        const std::string& spin_type = "singlet")
+        const std::string& spin_type,
+        const std::vector<ct::Tensor>& relaxed_density)
     {
         const int& nspin = inputs.nspin;
         const int& naos = inputs.nbasis;
@@ -216,7 +217,7 @@ namespace LR
             );
         }
         std::vector<T> W(p_occ_occ[0].size() * nk, 0.0);
-        cal_W_from_Z(inputs, W.data(), Z, X, eig_ext_istate, eig_ks, c, p_occ_occ, spin_type);
+        cal_W_from_Z(inputs, W.data(), relaxed_density, X, eig_ext_istate, eig_ks, c, p_occ_occ, spin_type);
         // std::cout << "W: " << std::endl;
         // LR_Util::print_value(W.data(), nk, p_occ_occ[0].ncloc(), p_occ_occ[0].nrloc());
 
@@ -256,7 +257,8 @@ namespace LR
         const double eig_ext_istate,
         const double* const eig_ks,
         const module_dm::DensityMatrix<T, T>& dm_trans, // retained for signature symmetry
-        std::weak_ptr<PotHxcLR> pot)
+        std::weak_ptr<PotHxcLR> pot,
+        const std::vector<std::vector<ct::Tensor>>& relaxed_density)
     {
         const int& nspin = inputs.nspin;
         const int& naos = inputs.nbasis;
@@ -297,7 +299,7 @@ namespace LR
             );
         }
         std::vector<std::vector<T>> W;
-        cal_W_from_Z_openshell(inputs, W, Z, X, eig_ext_istate, eig_ks, p_occ_occ);
+        cal_W_from_Z_openshell(inputs, W, relaxed_density, X, eig_ext_istate, eig_ks, p_occ_occ);
 
         // 2. $W^X_{ai\sigma}=2\sum_j X_{aj\sigma}K_{ji\sigma}[D^X]$.
         //    The free spin sits on X (hence `psi_in = X + off_x[sl]`, laid out over `px[sl]`),
@@ -349,7 +351,7 @@ namespace LR
             {
 #ifdef __MPI
                 dmx_buf = cal_dm_trans_pblas(X + off_x[is], px[is], psi_ks_spin[is], pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                for (auto& t: dmx_buf)
+                for (container::Tensor& t: dmx_buf)
                 {
                     LR_Util::mattrans(t.data<T>(), naos, pmat.para_2d());
                 }

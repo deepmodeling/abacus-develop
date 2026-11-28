@@ -22,7 +22,7 @@ LRI_CV_Tools::cal_I_dI(const RIBlockMatrix<T>& metric,
     }
     Inverse_Matrix<T> inverse;
     inverse.input(metric);
-    const auto responses = inverse.cal_inverse_with_derivatives(derivatives, threshold);
+    const std::array<RI::Tensor<T>, 3> responses = inverse.cal_inverse_with_derivatives(derivatives, threshold);
     std::array<RIBlockMatrix<T>, 3> block_responses;
     for (std::size_t axis = 0; axis < 3; ++axis)
     {
@@ -30,7 +30,7 @@ LRI_CV_Tools::cal_I_dI(const RIBlockMatrix<T>& metric,
         pack.input(responses[axis]);
         block_responses[axis] = pack.output(sizes, sizes);
     }
-    auto inverse_blocks = inverse.output(sizes, sizes);
+    RIBlockMatrix<T> inverse_blocks = inverse.output(sizes, sizes);
     return std::make_pair(inverse_blocks, block_responses);
 }
 

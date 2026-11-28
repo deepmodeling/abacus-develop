@@ -42,7 +42,7 @@ void lapackEigen(
     bool outtime = false)
 {
     int info = 0;
-    auto tmp = hm;
+    std::vector<double> tmp = hm;
     clock_t start, end;
     start = clock();
     char tmp_c1 = 'V', tmp_c2 = 'U';
@@ -115,7 +115,7 @@ class DiagoCGPrepare
     {
         // calculate eigenvalues by LAPACK;
         double *e_lapack = new double[npw];
-        auto ev = DIAGOTEST::hmatrix_d;
+        std::vector<double> ev = DIAGOTEST::hmatrix_d;
         if (mypnum == 0)
         {
             lapackEigen(

@@ -81,7 +81,7 @@ void TD_MovingGauge::init_DR(const hamilt::HContainer<T_sR>* sR_template,
     // 2. Construct the sparsity pattern based on sR_template, only allocate terms where delta_{JK} is non-zero
     for (int iap = 0; iap < sR_template->size_atom_pairs(); ++iap)
     {
-        const auto& ap = sR_template->get_atom_pair(iap);
+        const hamilt::AtomPair<T_sR>& ap = sR_template->get_atom_pair(iap);
         const int iat1 = ap.get_atom_i();
         const int iat2 = ap.get_atom_j();
 
@@ -134,7 +134,7 @@ void TD_MovingGauge::fill_DR(const hamilt::HContainer<T_sR>* sR_template,
 
     for (int iap = 0; iap < sR_template->size_atom_pairs(); ++iap)
     {
-        const auto& ap = sR_template->get_atom_pair(iap);
+        const hamilt::AtomPair<T_sR>& ap = sR_template->get_atom_pair(iap);
         const int iat1 = ap.get_atom_i();
         const int iat2 = ap.get_atom_j();
         const LocalBasisBlock& atom_rows = rows[iat1];

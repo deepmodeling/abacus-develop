@@ -135,7 +135,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
             for (int n = 0; n < deepks_param.nchi_d_l[l]; ++n)
             {
                 torch::Tensor po = torch::zeros({basis_size, 1, nm}, torch::TensorOptions().dtype(torch::kFloat64));
-                auto accessor = po.accessor<double, 3>();
+                at::TensorAccessor<double, 3> accessor = po.accessor<double, 3>();
                 for (int m = 0; m < nm; ++m)
                 {
                     accessor[offset + m][0][m] = 1.0;
@@ -152,7 +152,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 
         std::vector<torch::Tensor> dm_flat;
         dm_flat.reserve(ovlp_shells.size());
-        for (const auto& po : ovlp_shells)
+        for (const at::Tensor& po : ovlp_shells)
         {
             // Equivalent to python:
             // torch.einsum('rap,...rs,saq->...apq', po, dm, po)
@@ -161,7 +161,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
         }
 
         c10::List<torch::Tensor> model_input;
-        for (const auto& pdm_shell : dm_flat)
+        for (const at::Tensor& pdm_shell : dm_flat)
         {
             model_input.push_back(pdm_shell);
         }
@@ -191,7 +191,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
                                                            /*allow_unused=*/false)[0];
 
         torch::Tensor gedm_nat = gedm_tensor.reshape({nat, deepks_param.des_per_atom});
-        auto accessor = gedm_nat.accessor<double, 2>();
+        at::TensorAccessor<double, 2> accessor = gedm_nat.accessor<double, 2>();
         for (int iat = 0; iat < nat; ++iat)
         {
             for (int ides = 0; ides < deepks_param.des_per_atom; ++ides)
@@ -291,7 +291,7 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
             }
             continue;
         }
-        auto accessor = gedm_tensor[inl].accessor<double, 2>();
+        at::TensorAccessor<double, 2> accessor = gedm_tensor[inl].accessor<double, 2>();
         for (int m1 = 0; m1 < nm; ++m1)
         {
             for (int m2 = 0; m2 < nm; ++m2)
@@ -315,7 +315,7 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
                 }
                 continue;
             }
-            auto accessor = grad_mag.accessor<double, 2>();
+            at::TensorAccessor<double, 2> accessor = grad_mag.accessor<double, 2>();
             for (int m1 = 0; m1 < nm; ++m1)
             {
                 for (int m2 = 0; m2 < nm; ++m2)

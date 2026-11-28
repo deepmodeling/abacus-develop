@@ -19,16 +19,27 @@ KernelPotentials prepare_lr_potentials(const Input_para& input, const std::strin
     const bool oshell = (nspin == 2) && openshell;
     // $g^{xc}$ (third-order) is only ever needed by the LR gradient, and only for the spin
     // combinations that are actually going to be requested.
+    const bool scalar_triplet = nspin == 1 && input.lr_target_spin == "triplet";
+    if (scalar_triplet && input.lr_init_xc_kernel[0] == "file"
+        && input.lr_init_xc_kernel.size() < 4)
+    {
+        throw std::invalid_argument("nspin=1 triplet requires three spin-resolved XC kernel files (uu, ud, dd)");
+    }
+    const int kernel_nspin = scalar_triplet ? 2 : nspin;
+    const int scalar_gxc = scalar_triplet ? GX::Triplet : GX::Singlet;
     const int gxc_lr = (!input.cal_force || !LR_Util::has_local_xc(xc_kernel)) ? GX::NoGxc
-        : ((nspin == 1) ? GX::Singlet : GX::BothSpins);
+        : ((nspin == 1) ? scalar_gxc : GX::BothSpins);
 
     result.kernel = LR::build_xc_kernel(
-        xc_kernel, rho_basis, ucell, chg_gs, grid, nspin, oshell, gxc_lr, input.lr_init_xc_kernel);
+        xc_kernel, rho_basis, ucell, chg_gs, grid, kernel_nspin, oshell, gxc_lr, input.lr_init_xc_kernel);
     switch (nspin)
     {
     case 1:
-        result.pot[0] = std::make_shared<PotHxcLR>(result.kernel, rho_basis, ucell, chg_gs.nrxx, nspin, ST::S1);
+    {
+        const ST spin = scalar_triplet ? ST::S2_triplet : ST::S1;
+        result.pot[0] = std::make_shared<PotHxcLR>(result.kernel, rho_basis, ucell, chg_gs.nrxx, kernel_nspin, spin);
         break;
+    }
     case 2:
     {
         const ST first_spin = oshell ? ST::S2_updown : ST::S2_singlet;
@@ -70,11 +81,27 @@ std::shared_ptr<PotHxcLR> prepare_gs_potential(const Input_para& input, const st
     // contribution to W and the force use the corresponding LR potential instead.
     const int gxc_gs = (!LR_Util::has_local_xc(xc_kernel) || !LR_Util::has_local_xc(xc_kernel_gs)) ? GX::NoGxc
         : ((nspin == 1) ? GX::Singlet : GX::BothSpins);
-    // When the LR kernel *is* the ground-state functional -- the usual TDDFT case -- the two
-    // `KernelXC` are bit-for-bit identical, so reuse the one just built.
-    const bool share_lr = (xc_kernel_gs == xc_kernel) && ((prepared.gxc & gxc_gs) == gxc_gs);
-    std::shared_ptr<const LR::KernelXC> kernel_gs = share_lr ? prepared.kernel
-        : LR::build_xc_kernel(xc_kernel_gs, rho_basis, ucell, chg_gs, grid, nspin, oshell, gxc_gs, input.lr_init_xc_kernel);
+    // HSE GS response starts raw and reports an approximate fallback only for non-finite coefficients.
+    // Other matching functionals retain sharing when spin layouts and derivative orders agree.
+    // Legacy GS/LR low-density cutoffs remain different; this fixes only the sigma-floor mismatch.
+    const bool separate_hse_response = xc_kernel_gs == "hse";
+    const bool share_lr = !separate_hse_response && prepared.kernel->nspin() == nspin
+        && xc_kernel_gs == xc_kernel && ((prepared.gxc & gxc_gs) == gxc_gs);
+    std::shared_ptr<const LR::KernelXC> kernel_gs;
+    if (separate_hse_response)
+    {
+        kernel_gs = LR::build_gs_xc_kernel(xc_kernel_gs, rho_basis, ucell, chg_gs,
+            grid, nspin, oshell, input.lr_init_xc_kernel);
+    }
+    else if (share_lr)
+    {
+        kernel_gs = prepared.kernel;
+    }
+    else
+    {
+        kernel_gs = LR::build_xc_kernel(xc_kernel_gs, rho_basis, ucell, chg_gs,
+            grid, nspin, oshell, gxc_gs, input.lr_init_xc_kernel);
+    }
     return std::make_shared<LR::PotHxcLR>(kernel_gs, rho_basis, ucell, chg_gs.nrxx, nspin, st_gs);
 }
 }

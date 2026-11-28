@@ -33,6 +33,15 @@ LRI_CV<Tdata>::~LRI_CV()
     pthread_rwlock_destroy(&rwlock_dCw);
 }
 
+template<typename Tdata>
+void LRI_CV<Tdata>::clear_cache()
+{
+    this->Vws.clear();
+    this->Cws.clear();
+    this->dVws.clear();
+    this->dCws.clear();
+}
+
 template <typename Tdata>
 void LRI_CV<Tdata>::set_orbitals(
     const UnitCell &ucell,
@@ -408,9 +417,9 @@ LRI_CV<Tdata>::DPcal_C_dC(
             const double cs_inv_thr = this->p_info_ri != nullptr ? this->p_info_ri->Cs_inv_thr : 0.0;
             if (cs_inv_thr > 0 && !flag_finish_dC)
             {
-                const auto derivative01 = DPcal_dV(it0, it1, R, flags);
-                const auto reverse_derivative = DPcal_dV(it1, it0, Rm, flags);
-                const auto derivative10 = LRI_CV_Tools::negative(reverse_derivative);
+                const std::array<RI::Tensor<Tdata>, 3> derivative01 = DPcal_dV(it0, it1, R, flags);
+                const std::array<RI::Tensor<Tdata>, 3> reverse_derivative = DPcal_dV(it1, it0, Rm, flags);
+                const std::array<RI::Tensor<Tdata>, 3> derivative10 = LRI_CV_Tools::negative(reverse_derivative);
                 auto inverse = LRI_CV_Tools::cal_I_dI(V, derivative01, derivative10, cs_inv_thr);
                 L = std::move(inverse.first);
                 dL = std::move(inverse.second);
@@ -458,7 +467,7 @@ LRI_CV<Tdata>::DPcal_C_dC(
                     {
                         const std::vector<RI::Tensor<Tdata>> derivative_A = {dA[0][axis], dA[1][axis]};
                         dC_tmp[axis] = LRI_CV_Tools::mul2(L, derivative_A);
-                        const auto inverse_response = LRI_CV_Tools::mul2(dL[axis], A);
+                        const std::vector<RI::Tensor<Tdata>> inverse_response = LRI_CV_Tools::mul2(dL[axis], A);
                         for (std::size_t block = 0; block < 2; ++block)
                         {
                             dC_tmp[axis][block] += inverse_response[block];
@@ -467,9 +476,9 @@ LRI_CV<Tdata>::DPcal_C_dC(
                 }
                 else
                 {
-                    const auto dV_01 = DPcal_dV(it0, it1, R, flags);
-                    const auto reverse_derivative = DPcal_dV(it1, it0, Rm, flags);
-                    const auto dV_10 = LRI_CV_Tools::negative(reverse_derivative);
+                    const std::array<RI::Tensor<Tdata>, 3> dV_01 = DPcal_dV(it0, it1, R, flags);
+                    const std::array<RI::Tensor<Tdata>, 3> reverse_derivative = DPcal_dV(it1, it0, Rm, flags);
+                    const std::array<RI::Tensor<Tdata>, 3> dV_10 = LRI_CV_Tools::negative(reverse_derivative);
                     dC_tmp = LRI_CV_Tools::mul2(
                             L,
                             LRI_CV_Tools::change_order( LRI_CV_Tools::minus(

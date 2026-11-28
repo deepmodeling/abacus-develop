@@ -72,9 +72,9 @@ TEST_F(csrFileReaderTest, CsrReader)
     // 0 0 0 10
     sparse_matrix = csr.getMatrix(0);
     sparse_matrix1 = csr.getMatrix(0, 1, 1);
-    for (const auto& element: sparse_matrix.getElements())
+    for (const std::pair<const std::pair<int, int>, double>& element: sparse_matrix.getElements())
     {
-        auto it = sparse_matrix1.getElements().find(element.first);
+        std::map<std::pair<int, int>, double>::const_iterator it = sparse_matrix1.getElements().find(element.first);
         EXPECT_EQ(it->first.first, element.first.first);
         EXPECT_EQ(it->first.second, element.first.second);
         EXPECT_DOUBLE_EQ(it->second, element.second);
@@ -87,9 +87,9 @@ TEST_F(csrFileReaderTest, CsrReader)
     // the second R
     sparse_matrix = csr.getMatrix(1);
     sparse_matrix1 = csr.getMatrix(0, 0, 0);
-    for (const auto& element: sparse_matrix.getElements())
+    for (const std::pair<const std::pair<int, int>, double>& element: sparse_matrix.getElements())
     {
-        auto it = sparse_matrix1.getElements().find(element.first);
+        std::map<std::pair<int, int>, double>::const_iterator it = sparse_matrix1.getElements().find(element.first);
         EXPECT_EQ(it->first.first, element.first.first);
         EXPECT_EQ(it->first.second, element.first.second);
         EXPECT_DOUBLE_EQ(it->second, element.second);

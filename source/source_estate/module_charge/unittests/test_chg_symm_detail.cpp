@@ -58,7 +58,7 @@ const std::array<std::array<std::array<int, 3>, 3>, 8> kRcol = {{
 
 ModuleBase::Matrix3 gmatc_of(int g)
 {
-    const auto& r = kRcol[g];
+    const std::array<std::array<int, 3>, 3>& r = kRcol[g];
     return ModuleBase::Matrix3(r[0][0], r[1][0], r[2][0],
                                r[0][1], r[1][1], r[2][1],
                                r[0][2], r[1][2], r[2][2]);

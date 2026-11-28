@@ -31,10 +31,10 @@ void distribute_pvdpR_sparse(const int cspin,
     int count = 0;
     for (const Abfs::Vector3_Order<int>& R_coor: hs_arrays.all_R_coor)
     {
-        auto iter = pvdpR_sparse.find(R_coor);
+        std::map<Abfs::Vector3_Order<int>, std::map<std::size_t, std::map<std::size_t, double>>>::const_iterator iter = pvdpR_sparse.find(R_coor);
         if (iter != pvdpR_sparse.end())
         {
-            for (auto& row_loop: iter->second)
+            for (const std::pair<const std::size_t, std::map<std::size_t, double>>& row_loop: iter->second)
             {
                 nonzero_num[count] += row_loop.second.size();
             }
@@ -45,7 +45,7 @@ void distribute_pvdpR_sparse(const int cspin,
         iter = pvdpR_sparse.find(minus_R_coor);
         if (iter != pvdpR_sparse.end())
         {
-            for (auto& row_loop: iter->second)
+            for (const std::pair<const std::size_t, std::map<std::size_t, double>>& row_loop: iter->second)
             {
                 minus_nonzero_num[count] += row_loop.second.size();
             }
@@ -70,16 +70,16 @@ void distribute_pvdpR_sparse(const int cspin,
             {
                 tmp.assign(tmp.size(), 0);
 
-                auto iter = pvdpR_sparse.find(R_coor);
+                std::map<Abfs::Vector3_Order<int>, std::map<std::size_t, std::map<std::size_t, double>>>::const_iterator iter = pvdpR_sparse.find(R_coor);
                 if (iter != pvdpR_sparse.end())
                 {
 
                     if (trace_lo[row] >= 0)
                     {
-                        auto row_iter = iter->second.find(row);
+                        std::map<std::size_t, std::map<std::size_t, double>>::const_iterator row_iter = iter->second.find(row);
                         if (row_iter != iter->second.end())
                         {
-                            for (auto& value: row_iter->second)
+                            for (const std::pair<const std::size_t, double>& value: row_iter->second)
                             {
                                 tmp[value.first] = value.second;
                             }
@@ -87,17 +87,17 @@ void distribute_pvdpR_sparse(const int cspin,
                     }
                 }
 
-                auto minus_R_iter = pvdpR_sparse.find(minus_R_coor);
+                std::map<Abfs::Vector3_Order<int>, std::map<std::size_t, std::map<std::size_t, double>>>::const_iterator minus_R_iter = pvdpR_sparse.find(minus_R_coor);
                 if (minus_R_iter != pvdpR_sparse.end())
                 {
                     for (int col = 0; col < row; ++col)
                     {
                         if (trace_lo[col] >= 0)
                         {
-                            auto row_iter = minus_R_iter->second.find(col);
+                            std::map<std::size_t, std::map<std::size_t, double>>::const_iterator row_iter = minus_R_iter->second.find(col);
                             if (row_iter != minus_R_iter->second.end())
                             {
-                                auto col_iter = row_iter->second.find(row);
+                                std::map<std::size_t, double>::const_iterator col_iter = row_iter->second.find(row);
                                 if (col_iter != row_iter->second.end())
                                 {
                                     tmp[col] = col_iter->second;

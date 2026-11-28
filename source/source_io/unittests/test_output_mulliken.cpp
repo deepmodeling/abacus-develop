@@ -35,9 +35,9 @@ TYPED_TEST(OutputMullikenTest, nspin1)
     this->ncol = 13;
     this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
     CellIndex cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 1);
-    auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 1, 1);
-    auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 1, 1);
-    auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0}, 1);
+    ModuleIO::Output_Sk<TypeParam> out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 1, 1);
+    ModuleIO::Output_DMK<TypeParam> out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 1, 1);
+    ModuleIO::Output_Mulliken<TypeParam> mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0}, 1);
     mulp.write(0, 0, "./", this->ofs_running);
     std::vector<double> tot_chg = mulp.get_tot_chg();
     EXPECT_NEAR(tot_chg[0], 4.0, 1e-5);
@@ -54,9 +54,9 @@ TYPED_TEST(OutputMullikenTest, AppendModes)
     this->ncol = 13;
     this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
     CellIndex cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 1);
-    auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 1, 1);
-    auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 1, 1);
-    auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0}, 1);
+    ModuleIO::Output_Sk<TypeParam> out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 1, 1);
+    ModuleIO::Output_DMK<TypeParam> out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 1, 1);
+    ModuleIO::Output_Mulliken<TypeParam> mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0}, 1);
 
     const std::string dir = testing::TempDir();
     const std::string fixed = dir + "mulliken.txt";
@@ -97,9 +97,9 @@ TYPED_TEST(OutputMullikenTest, nspin2)
     this->ncol = 13;
     this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
     CellIndex cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 2);
-    auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 2, 1);
-    auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 2, 1);
-    auto mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0, 1}, 2);
+    ModuleIO::Output_Sk<TypeParam> out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 2, 1);
+    ModuleIO::Output_DMK<TypeParam> out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 2, 1);
+    ModuleIO::Output_Mulliken<TypeParam> mulp = ModuleIO::Output_Mulliken<TypeParam>(&(out_s_k), &(out_dm_k), &(this->paraV), &(cell_index), {0, 1}, 2);
     mulp.write(0, 0, "./", this->ofs_running);
     std::vector<double> tot_chg = mulp.get_tot_chg();
     EXPECT_NEAR(tot_chg[0], 3.0, 1e-5);
@@ -212,7 +212,7 @@ TEST(OutputMullikenSpinTest, Nspin4MyFollowsPauliConvention)
         {0.36, 0.48, -0.8}, // general three-dimensional direction
     };
 
-    for (const auto& mhat : dirs)
+    for (const double (&mhat)[3] : dirs)
     {
         cd c[2];
         spinor_from_direction(mhat, c);
