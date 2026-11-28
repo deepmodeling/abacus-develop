@@ -156,8 +156,8 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge &chg_gs)
     {
         return;
     }
-    const auto &grid = pgrid();
-    auto prepared =
+    const Parallel_Grid& grid = pgrid();
+    LR::KernelPotentials prepared =
         LR::prepare_lr_potentials(*this->inp_, xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, grid, nspin, openshell);
     this->pot = std::move(prepared.pot);
     if (this->inp_->cal_force)

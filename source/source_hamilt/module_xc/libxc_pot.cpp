@@ -462,7 +462,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         double factor = 1.0;
         if (scaling_factor)
         {
-            auto pair_factor = scaling_factor->find(func.info->number);
+            std::map<int, double>::const_iterator pair_factor = scaling_factor->find(func.info->number);
             if (pair_factor != scaling_factor->end())
             {
                 factor = pair_factor->second;

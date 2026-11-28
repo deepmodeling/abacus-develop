@@ -22,7 +22,9 @@ struct KernelPotentials
     std::shared_ptr<const KernelXC> kernel;
     int gxc = 0;
 };
-/// Prepare one LR kernel and bind its singlet/triplet or open-shell potential views.
+/// Prepare LR potential views. At nspin=1, lr_target_spin selects a single channel;
+/// triplets use a polarized kernel evaluated at rho_up=rho_down=rho/2.
+/// nspin=2 retains both closed-shell views or the unrestricted spin blocks.
 KernelPotentials prepare_lr_potentials(const Input_para&, const std::string& xc_kernel,
     const ModulePW::PW_Basis&, const UnitCell&, const Charge&, const Parallel_Grid&, int nspin, bool openshell);
 /// Reuse LR coefficients for an identical GS functional and sufficient derivative order.

@@ -272,7 +272,7 @@ void AtomPair<T>::allocate(T *data_array, bool is_zero)
 template <typename T>
 void AtomPair<T>::set_zero()
 {
-    for (auto &value : values)
+    for (hamilt::BaseMatrix<T>& value : values)
     {
         value.set_zero();
     }

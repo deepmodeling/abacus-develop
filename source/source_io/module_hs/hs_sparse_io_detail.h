@@ -43,14 +43,14 @@ std::vector<long long> count_nonzeros_by_R(
 {
     std::vector<long long> nonzero_num(all_R_coor.size(), 0);
     int count = 0;
-    for (const auto& R_coor: all_R_coor)
+    for (const Abfs::Vector3_Order<int>& R_coor: all_R_coor)
     {
-        const auto iter = smat.find(R_coor);
+        const typename SparseRMatrix<Tdata>::const_iterator iter = smat.find(R_coor);
         if (iter != smat.end())
         {
-            for (const auto& row_loop: iter->second)
+            for (const typename SparseRBlock<Tdata>::value_type& row_loop: iter->second)
             {
-                for (const auto& col_value: row_loop.second)
+                for (const std::pair<const std::size_t, Tdata>& col_value: row_loop.second)
                 {
                     if (std::abs(col_value.second) > threshold)
                     {

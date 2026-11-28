@@ -61,7 +61,7 @@ void toW90_PW::gen_radial_function_in_q(std::vector<ModuleBase::matrix> &radial_
             psir[ir] = psi[ir] * r[ir];
         }
 
-        auto &tmp_radial = radial_in_q[wannier_index];
+        ModuleBase::matrix& tmp_radial = radial_in_q[wannier_index];
         if (L[wannier_index] >= 0)
         {
             tmp_radial.create(1, nqx_);

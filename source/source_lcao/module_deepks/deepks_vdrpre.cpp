@@ -54,8 +54,8 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
     int nnmax = *std::max_element(nnmax_vec.begin(), nnmax_vec.end());
     overlap = torch::zeros({ucell.nat, nnmax, nlocal, deepks_param.des_per_atom}, dtype);
     torch::Tensor dRmat_tmp = torch::zeros({ucell.nat, nnmax, 3}, torch::kInt32);
-    auto overlap_accessor = overlap.accessor<double, 4>();
-    auto dRmat_accessor = dRmat_tmp.accessor<int, 3>();
+    at::TensorAccessor<double, 4> overlap_accessor = overlap.accessor<double, 4>();
+    at::TensorAccessor<int, 3> dRmat_accessor = dRmat_tmp.accessor<int, 3>();
 
     std::fill(nnmax_vec.begin(), nnmax_vec.end(), 0);
     DeePKS_domain::iterate_ad1(
@@ -128,7 +128,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
                                           (2 * deepks_param.lmaxd + 1),
                                           (2 * deepks_param.lmaxd + 1)},
                                          torch::TensorOptions().dtype(torch::kFloat64));
-    auto accessor = vdr_pdm.accessor<double, 8>();
+    at::TensorAccessor<double, 8> accessor = vdr_pdm.accessor<double, 8>();
 
     DeePKS_domain::iterate_ad2(ucell,
                                GridD,
@@ -262,10 +262,10 @@ int DeePKS_domain::mapping_R(int R)
 
 torch::Tensor DeePKS_domain::mapping_R(const torch::Tensor& R_tensor)
 {
-    auto R = R_tensor.to(torch::kInt32);
-    auto pos = R > 0;
-    auto twoR_minus1 = R * 2 - 1;
-    auto neg_minus2R = -2 * R;
+    at::Tensor R = R_tensor.to(torch::kInt32);
+    at::Tensor pos = R > 0;
+    at::Tensor twoR_minus1 = R * 2 - 1;
+    at::Tensor neg_minus2R = -2 * R;
     return at::where(pos, twoR_minus1, neg_minus2R);
 }
 

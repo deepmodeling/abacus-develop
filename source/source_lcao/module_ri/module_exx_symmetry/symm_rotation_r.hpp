@@ -95,7 +95,7 @@ namespace ModuleSymmetry
                 const TapR& irapR = { irap, irR };
                 if (this->irs_.sector_stars_.find(irapR) != this->irs_.sector_stars_.end())
                 {
-                    for (auto& isym_apR : this->irs_.sector_stars_.at(irapR))
+                    for (const std::pair<const int, std::pair<std::pair<int, int>, std::array<int, 3>>>& isym_apR : this->irs_.sector_stars_.at(irapR))
                     {
                         const int& isym = isym_apR.first;
                         const TapR& apR = isym_apR.second;
@@ -190,10 +190,10 @@ namespace ModuleSymmetry
             }
         }
 
-        for (auto& k1 : ir_keys)
+        for (std::pair<const int, std::set<std::pair<int, std::array<int, 3>>>>& k1 : ir_keys)
         {
             const int& irap1 = k1.first;
-            for (auto& a2R : k1.second)
+            for (const std::pair<int, std::array<int, 3>>& a2R : k1.second)
             {
                 const int& irap2 = a2R.first;
                 const TC& irR = a2R.second;
@@ -218,7 +218,7 @@ namespace ModuleSymmetry
                     }
                     if (Hir[is].empty()) { Hir[is] = RI::Tensor<Tdata>({ static_cast<size_t>(a1.nw), static_cast<size_t>(a2.nw) }); }
                 }
-                for (auto& isym_apR : this->irs_.sector_stars_.at(irapR))
+                for (const std::pair<const int, std::pair<std::pair<int, int>, std::array<int, 3>>>& isym_apR : this->irs_.sector_stars_.at(irapR))
                 {
                     const int& isym = isym_apR.first;
                     const TapR& apR = isym_apR.second;

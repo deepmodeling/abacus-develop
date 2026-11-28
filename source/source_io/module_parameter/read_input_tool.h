@@ -184,7 +184,7 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
         return;
     }
 
-    for (const auto& expr: expressions)
+    for (const std::string& expr: expressions)
     {
         size_t first_star_pos = expr.find('*');
         size_t second_star_pos = expr.rfind('*'); // rfind finds the rightmost '*'

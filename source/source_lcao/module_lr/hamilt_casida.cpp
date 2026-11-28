@@ -10,7 +10,7 @@ namespace LR
         ModuleBase::TITLE("HamiltLR", "matrix");
         const int no = this->nocc[0];
         const int nv = this->nvirt[0];
-        const auto& px = this->pX[0];
+        const Parallel_Blkcyclic& px = this->pX[0];
         const int ldim = nk * px.size();
         int npairs = no * nv;
         std::vector<T> Amat_full(this->nk * npairs * this->nk * npairs, 0.0);

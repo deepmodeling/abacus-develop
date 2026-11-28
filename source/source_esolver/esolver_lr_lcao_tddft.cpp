@@ -74,6 +74,11 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     this->spin_types =
         this->openshell ? std::vector<std::string>({"updown"}) : std::vector<std::string>({"singlet", "triplet"});
 
+    if (this->nspin == 1)
+    {
+        this->spin_types = {this->inp_->lr_target_spin};
+    }
+
     // a relaxation writes these once per ionic step; without the suffix every step would overwrite
     // the last, and the trajectory would be impossible to inspect afterwards
     const std::string step_suffix = this->excited_relax_ ? "_step" + std::to_string(istep) : "";
@@ -203,6 +208,11 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
             }
         }
     }
+    if (this->ks_ && this->inp_->cal_force && !this->excited_relax_)
+    {
+        // Cache the KS force shared by all single-point excited states.
+        this->ks_->cal_force(ucell, this->force_gs_);
+    }
     if (this->excited_relax_)
     {
         // Re-select which root to follow BEFORE taking the gradient, so the force belongs to
@@ -266,7 +276,8 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
             for (int is = 0; is < this->nspin; ++is)
             {
                 const T *const amplitudes = this->X[0].template data<T>();
-                lr_density.output_eh_density_all_states(amplitudes, is, nstates, this->ofs_running_);
+                const std::string density_label = is == 0 ? "up" : "down";
+                lr_density.output_eh_density_all_states(amplitudes, is, nstates, density_label, this->ofs_running_);
             }
         }
         else
@@ -274,7 +285,8 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
             for (int is = 0; is < this->X.size(); ++is)
             {
                 const T *const amplitudes = this->X[is].template data<T>();
-                lr_density.output_eh_density_all_states(amplitudes, is, nstates, this->ofs_running_);
+                lr_density.output_eh_density_all_states(
+                    amplitudes, is, nstates, this->spin_types[is], this->ofs_running_);
             }
         }
     }

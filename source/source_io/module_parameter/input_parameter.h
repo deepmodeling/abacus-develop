@@ -405,7 +405,7 @@ struct Input_para
     // ==============   #Parameters (10.lr-tddft) ===========================
     int lr_nstates = 1;                              ///< the number of 2-particle states to be solved
     int lr_target_state = 0;                         ///< which excited state the geometry relaxation follows (0-based)
-    std::string lr_target_spin = "singlet";          ///< spin channel of that state: singlet / triplet / updown
+    std::string lr_target_spin = "singlet";          ///< nspin=1 LR channel, or relaxation target at nspin=2: singlet / triplet / updown
     double lr_degen_thr
         = 0.0; ///< max excitation-energy spread of a degenerate multiplet whose gradient matrix is computed (Ry); 0 disables
     std::string lr_degen_mode = "state";       ///< what a relaxation follows when the target state sits in a degenerate multiplet: state / average

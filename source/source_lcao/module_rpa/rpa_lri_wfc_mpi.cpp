@@ -195,7 +195,7 @@ void write_ks_eigenvector_v1_mpi(const MPI_Comm mpi_comm,
 
         const unsigned long long chunk_elements = 4ULL * 1024ULL * 1024ULL;
         unsigned long long local_buffer_elements = 0;
-        for (const auto& layout: layouts)
+        for (const RpaLriDetail::KSEigenvectorMpiLayout& layout: layouts)
         {
             local_buffer_elements = std::max(local_buffer_elements, std::min(layout.local_count, chunk_elements));
         }
@@ -312,7 +312,7 @@ void write_ks_eigenvector_v1_mpi(const MPI_Comm mpi_comm,
         collective_mpi_check(mpi_comm, mpi_error, "Failed to close the KS eigenvector MPI file");
 
         int free_error = MPI_SUCCESS;
-        for (auto& layout: layouts)
+        for (RpaLriDetail::KSEigenvectorMpiLayout& layout: layouts)
         {
             const int layout_error = free_ks_eigenvector_mpi_layout(layout);
             if (free_error == MPI_SUCCESS && layout_error != MPI_SUCCESS)

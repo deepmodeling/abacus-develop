@@ -66,7 +66,7 @@ void Read_HContainer<T>::read()
         {
             std::vector<int> RCoord = csr.getRCoordinate(i);
             ModuleIO::SparseMatrix<T> sparse_matrix = csr.getMatrix(i);
-            for (const auto &element : sparse_matrix.getElements())
+            for (const std::pair<const std::pair<int, int>, T>& element : sparse_matrix.getElements())
             {
                 int row = element.first.first;
                 int col = element.first.second;
@@ -75,7 +75,7 @@ void Read_HContainer<T>::read()
                 // insert into hcontainer
                 int atom_i = atom_index_row[row];
                 int atom_j = atom_index_col[col];
-                auto *ij_pair = hcontainer_serial.find_pair(atom_i, atom_j);
+                hamilt::AtomPair<T>* ij_pair = hcontainer_serial.find_pair(atom_i, atom_j);
                 if (ij_pair == nullptr)
                 {
                     // insert new pair
@@ -99,7 +99,7 @@ void Read_HContainer<T>::read()
         {
             std::vector<int> RCoord = csr.getRCoordinate(i);
             ModuleIO::SparseMatrix<T> sparse_matrix = csr.getMatrix(i);
-            for (const auto &element : sparse_matrix.getElements())
+            for (const std::pair<const std::pair<int, int>, T>& element : sparse_matrix.getElements())
             {
                 int row = element.first.first;
                 int col = element.first.second;
@@ -108,7 +108,7 @@ void Read_HContainer<T>::read()
                 // insert into hcontainer
                 int atom_i = atom_index_row[row];
                 int atom_j = atom_index_col[col];
-                auto *matrix = hcontainer_serial.find_matrix(atom_i, atom_j, RCoord[0], RCoord[1], RCoord[2]);
+                hamilt::BaseMatrix<T>* matrix = hcontainer_serial.find_matrix(atom_i, atom_j, RCoord[0], RCoord[1], RCoord[2]);
                 matrix->add_element(
                     row - pv_serial.atom_begin_row[atom_i], col - pv_serial.atom_begin_col[atom_j], value);
             }

@@ -245,11 +245,10 @@ void assemble_print_force(const UnitCell& ucell,
                           ModuleBase::matrix& fcs)
 {
     const int nat = ucell.nat;
-    const auto& input = PARAM.inp;
+    const Input_para& input = PARAM.inp;
     //---------------------------------
     // sum all parts of force!
     //---------------------------------
-    ModuleBase::Vector3<double> net_force = {0.0, 0.0, 0.0};
     for (int i = 0; i < 3; i++)
     {
         for (int iat = 0; iat < nat; iat++)
@@ -275,15 +274,7 @@ void assemble_print_force(const UnitCell& ucell,
     // Force symmetrization is linear, so it commutes with the removal of a
     // uniform shift: the resulting fcs is identical to the previous ordering.
     // Net force is evaluated after symmetrization and before the uniform shift.
-    for (int i = 0; i < 3; i++)
-    {
-        double sum = 0.0;
-        for (int iat = 0; iat < nat; iat++)
-        {
-            sum += fcs(iat, i);
-        }
-        net_force[i] = sum;
-    }
+    const ModuleBase::Vector3<double> net_force = ModuleBase::net_force_vector(nat, fcs);
     if (!(input.gate_flag || input.efield_flag))
     {
         ModuleBase::remove_net_force(nat, fcs);
@@ -302,11 +293,12 @@ void assemble_print_force(const UnitCell& ucell,
     }
     GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
-    // this->printforce_total(ry, istestf, fcs);
-    ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", fcs, false);
-    net_force*= ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Net force vector (eV/Ang)", net_force.x, net_force.y, net_force.z);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total drift (ev/Ang)", net_force.norm());
+    // The coupled LR solver reports the ground-state force with the LR forces.
+    if (input.esolver_type != "ks-lr")
+    {
+        ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", fcs, false);
+    }
+    ModuleIO::print_net_force(GlobalV::ofs_running, net_force);
     if (istestf)
     {
         print_force_invalid_table(ucell, force_threshold, fcs);

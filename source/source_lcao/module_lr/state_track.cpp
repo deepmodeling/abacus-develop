@@ -26,7 +26,7 @@ RootBasis<T> capture_basis(const RootInputs<T>& inputs)
     basis.nvirt = inputs.nvirt;
     basis.layout = {inputs.pc.nb(), inputs.pc.nrproc(), inputs.pc.ncproc(),
         inputs.pc.irproc(), inputs.pc.icproc(), inputs.pc.nrloc(), inputs.pc.ncloc()};
-    for (const auto& px : inputs.px)
+    for (const Parallel_Blkcyclic& px : inputs.px)
     {
         basis.layout.push_back(px.nb());
         basis.layout.push_back(px.nrloc());
@@ -64,7 +64,7 @@ void project_local_references(const RootInputs<T>& inputs, const RootBasis<T>& o
 {
     const std::vector<T> typed_ao(ao.begin(), ao.end());
     std::vector<std::vector<T>*> references{&previous};
-    for (auto& root: group)
+    for (std::vector<T>& root: group)
     {
         references.push_back(&root);
     }
@@ -89,15 +89,15 @@ void project_local_references(const RootInputs<T>& inputs, const RootBasis<T>& o
 #endif
         // Only oo/vv are needed; construct each once and reuse across references.
         const int occupied_start = 0;
-        const auto occupied = mo_overlap_dist(old.coefficients[spin], typed_ao,
+        const std::vector<T> occupied = mo_overlap_dist(old.coefficients[spin], typed_ao,
             current.coefficients[spin], inputs.pc, inputs.pmat.para_2d(), pi, occupied_start);
-        const auto virtuals = mo_overlap_dist(old.coefficients[spin], typed_ao,
+        const std::vector<T> virtuals = mo_overlap_dist(old.coefficients[spin], typed_ao,
             current.coefficients[spin], inputs.pc, inputs.pmat.para_2d(), pv, no);
-        for (auto* reference : references)
+        for (std::vector<T>* reference : references)
         {
             std::vector<T> local_reference(local_count);
             std::copy_n(reference->begin() + offset, local_count, local_reference.begin());
-            const auto projected = project_reference_dist(local_reference, occupied, virtuals, pi, pv, px);
+            const std::vector<T> projected = project_reference_dist(local_reference, occupied, virtuals, pi, pv, px);
             std::copy(projected.begin(), projected.end(), reference->begin() + offset);
         }
         offset += px.size();
@@ -111,7 +111,7 @@ int follow_subspace(const RootInputs<T>& inputs, const T* amplitudes,
 {
     const int nlocal = previous.size();
     int nstates = 0;
-    for (const auto& group: groups)
+    for (const std::vector<int>& group: groups)
     {
         nstates += group.size();
     }
@@ -139,7 +139,7 @@ int follow_subspace(const RootInputs<T>& inputs, const T* amplitudes,
     {
         reference_size[root] = std::abs(reference[root]);
     }
-    const auto match = match_state_group(complex_overlap, old_dimension, nstates, groups, reference_size, inputs.reference_first);
+    const GroupMatch match = match_state_group(complex_overlap, old_dimension, nstates, groups, reference_size, inputs.reference_first);
     for (size_t ig = 0; ig < groups.size(); ++ig)
     {
         log << " EXCITED-STATE RELAX: candidate roots";
@@ -149,7 +149,7 @@ int follow_subspace(const RootInputs<T>& inputs, const T* amplitudes,
         }
         log << "; reference projection weight " << match.reference_weights[ig] << std::endl;
     }
-    const auto& selected = groups[match.group];
+    const std::vector<int>& selected = groups[match.group];
     int target = selected.front();
     for (const int root : selected)
     {
@@ -171,7 +171,7 @@ int follow_subspace(const RootInputs<T>& inputs, const T* amplitudes,
     {
         log << " " << root;
     }
-    const auto largest_reference = std::max_element(reference_size.begin(), reference_size.end());
+    const std::vector<double>::iterator largest_reference = std::max_element(reference_size.begin(), reference_size.end());
     const int reference_root = std::distance(reference_size.begin(), largest_reference);
     log << "; target " << target << "; reference overlap " << reference_size[target] << "; best reference root "
         << reference_root << " (" << *largest_reference << ")" << std::endl;
@@ -236,7 +236,7 @@ void follow_cross_root(const RootInputs<T>& inputs, const T* amplitudes,
         project_local_references(inputs, basis, current, ao, previous, basis.group_amplitudes);
         log << " EXCITED-STATE RELAX: root overlap uses old-new AO and MO bases." << std::endl;
     }
-    const auto groups = group_degenerate_states(energies, group_threshold);
+    const std::vector<std::vector<int>> groups = group_degenerate_states(energies, group_threshold);
     if (!basis.group_amplitudes.empty())
     {
         target = follow_subspace(inputs, amplitudes, groups, previous, basis.group_amplitudes, log);
@@ -245,7 +245,7 @@ void follow_cross_root(const RootInputs<T>& inputs, const T* amplitudes,
     {
         follow_root(amplitudes, nlocal, nstates, initial_state, target, previous, log);
     }
-    for (const auto& group : groups)
+    for (const std::vector<int>& group : groups)
     {
         if (std::find(group.begin(), group.end(), target) == group.end())
         {

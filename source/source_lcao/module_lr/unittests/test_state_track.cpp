@@ -45,7 +45,7 @@ TEST(StateTrack, ClosedShellTripletIgnoresDownSpinVirtualRotation)
     }
 #else
     pmat.para_2d().set_serial(3, 3);
-    for (auto& block: px)
+    for (Parallel_Blkcyclic& block: px)
     {
         block.set_serial(2, 1);
     }

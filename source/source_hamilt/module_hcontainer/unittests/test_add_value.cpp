@@ -43,7 +43,7 @@ class AddValueTest : public ::testing::Test
     {
         hamilt::HContainer<double>* hc = new hamilt::HContainer<double>(&paraV);
         insert_all_pairs(hc);
-        for (auto &item : fill)
+        for (const std::tuple<int, int, std::vector<double>>& item : fill)
         {
             int i = std::get<0>(item);
             int j = std::get<1>(item);

@@ -40,25 +40,25 @@ struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_CPU>
         {
             for (int ig = 0; ig < npw; ig++)
             {
-                auto pvkb0i = vkbi + i * npwx;
-                auto pvkb0j = vkbj + i * npwx;
-                auto pdbecp_noevc = dbecp_noevc + i * npwx;
+                std::complex<FPTYPE> *pvkb0i = vkbi + i * npwx;
+                std::complex<FPTYPE> *pvkb0j = vkbj + i * npwx;
+                std::complex<FPTYPE> *pdbecp_noevc = dbecp_noevc + i * npwx;
                 FPTYPE qvec[3];
                 for (int ii = 0; ii < 3; ii++)
                 {
                     qvec[ii] = gcar[(ik * npwx + ig) * 3 + ii] + kvec_c[ik * 3 + ii];
                 }
-                auto pvkb1 = vkb1 + i * npwx;
+                std::complex<FPTYPE> *pvkb1 = vkb1 + i * npwx;
                 pvkb1[ig] += static_cast<FPTYPE>(0.5) * qvec[ipol] * pvkb0j[ig] +
                              static_cast<FPTYPE>(0.5) * qvec[jpol] * pvkb0i[ig];
                 pdbecp_noevc[ig] -= static_cast<FPTYPE>(2.0) * pvkb1[ig];
 
                 if (ipol == jpol)
                 {
-                    auto pvkb = vkb + i * npwx;
+                    std::complex<FPTYPE> *pvkb = vkb + i * npwx;
                     pdbecp_noevc[ig] -= pvkb[ig];
                 }
-                auto pvkb2 = vkb2 + i * npwx;
+                std::complex<FPTYPE> *pvkb2 = vkb2 + i * npwx;
 
                 FPTYPE qvec_norm2 = qvec[0] * qvec[0] + qvec[1] * qvec[1] + qvec[2] * qvec[2];
                 FPTYPE qm1 = qvec_norm2 > 1e-16 ? 1.0 / sqrt(qvec_norm2) : 0;

@@ -33,8 +33,8 @@ try
     ModuleBase::TITLE("DFT_RPA_interface", "out_coulomb_k_v1");
     ModuleBase::timer::start("RPA_LRI", "out_coulomb_k_v1");
 
-    const auto basis_method = this->select_coulomb_basis_method_(exx_lri);
-    const auto atom_naux = this->collect_atom_naux_(ucell, exx_lri);
+    const Conv_Coulomb_Pot_K::Coulomb_Method basis_method = this->select_coulomb_basis_method_(exx_lri);
+    const std::vector<int> atom_naux = this->collect_atom_naux_(ucell, exx_lri);
     const int all_mu = RpaLriDetail::sum_int_vector(atom_naux);
     const int nks_tot = this->runtime.input.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
     const std::size_t natoms = static_cast<std::size_t>(ucell.nat);
@@ -68,7 +68,7 @@ try
                     continue;
                 }
                 RI::Tensor<std::complex<double>> tmp_VR = RI::Global_Func::convert<std::complex<double>>(JPp.second);
-                const auto R = JPp.first.second;
+                const TC R = JPp.first.second;
                 // Fourier transform the real-space pair block with
                 // exp(i 2*pi k.R), using the lattice-vector convention.
                 const double arg
@@ -80,10 +80,10 @@ try
                 }
                 Vq_k_IJ[J] = Vq_k_IJ[J] + tmp_VR * kphase;
             }
-            for (auto& vq_Jp: Vq_k_IJ)
+            for (std::pair<const std::size_t, RI::Tensor<std::complex<double>>>& vq_Jp: Vq_k_IJ)
             {
                 const int J = static_cast<int>(vq_Jp.first);
-                auto& vq_J = vq_Jp.second;
+                RI::Tensor<std::complex<double>>& vq_J = vq_Jp.second;
                 const int nu_num = exx_lri->exx_objs.at(basis_method).cv.get_index_abfs_size(ucell.iat2it[J]);
                 if (static_cast<int>(vq_J.shape[0]) != mu_num || static_cast<int>(vq_J.shape[1]) != nu_num)
                 {

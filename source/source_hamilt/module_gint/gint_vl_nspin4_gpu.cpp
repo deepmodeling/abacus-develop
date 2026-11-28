@@ -67,7 +67,7 @@ void Gint_vl_nspin4_gpu::cal_hr_gint_()
 #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrid_batches_num(); ++i)
         {
-            const auto &bgrid_batch = gint_info_->get_bgrid_batches()[i];
+            const std::shared_ptr<BatchBigGrid>& bgrid_batch = gint_info_->get_bgrid_batches()[i];
             if (bgrid_batch->empty())
             {
                 continue;

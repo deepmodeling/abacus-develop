@@ -128,7 +128,7 @@ void ModuleIO::save_sparse(
 
     const SparseRBlock<Tdata> empty_block;
     int count = 0;
-    for (const auto& R_coor: all_R_coor)
+    for (const Abfs::Vector3_Order<int>& R_coor: all_R_coor)
     {
         const bool is_empty = (nonzero_num[count] == 0);
         // Sparse output must not persist all-zero blocks: they carry no

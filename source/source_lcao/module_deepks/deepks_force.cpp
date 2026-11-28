@@ -92,8 +92,8 @@ void DeePKS_domain::cal_f_delta(const UnitCell& ucell,
                     r2[2] = (tau2.z - tau0.z);
                 }
 
-                auto row_indexes = pv.get_indexes_row(ibt1);
-                auto col_indexes = pv.get_indexes_col(ibt2);
+                std::vector<int> row_indexes = pv.get_indexes_row(ibt1);
+                std::vector<int> col_indexes = pv.get_indexes_col(ibt2);
 
                 if (row_indexes.size() * col_indexes.size() == 0)
                 {
