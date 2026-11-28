@@ -13,3 +13,15 @@
 03_LCAO_DFTU_S2_Z
 # 04_LCAO_DFTU_S4_XY   # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DFT+U
 # 05_LCAO_DFTU_S4_XYZ  # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DFT+U
+
+# Onsite +U occupation / DMR mixing and U-ramping regressions
+60_LCAO_U_BASE
+61_LCAO_U_OCC
+62_LCAO_U_DMR
+63_LCAO_U_RAMP
+64_LCAO_U_OCC_RAMP
+65_LCAO_U_DMR_RAMP
+66_PW_U_BASE
+67_PW_U_OCC
+68_PW_U_RAMP
+69_PW_U_OCC_RAMP

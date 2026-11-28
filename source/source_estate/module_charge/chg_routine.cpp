@@ -215,21 +215,21 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 
         if (inp.dft_plus_u)
         {
-            if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
-            {
-                p_chgmix->mixing_restart_step = iter_limit + 1;
-            }
-            if (dftu.get_uramping() > 0.01)
+            if (dftu.get_uramping() > 0.0)
             {
                 if (mag_converged) // skip uramping if mag not converged
                 {
-                    dftu.uramping_update(); // update U by uramping if uramping > 0.01
+                    dftu.uramping_update(); // update U by uramping if uramping > 0.0
                     std::cout << " U-Ramping! Current U = ";
                     for (int i = 0; i < dftu.get_num_u_types(); i++)
                     {
                         std::cout << dftu.get_u_current(i) * ModuleBase::Ry_to_eV << " ";
                     }
                     std::cout << " eV " << std::endl;
+                }
+                if (!dftu.u_converged())
+                {
+                    p_chgmix->mixing_restart_step = iter_limit + 1;
                 }
             }
         }
@@ -250,9 +250,13 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
     if (iter == 1)
     {
         p_chgmix->mix_reset(); // init mixing
+        if (dftu.has_occ_mixer())
+        {
+            dftu.occ_mixer().set_beta(p_chgmix->get_mixing_beta());
+        }
         p_chgmix->reset_scf_history(iter_limit);
         // this output will be removed once the feeature is stable
-        if (dftu.get_uramping() > 0.01)
+        if (dftu.get_uramping() > 0.0)
         {
             std::cout << " U-Ramping! Current U = ";
             for (int i = 0; i < dftu.get_num_u_types(); i++)
@@ -270,8 +274,8 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         p_chgmix->mixing_restart_count++;
         if (inp.dft_plus_u)
         {
-            dftu.uramping_update(); // update U by uramping if uramping > 0.01
-            if (dftu.get_uramping() > 0.01)
+            dftu.uramping_update(); // update U by uramping if uramping > 0.0
+            if (dftu.get_uramping() > 0.0)
             {
                 std::cout << " U-Ramping! Current U = ";
                 for (int i = 0; i < dftu.get_num_u_types(); i++)
@@ -280,7 +284,7 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
                 }
                 std::cout << " eV " << std::endl;
             }
-            if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
+            if (dftu.get_uramping() > 0.0 && !dftu.u_converged())
             {
                 p_chgmix->mixing_restart_step = iter_limit + 1;
             }

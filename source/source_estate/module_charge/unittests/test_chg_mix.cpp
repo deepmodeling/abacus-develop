@@ -235,32 +235,61 @@ TEST_F(ChargeMixingTest, ModelChangeRestartsTheOscillationWindow)
 TEST_F(ChargeMixingTest, ModelChangeRestartsUomHistory)
 {
     cfg.mixing_mode = "pulay";
+    cfg.scf_thr_type = 2;
     Charge_Mixing charge_mixing;
     charge_mixing.set_mixing(make_cfg(), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
     charge_mixing.init_mixing();
-    const int uom_size = 4;
-    charge_mixing.allocate_mixing_uom(uom_size);
-    for (int step = 0; step < 2; ++step)
+    charge_mixing.allocate_mixing_uom(4);
+    std::vector<double> uom(4, 2.0);
+    std::vector<double> saved(4, 1.0);
+    // A restart has no rho coefficients. The auxiliary matrix must pass through.
+    EXPECT_FALSE(charge_mixing.has_uom_coefficients());
+    charge_mixing.mix_uom(uom, saved);
+    EXPECT_DOUBLE_EQ(uom[0], 2.0);
+    Base_Mixing::Mixing_Data& rho = charge_mixing.get_rho_mdata();
+    std::vector<double> rho_in(rho.length, 0.0);
+    std::vector<double> rho_out(rho.length, 1.0);
+    charge_mixing.get_mixing()->push_data(rho, rho_in.data(), rho_out.data(), nullptr, true);
+    const std::size_t length = rho.length;
+    std::function<double(double*, double*)> inner_product = [length](double* lhs, double* rhs) {
+        double result = 0.0;
+        for (std::size_t i = 0; i < length; ++i)
+        {
+            result += lhs[i] * rhs[i];
+        }
+        return result;
+    };
+    charge_mixing.get_mixing()->cal_coef(rho, inner_product);
+    EXPECT_TRUE(charge_mixing.has_uom_coefficients());
+    charge_mixing.mix_uom(uom, saved);
+    EXPECT_NEAR(uom[0], 1.0 + cfg.mixing_beta, 1e-12);
+    // Skipping charge mixing must not apply the same coefficients a second time.
+    EXPECT_FALSE(charge_mixing.has_uom_coefficients());
+    const std::vector<double> mixed = uom;
+    charge_mixing.mix_uom(uom, saved);
+    EXPECT_EQ(uom, mixed);
+    // Populate a genuine multi-vector Pulay history before restarting.
+    for (std::size_t i = 0; i < rho.length; ++i)
     {
-        const double uom_value = 1.0 + step;
-        const double uom_save_value = 0.5 + step;
-        std::vector<double> uom(uom_size, uom_value);
-        std::vector<double> uom_save(uom_size, uom_save_value);
-        charge_mixing.mix_uom(uom, uom_save);
+        rho_out[i] = 0.5 + (i % 2);
     }
-
-    const int model_change = 3;
-    charge_mixing.restart_for_new_model(model_change);
-    std::vector<double> uom = {2.0, 3.0, 4.0, 5.0};
-    std::vector<double> uom_save = {1.0, 1.0, 1.0, 1.0};
-    charge_mixing.mix_uom(uom, uom_save);
-
-    const double beta = cfg.mixing_beta;
-    for (int i = 0; i < uom_size; ++i)
-    {
-        const double expected = 1.0 + beta * (2.0 + i - 1.0);
-        EXPECT_NEAR(uom[i], expected, 1e-12) << "element " << i;
-    }
+    charge_mixing.get_mixing()->push_data(rho, rho_in.data(), rho_out.data(), nullptr, true);
+    charge_mixing.get_mixing()->cal_coef(rho, inner_product);
+    charge_mixing.mix_uom(uom, saved);
+    EXPECT_GT(rho.ndim_use, 1);
+    charge_mixing.restart_for_new_model(3);
+    EXPECT_FALSE(charge_mixing.has_uom_coefficients());
+    charge_mixing.get_mixing()->push_data(rho, rho_in.data(), rho_out.data(), nullptr, true);
+    charge_mixing.get_mixing()->cal_coef(rho, inner_product);
+    EXPECT_TRUE(charge_mixing.has_uom_coefficients());
+    uom.assign(4, 2.0);
+    charge_mixing.mix_uom(uom, saved);
+    EXPECT_NEAR(uom[0], 1.0 + cfg.mixing_beta, 1e-12);
+    // U-ramping reconstructs the mixer through init_mixing, which must clear
+    // both auxiliary histories as well as rho.
+    charge_mixing.init_mixing();
+    EXPECT_FALSE(charge_mixing.has_uom_coefficients());
+    EXPECT_EQ(charge_mixing.get_dmr_mdata().ndim_history, 0);
 }
 
 TEST_F(ChargeMixingTest, MixResetClearsDmrHistory)
@@ -283,6 +312,9 @@ TEST_F(ChargeMixingTest, MixResetClearsDmrHistory)
     EXPECT_EQ(dmr_mdata.ndim_use, 0);
     EXPECT_EQ(dmr_mdata.ndim_history, 0);
     EXPECT_EQ(dmr_mdata.start, -1);
+    dmr_mdata.push(dmr);
+    charge_mixing.init_mixing();
+    EXPECT_EQ(dmr_mdata.ndim_history, 0);
 }
 
 TEST_F(ChargeMixingTest, SetMixingTest)

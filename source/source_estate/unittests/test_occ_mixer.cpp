@@ -262,7 +262,7 @@ TEST_F(OccMatMixerTest, FlatRoundtripNspin4AllPauliBlocks)
 }
 
 // ----------------------------------------------------------------------
-// begin_iter/seed_save flatten the saved (not the live) occupation matrix
+// begin_iter flattens the saved (not the live) occupation matrix
 // ----------------------------------------------------------------------
 TEST_F(OccMatMixerTest, BeginIterFlattensSave)
 {
@@ -285,4 +285,57 @@ TEST_F(OccMatMixerTest, BeginIterFlattensSave)
     {
         EXPECT_DOUBLE_EQ(mixer.uom_save()[flat_index[0] + m], 7.0 + m);
     }
+}
+
+TEST_F(OccMatMixerTest, OnsiteFirstProjectionAndIndependentSpinHistory)
+{
+    OccupationMatrix occupation;
+    occupation.init(cell, l_channel, 2, 1);
+    OccMatMixer mixer;
+    const int size = total_size(2);
+    mixer.init(&cell, &l_channel, &flat_index, 2, size);
+    std::vector<double> up(block, 0.2);
+    std::vector<double> down(block, 0.6);
+    mixer.mix_onsite_block(0, 0, up, 0.25);
+    mixer.mix_onsite_block(0, 1, down, 0.25);
+    EXPECT_DOUBLE_EQ(up[0], 0.2);
+    EXPECT_DOUBLE_EQ(down[0], 0.6);
+    EXPECT_TRUE(mixer.mixed_block(0, 0, block).empty());
+    up.assign(block, 0.8);
+    down.assign(block, 0.2);
+    mixer.mix_onsite_block(0, 0, up, 0.25);
+    mixer.mix_onsite_block(0, 1, down, 0.25);
+    EXPECT_NEAR(up[0], 0.35, 1e-15);
+    EXPECT_NEAR(down[0], 0.5, 1e-15);
+    EXPECT_DOUBLE_EQ(mixer.raw_block(0, 0, block)[0], 0.8);
+    EXPECT_EQ(mixer.mixed_block(0, 0, block), up);
+    // Another atom has no previous matrix, and must not inherit atom 0's history.
+    std::vector<double> other(block, 0.9);
+    mixer.mix_onsite_block(1, 0, other, 0.25);
+    EXPECT_DOUBLE_EQ(other[0], 0.9);
+}
+
+TEST_F(OccMatMixerTest, SeededOnsiteMatrixAndPwRawSnapshot)
+{
+    OccupationMatrix occupation;
+    occupation.init(cell, l_channel, 2, 1);
+    occupation.zero(cell, l_channel);
+    std::vector<double> input(block, 0.4);
+    occupation.set_flat(0, l_corr, 0, input);
+    OccMatMixer mixer;
+    const int size = total_size(2);
+    mixer.init(&cell, &l_channel, &flat_index, 2, size);
+    mixer.seed_save(occupation);
+    std::vector<double> raw(block, 0.8);
+    mixer.mix_onsite_block(0, 0, raw, 0.5);
+    EXPECT_NEAR(raw[0], 0.6, 1e-15);
+    occupation.copy_to_save(cell, l_channel);
+    mixer.begin_iter(occupation);
+    occupation.set_flat(0, l_corr, 0, raw);
+    mixer.collect(occupation);
+    mixer.uom()[0] = 0.1;
+    mixer.record_mixing(true);
+    mixer.write_back(occupation);
+    EXPECT_NEAR(mixer.raw_block(0, 0, block)[0], 0.6, 1e-15);
+    EXPECT_DOUBLE_EQ(mixer.mixed_block(0, 0, block)[0], 0.1);
 }

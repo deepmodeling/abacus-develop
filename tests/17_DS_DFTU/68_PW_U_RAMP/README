@@ -1,0 +1,3 @@
+Onsite DFT+U pw: occupation mixing=False, DMR mixing=False, U-ramping=True.
+Use ABACUS_SCF_DIAGNOSTICS=1 to validate per-electronic-step matrices.
+Diamond Si p-shell regression; tests update semantics rather than a material-specific U value.

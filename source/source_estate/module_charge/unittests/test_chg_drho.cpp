@@ -252,3 +252,46 @@ TEST_F(ChgDrhoTest, CalDkinMetaGgaTrueComputesResidual)
                        * omega / static_cast<double>(pw_basis.nxyz) / nelec;
     EXPECT_NEAR(dkin, ref, 1e-10);
 }
+
+TEST_F(ChgDrhoTest, SpinChannelsSeparateChargeAndMagneticChangesWithoutMutatingDensity)
+{
+    setup_charge(2);
+    for (int ir = 0; ir < pw_basis.nrxx; ++ir)
+    {
+        charge.rho_save[0][ir] = 10.0;
+        charge.rho_save[1][ir] = 10.0;
+        charge.rho[0][ir] = 12.0;
+        charge.rho[1][ir] = 9.0;
+    }
+    double rc = 0.0;
+    double rm = 0.0;
+    module_charge::cal_spin_channel_residuals(charge, 4.0, pw_basis, 2.0, rc, rm);
+    const double factor = 2.0 * pw_basis.nrxx / pw_basis.nxyz / 4.0;
+    EXPECT_NEAR(rc, factor, 1e-12);
+    EXPECT_NEAR(rm, 3.0 * factor, 1e-12);
+    EXPECT_DOUBLE_EQ(charge.rho[0][0], 12.0);
+    EXPECT_DOUBLE_EQ(charge.rho_save[1][0], 10.0);
+    charge.rho[1][0] = 12.0;
+    module_charge::cal_spin_channel_residuals(charge, 4.0, pw_basis, 2.0, rc, rm);
+    EXPECT_GT(rc, factor);
+    EXPECT_LT(rm, 3.0 * factor);
+}
+
+TEST_F(ChgDrhoTest, SpinChannelsL2Normalization)
+{
+    setup_charge(2);
+    for (int ir = 0; ir < pw_basis.nrxx; ++ir)
+    {
+        charge.rho_save[0][ir] = 10.0;
+        charge.rho_save[1][ir] = 10.0;
+        charge.rho[0][ir] = 12.0;
+        charge.rho[1][ir] = 9.0;
+    }
+    double rc = 0.0;
+    double rm = 0.0;
+    module_charge::cal_spin_channel_residuals_l2(charge, 4.0, pw_basis, 2.0, rc, rm);
+    const double factor = 0.5*std::sqrt(static_cast<double>(pw_basis.nrxx)/pw_basis.nxyz);
+    EXPECT_NEAR(rc, factor, 1e-12);
+    EXPECT_NEAR(rm, 3.0*factor, 1e-12);
+    EXPECT_DOUBLE_EQ(charge.rho[0][0], 12.0);
+}

@@ -162,6 +162,28 @@ TEST_F(DFTUBaseTest, InitBaseSeedsURampingState)
     EXPECT_FALSE(dftu.u_converged());
 }
 
+
+TEST_F(DFTUBaseTest, SmallPositiveRampClampsAndRequiresTarget)
+{
+    Plus_U_Base dftu;
+    const std::vector<int> channels = {2};
+    const std::vector<double> target = {0.005};
+    dftu.init_base(ucell, 1, 2, channels, false, 0.5, "", "", "none", "cpu",
+                   target, 0.002, 0, 0, DFTU_BASE::SOC_LAYOUT_PAULI);
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 0.0);
+    EXPECT_FALSE(dftu.u_converged());
+    dftu.uramping_update();
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 0.002);
+    dftu.uramping_update();
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 0.004);
+    EXPECT_FALSE(dftu.u_converged());
+    dftu.uramping_update();
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 0.005);
+    EXPECT_TRUE(dftu.u_converged());
+    dftu.uramping_update();
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 0.005);
+}
+
 /// init_base owns the flat potential offsets used by PW and the occupation
 /// mixer. Check the real layout for unequal orbital sizes and all spin modes.
 TEST_F(DFTUBaseTest, InitBaseComputesMixedOrbitalOffsetsForSpinModes)

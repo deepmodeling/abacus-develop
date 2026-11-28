@@ -52,7 +52,7 @@ void Plus_U_Base::init_base(
     this->init_occ_mat = init_occ_mat;
     this->u_target = hubbard_u;
     this->u_current = hubbard_u;
-    if (uramping > 0.01)
+    if (uramping > 0.0)
     {
         std::fill(this->u_current.begin(), this->u_current.end(), 0.0);
     }
@@ -173,6 +173,11 @@ void Plus_U_Base::init_base(
             DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
 #endif
             this->set_occmat_ready();
+            this->occmat_.copy_to_save(cell, this->l_channel);
+            if (this->has_occ_mixer())
+            {
+                this->occ_mixer().seed_save(this->occmat_);
+            }
         }
         else
         {
@@ -190,8 +195,8 @@ void Plus_U_Base::uramping_update()
     {
         return;
     }
-    // if uramping < 0.1, use the original U
-    if (this->uramping < 0.01)
+    // A nonpositive increment disables U ramping.
+    if (this->uramping <= 0.0)
     {
         return;
     }

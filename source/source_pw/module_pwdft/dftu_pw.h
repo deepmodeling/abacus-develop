@@ -2,10 +2,12 @@
 #define DFTU_PW_H
 
 #include "source_base/matrix.h"
+#include "source_estate/scf_diagnostics.h"
 #include <complex>
 #include <vector>
 
 class UnitCell;
+class Plus_U_Base;
 class OccupationMatrix;
 class OccMatMixer;
 class Charge_Mixing;
@@ -59,6 +61,12 @@ void cal_occ_pw(
     OccMatMixer *occ_mixer,
     std::vector<std::complex<double>> &uterm_mat,
     double &energy_u);
+
+/// Observational projection only: separate storage; no potential/energy/mixer update.
+template <typename Device>
+std::vector<ScfDiagnostics::ScfOccupationBlock> observe_occ_pw(
+    const void* psi_in, const ModuleBase::matrix& wg, const UnitCell& cell,
+    const int* isk, const int kpar, const Plus_U_Base& dftu, const bool input_ready);
 
 } // namespace DFTU_BASE
 

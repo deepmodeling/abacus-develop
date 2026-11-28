@@ -106,13 +106,65 @@ void cal_occ_pw(
     if (occ_mixer != nullptr && p_chgmix != nullptr)
     {
         occ_mixer->collect(occmat);
+        const bool applied = p_chgmix->has_uom_coefficients();
         p_chgmix->mix_uom(occ_mixer->uom(), occ_mixer->uom_save());
+        occ_mixer->record_mixing(applied);
         occ_mixer->write_back(occmat);
     }
 
     pw::compute_pot_uterm_and_energy(cell, nspin, u_current, l_channel, uterm_mat_index, occmat, uterm_mat, energy_u);
 
     ModuleBase::timer::end("Plus_U_Base", "cal_occ_pw");
+}
+
+template <typename Device>
+std::vector<ScfDiagnostics::ScfOccupationBlock> observe_occ_pw(
+    const void* psi_in, const ModuleBase::matrix& wg, const UnitCell& cell,
+    const int* isk, const int kpar, const Plus_U_Base& dftu, const bool input_ready)
+{
+    OccupationMatrix raw;
+    const std::vector<int>& channels = dftu.get_l_channel_vec();
+    raw.init(cell, channels, 2, 1);
+    raw.zero(cell, channels);
+    const auto* wavefunctions = static_cast<const psi::Psi<std::complex<double>, Device>*>(psi_in);
+    const int saved_k = wavefunctions->get_current_k();
+    accumulate_occ_one_k<Device>(psi_in, wg, cell, isk, 2, channels, raw);
+    pw::reduce_occ_mat(cell, 2, kpar, channels, raw);
+    wavefunctions->fix_k(saved_k);
+    auto* projector = projectors::OnsiteProjector<double, Device>::get_instance();
+    projector->tabulate_atomic(saved_k);
+    const int nbands = wavefunctions->get_nbands();
+    projector->overlap_proj_psi(nbands, wavefunctions->get_pointer());
+    std::vector<ScfDiagnostics::ScfOccupationBlock> blocks;
+    for (int atom = 0; atom < cell.nat; ++atom)
+    {
+        const int type = cell.iat2it[atom];
+        const int l = channels[type];
+        if (l < 0) { continue; }
+        const int size = (2*l+1)*(2*l+1);
+        for (int spin = 0; spin < 2; ++spin)
+        {
+            ScfDiagnostics::ScfOccupationBlock block;
+            block.atom = atom+1;
+            block.spin = spin;
+            block.l = l;
+            block.u_eV = dftu.get_u_current(type)*ModuleBase::Ry_to_eV;
+            const double* output = raw.mat(atom,l,spin).c;
+            block.raw_output.assign(output,output+size);
+            if (input_ready)
+            {
+                const double* input = dftu.occmat().mat(atom,l,spin).c;
+                block.input.assign(input,input+size);
+            }
+            if (dftu.has_occ_mixer())
+            {
+                block.raw_before_occupation_mixing = dftu.occ_mixer().raw_block(atom, spin, size);
+                block.after_occupation_mixing = dftu.occ_mixer().mixed_block(atom, spin, size);
+            }
+            blocks.push_back(block);
+        }
+    }
+    return blocks;
 }
 
 } // namespace DFTU_BASE
@@ -135,4 +187,11 @@ template void DFTU_BASE::accumulate_occ_one_k<base_device::DEVICE_GPU>(
     const int,
     const std::vector<int> &,
     OccupationMatrix &);
+#endif
+
+template std::vector<ScfDiagnostics::ScfOccupationBlock> DFTU_BASE::observe_occ_pw<base_device::DEVICE_CPU>(
+    const void*, const ModuleBase::matrix&, const UnitCell&, const int*, const int, const Plus_U_Base&, const bool);
+#if defined(__CUDA) || defined(__ROCM)
+template std::vector<ScfDiagnostics::ScfOccupationBlock> DFTU_BASE::observe_occ_pw<base_device::DEVICE_GPU>(
+    const void*, const ModuleBase::matrix&, const UnitCell&, const int*, const int, const Plus_U_Base&, const bool);
 #endif

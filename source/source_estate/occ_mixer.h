@@ -50,7 +50,7 @@ class OccMatMixer
               int total_size);
 
     /**
-     * @brief Seed uom_save from an occupation matrix loaded from file.
+     * @brief Seed uom_save from the live occupation matrix loaded from file.
      *
      * Used when init_occ_mat != 0 (restart from dm_onsite_ini.txt) so that
      * the first mixing step has a meaningful "previous" matrix.
@@ -76,6 +76,7 @@ class OccMatMixer
      *        matrix. Called after the caller has run Charge_Mixing::mix_uom.
      */
     void write_back(OccupationMatrix& occmat);
+    void record_mixing(bool applied);
 
     /**
      * @brief Plain linear mixing for the nested-matrix (LCAO) path:
@@ -86,6 +87,14 @@ class OccMatMixer
      */
     void mix_plain(OccupationMatrix& occmat, double beta);
 
+    /// Mix one onsite atom/spin block; the first unseeded projection is unchanged.
+    void mix_onsite_block(int atom, int spin, std::vector<double>& occupation, double beta);
+    std::vector<double> raw_block(int atom, int spin, int size) const;
+    std::vector<double> mixed_block(int atom, int spin, int size) const;
+
+    void set_beta(double beta) { beta_ = beta; }
+    double beta() const { return beta_; }
+
     /// Total flat-buffer size (== Charge_Mixing::allocate_mixing_uom argument).
     int flat_size() const { return static_cast<int>(uom_.size()); }
 
@@ -95,12 +104,17 @@ class OccMatMixer
     std::vector<double>& uom_save() { return uom_save_; }
 
   private:
+    int block_offset(int atom, int spin) const;
+    std::vector<double> raw_;
+    std::vector<unsigned char> initialized_;
+    std::vector<unsigned char> mixed_;
     std::vector<double> uom_;      ///< new / mixed flat occupation matrix
     std::vector<double> uom_save_; ///< previous flat occupation matrix
     const std::vector<int>* index_ = nullptr;        ///< borrowed uterm_mat_index
     const UnitCell* cell_ = nullptr;                 ///< borrowed unit cell
     const std::vector<int>* l_channel_ = nullptr; ///< borrowed l_channel table
     int nspin_ = 0;
+    double beta_ = 0.0;
 };
 
 #endif

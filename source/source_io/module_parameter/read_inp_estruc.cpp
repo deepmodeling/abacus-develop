@@ -692,6 +692,18 @@ For systems that are difficult to converge, one could try increasing the value o
         item.unit = "";
         item.set_availability("mixing_restart>0");
         read_sync_bool(input.mixing_dmr);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.mixing_dmr
+                && (para.input.basis_type != "lcao" || para.input.mixing_restart <= 0.0
+                    || para.input.scf_thr_type != 2))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "mixing_dmr requires LCAO, scf_thr_type=2 and mixing_restart>0");
+            }
+            if (para.input.mixing_dmr && para.input.mixing_dftu)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "Simultaneous mixing_dmr and mixing_dftu is not supported");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -772,7 +784,7 @@ This setting takes effect only when the selected exchange-correlation functional
         item.category = "Electronic structure";
         item.type = "Boolean";
         item.description = R"(Whether to mix the occupation matrices.
-* True: The occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+* True: Mix the occupation matrices before building the Hubbard potential. LCAO uses linear mixing with mixing_beta; PW reuses the charge-mixing coefficients. Cannot be combined with mixing_dmr.
 * False: The occupation matrices will not be mixed.)";
         item.default_value = "False";
         item.unit = "";

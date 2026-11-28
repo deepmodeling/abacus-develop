@@ -283,6 +283,7 @@ OBJS_DEEPKS=lcao_deepks.o\
 
 
 OBJS_ELECSTAT=elecstate.o\
+    scf_diagnostics.o\
     init_scf.o\
     param_update.o\
     estate_e_terms.o\

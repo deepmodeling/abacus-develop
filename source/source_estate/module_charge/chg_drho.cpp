@@ -85,6 +85,58 @@ double cal_drho(Charge* chr,
     return drho;
 }
 
+void cal_spin_channel_residuals(const Charge& chr,
+                                const double nelec,
+                                const ModulePW::PW_Basis& rhopw,
+                                const double omega,
+                                double& charge_residual,
+                                double& magnetic_residual)
+{
+    assert(nelec > 0.0 && omega > 0.0 && rhopw.nxyz > 0);
+    charge_residual = 0.0;
+    magnetic_residual = 0.0;
+    for (int ir = 0; ir < rhopw.nrxx; ++ir)
+    {
+        const double up = chr.rho[0][ir] - chr.rho_save[0][ir];
+        const double down = chr.rho[1][ir] - chr.rho_save[1][ir];
+        charge_residual += std::abs(up + down);
+        magnetic_residual += std::abs(up - down);
+    }
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(charge_residual);
+    Parallel_Reduce::reduce_pool(magnetic_residual);
+#endif
+    const double normalization = omega / static_cast<double>(rhopw.nxyz) / nelec;
+    charge_residual *= normalization;
+    magnetic_residual *= normalization;
+}
+
+void cal_spin_channel_residuals_l2(const Charge& chr,
+                                   const double nelec,
+                                   const ModulePW::PW_Basis& rhopw,
+                                   const double omega,
+                                   double& charge_residual,
+                                   double& magnetic_residual)
+{
+    assert(nelec > 0.0 && omega > 0.0 && rhopw.nxyz > 0);
+    double charge_sum = 0.0;
+    double magnetic_sum = 0.0;
+    for (int ir = 0; ir < rhopw.nrxx; ++ir)
+    {
+        const double up = chr.rho[0][ir] - chr.rho_save[0][ir];
+        const double down = chr.rho[1][ir] - chr.rho_save[1][ir];
+        charge_sum += (up+down)*(up+down);
+        magnetic_sum += (up-down)*(up-down);
+    }
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(charge_sum);
+    Parallel_Reduce::reduce_pool(magnetic_sum);
+#endif
+    const double normalization = omega/nelec;
+    charge_residual = normalization*std::sqrt(charge_sum/static_cast<double>(rhopw.nxyz));
+    magnetic_residual = normalization*std::sqrt(magnetic_sum/static_cast<double>(rhopw.nxyz));
+}
+
 // Kinetic-energy-density residual between chr->kin_r and chr->kin_r_save.
 double cal_dkin(Charge* chr,
                 const double nelec,
