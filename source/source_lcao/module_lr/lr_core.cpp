@@ -173,6 +173,31 @@ void Core<T>::setup_ks_layout(const Parallel_Orbitals& pv, const K_Vectors& kv, 
 }
 
 template <typename T>
+void Core<T>::setup_file_layout(const K_Vectors& kv, const UnitCell& ucell, const Input_para& inp)
+{
+    LR_Util::setup_2d_division(this->gs.para_mat.para_2d(), 1, this->dim.nbasis, this->dim.nbasis);
+    LR::set_band_layout(this->gs.para_mat, this->dim.nbasis, this->dim.nbands, ucell,
+                        inp.ri_hartree_benchmark == "aims");
+    if (inp.cal_force)
+    {
+        LR_Util::setup_2d_division(this->gs.para_mat_all.para_2d(), 1, this->dim.nbasis, this->dim.nbasis);
+        LR::set_band_layout(this->gs.para_mat_all, this->dim.nbasis, inp.nbands, ucell,
+                            inp.ri_hartree_benchmark == "aims");
+    }
+
+    // the ground state is read from file, so the band window spans the stored bands directly
+    this->gs.psi.reset(new psi::Psi<T>(kv.get_nks(), this->gs.para_mat.ncol_bands,
+                                       this->gs.para_mat.para_2d().nrloc(), kv.ngk, true));
+
+    LR_Util::setup_2d_division(this->amp.para_c, 1, this->dim.nbasis, this->dim.nbands
+#ifdef __MPI
+                               ,
+                               this->gs.para_mat.para_2d().ictxt()
+#endif
+    );
+}
+
+template <typename T>
 GradientInputs<T> Core<T>::gradient_inputs() const
 {
     return {*this->refs.ucell, *this->refs.kv, *this->refs.gd, *this->refs.orb_cutoff, this->gs.para_mat,
@@ -426,6 +451,8 @@ template void Core<double>::setup_ks_layout(const Parallel_Orbitals&, const K_Ve
                                             const Input_para&);
 template void Core<std::complex<double>>::setup_ks_layout(const Parallel_Orbitals&, const K_Vectors&, const UnitCell&,
                                                           const Input_para&);
+template void Core<double>::setup_file_layout(const K_Vectors&, const UnitCell&, const Input_para&);
+template void Core<std::complex<double>>::setup_file_layout(const K_Vectors&, const UnitCell&, const Input_para&);
 
 template std::vector<ModuleBase::matrix> Core<double>::cal_force(int, const ModuleBase::matrix&, int);
 template std::vector<ModuleBase::matrix> Core<std::complex<double>>::cal_force(int, const ModuleBase::matrix&, int);

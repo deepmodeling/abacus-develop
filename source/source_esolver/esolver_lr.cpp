@@ -294,7 +294,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
     {
         LR_Density<T> lr_density(
             *this->ucell_, kv, gd(), *this->lr_.gs.psi, orb_cutoff_, pgrid(), this->lr_.dim.nspin, this->lr_.dim.nocc, this->lr_.dim.nvirt, this->lr_.dim.nbasis, this->lr_.amp.para_x, this->lr_.amp.para_c,
-            paraMat_, this->lr_.dim.openshell, this->inp_->out_chg[1], this->out_dir);
+            this->lr_.gs.para_mat, this->lr_.dim.openshell, this->inp_->out_chg[1], this->out_dir);
 
         if (this->lr_.dim.openshell)
         {
@@ -809,22 +809,11 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
     }
 
     this->set_dim();
-    //  setup 2d-block distribution for AO-matrix and KS wfc
-    LR_Util::setup_2d_division(this->lr_.gs.para_mat.para_2d(), 1, this->lr_.dim.nbasis, this->lr_.dim.nbasis);
-    LR::set_band_layout(this->lr_.gs.para_mat, this->lr_.dim.nbasis, this->lr_.dim.nbands, *this->ucell_,
-                        this->inp_->ri_hartree_benchmark == "aims");
-    if (this->inp_->cal_force)
-    {
-        LR_Util::setup_2d_division(this->lr_.gs.para_mat_all.para_2d(), 1, this->lr_.dim.nbasis, this->lr_.dim.nbasis);
-        LR::set_band_layout(this->lr_.gs.para_mat_all, this->lr_.dim.nbasis, this->inp_->nbands, *this->ucell_,
-                            this->inp_->ri_hartree_benchmark == "aims");
-    }
+    this->lr_.setup_file_layout(this->kv, *this->ucell_, *this->inp_);
 
     // read the ground state info
     // now ModuleIO::read_wfc_nao needs `Parallel_Orbitals` and can only read all the bands
     // it need improvement to read only the bands needed
-    this->lr_.gs.psi.reset(new psi::Psi<T>(
-        this->kv.get_nks(), this->lr_.gs.para_mat.ncol_bands, this->lr_.gs.para_mat.para_2d().nrloc(), this->kv.ngk, true));
     this->read_ks_wfc();
 
     if (this->lr_.dim.nspin == 2)
@@ -834,18 +823,10 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
     }
     // the Z-vector window: after `reset_dim_spin`, so nocc/nvirt/openshell are final
 #ifdef __MPI
-    this->fill_z_window_(paraMat_all_.desc_wfc);
+    this->fill_z_window_(this->lr_.gs.para_mat_all.desc_wfc);
 #else
     this->fill_z_window_(nullptr);
 #endif
-
-    LR_Util::setup_2d_division(
-        this->lr_.amp.para_c, 1, this->lr_.dim.nbasis, this->lr_.dim.nbands
-#ifdef __MPI
-        ,
-        paraMat_.para_2d().ictxt()
-#endif
-    );
 
     // clear ks info, new elecstate for excition
     delete this->pelec; // the ElecStateLCAO allocated above, only needed while reading the KS data

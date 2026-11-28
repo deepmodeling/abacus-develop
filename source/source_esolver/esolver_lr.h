@@ -138,9 +138,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// Widen `nst` X blocks starting at `istate_begin` from the X window into the Z window,
     /// zero-filling the virtual rows X does not have.
     /// @brief variables for parallel distribution of matrix in AO representation
-    Parallel_Orbitals paraMat_;
-    Parallel_Orbitals paraMat_all_; // for the parallelized size of the KS orbitals
-
     LCAO_Orbitals orb_;                            ///< numerical atomic orbital data for single-point evaluation
     std::vector<std::complex<double>> velocity_mo; ///< store the velocity matrix elements in MO basis
 
