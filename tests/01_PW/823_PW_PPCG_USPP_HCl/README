@@ -1,0 +1,2 @@
+Tests CPU PPCG plane-wave SCF for HCl with mixed NCPP/USPP pseudopotentials.
+Checks total energy, forces and stress.

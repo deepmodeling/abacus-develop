@@ -8,6 +8,7 @@ Running SCF
    initialization
    construct_H
    hsolver
+   ppcg_validation
    converge
    performance
    advanced

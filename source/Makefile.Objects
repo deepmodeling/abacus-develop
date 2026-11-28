@@ -517,6 +517,7 @@ OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
     diago_dav_subspace.o\
     diago_bpcg.o\
+    diago_ppcg.o\
     diago_lobpcg.o\
     lobpcg_subspace.o\
     lobpcg_recovery.o\
@@ -538,6 +539,7 @@ OBJS_HSOLVER=diago_cg.o\
     diago_iter_assist.o\
     hegvd_op.o\
     bpcg_kernel_op.o\
+    ppcg_kernel_op.o\
     diag_const_nums.o\
     diag_hs_para.o\
     diago_pxxxgvx.o\

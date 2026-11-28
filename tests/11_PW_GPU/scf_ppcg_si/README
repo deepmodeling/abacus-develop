@@ -1,0 +1,2 @@
+Tests CUDA PPCG plane-wave SCF for Si with norm-conserving pseudopotentials.
+Checks total energy, forces, stress, symmetry and irreducible k-point count.

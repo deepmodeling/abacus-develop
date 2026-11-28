@@ -37,20 +37,30 @@ void ReadInput::item_elec_stru()
     // Electronic Structure
     {
         Input_Item item("ks_solver");
-        item.domain.set_choices({"cg", "dav", "bpcg", "dav_subspace", "lobpcg", "genelpa", "elpa", "lapack", "scalapack_gvx", "cusolver", "cusolvermp", "pexsi"});
-        item.domain.add_requirement("basis_type==pw", "ks_solver in [cg, dav, bpcg, dav_subspace, lobpcg]");
+        item.domain.set_choices(
+            {"cg", "dav", "bpcg", "dav_subspace", "ppcg", "lobpcg", "genelpa", "elpa", "lapack", "scalapack_gvx",
+                "cusolver", "cusolvermp", "pexsi"});
+        item.domain.add_requirement("basis_type==pw", "ks_solver in [cg, dav, bpcg, dav_subspace, ppcg, lobpcg]");
         item.domain.add_requirement("basis_type==lcao", "ks_solver in [genelpa, elpa, lapack, scalapack_gvx, cusolver, cusolvermp, pexsi]");
+        item.domain.add_requirement("ks_solver==ppcg", "esolver_type!=sdft");
+        item.domain.add_requirement("ks_solver==ppcg", "calculation!=nscf");
+#ifndef __CUDA
+        item.domain.add_requirement("ks_solver==ppcg", "device==cpu");
+#endif
         item.domain.add_requirement("ks_solver==genelpa", "device==cpu");
-        item.annotation = "cg; dav; dav_subspace; bpcg; lobpcg; lapack; genelpa; elpa; scalapack_gvx; cusolver; cusolvermp; pexsi";
+        item.annotation = "cg; dav; dav_subspace; bpcg; ppcg; lobpcg; lapack; genelpa; elpa; scalapack_gvx; cusolver; "
+                          "cusolvermp; pexsi";
         item.category = "Electronic structure";
         item.type = "String";
-        item.description = R"(Choose the diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
+        item.description =
+            R"(Choose the diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
 
 For plane-wave basis,
 
 * cg: The conjugate-gradient (CG) method.
 * dav: The Davidson algorithm.
 * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
+* ppcg: The projection preconditioned conjugate-gradient method. It supports CPU and CUDA plane-wave calculations. On CUDA, wavefunction-sized blocks and their operations remain on the device; only projected matrices and convergence scalars are transferred to the host. Other GPU backends are not supported. It is not supported for calculation=nscf or esolver_type=sdft, including mixed stochastic-deterministic calculations.
 * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 * lobpcg: The locally optimal block preconditioned conjugate gradient method for CPU and GPU.
 
@@ -1039,10 +1049,19 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_thr");
-        item.annotation = "initial convergence threshold for iterative diagonalization";
+        item.annotation = "threshold for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Initial diagonalization threshold for cg/dav/dav_subspace/bpcg/lobpcg, updated automatically during SCF. For plane-wave NSCF calculations, choose a value <= 1e-3.";
+        item.description =
+            "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg/lobpcg. It indicates the threshold for "
+            "the "
+            "first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. The "
+            "stopping criterion is solver-dependent: CG and Davidson methods compare eigenvalue changes against the "
+            "threshold, whereas PPCG requires the norm of H psi - epsilon S psi to be at most max(ethr_band, ethr, "
+            "1e-14). The same numerical threshold therefore does not imply the same accuracy or cost across these "
+            "methods. PPCG uses a direct residual tolerance; it does not convert an eigenvalue-difference tolerance by "
+            "taking its square root. Validate total energies, forces and stresses for the system and SCF settings of "
+            "interest. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
         item.default_value = "0.01";
         item.unit = "";
         read_sync_double(input.pw_diag_thr);
@@ -1083,26 +1102,52 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_nmax");
-        item.annotation = "maximum iterations per iterative diagonalization attempt";
+        item.annotation = "maximum iteration count for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Maximum number of iterations per diagonalization attempt.";
+        item.description =
+            "Sets the maximum number of iterations for the selected iterative PW diagonalization method. It is used by "
+            "CG, Davidson, Davidson-subspace, LOBPCG, and PPCG; the value is a solver-specific iteration limit and "
+            "does not "
+            "define a common number of operator applications or a convergence tolerance. Increasing it does not "
+            "guarantee convergence. BPCG currently does not use this parameter.";
         item.default_value = "50";
         item.domain.set_rule("value>0");
         item.unit = "";
-        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, lobpcg]");
+        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, ppcg, lobpcg]");
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }
     {
         Input_Item item("pw_diag_ndim");
-        item.annotation = "dimension of workspace for Davidson diagonalization";
+        item.annotation = "dimension of workspace for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
+        item.description =
+            "Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of "
+            "workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the block size "
+            "for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses "
+            "more memory and more CPU time in subspace diagonalization.";
         item.default_value = "4";
         item.unit = "";
+        item.set_availability("basis_type==pw and ks_solver in [dav, dav_subspace, ppcg]");
         read_sync_int(input.pw_diag_ndim);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("ppcg_rr_step");
+        item.domain.set_rule("value>=1");
+        item.annotation = "PPCG full Rayleigh-Ritz interval";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = "Number of PPCG block sweeps between scheduled full Rayleigh-Ritz solves. The conservative "
+                           "default of 1 performs a full solve each sweep. Larger values reduce global subspace work "
+                           "but may require more iterations; tune with accuracy and timing checks for the system of "
+                           "interest. Initial, convergence-certifying and recovery solves, and operator-cache "
+                           "refreshes, are independent of this interval.";
+        item.default_value = "1";
+        item.set_availability("basis_type==pw and ks_solver==ppcg");
+        read_sync_int(input.ppcg_rr_step);
         this->add_item(item);
     }
     {

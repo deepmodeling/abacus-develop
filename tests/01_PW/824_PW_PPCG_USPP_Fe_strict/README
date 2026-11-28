@@ -1,0 +1,2 @@
+Tests CPU PPCG on spin-polarized USPP Fe at scf_thr=1e-16 with uniform band thresholds.
+Checks energy, forces and stress while recording strict eigenpair residual warnings.

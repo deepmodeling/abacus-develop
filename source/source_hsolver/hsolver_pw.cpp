@@ -1,6 +1,8 @@
 #include "hsolver_pw.h"
 
+#include "source_base/module_device/memory_op.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"
@@ -10,17 +12,93 @@
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
-#include "source_hsolver/diago_lobpcg.h"
 #include "source_hsolver/diago_iter_assist.h"
+#include "source_hsolver/diago_lobpcg.h"
+#include "source_hsolver/diago_ppcg.h"
 #include "source_psi/psi.h"
 
 #include <algorithm>
+#include <cmath>
+#include <exception>
+#include <iostream>
 #include <ostream>
 #include <sstream>
+#include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 namespace hsolver
 {
+
+namespace
+{
+struct PPCGRunResult
+{
+    double average_iterations;
+    bool converged;
+    int active_band_count;
+    bool iteration_limit_reached;
+    double max_residual;
+    int first_active_band;
+    double first_active_threshold;
+};
+
+template <typename T, typename Device, typename Real>
+PPCGRunResult run_ppcg_pw(
+    const HSOperator<T, Device> &op,
+    const int ld_psi,
+    const int nband,
+    const int dim,
+    T *psi,
+    Real *eigenvalue,
+    const std::vector<double> &ethr_band,
+    const Real *pre_condition,
+    const double diag_thr,
+    const int diag_iter_max,
+    const int pw_diag_ndim,
+    const int rr_step,
+    std::ostream &log,
+    const PPCGTraceContext &trace_context,
+    std::true_type)
+{
+    const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
+    const int rr_step_safe = std::max(1, rr_step);
+    const Real solver_diag_thr = static_cast<Real>(diag_thr);
+    DiagoPPCG<T, Device> ppcg(solver_diag_thr, diag_iter_max, sbsize, rr_step_safe);
+    PPCGRunResult result;
+    result.average_iterations =
+        ppcg.diag(op, ld_psi, nband, dim, psi, eigenvalue, ethr_band, pre_condition, log, trace_context);
+    result.converged = ppcg.converged();
+    result.active_band_count = ppcg.active_band_count();
+    result.iteration_limit_reached = ppcg.iteration_limit_reached();
+    result.max_residual = double(ppcg.max_residual());
+    result.first_active_band = ppcg.first_active_band();
+    result.first_active_threshold = double(ppcg.first_active_threshold());
+    return result;
+}
+
+template <typename T, typename Device, typename Real>
+PPCGRunResult run_ppcg_pw(
+    const HSOperator<T, Device> &op,
+    const int ld_psi,
+    const int nband,
+    const int dim,
+    T *psi,
+    Real *eigenvalue,
+    const std::vector<double> &ethr_band,
+    const Real *pre_condition,
+    const double diag_thr,
+    const int diag_iter_max,
+    const int pw_diag_ndim,
+    const int rr_step,
+    std::ostream &log,
+    const PPCGTraceContext &trace_context,
+    std::false_type)
+{
+    throw std::invalid_argument("GPU PPCG requires a CUDA build. Select another solver for this backend.");
+}
+
+} // namespace
 
 template <typename T, typename Device>
 void HSolverPW<T, Device>::cal_smooth_ethr(const double& wk,
@@ -81,7 +159,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
     this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "lobpcg"};
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "ppcg", "lobpcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
@@ -133,7 +211,8 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            Real *k_eigenvalues = eigenvalues.data() + ik * psi.get_nbands();
+            this->hamiltSolvePsiK(op, psi, precondition, k_eigenvalues, this->wfc_basis->nks, log);
 
             if (skip_charge)
             {
@@ -171,7 +250,8 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            Real *k_eigenvalues = eigenvalues.data() + ik * psi.get_nbands();
+            this->hamiltSolvePsiK(op, psi, precondition, k_eigenvalues, this->wfc_basis->nks, log);
 
             // output iteration information and reset avg_iter
             if (skip_charge)
@@ -225,11 +305,13 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
-                                           psi::Psi<T, Device>& psi,
-                                           std::vector<Real>& pre_condition,
-                                           Real* eigenvalue,
-                                           const int& nk_nums)
+void HSolverPW<T, Device>::hamiltSolvePsiK(
+    const HSOperator<T, Device> &op,
+    psi::Psi<T, Device> &psi,
+    std::vector<Real> &pre_condition,
+    Real *eigenvalue,
+    const int &nk_nums,
+    std::ostream &log)
 {
     ModuleBase::timer::start("HSolverPW", "solve_psik");
 #ifdef __MPI
@@ -348,6 +430,62 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                         david_maxiter,
                         ntry_max,
                         notconv_max));
+    }
+    else if (this->method == "ppcg")
+    {
+        if (this->calculation_type == "nscf")
+        {
+            ModuleBase::WARNING_QUIT("HSolverPW::solve_psik", "PPCG is not supported for NSCF calculations.");
+        }
+        const int ld_psi = psi.get_nbasis();
+        const int nband = psi.get_nbands();
+        const int dim = psi.get_current_ngk();
+        T *psi_pointer = psi.get_pointer();
+        const Real *precondition_pointer = pre_condition.data();
+        const int kpoint = psi.get_current_k() + 1;
+        const PPCGTraceContext trace_context = {this->scf_iter, kpoint};
+        try
+        {
+#ifdef __CUDA
+            using PPCGDeviceSupported = std::true_type;
+#else
+            using PPCGDeviceSupported = std::is_same<Device, base_device::DEVICE_CPU>;
+#endif
+            const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
+                op, ld_psi, nband, dim, psi_pointer, eigenvalue, this->ethr_band, precondition_pointer, this->diag_thr,
+                this->diag_iter_max, this->pw_diag_ndim, this->ppcg_rr_step, log, trace_context, PPCGDeviceSupported());
+            if (!ppcg_result.converged)
+            {
+                std::ostringstream message;
+                message << "PPCG did not converge: active bands=" << ppcg_result.active_band_count
+                        << ", max residual=" << ppcg_result.max_residual;
+                const int first_active_band = ppcg_result.first_active_band + 1;
+                message << ", SCF iteration=" << trace_context.scf_iteration << ", k-point=" << kpoint
+                        << ", first active band=" << first_active_band
+                        << ", threshold=" << ppcg_result.first_active_threshold;
+                if (ppcg_result.iteration_limit_reached)
+                {
+                    message << ", iteration limit reached (pw_diag_nmax=" << this->diag_iter_max << ")";
+                }
+                const std::string diagnostic = message.str();
+                if (this->rank_in_pool == 0)
+                {
+                    log << "WARNING: " << diagnostic << std::endl;
+                    // Other k-point pools may not own an open running log.
+                    std::cerr << "WARNING: " << diagnostic << std::endl;
+                }
+                if (!std::isfinite(ppcg_result.max_residual))
+                {
+                    ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", diagnostic);
+                }
+            }
+            DiagoIterAssist<T, Device>::avg_iter += ppcg_result.average_iterations;
+        }
+        catch (const std::exception &error)
+        {
+            const std::string message = std::string("PPCG diagonalization failed: ") + error.what();
+            ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", message);
+        }
     }
     else if (this->method == "lobpcg")
     {

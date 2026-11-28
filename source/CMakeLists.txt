@@ -172,9 +172,10 @@ if(USE_DSP)
     endif()
     list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
   else()
-    message(STATUS
-      "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
-      "eigensolver falls back to the configured LAPACK provider (zhegvx).")
+    message(
+      STATUS
+        "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
+        "eigensolver falls back to the configured LAPACK provider (zhegvx).")
   endif()
 endif()
 
@@ -650,6 +651,7 @@ list(
   source_basis/module_pw/kernels/pw_op.cpp
   source_hsolver/kernels/hegvd_op.cpp
   source_hsolver/kernels/bpcg_kernel_op.cpp
+  source_hsolver/kernels/ppcg_kernel_op.cpp
   source_hsolver/module_linalg/kernels/linear_op.cpp
   source_estate/kernels/elecstate_op.cpp
   source_base/module_device/device.cpp
@@ -684,6 +686,7 @@ if(USE_CUDA)
     source_basis/module_pw/kernels/cuda/pw_op.cu
     source_hsolver/kernels/cuda/hegvd_op.cu
     source_hsolver/kernels/cuda/bpcg_kernel_op.cu
+    source_hsolver/kernels/cuda/ppcg_kernel_op.cu
     source_hsolver/module_linalg/kernels/cuda/linear_op.cu
     source_estate/kernels/cuda/elecstate_op.cu
     source_base/module_device/cuda/memory_op.cu

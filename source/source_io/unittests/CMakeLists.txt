@@ -3,6 +3,10 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+# The reader regression uses the serial INPUT library and feature settings.
+# Keep its source in the flat unittests directory while reusing that target.
+target_sources(MODULE_IO_ppcg_input PRIVATE test_read_inp_estruc_ppcg.cpp)
+
 # Keep the existing serial INPUT target and its compile definitions.
 target_sources(MODULE_IO_read_input_serial PRIVATE test_read_input_serial.cpp)
 target_sources(MODULE_IO_read_item_serial PRIVATE test_read_inp_exx_dftu.cpp)

@@ -271,8 +271,8 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(
             PARAM.globalv.use_uspp, this->inp_->nspin, hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
             hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX, hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
             hsolver::DiagoIterAssist<T, Device>::need_subspace, this->inp_->nbands, this->inp_->diago_smooth_ethr,
-            this->inp_->pw_diag_ndim, this->inp_->lobpcg_locking,
-            this->inp_->diag_subspace, this->inp_->nb2d, this->inp_->use_k_continuity);
+            this->inp_->pw_diag_ndim, this->inp_->ppcg_rr_step, this->inp_->lobpcg_locking, this->inp_->diag_subspace,
+            this->inp_->nb2d, this->inp_->use_k_continuity);
 
         // the iterative eigensolvers see the Hamiltonian only through this operator
         hamilt::HamiltHSOperator<T, Device> op(static_cast<hamilt::Hamilt<T, Device> *>(this->p_hamilt), this->pw_wfc);

@@ -6,20 +6,24 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "source_hsolver/diag_comm_info.h"
-#include "source_base/parallel_global.h"
+#include "source_hsolver/diago_params.h"
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/diago_params.h"
+#ifdef __MPI
+#include "source_basis/module_pw/test/test_tool.h"
+#endif
+#include "source_base/parallel_global.h"
 #include "source_hsolver/diago_lobpcg.h"
 
 #include <algorithm>
-#include <complex>
 #include <cmath>
+#include <complex>
 #include <cstdlib>
 
 /// H = S = identity: the simplest operator the solvers can be handed
-template <typename T> class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
+template <typename T>
+class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
 {
   public:
     void update_k(const int ik) override {}
@@ -39,6 +43,43 @@ template <typename T> class IdentityHSOperator : public hsolver::HSOperator<T, b
     {
         std::copy(x, x + static_cast<size_t>(ld) * nvec, sx);
     }
+};
+
+class DiagonalHSOperator : public hsolver::HSOperator<std::complex<double>, base_device::DEVICE_CPU>
+{
+  public:
+    explicit DiagonalHSOperator(const std::vector<double> &diagonal) : diagonal_(diagonal) {}
+
+    void update_k(const int ik) override {}
+
+    void hpsi(
+        const std::complex<double> *x,
+        std::complex<double> *hx,
+        const int ld,
+        const int nvec) const override
+    {
+        for (int column = 0; column < nvec; ++column)
+        {
+            for (int row = 0; row < ld; ++row)
+            {
+                hx[row + column * ld] = diagonal_[row] * x[row + column * ld];
+            }
+        }
+    }
+
+    void spsi(
+        const std::complex<double> *x,
+        std::complex<double> *sx,
+        const int ld,
+        const int nvec) const override
+    {
+        const size_t count = static_cast<size_t>(ld) * nvec;
+        const std::complex<double> *end = x + count;
+        std::copy(x, end, sx);
+    }
+
+  private:
+    std::vector<double> diagonal_;
 };
 
 // Mock implementations for the template functions causing linking errors
@@ -189,11 +230,25 @@ template void diago_hs_para<std::complex<float>>(
 class TestHSolverPW : public ::testing::Test
 {
   public:
+    using DiagoAssist = hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
+
     void SetUp() override
     {
-        // WARNING_QUIT is exercised after OpenMP/runtime state has been initialized
-        // by earlier tests; re-exec death tests avoid inheriting those threads.
         ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+        saved_diag_iter_max = DiagoAssist::PW_DIAG_NMAX;
+        saved_diag_thr = DiagoAssist::PW_DIAG_THR;
+        saved_scf_iter = DiagoAssist::SCF_ITER;
+        saved_need_subspace = DiagoAssist::need_subspace;
+        saved_avg_iter = DiagoAssist::avg_iter;
+    }
+
+    void TearDown() override
+    {
+        DiagoAssist::PW_DIAG_NMAX = saved_diag_iter_max;
+        DiagoAssist::PW_DIAG_THR = saved_diag_thr;
+        DiagoAssist::SCF_ITER = saved_scf_iter;
+        DiagoAssist::need_subspace = saved_need_subspace;
+        DiagoAssist::avg_iter = saved_avg_iter;
     }
 
     // HSolverPW declares this fixture a friend, but a TEST_F body lives in a
@@ -206,24 +261,74 @@ class TestHSolverPW : public ::testing::Test
         psi::Psi<T, Device> &ps,
         std::vector<typename GetTypeReal<T>::type> &pre,
         typename GetTypeReal<T>::type *eig,
-        const int ntry)
+        const int ntry,
+        std::ostream &log)
     {
-        hs.hamiltSolvePsiK(
-            op,
-            ps,
-            pre,
-            eig,
-            ntry);
+        hs.hamiltSolvePsiK(op, ps, pre, eig, ntry, log);
+    }
+
+    template <typename T, typename Device>
+    static void set_ethr_band(hsolver::HSolverPW<T, Device> &hs, const int count, const double value)
+    {
+        hs.ethr_band.assign(count, value);
+    }
+
+    std::vector<double> run_ppcg_dispatch(
+        const std::string &calculation,
+        const bool exact_vectors,
+        const int iteration_budget,
+        std::ostream &log)
+    {
+        Input_para inp;
+        inp.calculation = calculation;
+        inp.ks_solver = "ppcg";
+        inp.pw_diag_nmax = iteration_budget;
+        hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1.0e-12, inp);
+        hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs(
+            &pwbk, calculation, "pw", "ppcg", false, 1, DiagoAssist::SCF_ITER, DiagoAssist::PW_DIAG_NMAX,
+            DiagoAssist::PW_DIAG_THR, DiagoAssist::need_subspace, 2, false, 1, 1, "hard", 0, 0);
+        if (calculation != "nscf")
+        {
+            EXPECT_EQ(hs.diag_iter_max, iteration_budget);
+        }
+        const std::vector<double> diagonal = {1.0, 2.0, 4.0};
+        DiagonalHSOperator op(diagonal);
+        psi::Psi<std::complex<double>> ps;
+        ps.resize(1, 2, 3);
+        std::complex<double> *vectors = ps.get_pointer();
+        std::complex<double> *end = vectors + 6;
+        const std::complex<double> zero(0.0, 0.0);
+        std::fill(vectors, end, zero);
+        vectors[0] = std::complex<double>(1.0, 0.0);
+        vectors[4] = std::complex<double>(1.0, 0.0);
+        if (!exact_vectors)
+        {
+            vectors[1] = std::complex<double>(1.0, 0.0);
+            vectors[5] = std::complex<double>(1.0, 0.0);
+        }
+        std::vector<double> preconditioner(3, 1.0);
+        std::vector<double> eigenvalues(2, 0.0);
+        set_ethr_band(hs, 2, 1.0e-12);
+        hamiltSolvePsiK(hs, op, ps, preconditioner, eigenvalues.data(), 1, log);
+        return eigenvalues;
+    }
+
+    void run_ppcg_nscf_case(const bool exact_vectors, const int iteration_budget)
+    {
+        std::streambuf *error_buffer = std::cerr.rdbuf();
+        std::cout.rdbuf(error_buffer);
+        std::ostringstream log;
+        run_ppcg_dispatch("nscf", exact_vectors, iteration_budget, log);
     }
 
     ModulePW::PW_Basis_K pwbk;
     using Assist = hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
-    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f{
-        &pwbk, "scf", "pw", "cg", false, 1, Assist::SCF_ITER, Assist::PW_DIAG_NMAX,
-        Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, "hard", 0, 0};
-    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d{
-        &pwbk, "scf", "pw", "cg", false, 1, Assist::SCF_ITER, Assist::PW_DIAG_NMAX,
-        Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, "hard", 0, 0};
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f{&pwbk, "scf", "pw", "cg", false, 1,
+        Assist::SCF_ITER, Assist::PW_DIAG_NMAX, Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, 1, "hard", 0,
+        0};
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d{&pwbk, "scf", "pw", "cg", false, 1,
+        Assist::SCF_ITER, Assist::PW_DIAG_NMAX, Assist::PW_DIAG_THR, Assist::need_subspace, 0, false, 4, 1, "hard", 0,
+        0};
 
     IdentityHSOperator<std::complex<double>> hamilt_test_d;
     IdentityHSOperator<std::complex<float>> hamilt_test_f;
@@ -242,10 +347,6 @@ class TestHSolverPW : public ::testing::Test
     void run_lobpcg_entry(const int dim, const int block, const int backend)
     {
         std::cout.rdbuf(std::cerr.rdbuf());
-        int size = 1;
-        int threads = 1;
-        int rank = 0;
-        Parallel_Global::read_pal_param(0, nullptr, size, threads, rank);
         const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
         const hsolver::LobpcgBasisLayout layout = {dim, 1};
         std::vector<double> prec(dim, 1);
@@ -264,10 +365,6 @@ class TestHSolverPW : public ::testing::Test
     {
         std::cout.rdbuf(std::cerr.rdbuf());
 #ifdef __MPI
-        int size = 1;
-        int threads = 1;
-        int rank = 0;
-        Parallel_Global::read_pal_param(0, nullptr, size, threads, rank);
         POOL_WORLD = MPI_COMM_SELF;
 #endif
         using C = std::complex<double>;
@@ -293,13 +390,20 @@ class TestHSolverPW : public ::testing::Test
         }
         std::vector<double> prec(40, 1);
         std::vector<double> eig(4);
-        const hsolver::HSOperator<C>& op = dependent ? hamilt_test_d : diagonal;
-        hsolver::HSolverPW<C> solver(&pwbk, calculation, "pw", "lobpcg", false,
-                                    1, 1, 1, 1e-12, false, 4, false, 4, "hard", 0, 0);
-        hamiltSolvePsiK(solver, op, ps, prec, eig.data(), 1);
+        const hsolver::HSOperator<C> &op = dependent ? hamilt_test_d : diagonal;
+        hsolver::HSolverPW<C> solver(
+            &pwbk, calculation, "pw", "lobpcg", false, 1, 1, 1, 1e-12, false, 4, false, 4, 1, "hard", 0, 0);
+        std::ostringstream log;
+        hamiltSolvePsiK(solver, op, ps, prec, eig.data(), 1, log);
         std::exit(0);
     }
 
+  private:
+    int saved_diag_iter_max = 0;
+    double saved_diag_thr = 0.0;
+    int saved_scf_iter = 0;
+    bool saved_need_subspace = false;
+    double saved_avg_iter = 0.0;
 };
 
 // TEST_F(TestHSolverPW, solve) {
@@ -549,16 +653,48 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
     psi_test_cd.resize(1, 5, 3);
     std::vector<double> precond(3, 0.0);
     std::vector<double> eigenvalues(5, 0.0);
+    std::ostringstream log;
     // Expect death from WARNING_QUIT due to npwx < nbands
     EXPECT_EXIT(
-        hamiltSolvePsiK(
-            hs_d,
-            hamilt_test_d,
-            psi_test_cd,
-            precond,
-            eigenvalues.data(),
-            1),
+        hamiltSolvePsiK(hs_d, hamilt_test_d, psi_test_cd, precond, eigenvalues.data(), 1, log),
         ::testing::ExitedWithCode(1), ".*");
+}
+
+TEST_F(TestHSolverPW, PPCGScfDispatchReportsExhaustedBudget)
+{
+    std::ostringstream log;
+    const std::vector<double> eigenvalues = run_ppcg_dispatch("scf", false, 0, log);
+    EXPECT_NE(log.str().find("PPCG did not converge"), std::string::npos);
+    EXPECT_NE(log.str().find("active bands=2"), std::string::npos);
+    EXPECT_NE(log.str().find("max residual="), std::string::npos);
+    EXPECT_NE(log.str().find("SCF iteration=1, k-point=1"), std::string::npos);
+    EXPECT_NE(log.str().find("first active band=1"), std::string::npos);
+    EXPECT_NE(log.str().find("threshold="), std::string::npos);
+    EXPECT_NE(log.str().find("iteration limit reached"), std::string::npos);
+    for (const double eigenvalue : eigenvalues)
+    {
+        EXPECT_TRUE(std::isfinite(eigenvalue));
+    }
+}
+
+TEST_F(TestHSolverPW, PPCGNscfDispatchIsRejected)
+{
+    EXPECT_EXIT(run_ppcg_nscf_case(false, 0), ::testing::ExitedWithCode(1), "PPCG is not supported for NSCF");
+}
+
+TEST_F(TestHSolverPW, PPCGConvergedDispatchHasNoWarning)
+{
+    std::ostringstream log;
+    const std::vector<double> eigenvalues = run_ppcg_dispatch("scf", true, 0, log);
+    EXPECT_EQ(log.str().find("PPCG did not converge"), std::string::npos);
+    EXPECT_NEAR(eigenvalues[0], 1.0, 1.0e-12);
+    EXPECT_NEAR(eigenvalues[1], 2.0, 1.0e-12);
+}
+
+TEST_F(TestHSolverPW, PPCGNscfDispatchRejectsEvenExactEigenvectors)
+{
+    DiagoAssist::PW_DIAG_NMAX = 30;
+    EXPECT_EXIT(run_ppcg_nscf_case(true, 77), ::testing::ExitedWithCode(1), "PPCG is not supported for NSCF");
 }
 
 TEST_F(TestHSolverPW, LobpcgBlockMustContainRequestedBands)
@@ -607,7 +743,7 @@ TEST_F(TestHSolverPW, PwUsesInputIterationBudget)
     for (const char* calculation : {"scf", "nscf", "relax", "cell-relax", "md"})
     {
         input.calculation = calculation;
-        for (const char* method : {"cg", "dav", "dav_subspace", "bpcg", "lobpcg"})
+        for (const char *method : {"cg", "dav", "dav_subspace", "bpcg", "ppcg", "lobpcg"})
         {
             input.ks_solver = method;
             Assist::PW_DIAG_NMAX = 30;
@@ -616,4 +752,24 @@ TEST_F(TestHSolverPW, PwUsesInputIterationBudget)
         }
     }
     Assist::PW_DIAG_NMAX = previous;
+}
+
+int main(int argc, char **argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+#ifdef __MPI
+    int nproc = 1;
+    int myrank = 0;
+    setupmpi(argc, argv, nproc, myrank);
+    int nproc_in_pool = 1;
+    int kpar = nproc;
+    int mypool = 0;
+    int rank_in_pool = 0;
+    divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
+#endif
+    const int result = RUN_ALL_TESTS();
+#ifdef __MPI
+    finishmpi();
+#endif
+    return result;
 }

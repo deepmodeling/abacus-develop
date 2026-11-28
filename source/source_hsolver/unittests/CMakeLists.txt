@@ -120,15 +120,17 @@ if(ENABLE_MPI)
             ../hsolver_lcaopw.cpp
             ../diago_bpcg.cpp
             ../diago_dav_subspace.cpp
+            ../diago_ppcg.cpp
             ../diago_lobpcg.cpp
             ../lobpcg_subspace.cpp
             ../lobpcg_recovery.cpp
             ../dense_eigensolver.cpp
-            ../diago_params.cpp
             ../module_linalg/linear_algebra.cpp
             ../diag_const_nums.cpp
+            ../diago_params.cpp
             ../diago_iter_assist.cpp
             ../para_lin_tf.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_estate/elecstate_tools.cpp
             ../../source_estate/occupy.cpp
             ../../source_base/module_fft/fft_bundle.cpp
@@ -207,6 +209,35 @@ if(ENABLE_MPI)
     target_compile_definitions(MODULE_HSOLVER_LCAO_cusolver PRIVATE __CUDA)
   endif()
 endif()
+
+addtest(
+  TARGET MODULE_HSOLVER_ppcg
+  LIBS parameter base psi device container
+  SOURCES test_diago_ppcg.cpp
+          test_diago_ppcg_iteration.cpp
+          test_diago_ppcg_roots.cpp
+          test_diago_ppcg_subspace.cpp
+          test_diago_ppcg_refinement.cpp
+          test_ppcg_kernel_op.cpp
+          ../diago_ppcg.cpp
+          ../../source_basis/module_pw/test/test_tool.cpp)
+
+if(USE_CUDA)
+  addtest(
+    TARGET MODULE_HSOLVER_ppcg_gpu
+    LIBS parameter base psi device container
+    SOURCES test_diago_ppcg_gpu.cpp test_ppcg_kernel_op.cpp ../diago_ppcg.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+    KEEP_FEATURE_DEFINITIONS __CUDA)
+  set_tests_properties(MODULE_HSOLVER_ppcg_gpu PROPERTIES LABELS "GPU")
+endif()
+
+addtest(
+  TARGET MODULE_HSOLVER_ppcg_float
+  LIBS parameter base psi device container
+  SOURCES test_diago_ppcg_float.cpp ../diago_ppcg.cpp
+          ../../source_basis/module_pw/test/test_tool.cpp)
+
 abacus_copy_test_files(
   H-KPoints-Si2.dat
   H-GammaOnly-Si2.dat
@@ -223,6 +254,7 @@ abacus_copy_test_files(
   diago_cg_parallel_test.sh
   diago_david_parallel_test.sh
   diago_lcao_parallel_test.sh
+  diago_ppcg_parallel_test.sh
   PEXSI-H-GammaOnly-Si2.dat
   PEXSI-S-GammaOnly-Si2.dat
   PEXSI-DM-GammaOnly-Si2.dat
@@ -255,6 +287,12 @@ if(ENABLE_MPI)
     LIBS parameter base device MPI::MPI_CXX
     SOURCES test_para_lin_tf.cpp ../para_lin_tf.cpp)
 
+  addtest(
+    TARGET MODULE_HSOLVER_ppcg_parallel
+    LIBS parameter base psi device container MPI::MPI_CXX
+    SOURCES test_diago_ppcg_parallel.cpp ../diago_ppcg.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp)
+
   add_test(
     NAME MODULE_HSOLVER_para_linear_trans
     COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_HSOLVER_linear_trans>"
@@ -278,6 +316,11 @@ if(ENABLE_MPI)
     COMMAND
       ${BASH} diago_david_parallel_test.sh "$<TARGET_FILE:MODULE_HSOLVER_dav>"
       "$<TARGET_FILE:MODULE_HSOLVER_dav_float>"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  add_test(
+    NAME MODULE_HSOLVER_ppcg_parallel_test
+    COMMAND ${BASH} diago_ppcg_parallel_test.sh
+            "$<TARGET_FILE:MODULE_HSOLVER_ppcg_parallel>"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(ENABLE_LCAO)
     add_test(

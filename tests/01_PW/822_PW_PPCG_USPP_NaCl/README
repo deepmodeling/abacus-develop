@@ -1,0 +1,2 @@
+Tests CPU PPCG plane-wave SCF for NaCl with ultrasoft pseudopotentials.
+Checks total energy, forces, stress, symmetry and irreducible k-point count.

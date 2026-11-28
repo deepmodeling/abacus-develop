@@ -4,7 +4,17 @@
 
 Method of explicit solving KS-equation can be chosen by variable "ks_solver" in INPUT file.
 
-When "basis_type = pw", `ks_solver` can be `cg`, `bpcg` or `dav`. The default setting `cg` is recommended, which is band-by-band conjugate gradient diagonalization method. There is a large probability that the use of setting of `dav` , which is block Davidson diagonalization method, can be tried to improve performance.  
+When "basis_type = pw", `ks_solver` can be `cg`, `bpcg`, `dav`, `dav_subspace`, or `ppcg`. The default setting `cg` is recommended, which is a band-by-band conjugate-gradient diagonalization method. The `dav` and `dav_subspace` settings use Davidson-style subspace diagonalization and can be tried to improve performance.
+
+The `ppcg` setting uses the projection preconditioned conjugate-gradient method, a restarted block method with bounded workspace. It supports CPU and CUDA plane-wave calculations. With a CUDA build, `device = gpu` keeps wavefunctions, residuals, search directions and cached H/S images on the GPU. Gram products, rotations, projections, preconditioning and residual operations execute on the device. Small projected matrices and per-band convergence scalars are transferred to the CPU for LAPACK and MPI reductions; full wavefunction blocks are not transferred by the solver. Other GPU backends are not supported. PPCG is unavailable for `esolver_type = sdft`, including mixed stochastic-deterministic calculations.
+
+PPCG uses `pw_diag_ndim` as its block size and `ppcg_rr_step` (positive integer, default 1) as the interval between scheduled full Rayleigh--Ritz corrections. The default corrects every iteration. Larger intervals can reduce global subspace work, but should be tuned against convergence and timing for the target system. Initial, final certification and recovery solves remain independent of this setting. Cached Hamiltonian and overlap images are refreshed independently, with additional refreshes when numerical cancellation threatens the residual.
+
+PPCG is unavailable for `calculation = nscf`; INPUT validation rejects this combination before diagonalization. It uses the same iteration-budget setup as the other PW solvers. If PPCG reaches `pw_diag_nmax` before satisfying its residual criterion, the running log reports the active-band count and maximum residual, and SCF continues to its next electronic iteration with a warning. A non-finite residual is an error.
+
+For diagnostics, `ABACUS_PPCG_RESIDUAL_TRACE` selects an optional CSV trace. Only the MPI world root writes this file, and its resolved full path is recorded in the running log. Successive solves append records, preserving earlier k-points and SCF steps. Each record includes the SCF iteration, the one-based pool-local k-point index, and a unique `solve_id` within that file (the append offset), which also distinguishes ionic steps and repeated launches. Standalone solver tests use zero for the SCF/k-point context. Use a fresh trace path when changing the number of bands. Other MPI pools do not write this diagnostic trace.
+
+CPU correctness and efficiency measurements, native CUDA checks, NCPP/USPP comparisons, and the regression protocol are recorded in [PPCG validation](ppcg_validation.md).
 
 When "basis_type = lcao", `ks_solver` can be `genelpa` or `scalapack_gvx`. The default setting `genelpa` is recommended, which is based on ELPA (EIGENVALUE SOLVERS FOR PETAFLOP APPLICATIONS) (https://elpa.mpcdf.mpg.de/) and the kernel is auto choosed by GENELPA(https://github.com/pplab/GenELPA), usually faster than the setting of "scalapack_gvx", which is based on ScaLAPACK(Scalable Linear Algebra PACKage)  
 

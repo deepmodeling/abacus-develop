@@ -1,0 +1,2 @@
+Tests CUDA PPCG SCF for spin-polarized USPP Fe with 20 bands and uniform residual thresholds.
+Checks energy, forces and stress and reproduces the search-direction cancellation regression.

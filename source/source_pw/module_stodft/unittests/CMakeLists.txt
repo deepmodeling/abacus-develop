@@ -32,6 +32,7 @@ if(ENABLE_MPI)
       ../sto_hsolver_pw.cpp
       ../../../source_hsolver/hsolver_pw.cpp
       ../../../source_hsolver/diago_bpcg.cpp
+      ../../../source_hsolver/diago_ppcg.cpp
       ../../../source_hsolver/diago_dav_subspace.cpp
       ../../../source_hsolver/diago_lobpcg.cpp
       ../../../source_hsolver/lobpcg_subspace.cpp

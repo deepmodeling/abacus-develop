@@ -32,27 +32,29 @@ class HSolverPW
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
 
   public:
-    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
-              const std::string calculation_type_in,
-              const std::string basis_type_in,
-              const std::string method_in,
-              const bool use_uspp_in,
-              const int nspin_in,
-              const int scf_iter_in,
-              const int diag_iter_max_in,
-              const double diag_thr_in,
-              const bool need_subspace_in,
-              const int nbands_in,
-              const bool diago_smooth_ethr_in,
-              const int pw_diag_ndim_in,
-              const std::string& lobpcg_locking_in,
-              const int diag_subspace_in,
-              const int nb2d_in,
-              const bool use_k_continuity_in = false)
+    HSolverPW(
+        ModulePW::PW_Basis_K *wfc_basis_in,
+        const std::string calculation_type_in,
+        const std::string basis_type_in,
+        const std::string method_in,
+        const bool use_uspp_in,
+        const int nspin_in,
+        const int scf_iter_in,
+        const int diag_iter_max_in,
+        const double diag_thr_in,
+        const bool need_subspace_in,
+        const int nbands_in,
+        const bool diago_smooth_ethr_in,
+        const int pw_diag_ndim_in,
+        const int ppcg_rr_step_in,
+        const std::string &lobpcg_locking_in,
+        const int diag_subspace_in,
+        const int nb2d_in,
+        const bool use_k_continuity_in = false)
         : wfc_basis(wfc_basis_in), calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
-          use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
-          diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
-          nbands(nbands_in), diago_smooth_ethr(diago_smooth_ethr_in), pw_diag_ndim(pw_diag_ndim_in),
+          use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in), diag_iter_max(diag_iter_max_in),
+          diag_thr(diag_thr_in), need_subspace(need_subspace_in), nbands(nbands_in),
+          diago_smooth_ethr(diago_smooth_ethr_in), pw_diag_ndim(pw_diag_ndim_in), ppcg_rr_step(ppcg_rr_step_in),
           lobpcg_locking(lobpcg_locking_in), diag_subspace(diag_subspace_in), nb2d(nb2d_in),
           use_k_continuity(use_k_continuity_in) {};
 
@@ -72,11 +74,13 @@ class HSolverPW
 
   protected:
     // diago caller
-    void hamiltSolvePsiK(const HSOperator<T, Device>& op,
-                         psi::Psi<T, Device>& psi,
-                         std::vector<Real>& pre_condition,
-                         Real* eigenvalue,
-                         const int& nk_nums);
+    void hamiltSolvePsiK(
+        const HSOperator<T, Device> &op,
+        psi::Psi<T, Device> &psi,
+        std::vector<Real> &pre_condition,
+        Real *eigenvalue,
+        const int &nk_nums,
+        std::ostream &log);
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
@@ -100,6 +104,7 @@ class HSolverPW
     const int nbands;              // global number of bands, may differ from psi.get_nbands() under band parallelism
     const bool diago_smooth_ethr;  // use a band-wise smoothed threshold for all iter methods
     const int pw_diag_ndim;        // dimension of the workspace for Davidson-type methods
+    const int ppcg_rr_step;        // scheduled full Rayleigh-Ritz interval
     const std::string lobpcg_locking; // hard or soft locking of converged LOBPCG bands
     const int diag_subspace;       // subspace eigensolver for dav_subspace and lobpcg: 0 Lapack, 1 elpa, 2 scalapack
     const int nb2d;                // 2d block size used by the distributed subspace eigensolvers
