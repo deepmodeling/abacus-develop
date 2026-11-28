@@ -1,11 +1,14 @@
 #include "source_lcao/module_lr/lr_core.h"
 
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/parallel_grid.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_basis/module_nao/two_center_integrator.h"
+#include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
@@ -18,14 +21,18 @@
 #include "source_lcao/module_lr/hamilt_ulr.h"
 #include "source_lcao/module_lr/hsolver_lrtd.h"
 #include "source_lcao/module_lr/lr_amp.h"
+#include "source_lcao/module_lr/lr_density.h"
 #include "source_lcao/module_lr/lr_dm.h"
 #include "source_lcao/module_lr/lr_force.h"
 #include "source_lcao/module_lr/lr_gs.h"
 #include "source_lcao/module_lr/lr_sforce.h"
+#include "source_lcao/module_lr/lr_spectrum.h"
 #include "source_lcao/module_lr/lr_zeq.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
+#include "source_lcao/module_lr/utils/lr_util_print.h"
+#include "source_lcao/module_lr/utils/spectrum_weights.h"
 
 #include <algorithm>
 #include <cassert>
@@ -344,6 +351,105 @@ void Core<T>::solve(double* ekb, const int istep)
 }
 
 template <typename T>
+void Core<T>::output(const ModuleBase::matrix& ekb)
+{
+    const Input_para& inp = *this->refs.inp;
+    std::ofstream& ofs = *this->refs.log;
+    if (inp.ri_hartree_benchmark != "none")
+    {
+        return; // no need to calculate the spectrum in the benchmark routine
+    }
+
+    // cal electron-hole density
+    if (inp.out_chg[0])
+    {
+        LR_Density<T> lr_density(*this->refs.ucell, *this->refs.kv, *this->refs.gd, *this->gs.psi, *this->refs.orb_cutoff,
+                                 *this->refs.pgrid, this->dim.nspin, this->dim.nocc, this->dim.nvirt, this->dim.nbasis,
+                                 this->amp.para_x, this->amp.para_c, this->gs.para_mat, this->dim.openshell,
+                                 inp.out_chg[1], *this->refs.out_dir);
+
+        if (this->dim.openshell)
+        {
+            for (int is = 0; is < this->dim.nspin; ++is)
+            {
+                const T* const amplitudes = this->amp.x[0].template data<T>();
+                lr_density.output_eh_density_all_states(amplitudes, is, this->dim.nstates, ofs);
+            }
+        }
+        else
+        {
+            for (int is = 0; is < this->amp.x.size(); ++is)
+            {
+                const T* const amplitudes = this->amp.x[is].template data<T>();
+                lr_density.output_eh_density_all_states(amplitudes, is, this->dim.nstates, ofs);
+            }
+        }
+    }
+
+    const std::string gauge = LR_Util::tolower(inp.abs_gauge);
+    const bool calculate_spectrum = gauge != "none";
+    const std::vector<double> spatial_weights = LR_Util::spatial_k_weights(this->refs.kv->wk, this->dim.nspin);
+    // cal spectrum
+    std::vector<std::complex<double>> velocity_mo;
+    if (gauge == "velocity")
+    {
+        const int nspin_tmp = inp.nspin == 2 ? 2 : 1;
+        velocity_mo = LR_Util::cal_velocity_mo(*this->refs.ucell, *this->refs.gd, *this->refs.tcb, this->gs.para_mat,
+                                               this->amp.para_c, *this->refs.kv, *this->gs.psi, this->dim.nk, nspin_tmp,
+                                               this->dim.nbasis, this->dim.nocc, this->dim.nvirt);
+    }
+    std::vector<double> freq;
+    if (calculate_spectrum)
+    {
+        freq.resize(100);
+        std::vector<double> abs_wavelen_range({20, 200}); // default range
+        if (inp.abs_wavelen_range.size() >= 2 &&
+            std::abs(inp.abs_wavelen_range[1] - inp.abs_wavelen_range[0]) > 0.02)
+        {
+            abs_wavelen_range = inp.abs_wavelen_range;
+        }
+        double lambda_diff = std::abs(abs_wavelen_range[1] - abs_wavelen_range[0]);
+        double lambda_min = std::min(abs_wavelen_range[1], abs_wavelen_range[0]);
+        for (int i = 0; i < freq.size(); ++i)
+        {
+            freq[i] = 91.126664 / (lambda_min + 0.01 * static_cast<double>(i + 1) * lambda_diff);
+        }
+    }
+    for (int is = 0; is < this->amp.x.size(); ++is)
+    {
+        if (!calculate_spectrum)
+        {
+            const double* const energies = &ekb.c[is * this->dim.nstates];
+            LR_Util::print_excitation_energies(ofs, energies, this->dim.nstates, this->amp.spin_types[is]);
+        }
+        else
+        {
+            LR_Spectrum<T> spectrum(
+                this->dim.nspin, this->dim.nbasis, this->dim.nocc, this->dim.nvirt, *this->refs.rho, *this->gs.psi,
+                *this->refs.ucell, *this->refs.kv, spatial_weights, *this->refs.gd, *this->refs.orb_cutoff,
+                *this->refs.tcb, this->amp.para_x, this->amp.para_c, this->gs.para_mat, &ekb.c[is * this->dim.nstates],
+                this->gs.eig.c, this->amp.x[is].template data<T>(), this->dim.nstates, this->dim.openshell, gauge,
+                this->refs.my_rank, *this->refs.out_dir);
+            if (gauge == "velocity")
+            {
+                spectrum.set_vmo(velocity_mo.data());
+            }
+            spectrum.cal_spectrum();
+            spectrum.transition_analysis(this->amp.spin_types[is] + "_tda");
+            if (this->amp.spin_types[is] != "triplet") // triplets has no transition dipole and no contribution to the spectrum
+            {
+                spectrum.optical_absorption_method1(freq, inp.abs_broadening);
+                spectrum.write_transition_dipole(*this->refs.out_dir + "trans_dipole_" + this->amp.spin_types[is] + "_tda.dat");
+            }
+        }
+        if (inp.cal_force && !this->relax.target.active())
+        {
+            this->cal_force_grad(is, ekb, ofs);
+        }
+    }
+}
+
+template <typename T>
 GradientInputs<T> Core<T>::gradient_inputs() const
 {
     return {*this->refs.ucell, *this->refs.kv, *this->refs.gd, *this->refs.orb_cutoff, this->gs.para_mat,
@@ -601,6 +707,8 @@ template void Core<double>::setup_file_layout(const K_Vectors&, const UnitCell&,
 template void Core<std::complex<double>>::setup_file_layout(const K_Vectors&, const UnitCell&, const Input_para&);
 template void Core<double>::solve(double*, int);
 template void Core<std::complex<double>>::solve(double*, int);
+template void Core<double>::output(const ModuleBase::matrix&);
+template void Core<std::complex<double>>::output(const ModuleBase::matrix&);
 
 template std::vector<ModuleBase::matrix> Core<double>::cal_force(int, const ModuleBase::matrix&, int);
 template std::vector<ModuleBase::matrix> Core<std::complex<double>>::cal_force(int, const ModuleBase::matrix&, int);

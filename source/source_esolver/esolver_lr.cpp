@@ -1,12 +1,8 @@
 #include "esolver_lr.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_lcao/module_lr/lr_density.h"
-#include "source_lcao/module_lr/lr_spectrum.h"
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/utils/lr_io.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
-#include "source_lcao/module_lr/utils/lr_util_print.h"
-#include "source_lcao/module_lr/utils/spectrum_weights.h"
 #include "source_lcao/module_lr/zeq_solver.h"
 #include <algorithm>
 #include <iomanip>
@@ -146,110 +142,8 @@ template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell &ucell = static_cast<UnitCell &>(basecell);
-
     ModuleBase::TITLE("ESolver_LR", "after_all_runners");
-    if (this->inp_->ri_hartree_benchmark != "none")
-    {
-        return;
-    } // no need to calculate the spectrum in the benchmark routine
-
-    // cal electron-hole density
-    if (this->inp_->out_chg[0])
-    {
-        LR_Density<T> lr_density(
-            *this->ucell_, kv, gd(), *this->lr_.gs.psi, orb_cutoff_, pgrid(), this->lr_.dim.nspin, this->lr_.dim.nocc, this->lr_.dim.nvirt, this->lr_.dim.nbasis, this->lr_.amp.para_x, this->lr_.amp.para_c,
-            this->lr_.gs.para_mat, this->lr_.dim.openshell, this->inp_->out_chg[1], this->out_dir);
-
-        if (this->lr_.dim.openshell)
-        {
-            for (int is = 0; is < this->lr_.dim.nspin; ++is)
-            {
-                const T *const amplitudes = this->lr_.amp.x[0].template data<T>();
-                lr_density.output_eh_density_all_states(amplitudes, is, this->lr_.dim.nstates, this->ofs_running_);
-            }
-        }
-        else
-        {
-            for (int is = 0; is < this->lr_.amp.x.size(); ++is)
-            {
-                const T *const amplitudes = this->lr_.amp.x[is].template data<T>();
-                lr_density.output_eh_density_all_states(amplitudes, is, this->lr_.dim.nstates, this->ofs_running_);
-            }
-        }
-    }
-
-    const std::string gauge = LR_Util::tolower(this->inp_->abs_gauge);
-    const bool calculate_spectrum = gauge != "none";
-    const std::vector<double> spatial_weights = LR_Util::spatial_k_weights(this->kv.wk, this->lr_.dim.nspin);
-    // cal spectrum
-    if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
-    {
-        const int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
-        this->velocity_mo = LR_Util::cal_velocity_mo(
-            *this->ucell_, this->gd(), this->tcb(), this->lr_.gs.para_mat, this->lr_.amp.para_c, this->kv, *this->lr_.gs.psi, this->lr_.dim.nk,
-            nspin_tmp, this->lr_.dim.nbasis, this->lr_.dim.nocc, this->lr_.dim.nvirt);
-    }
-    std::vector<double> freq;
-    if (calculate_spectrum)
-    {
-        freq.resize(100);
-        std::vector<double> abs_wavelen_range({20, 200}); // default range
-        if (this->inp_->abs_wavelen_range.size() >= 2 &&
-            std::abs(this->inp_->abs_wavelen_range[1] - this->inp_->abs_wavelen_range[0]) > 0.02)
-        {
-            abs_wavelen_range = this->inp_->abs_wavelen_range;
-        }
-        double lambda_diff = std::abs(abs_wavelen_range[1] - abs_wavelen_range[0]);
-        double lambda_min = std::min(abs_wavelen_range[1], abs_wavelen_range[0]);
-        for (int i = 0; i < freq.size(); ++i)
-        {
-            freq[i] = 91.126664 / (lambda_min + 0.01 * static_cast<double>(i + 1) * lambda_diff);
-        }
-    }
-    // auto spin_types = (nspin == 2 && !openshell) ? std::vector<std::string>({ "singlet", "triplet" }) :
-    // std::vector<std::string>({ "updown" }); for (int is = 0;is < this->lr_.amp.x.size() - 1;++is)
-    for (int is = 0; is < this->lr_.amp.x.size(); ++is)
-    {
-        if (!calculate_spectrum)
-        {
-            const double *const energies = &this->pelec->ekb.c[is * this->lr_.dim.nstates];
-            LR_Util::print_excitation_energies(this->ofs_running_, energies, this->lr_.dim.nstates, this->lr_.amp.spin_types[is]);
-        }
-        else
-        {
-            LR_Spectrum<T> spectrum(
-                this->lr_.dim.nspin, this->lr_.dim.nbasis, this->lr_.dim.nocc, this->lr_.dim.nvirt, *this->pw_rho, *this->lr_.gs.psi, *this->ucell_, this->kv,
-                spatial_weights, this->gd(), this->orb_cutoff_, this->tcb(), this->lr_.amp.para_x, this->lr_.amp.para_c, this->lr_.gs.para_mat,
-                &this->pelec->ekb.c[is * this->lr_.dim.nstates], this->lr_.gs.eig.c, this->lr_.amp.x[is].template data<T>(), this->lr_.dim.nstates, this->lr_.dim.openshell,
-                LR_Util::tolower(this->inp_->abs_gauge), this->my_rank_, this->out_dir);
-            if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
-            {
-                spectrum.set_vmo(this->velocity_mo.data());
-            }
-            spectrum.cal_spectrum();
-            spectrum.transition_analysis(this->lr_.amp.spin_types[is] + "_tda");
-            if (this->lr_.amp.spin_types[is] != "triplet") // triplets has no transition dipole and no contribution to the spectrum
-            {
-                spectrum.optical_absorption_method1(freq, this->inp_->abs_broadening);
-                spectrum.write_transition_dipole(this->out_dir + "trans_dipole_" + this->lr_.amp.spin_types[is] + "_tda.dat");
-                // =============================================== for test
-                // ==================================================== spectrum.optical_absorption_method2(freq,
-                // this->inp_->abs_broadening); if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity") {   // TEST
-                // the formula v/omega rather than v/(e_a-e_i)
-                //     spectrum.test_transition_dipoles_velocity_omega();
-                //     spectrum.write_transition_dipole(this->out_dir +
-                //         "trans_dipole_" + spin_types[is] + "_vomega_tda.dat");
-                // }
-                // =============================================== for test
-                // ====================================================
-            }
-        }
-        if (this->inp_->cal_force && !this->lr_.relax.target.active())
-        {
-            this->lr_.cal_force_grad(is, this->pelec->ekb, this->ofs_running_);
-        }
-    }
+    this->lr_.output(this->pelec->ekb);
 }
 
 // Resolve LR dimensions and initialize kernel potentials.

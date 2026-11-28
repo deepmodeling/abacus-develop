@@ -153,6 +153,8 @@ struct Core
     /// Solve the TDA eigenproblem, or read its states from file under `lr_solver = spectrum`.
     /// The `nspin x nstates` eigenvalues are written to `ekb`.
     void solve(double* ekb, int istep);
+    /// Electron-hole densities, the absorption spectrum and the per-state gradients after the run.
+    void output(const ModuleBase::matrix& ekb);
 
     /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
     /// restricts it to that one state; -1 does all `nstates`.
