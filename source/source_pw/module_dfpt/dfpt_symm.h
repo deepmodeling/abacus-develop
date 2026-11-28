@@ -42,6 +42,40 @@ std::vector<int> little_group_of_q(
     int nops,
     const ModuleBase::Vector3<double> &q_cart);
 
+/// One (k, k+q) response pair representative with its orbit weight.
+struct KQPair
+{
+    ModuleBase::Vector3<double> k_frac;  ///< representative mesh k, wrapped to [0,1)
+    ModuleBase::Vector3<double> kq_frac; ///< k + q, wrapped to [0,1)
+    int orbit_size;                      ///< number of mesh points this pair represents
+};
+
+/**
+ * @brief Representatives of the (k, k+q) response pairs over a full mesh (B1).
+ *
+ * Reduces the full k mesh to orbit representatives of the UNITARY little
+ * co-group of q (the s = +1 branch: QE's nsymq), and returns one pair
+ * (k, k + q) per orbit with the orbit size as weight. The plain weighted
+ * sum over these representatives is the input the G_q projection of the
+ * later symmetrization step closes on (P(A) = F requires the list to be
+ * reduced with respect to the same group the projector runs over).
+ *
+ * The orbits are generated in cartesian k space through the rotation
+ * images R = latvec^-1 G latvec, which makes the orbit PARTITION immune
+ * to the forward/backward gmatrix conventions ({R} and {R^T} generate
+ * the same orbits because the cartesian images are orthogonal); the
+ * Gamma case reproduces the standard k-mesh IBZ reduction as the
+ * convention anchor.
+ *
+ * Inert infrastructure: nothing consumes it yet.
+ */
+std::vector<KQPair> kq_pair_reps(
+    const ModuleBase::Matrix3 &latvec,
+    const ModuleBase::Matrix3 *gmatrix,
+    int nops,
+    const ModuleBase::Vector3<double> &q_frac,
+    const std::vector<ModuleBase::Vector3<double>> &mesh_frac);
+
 } // namespace ModuleDFPT
 
 #endif // DFPT_SYMM_H
