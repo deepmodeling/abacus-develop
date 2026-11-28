@@ -41,11 +41,9 @@ class Relax
         const ModuleBase::matrix &stress,
         std::ofstream &ofs_running);
 
-    // Compute the ionic gradient from the force (in eV/Angstrom), honoring
-    // per-atom move flags, and return the largest component. Records the value
-    // in the force history and the running log, prints the optional out_level
-    // diagnostics, and updates force_converged.
-    double setup_ion_gradient(
+    // Project ionic forces and use the largest component in eV/Angstrom
+    // for convergence, history and output.
+    void setup_ion_gradient(
         const UnitCell &ucell,
         const ModuleBase::matrix &force,
         bool &force_converged,
@@ -79,23 +77,10 @@ class Relax
     // move ions and lattice vectors
     void move_cell_ions(UnitCell &ucell, const bool is_new_dir, std::ofstream &ofs_running);
 
-    // Step 1 of move_cell_ions: update latvec along the cell search
-    // direction, honoring per-axis free flags, the volume constraint and
-    // fixed_ibrav. Saves latvec at the start of each CG step. Only runs when
-    // if_cell_moves is true.
-    void update_lattice(UnitCell &ucell, double fac, bool is_new_dir);
-
-    // Steps 2 & 3 of move_cell_ions: compute the ionic displacement along the
-    // ion search direction (Cartesian -> direct via the OLD GT), apply the
-    // per-atom move flags and symmetry, then update taud/tau and print the
-    // structure.
-    void update_ion_positions(UnitCell &ucell, double fac, std::ofstream &ofs_running);
-
-    // Steps 4 & 6 of move_cell_ions: refresh a1/a2/a3, omega and the
-    // reciprocal lattice (G/GT/GGT) from the new latvec, broadcast them under
-    // MPI, and re-setup the cell for the next SCF. Only runs when
-    // if_cell_moves is true.
-    void update_reciprocal_cell(UnitCell &ucell, std::ofstream &ofs_running);
+    // Lattice displacement along the current CG direction, in latvec units.
+    // With symmetry active, transposes and symmetrizes search_dr_cell in place for later CG dot products.
+    // On a new direction, saves ucell.latvec in latvec_save for subsequent line-search corrections.
+    ModuleBase::Matrix3 lattice_step(const UnitCell &ucell, double fraction, bool is_new_dir);
 
     int nat = 0;         // number of atoms
     bool ltrial = false; // if last step is trial step
