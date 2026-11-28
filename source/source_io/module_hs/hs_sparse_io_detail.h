@@ -158,8 +158,10 @@ struct CsrTextHeader
     double efermi_eV;                ///< Fermi energy in eV.
     bool write_banner;               ///< Write the CSR layout banner.
     /// Optional suffix appended to the description line (e.g. ", E_exx = ... Ry").
-    /// Empty by default so existing writers are unaffected.
-    std::string description_suffix = "";
+    /// Left empty by callers that do not need it; no default member initializer
+    /// is used so that this struct stays an aggregate under C++11 and the
+    /// brace-initializer lists at the call sites keep working.
+    std::string description_suffix;
 };
 
 /**
