@@ -9,6 +9,7 @@
 #include "source_io/module_hs/hs_sparse_io.h"
 #include "source_base/module_out/csr_reader.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_restart/restart_exx_csr.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_ri/exx_abfs_jle.h"
 
@@ -387,6 +388,18 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
         std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_iter_finish");
+
+    // Legacy restart timing: write Hexx(R) at the first electronic iteration of
+    // every outer EXX step (not only at the end of the SCF), so a restart
+    // snapshot is available while the calculation is running.
+    const bool separate_loop = this->info_global.separate_loop;
+    const bool hexx_timing = (this->two_level_step > 0 || istep > 0) && (!separate_loop || iter == 1);
+    const bool hexx_freq = (PARAM.inp.out_freq_ion <= 0) || (istep % PARAM.inp.out_freq_ion == 0);
+    if (PARAM.inp.out_mat_exx[0] && this->info_global.cal_exx && hexx_timing && hexx_freq)
+    {
+        ModuleIO::write_Hexxs_csr(PARAM.globalv.global_out_dir, ucell, this->get_Hexxs(), elec.f_en.exx,
+                                  PARAM.inp.out_mat_exx[1], istep, PARAM.inp.out_app_flag);
+    }
 
     if (this->info_global.cal_exx && conv_esolver)
     {

@@ -45,7 +45,6 @@
 #include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
 #ifdef __EXX
-#include "source_io/module_restart/restart_exx_csr.h"
 #include "source_lcao/module_ri/exx_lri_interface.h" // use EXX codes
 #include "source_lcao/module_rpa/rpa_lri.h"          // use RPA code
 #endif
@@ -885,35 +884,6 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //	}
 
 #ifdef __EXX
-    //------------------------------------------------------------------
-    //! 15) Output Hexx(R) matrix in LCAO basis for EXX restart
-    // (see `out_mat_exx` in docs/advanced/input_files/input-main.md)
-    //------------------------------------------------------------------
-    bool cal_exx = exx_info.info_global.cal_exx;
-    bool real_number = exx_info.info_ri.real_number;
-
-    if (inp.out_mat_exx[0])
-    {
-        if (cal_exx && inp.calculation != "nscf") // Peize Lin add if 2022.11.14
-        {
-            if (real_number)
-            {
-                ModuleIO::write_Hexxs_csr(global_out_dir, ucell, exx_nao.exd->get_Hexxs(), pelec->f_en.exx,
-                                          inp.out_mat_exx[1], istep, inp.out_app_flag);
-            }
-            else
-            {
-                ModuleIO::write_Hexxs_csr(global_out_dir, ucell, exx_nao.exc->get_Hexxs(), pelec->f_en.exx,
-                                          inp.out_mat_exx[1], istep, inp.out_app_flag);
-            }
-            const bool numbered_exx = (istep >= 0) && (inp.out_app_flag == 2);
-            for (int is = 0; is < inp.nspin; ++is)
-            {
-                ModuleIO::write_matrix_notice(ofs_running, "Hexx(R)", is, inp.nspin,
-                                              global_out_dir + ModuleIO::exx_csr_filename(is, numbered_exx, istep));
-            }
-        }
-    }
 
     //------------------------------------------------------------------
     //! 16) Write RPA information in LCAO basis
