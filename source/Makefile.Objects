@@ -1201,6 +1201,7 @@ OBJS_TENSOR=tensor.o\
     lr_mpl.o\
     lr_zeq.o\
     lr_sforce.o\
+    lr_core.o\
     lr_gs_pot.o\
     esolver_lr.o\
 

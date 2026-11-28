@@ -105,40 +105,8 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// bind the aliases above; `ks_` must already be set (or null for the `lr` path)
     void bind_ground_state_aliases_();
 
-    // ground state info
-
-    /// @brief ground state wave function
-    std::unique_ptr<psi::Psi<T>> psi_ks; ///< KS orbitals used in the [nocc+nvirt] window
-    /// @brief all KS orbitals. On the `ks-lr` path this aliases the ground-state solver's
-    /// `psi` (nk x nbands x nbasis -- far too big to copy every ionic step, and only read
-    /// here); on the `lr` path it points at `psi_ks_all_own_`, filled from file.
-    psi::Psi<T> *psi_ks_all_ = nullptr;
-    std::unique_ptr<psi::Psi<T>> psi_ks_all_own_;
-
-    /// @brief ground state bands, read from the file, or moved from ESolver_FP::pelec.ekb
-    ModuleBase::matrix eig_ks; ///< ground state eigenvalues in the [nocc+nvirt] window
-    ModuleBase::matrix
-        eig_ks_all; ///< all eigenvalues of ground state, read from the file, or moved from ESolver_FP::pelec.ekb
-    ModuleBase::matrix wg_ks;     /// occupation numbers of ground state in the [nocc+nvirt] window
-    ModuleBase::matrix wg_ks_all; /// occupation number of all bands of ground state
-
     // @brief only needed for force calculation
 
-    std::vector<int> nocc;  ///< number of occupied orbitals for each spin used in the calculation
-    int nocc_in = 1;        ///< nocc read from input (adjusted by nelec): max(spin-up, spindown)
-    int nocc_max = 1;       ///< full occupied count in the largest spin channel
-    std::vector<int> nvirt; ///< number of virtual orbitals for each spin used in the calculation
-    int nvirt_in = 1;       ///< nvirt read from input (adjusted by nelec): min(spin-up, spindown)
-    int nbands = 2;
-    int nbasis = 2;
-    /// n_occ*nvirt, the basis size of electron-hole pair representation
-    std::vector<int> npairs;
-    /// how many 2-particle states to be solved
-    int nstates = 1;
-    int nspin = 1;
-    int nk = 1;
-    int nupdown = 0;
-    bool openshell = false;
     std::string xc_kernel;
 
     void initialize_from_unitcell_(UnitCell &ucell, const Input_para &inp);
@@ -181,7 +149,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     void fill_z_window_(const int *desc_src);
     /// Widen `nst` X blocks starting at `istate_begin` from the X window into the Z window,
     /// zero-filling the virtual rows X does not have.
-    ct::Tensor pad_X_to_z_(const int ispin, const int istate_begin, const int nst) const;
     /// @brief variables for parallel distribution of matrix in AO representation
     Parallel_Orbitals paraMat_;
     Parallel_Orbitals paraMat_all_; // for the parallelized size of the KS orbitals

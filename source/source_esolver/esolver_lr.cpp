@@ -102,12 +102,12 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
 
     // allocate 2-particle state and setup 2d division
     this->setup_eigenvectors_X();
-    this->pelec->ekb.create(nspin, this->nstates);
+    this->pelec->ekb.create(this->lr_.dim.nspin, this->lr_.dim.nstates);
 
     // set once here rather than inside the solver branches: the open-shell `spectrum` branch used
     // to leave it empty, and both `after_all_runners` and the gradient index it
     this->lr_.amp.spin_types =
-        this->openshell ? std::vector<std::string>({"updown"}) : std::vector<std::string>({"singlet", "triplet"});
+        this->lr_.dim.openshell ? std::vector<std::string>({"updown"}) : std::vector<std::string>({"singlet", "triplet"});
 
     // a relaxation writes these once per ionic step; without the suffix every step would overwrite
     // the last, and the trajectory would be impossible to inspect afterwards
@@ -137,7 +137,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
         };
         std::vector<double> precondition(this->inp_->lr_solver == "lapack" ? 0 : this->lr_.amp.nloc, 1.0);
         // allocate and initialize A matrix and density matrix
-        if (openshell)
+        if (this->lr_.dim.openshell)
         {
             for (int is : {0, 1})
             {
@@ -145,25 +145,25 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
                 {
                     const int offset_is = is * this->lr_.amp.para_x[0].size();
                     OperatorLRDiag<double> pre_op(
-                        this->eig_ks.c + is * nk * (nocc[0] + nvirt[0]), this->lr_.amp.para_x[is], this->nk, this->nocc[is],
-                        this->nvirt[is], false);
+                        this->lr_.gs.eig.c + is * this->lr_.dim.nk * (this->lr_.dim.nocc[0] + this->lr_.dim.nvirt[0]), this->lr_.amp.para_x[is], this->lr_.dim.nk, this->lr_.dim.nocc[is],
+                        this->lr_.dim.nvirt[is], false);
                     pre_op.act(1, offset_is, 1, precondition.data() + offset_is, precondition.data() + offset_is);
                 }
             }
             std::cout << "Solving spin-conserving excitation for open-shell system." << std::endl;
             HamiltULR<T> hulr(
-                xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, *this->ucell_, orb_cutoff_, this->gd(),
-                *this->psi_ks, this->eig_ks,
+                xc_kernel, this->lr_.dim.nspin, this->lr_.dim.nbasis, this->lr_.dim.nocc, this->lr_.dim.nvirt, *this->ucell_, orb_cutoff_, this->gd(),
+                *this->lr_.gs.psi, this->lr_.gs.eig,
 #ifdef __EXX
                 this->exx_lri, this->exx_info.info_global.hybrid_alpha,
 #endif
-                this->lr_.pot.pot, this->kv, this->lr_.amp.para_x, this->lr_.amp.para_c, this->paraMat_);
+                this->lr_.pot.pot, this->kv, this->lr_.amp.para_x, this->lr_.amp.para_c, this->lr_.gs.para_mat);
             LR::HSolver::solve(
-                hulr, this->lr_.amp.x[0].template data<T>(), this->lr_.amp.nloc, nstates, this->nk, this->nocc, this->nvirt,
+                hulr, this->lr_.amp.x[0].template data<T>(), this->lr_.amp.nloc, this->lr_.dim.nstates, this->lr_.dim.nk, this->lr_.dim.nocc, this->lr_.dim.nvirt,
                 this->lr_.amp.para_x, this->pelec->ekb.c, this->inp_->lr_solver, this->inp_->lr_thr, precondition, true);
             if (this->inp_->out_wfc_lr)
             {
-                write_states("openshell", this->pelec->ekb.c, this->lr_.amp.x[0].template data<T>(), this->lr_.amp.nloc, nstates);
+                write_states("openshell", this->pelec->ekb.c, this->lr_.amp.x[0].template data<T>(), this->lr_.amp.nloc, this->lr_.dim.nstates);
             }
         }
         else
@@ -171,31 +171,31 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
             if (this->inp_->lr_solver != "lapack")
             {
                 OperatorLRDiag<double> pre_op(
-                    this->eig_ks.c, this->lr_.amp.para_x[0], this->nk, this->nocc[0], this->nvirt[0], false);
+                    this->lr_.gs.eig.c, this->lr_.amp.para_x[0], this->lr_.dim.nk, this->lr_.dim.nocc[0], this->lr_.dim.nvirt[0], false);
                 pre_op.act(1, this->lr_.amp.nloc, 1, precondition.data(), precondition.data());
             }
             const std::vector<std::string> &spin_types = this->lr_.amp.spin_types;
-            for (int is = 0; is < nspin; ++is)
+            for (int is = 0; is < this->lr_.dim.nspin; ++is)
             {
                 std::cout << " Calculating " << spin_types[is] << " excitations" << std::endl;
                 HamiltLR<T> hlr(
-                    xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, *this->ucell_, orb_cutoff_, this->gd(),
-                    *this->psi_ks, this->eig_ks,
+                    xc_kernel, this->lr_.dim.nspin, this->lr_.dim.nbasis, this->lr_.dim.nocc, this->lr_.dim.nvirt, *this->ucell_, orb_cutoff_, this->gd(),
+                    *this->lr_.gs.psi, this->lr_.gs.eig,
 #ifdef __EXX
                     this->exx_lri, this->exx_info.info_global.hybrid_alpha,
 #endif
-                    this->lr_.pot.pot[is], this->kv, this->lr_.amp.para_x, this->lr_.amp.para_c, this->paraMat_, spin_types[is], this->in_dir,
+                    this->lr_.pot.pot[is], this->kv, this->lr_.amp.para_x, this->lr_.amp.para_c, this->lr_.gs.para_mat, spin_types[is], this->in_dir,
                     this->out_dir, this->inp_->ri_hartree_benchmark,
                     (this->inp_->ri_hartree_benchmark == "aims" ? this->inp_->aims_nbasis : std::vector<int>({})));
                 LR::HSolver::solve(
-                    hlr, this->lr_.amp.x[is].template data<T>(), this->lr_.amp.nloc, nstates, this->nk, this->nocc, this->nvirt,
-                    this->lr_.amp.para_x, this->pelec->ekb.c + is * nstates, this->inp_->lr_solver, this->inp_->lr_thr,
+                    hlr, this->lr_.amp.x[is].template data<T>(), this->lr_.amp.nloc, this->lr_.dim.nstates, this->lr_.dim.nk, this->lr_.dim.nocc, this->lr_.dim.nvirt,
+                    this->lr_.amp.para_x, this->pelec->ekb.c + is * this->lr_.dim.nstates, this->inp_->lr_solver, this->inp_->lr_thr,
                     precondition, true);
                 if (this->inp_->out_wfc_lr)
                 {
                     write_states(
-                        spin_types[is], this->pelec->ekb.c + is * nstates, this->lr_.amp.x[is].template data<T>(),
-                        this->lr_.amp.nloc, nstates);
+                        spin_types[is], this->pelec->ekb.c + is * this->lr_.dim.nstates, this->lr_.amp.x[is].template data<T>(),
+                        this->lr_.amp.nloc, this->lr_.dim.nstates);
                 }
             }
         }
@@ -223,18 +223,18 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
             std::cout << "Rank " << this->my_rank_ << ": finish reading " << vfile_in(label) << std::endl;
         };
         std::cout << "reading the excitation states from file: \n";
-        if (openshell)
+        if (this->lr_.dim.openshell)
         {
-            read_states("openshell", this->pelec->ekb.c, this->lr_.amp.x[0].template data<T>(), this->lr_.amp.nloc, nstates);
+            read_states("openshell", this->pelec->ekb.c, this->lr_.amp.x[0].template data<T>(), this->lr_.amp.nloc, this->lr_.dim.nstates);
         }
         else
         {
             const std::vector<std::string> &spin_types = this->lr_.amp.spin_types;
-            for (int is = 0; is < nspin; ++is)
+            for (int is = 0; is < this->lr_.dim.nspin; ++is)
             {
                 read_states(
-                    spin_types[is], this->pelec->ekb.c + is * nstates, this->lr_.amp.x[is].template data<T>(), this->lr_.amp.nloc,
-                    nstates);
+                    spin_types[is], this->pelec->ekb.c + is * this->lr_.dim.nstates, this->lr_.amp.x[is].template data<T>(), this->lr_.amp.nloc,
+                    this->lr_.dim.nstates);
             }
         }
     }
@@ -252,7 +252,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
         // One line per ionic step with the two halves of the energy and of the gradient. Without
         // it the relaxation only reports a force, and whether E_gs + Omega actually goes down --
         // the thing being minimised -- cannot be read off the log at all.
-        const double omega = this->lr_.relax.target.omega(this->pelec->ekb.c, this->nstates);
+        const double omega = this->lr_.relax.target.omega(this->pelec->ekb.c, this->lr_.dim.nstates);
         auto max_abs = [](const ModuleBase::matrix &m) -> double
         {
             double v = 0.0;
@@ -293,15 +293,15 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
     if (this->inp_->out_chg[0])
     {
         LR_Density<T> lr_density(
-            *this->ucell_, kv, gd(), *psi_ks, orb_cutoff_, pgrid(), nspin, nocc, nvirt, nbasis, this->lr_.amp.para_x, this->lr_.amp.para_c,
-            paraMat_, openshell, this->inp_->out_chg[1], this->out_dir);
+            *this->ucell_, kv, gd(), *this->lr_.gs.psi, orb_cutoff_, pgrid(), this->lr_.dim.nspin, this->lr_.dim.nocc, this->lr_.dim.nvirt, this->lr_.dim.nbasis, this->lr_.amp.para_x, this->lr_.amp.para_c,
+            paraMat_, this->lr_.dim.openshell, this->inp_->out_chg[1], this->out_dir);
 
-        if (openshell)
+        if (this->lr_.dim.openshell)
         {
-            for (int is = 0; is < this->nspin; ++is)
+            for (int is = 0; is < this->lr_.dim.nspin; ++is)
             {
                 const T *const amplitudes = this->lr_.amp.x[0].template data<T>();
-                lr_density.output_eh_density_all_states(amplitudes, is, nstates, this->ofs_running_);
+                lr_density.output_eh_density_all_states(amplitudes, is, this->lr_.dim.nstates, this->ofs_running_);
             }
         }
         else
@@ -309,21 +309,21 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
             for (int is = 0; is < this->lr_.amp.x.size(); ++is)
             {
                 const T *const amplitudes = this->lr_.amp.x[is].template data<T>();
-                lr_density.output_eh_density_all_states(amplitudes, is, nstates, this->ofs_running_);
+                lr_density.output_eh_density_all_states(amplitudes, is, this->lr_.dim.nstates, this->ofs_running_);
             }
         }
     }
 
     const std::string gauge = LR_Util::tolower(this->inp_->abs_gauge);
     const bool calculate_spectrum = gauge != "none";
-    const std::vector<double> spatial_weights = LR_Util::spatial_k_weights(this->kv.wk, nspin);
+    const std::vector<double> spatial_weights = LR_Util::spatial_k_weights(this->kv.wk, this->lr_.dim.nspin);
     // cal spectrum
     if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
     {
         const int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
         this->velocity_mo = LR_Util::cal_velocity_mo(
-            *this->ucell_, this->gd(), this->tcb(), this->paraMat_, this->lr_.amp.para_c, this->kv, *this->psi_ks, this->nk,
-            nspin_tmp, this->nbasis, this->nocc, this->nvirt);
+            *this->ucell_, this->gd(), this->tcb(), this->lr_.gs.para_mat, this->lr_.amp.para_c, this->kv, *this->lr_.gs.psi, this->lr_.dim.nk,
+            nspin_tmp, this->lr_.dim.nbasis, this->lr_.dim.nocc, this->lr_.dim.nvirt);
     }
     std::vector<double> freq;
     if (calculate_spectrum)
@@ -348,15 +348,15 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
     {
         if (!calculate_spectrum)
         {
-            const double *const energies = &this->pelec->ekb.c[is * nstates];
-            LR_Util::print_excitation_energies(this->ofs_running_, energies, nstates, this->lr_.amp.spin_types[is]);
+            const double *const energies = &this->pelec->ekb.c[is * this->lr_.dim.nstates];
+            LR_Util::print_excitation_energies(this->ofs_running_, energies, this->lr_.dim.nstates, this->lr_.amp.spin_types[is]);
         }
         else
         {
             LR_Spectrum<T> spectrum(
-                nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks, *this->ucell_, this->kv,
-                spatial_weights, this->gd(), this->orb_cutoff_, this->tcb(), this->lr_.amp.para_x, this->lr_.amp.para_c, this->paraMat_,
-                &this->pelec->ekb.c[is * nstates], this->eig_ks.c, this->lr_.amp.x[is].template data<T>(), nstates, openshell,
+                this->lr_.dim.nspin, this->lr_.dim.nbasis, this->lr_.dim.nocc, this->lr_.dim.nvirt, *this->pw_rho, *this->lr_.gs.psi, *this->ucell_, this->kv,
+                spatial_weights, this->gd(), this->orb_cutoff_, this->tcb(), this->lr_.amp.para_x, this->lr_.amp.para_c, this->lr_.gs.para_mat,
+                &this->pelec->ekb.c[is * this->lr_.dim.nstates], this->lr_.gs.eig.c, this->lr_.amp.x[is].template data<T>(), this->lr_.dim.nstates, this->lr_.dim.openshell,
                 LR_Util::tolower(this->inp_->abs_gauge), this->my_rank_, this->out_dir);
             if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
             {
@@ -403,64 +403,35 @@ void ModuleESolver::ESolver_LR<T, TR>::set_dim()
     src.kpar = this->kv.para_k.kpar;
     src.rank_in_pool = this->kv.para_k.rank_in_pool;
     src.in_dir = this->in_dir;
-    src.ucell = const_cast<UnitCell*>(this->ucell_);
+    src.ucell = const_cast<UnitCell *>(this->ucell_);
     src.log = &this->ofs_running_;
 
-    const LR::Dim dim = LR::resolve_dim(src);
-
-    this->nspin = dim.nspin;
-    this->nstates = dim.nstates;
-    this->nbasis = dim.nbasis;
-    this->nbands = dim.nbands;
-    this->nk = dim.nk;
-    this->nupdown = dim.nupdown;
-    this->nocc_in = dim.nocc_in;
-    this->nocc_max = dim.nocc_max;
-    this->nvirt_in = dim.nvirt_in;
-    this->openshell = dim.openshell;
-    this->nocc = dim.nocc;
-    this->nvirt = dim.nvirt;
-    this->npairs = dim.npairs;
+    this->lr_.dim = LR::resolve_dim(src);
 }
 
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::reset_dim_spin()
 {
-    LR::Dim dim;
-    dim.nspin = this->nspin;
-    dim.nstates = this->nstates;
-    dim.nk = this->nk;
-    dim.nupdown = this->nupdown;
-    dim.openshell = this->openshell;
-    dim.nocc = this->nocc;
-    dim.nvirt = this->nvirt;
-    dim.npairs = this->npairs;
-
-    LR::apply_spin_pol(dim, *this->inp_);
-
-    this->nocc = dim.nocc;
-    this->nvirt = dim.nvirt;
-    this->npairs = dim.npairs;
-    this->openshell = dim.openshell;
+    LR::apply_spin_pol(this->lr_.dim, *this->inp_);
 }
 
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge &chg_gs)
 {
-    this->lr_.pot.pot.assign(nspin, nullptr);
+    this->lr_.pot.pot.assign(this->lr_.dim.nspin, nullptr);
     if (this->inp_->ri_hartree_benchmark != "none")
     {
         return;
     }
     const auto &grid = pgrid();
     auto prepared =
-        LR::prepare_lr_potentials(*this->inp_, xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, grid, nspin, openshell);
+        LR::prepare_lr_potentials(*this->inp_, xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, grid, this->lr_.dim.nspin, this->lr_.dim.openshell);
     this->lr_.pot.pot = std::move(prepared.pot);
     if (this->inp_->cal_force)
     {
         this->init_pot_groundstate(chg_gs);
         this->lr_.pot.pot_hxc_gs = LR::prepare_gs_potential(
-            *this->inp_, xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, grid, nspin, openshell, prepared);
+            *this->inp_, xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, grid, this->lr_.dim.nspin, this->lr_.dim.openshell, prepared);
     }
 }
 
@@ -471,8 +442,8 @@ template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
 {
     ModuleBase::TITLE("ESolver_LR", "setup_eigenvectors_X");
-    LR::XAmp<T> amp = LR::setup_x<T>(this->lr_.amp.para_c, this->nocc, this->nvirt, this->npairs, this->eig_ks, this->nstates,
-                                     this->nk, this->nspin, this->openshell, this->inp_->lr_solver == "spectrum",
+    LR::XAmp<T> amp = LR::setup_x<T>(this->lr_.amp.para_c, this->lr_.dim.nocc, this->lr_.dim.nvirt, this->lr_.dim.npairs, this->lr_.gs.eig, this->lr_.dim.nstates,
+                                     this->lr_.dim.nk, this->lr_.dim.nspin, this->lr_.dim.openshell, this->inp_->lr_solver == "spectrum",
                                      this->ofs_running_);
     this->lr_.amp.x = std::move(amp.x);
     this->lr_.amp.para_x = std::move(amp.para_x);
@@ -482,38 +453,19 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
 {
-    assert(this->psi_ks != nullptr);
-    LR::GsWfc<T> wfc = LR::read_gs_wfc<T>(*this->psi_ks, this->eig_ks, this->wg_ks, this->paraMat_, this->paraMat_all_,
-                                          this->in_dir, *this->inp_, this->nocc_in, this->nvirt_in, this->nocc_max,
-                                          this->nbands, this->nbasis, this->kv, this->inp_->cal_force,
-                                          this->ofs_running_);
-    this->psi_ks_all_own_ = std::move(wfc.all_own);
-    this->psi_ks_all_ = wfc.all;
-    this->eig_ks_all = std::move(wfc.eig_all);
-    this->wg_ks_all = std::move(wfc.wg_all);
+    this->lr_.read_wfc(this->in_dir, *this->inp_, this->kv, this->ofs_running_);
 }
 
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int *desc_src)
 {
-    ModuleBase::TITLE("ESolver_LR", "fill_z_window_");
-    LR::ZWin<T> z = LR::build_z_win<T>(this->psi_ks_all_, this->eig_ks_all, this->nocc, this->nvirt, this->nocc_max,
-                                       this->nbands, this->nbasis, this->nk, this->openshell, this->kv, this->lr_.amp.para_c,
-                                       this->paraMat_, desc_src, this->inp_->cal_force, !this->ks_initialized_,
-                                       this->ofs_running_);
-    this->lr_.zw.psi = std::move(z.psi);
-    this->lr_.zw.eig = std::move(z.eig);
-    this->lr_.zw.para_c = std::move(z.para_c);
-    this->lr_.zw.para_x = std::move(z.para_x);
-    this->lr_.zw.nvirt = std::move(z.nvirt);
-    this->lr_.zw.nbands = z.nbands;
-    this->lr_.zw.nloc = z.nloc;
+    this->lr_.fill_z(desc_src, this->kv, this->inp_->cal_force, !this->ks_initialized_, this->ofs_running_);
 }
 
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge &chg_gs)
 {
-    LR::read_gs_chg(this->in_dir, *this->inp_, this->nspin, *this->ucell_, pgrid(), this->pw_rho, chg_gs,
+    LR::read_gs_chg(this->in_dir, *this->inp_, this->lr_.dim.nspin, *this->ucell_, pgrid(), this->pw_rho, chg_gs,
                     this->my_rank_, this->ofs_running_);
 }
 
@@ -529,31 +481,23 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge &chg_gs
 }
 
 template <typename T, typename TR>
-ct::Tensor ModuleESolver::ESolver_LR<T, TR>::pad_X_to_z_(const int ispin, const int istate_begin, const int nst) const
-{
-    return LR::pad_amplitudes<T>(
-        this->lr_.amp.x, this->openshell, this->lr_.amp.para_x, this->lr_.zw.para_x, this->nocc, this->nvirt, this->nk, this->lr_.amp.nloc,
-        this->lr_.zw.nloc, ispin, istate_begin, nst);
-}
-
-template <typename T, typename TR>
 LR::GsForceCtx<T> ModuleESolver::ESolver_LR<T, TR>::gs_force_ctx_() const
 {
     // `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path (it is aliased straight
-    // from the ground-state solver's own `psi`), but per `this->paraMat_all_` on the
+    // from the ground-state solver's own `psi`), but per `this->lr_.gs.para_mat_all` on the
     // read-from-file path, where it was allocated with that descriptor's own sizes.
-    const Parallel_Orbitals *const pv_all = this->ks_ ? &this->ks_->pv : &this->paraMat_all_;
+    const Parallel_Orbitals *const pv_all = this->ks_ ? &this->ks_->pv : &this->lr_.gs.para_mat_all;
     const LR::ForceSettings settings{
-        this->nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
-    return {*this->psi_ks_all_, this->wg_ks_all, *pv_all, *this->pw_rho, *this->pw_rhod, this->vloc(), this->sfac(),
-            this->tcb(), settings, this->openshell, this->inp_->lr_grad_solver, this->in_dir};
+        this->lr_.dim.nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
+    return {*this->lr_.gs.psi_all, this->lr_.gs.wg_all, *pv_all, *this->pw_rho, *this->pw_rhod, this->vloc(), this->sfac(),
+            this->tcb(), settings, this->lr_.dim.openshell, this->inp_->lr_grad_solver, this->in_dir};
 }
 
 template <typename T, typename TR>
 LR::StateCtx<T> ModuleESolver::ESolver_LR<T, TR>::state_ctx_() const
 {
-    return {this->lr_.amp.x, this->lr_.amp.para_x, this->lr_.zw.para_x, this->nocc, this->nvirt, this->nk, this->lr_.amp.nloc,
-            this->lr_.zw.nloc, this->nstates, this->openshell, this->pelec->ekb.c};
+    return {this->lr_.amp.x, this->lr_.amp.para_x, this->lr_.zw.para_x, this->lr_.dim.nocc, this->lr_.dim.nvirt, this->lr_.dim.nk, this->lr_.amp.nloc,
+            this->lr_.zw.nloc, this->lr_.dim.nstates, this->lr_.dim.openshell, this->pelec->ekb.c};
 }
 
 template <typename T, typename TR>
@@ -563,7 +507,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
     {
         this->test_force();
     }
-    return this->openshell
+    return this->lr_.dim.openshell
                ? LR::state_forces_os<T>(this->gradient_inputs_(), this->gs_force_ctx_(), this->state_ctx_(), istate_only)
                : LR::state_forces<T>(this->gradient_inputs_(), this->gs_force_ctx_(), this->state_ctx_(), ispin,
                                      istate_only);
@@ -572,8 +516,8 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
 template <typename T, typename TR>
 LR::GradientInputs<T> ModuleESolver::ESolver_LR<T, TR>::gradient_inputs_() const
 {
-    return {*this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->paraMat_, this->lr_.zw.para_c, this->lr_.zw.para_x,
-        *this->lr_.zw.psi, this->lr_.zw.eig, this->nocc, this->lr_.zw.nvirt, this->nspin, this->nk, this->nbasis,
+    return {*this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->lr_.gs.para_mat, this->lr_.zw.para_c, this->lr_.zw.para_x,
+        *this->lr_.zw.psi, this->lr_.zw.eig, this->lr_.dim.nocc, this->lr_.zw.nvirt, this->lr_.dim.nspin, this->lr_.dim.nk, this->lr_.dim.nbasis,
         this->lr_.zw.nloc, this->xc_kernel, this->inp_->dft_functional, this->inp_->ks_solver,
         this->inp_->test_force, this->lr_.relax.target.active(), this->out_dir, this->my_rank_, this->lr_.amp.spin_types, this->lr_.pot.pot,
         this->lr_.pot.pot_hxc_gs, this->ofs_running_
@@ -637,20 +581,20 @@ template <typename T, typename TR>
 module_dm::DensityMatrix<T, double> ModuleESolver::ESolver_LR<T, TR>::cal_dm_gs()
 {
     // `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path (it is aliased straight
-    // from the ground-state solver's own `psi`), but per `this->paraMat_all_` on the
+    // from the ground-state solver's own `psi`), but per `this->lr_.gs.para_mat_all` on the
     // read-from-file path (where it was allocated with that descriptor's own sizes).
-    const Parallel_Orbitals *const pv_all = this->ks_ ? &this->ks_->pv : &this->paraMat_all_;
-    return LR::make_gs_dm<T>(*this->psi_ks_all_, this->wg_ks_all, *pv_all, this->paraMat_, *this->ucell_, this->gd(),
-                             this->orb_cutoff_, this->nspin, this->kv.kvec_d, this->nk);
+    const Parallel_Orbitals *const pv_all = this->ks_ ? &this->ks_->pv : &this->lr_.gs.para_mat_all;
+    return LR::make_gs_dm<T>(*this->lr_.gs.psi_all, this->lr_.gs.wg_all, *pv_all, this->lr_.gs.para_mat, *this->ucell_, this->gd(),
+                             this->orb_cutoff_, this->lr_.dim.nspin, this->kv.kvec_d, this->lr_.dim.nk);
 }
 
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::test_force()
 {
     const LR::ForceSettings force_settings{
-        this->nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
+        this->lr_.dim.nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
     LR_Force<T> lr_force(
-        (*this->ucell_), this->kv.kvec_d, this->paraMat_, *this->pw_rhod, *this->pw_rho, this->vloc(), this->sfac(),
+        (*this->ucell_), this->kv.kvec_d, this->lr_.gs.para_mat, *this->pw_rhod, *this->pw_rho, this->vloc(), this->sfac(),
         this->gd(), this->tcb(), force_settings, this->ofs_running_
 #ifdef __EXX
         ,
@@ -662,18 +606,18 @@ void ModuleESolver::ESolver_LR<T, TR>::test_force()
     // LR_Util::print_DMR(dm_gs, "DM(R) of ground state");
     ///========================== test 1: reproduce the force of ground state =========================
     // energy density matrix of the ground state
-    module_dm::DensityMatrix<T, double> edm_gs(&this->paraMat_, this->nspin, this->kv.kvec_d, this->nk); // DX
-    ModuleBase::matrix wg_ekb_ks_all(nspin, this->inp_->nbands);
-    const int occupation_count = nspin * this->inp_->nbands;
+    module_dm::DensityMatrix<T, double> edm_gs(&this->lr_.gs.para_mat, this->lr_.dim.nspin, this->kv.kvec_d, this->lr_.dim.nk); // DX
+    ModuleBase::matrix wg_ekb_ks_all(this->lr_.dim.nspin, this->inp_->nbands);
+    const int occupation_count = this->lr_.dim.nspin * this->inp_->nbands;
     for (int index = 0; index < occupation_count; ++index)
     {
-        wg_ekb_ks_all.c[index] = this->wg_ks_all.c[index] * this->eig_ks_all.c[index];
+        wg_ekb_ks_all.c[index] = this->lr_.gs.wg_all.c[index] * this->lr_.gs.eig_all.c[index];
     }
     // see `cal_dm_gs()`: `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path,
-    // not `this->paraMat_all_`.
-    const Parallel_Orbitals *const pv_all_edm = this->ks_ ? &this->ks_->pv : &this->paraMat_all_;
-    module_dm::dm_from_psi(pv_all_edm, wg_ekb_ks_all, *this->psi_ks_all_, edm_gs);
-    LR_Util::initialize_DMR(edm_gs, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_);
+    // not `this->lr_.gs.para_mat_all`.
+    const Parallel_Orbitals *const pv_all_edm = this->ks_ ? &this->ks_->pv : &this->lr_.gs.para_mat_all;
+    module_dm::dm_from_psi(pv_all_edm, wg_ekb_ks_all, *this->lr_.gs.psi_all, edm_gs);
+    LR_Util::initialize_DMR(edm_gs, this->lr_.gs.para_mat, (*this->ucell_), this->gd(), this->orb_cutoff_);
     edm_gs.cal_dmr(-1);
     // ground-state force
     ModuleBase::matrix force_gs = lr_force.reproduce_force_gs(kv, dm_gs, edm_gs);
@@ -697,7 +641,7 @@ void ModuleESolver::ESolver_LR<T, TR>::test_force()
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
 {
-    this->lr_.relax.target.setup(*this->inp_, this->openshell, this->nspin, this->nstates, this->ofs_running_);
+    this->lr_.relax.target.setup(*this->inp_, this->lr_.dim.openshell, this->lr_.dim.nspin, this->lr_.dim.nstates, this->ofs_running_);
     if (this->lr_.relax.target.active())
     {
         this->lr_.relax.force_gs.create(this->ucell_->nat, 3);
@@ -715,14 +659,14 @@ void ModuleESolver::ESolver_LR<T, TR>::follow_target_state_(std::ofstream &ofs)
         ModuleBase::timer::end("ESolver_LR", "follow_target_state_");
         return;
     }
-    const int channel = this->openshell ? 0 : this->lr_.relax.target.ispin();
+    const int channel = this->lr_.dim.openshell ? 0 : this->lr_.relax.target.ispin();
     const T *const amplitudes = this->lr_.amp.x[channel].template data<T>();
     const TwoCenterIntegrator &overlap_integrator = *this->tcb().overlap_orb;
-    std::vector<double> energies(this->nstates);
-    std::copy_n(this->pelec->ekb.c + this->lr_.relax.target.ekb_off(this->nstates), this->nstates, energies.begin());
-    this->lr_.relax.target.follow(*this->inp_, *this->ucell_, this->orb_cutoff_, overlap_integrator, *this->psi_ks, this->lr_.amp.para_c,
-                         this->paraMat_, this->lr_.amp.para_x, this->nocc, this->nvirt, amplitudes, this->lr_.amp.nloc,
-                         this->nstates, energies, ofs);
+    std::vector<double> energies(this->lr_.dim.nstates);
+    std::copy_n(this->pelec->ekb.c + this->lr_.relax.target.ekb_off(this->lr_.dim.nstates), this->lr_.dim.nstates, energies.begin());
+    this->lr_.relax.target.follow(*this->inp_, *this->ucell_, this->orb_cutoff_, overlap_integrator, *this->lr_.gs.psi, this->lr_.amp.para_c,
+                         this->lr_.gs.para_mat, this->lr_.amp.para_x, this->lr_.dim.nocc, this->lr_.dim.nvirt, amplitudes, this->lr_.amp.nloc,
+                         this->lr_.dim.nstates, energies, ofs);
     ModuleBase::timer::end("ESolver_LR", "follow_target_state_");
 }
 
@@ -739,7 +683,7 @@ double ModuleESolver::ESolver_LR<T, TR>::cal_energy()
     // otherwise, matching whatever `cal_lr_force_relax_` produced the gradient of. The
     // energy-based optimisers line-search on this, so the two must not describe different
     // surfaces.
-    return this->lr_.relax.etot_gs + this->lr_.relax.target.omega(this->pelec->ekb.c, this->nstates);
+    return this->lr_.relax.etot_gs + this->lr_.relax.target.omega(this->pelec->ekb.c, this->lr_.dim.nstates);
 }
 
 template <typename T, typename TR>
@@ -778,14 +722,14 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_stress(BaseCell &basecell, ModuleBase
 template <typename T, typename TR>
 ct::Tensor ModuleESolver::ESolver_LR<T, TR>::pad_group_to_z_(const int ispin, const std::vector<int> &group) const
 {
-    return LR::pad_group<T>(this->lr_.amp.x, this->openshell, this->lr_.amp.para_x, this->lr_.zw.para_x, this->nocc, this->nvirt, this->nk,
+    return LR::pad_group<T>(this->lr_.amp.x, this->lr_.dim.openshell, this->lr_.amp.para_x, this->lr_.zw.para_x, this->lr_.dim.nocc, this->lr_.dim.nvirt, this->lr_.dim.nk,
                             this->lr_.amp.nloc, this->lr_.zw.nloc, ispin, group);
 }
 
 template <typename T, typename TR>
 ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_lr_force_relax_(std::ofstream &ofs)
 {
-    this->lr_.relax.target.resolve_group(*this->inp_, this->pelec->ekb.c, this->nstates, this->ofs_running_);
+    this->lr_.relax.target.resolve_group(*this->inp_, this->pelec->ekb.c, this->lr_.dim.nstates, this->ofs_running_);
     const std::vector<int> &group = this->lr_.relax.target.group();
     if (group.empty())
     {
@@ -796,7 +740,7 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_lr_force_relax_(std::of
     // construction, so the off-diagonal part (and the extra d(d-1)/2 solves it costs) is not
     // involved. The Jahn-Teller direction is orthogonal to the average and does need them.
     const int d = static_cast<int>(group.size());
-    const int ekb_off = this->lr_.relax.target.ekb_off(this->nstates);
+    const int ekb_off = this->lr_.relax.target.ekb_off(this->lr_.dim.nstates);
     const ct::Tensor Xz = this->pad_group_to_z_(this->lr_.relax.target.ispin(), group);
     std::vector<double> omega(d);
     for (int k = 0; k < d; ++k)
@@ -804,7 +748,7 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_lr_force_relax_(std::of
         omega[k] = this->pelec->ekb.c[ekb_off + group[k]];
     }
     const std::vector<ModuleBase::matrix> forces =
-        this->openshell ? this->cal_force_openshell_Xz(Xz, omega, group.front())
+        this->lr_.dim.openshell ? this->cal_force_openshell_Xz(Xz, omega, group.front())
                         : this->cal_force_Xz(this->lr_.relax.target.ispin(), Xz, omega, group.front());
     ofs << " Followed state " << this->lr_.relax.target.state() << " is degenerate with";
     for (const int ist : group)
@@ -814,7 +758,7 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_lr_force_relax_(std::of
             ofs << " " << ist;
         }
     }
-    ofs << " (Omega_bar = " << this->lr_.relax.target.omega(this->pelec->ekb.c, this->nstates) << " Ry)." << std::endl;
+    ofs << " (Omega_bar = " << this->lr_.relax.target.omega(this->pelec->ekb.c, this->lr_.dim.nstates) << " Ry)." << std::endl;
     if (!jt_mode)
     {
         ofs << " lr_degen_mode=average: following the multiplet average, which keeps the"
@@ -836,7 +780,7 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_jt_force_(
     const LR::MplLvc mpl = LR::build_mpl_state<T>(this->gradient_inputs_(), this->gs_force_ctx_(), this->state_ctx_(),
                                                   this->lr_.relax.target.ispin(), group, diag, ofs);
     LR::JtForce jt = LR::eval_jt_force(mpl.g, ofs);
-    const int channel = this->openshell ? 0 : this->lr_.relax.target.ispin();
+    const int channel = this->lr_.dim.openshell ? 0 : this->lr_.relax.target.ispin();
     this->lr_.relax.target.save_mixed(this->lr_.amp.x[channel].template data<T>(), this->lr_.amp.nloc, jt.mixing);
     // The returned force is the descending branch's own gradient; once a step splits the
     // multiplet `resolve_group` finds no group and the single-state path takes over.
@@ -957,54 +901,54 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell &ucell, cons
     // kv
     this->kv = ks_sol.kv; // copy: cheap, and the KS solver keeps using its own
 
-    LR::check_lr_parameters(*this->inp_, this->xc_kernel, this->nspin);
+    LR::check_lr_parameters(*this->inp_, this->xc_kernel, this->lr_.dim.nspin);
 
     this->set_dim();
 
     // KS and LR must use the same AO distribution, including its BLACS grid.
     const int ks_block_size = ks_sol.pv.para_2d().nb();
     LR_Util::setup_2d_division(
-        this->paraMat_.para_2d(), ks_block_size, this->nbasis, this->nbasis
+        this->lr_.gs.para_mat.para_2d(), ks_block_size, this->lr_.dim.nbasis, this->lr_.dim.nbasis
 #ifdef __MPI
         ,
         ks_sol.pv.para_2d().ictxt()
 #endif
     );
-    LR::set_band_layout(this->paraMat_, this->nbasis, this->nbands, *this->ucell_,
+    LR::set_band_layout(this->lr_.gs.para_mat, this->lr_.dim.nbasis, this->lr_.dim.nbands, *this->ucell_,
                         this->inp_->ri_hartree_benchmark == "aims");
     if (this->inp_->cal_force)
     {
         LR_Util::setup_2d_division(
-            this->paraMat_all_.para_2d(), ks_block_size, this->nbasis, this->nbasis
+            this->lr_.gs.para_mat_all.para_2d(), ks_block_size, this->lr_.dim.nbasis, this->lr_.dim.nbasis
 #ifdef __MPI
             ,
             ks_sol.pv.para_2d().ictxt()
 #endif
         );
-        LR::set_band_layout(this->paraMat_all_, this->nbasis, this->inp_->nbands, *this->ucell_,
+        LR::set_band_layout(this->lr_.gs.para_mat_all, this->lr_.dim.nbasis, this->inp_->nbands, *this->ucell_,
                             this->inp_->ri_hartree_benchmark == "aims");
     }
 
-    this->paraMat_.atom_begin_row = ks_sol.pv.atom_begin_row;
-    this->paraMat_.atom_begin_col = ks_sol.pv.atom_begin_col;
-    this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
+    this->lr_.gs.para_mat.atom_begin_row = ks_sol.pv.atom_begin_row;
+    this->lr_.gs.para_mat.atom_begin_col = ks_sol.pv.atom_begin_col;
+    this->lr_.gs.para_mat.iat2iwt_ = ucell.get_iat2iwt();
 
     LR_Util::setup_2d_division(
-        this->lr_.amp.para_c, ks_block_size, this->nbasis, this->nbands
+        this->lr_.amp.para_c, ks_block_size, this->lr_.dim.nbasis, this->lr_.dim.nbands
 #ifdef __MPI
         ,
-        this->paraMat_.para_2d().ictxt()
+        this->lr_.gs.para_mat.para_2d().ictxt()
 #endif
     );
 
     // allocate psi_ks and eig_ks in the [nocc, nvirt] window
 #ifdef __MPI
-    this->psi_ks.reset(
+    this->lr_.gs.psi.reset(
         new psi::Psi<T>(this->kv.get_nks(), this->lr_.amp.para_c.ncloc(), this->lr_.amp.para_c.nrloc(), this->kv.ngk, true));
 #else
-    this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(), this->nbands, this->nbasis, this->kv.ngk, true));
+    this->lr_.gs.psi.reset(new psi::Psi<T>(this->kv.get_nks(), this->lr_.dim.nbands, this->lr_.dim.nbasis, this->kv.ngk, true));
 #endif
-    this->eig_ks.create(this->kv.get_nks(), this->nbands);
+    this->lr_.gs.eig.create(this->kv.get_nks(), this->lr_.dim.nbands);
     this->pelec = new elecstate::ElecStateLCAO<T>();
     orb_cutoff_ = ks_sol.orb_.cutoffs();
 
@@ -1054,50 +998,50 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell &ucell)
     // The ground-state solver owns `psi` and reuses it across ionic steps, so it cannot be stolen.
     // `eig_ks_all` / `wg_ks_all` are nspin x nbands matrices -- a few kB, copied rather than aliased
     // so that they survive the KS solver overwriting `pelec` on the next step.
-    this->psi_ks_all_ = ks_sol.psi;
-    this->eig_ks_all = ks_sol.pelec->ekb;
-    this->wg_ks_all = ks_sol.pelec->wg;
-    const int max_occupied_bands = *std::max_element(nocc.begin(), nocc.end());
-    const int start_band = this->nocc_max - max_occupied_bands;
+    this->lr_.gs.psi_all = ks_sol.psi;
+    this->lr_.gs.eig_all = ks_sol.pelec->ekb;
+    this->lr_.gs.wg_all = ks_sol.pelec->wg;
+    const int max_occupied_bands = *std::max_element(this->lr_.dim.nocc.begin(), this->lr_.dim.nocc.end());
+    const int start_band = this->lr_.dim.nocc_max - max_occupied_bands;
 
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
         // copy the KS orbitals in the [nocc, nvirt] window
 #ifdef __MPI
-        this->psi_ks_all_->fix_k(ik);
-        this->psi_ks->fix_k(ik);
+        this->lr_.gs.psi_all->fix_k(ik);
+        this->lr_.gs.psi->fix_k(ik);
         const int first_band = start_band + 1;
         Cpxgemr2d(
-            this->nbasis, this->nbands, this->psi_ks_all_->get_pointer(), 1, first_band, ks_sol.pv.desc_wfc,
-            this->psi_ks->get_pointer(), 1, 1, const_cast<int *>(this->lr_.amp.para_c.desc()), this->lr_.amp.para_c.ictxt());
+            this->lr_.dim.nbasis, this->lr_.dim.nbands, this->lr_.gs.psi_all->get_pointer(), 1, first_band, ks_sol.pv.desc_wfc,
+            this->lr_.gs.psi->get_pointer(), 1, 1, const_cast<int *>(this->lr_.amp.para_c.desc()), this->lr_.amp.para_c.ictxt());
 #else
         // serial: each band is `nbasis` contiguous coefficients, so the window is a plain
         // band-by-band copy (this loop used to compute the two pointers and copy nothing,
         // leaving `psi_ks` uninitialized in every non-MPI build)
-        for (int ib = 0; ib < this->nbands; ++ib)
+        for (int ib = 0; ib < this->lr_.dim.nbands; ++ib)
         {
-            const auto *start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
-            auto *to = &(*this->psi_ks)(ik, ib, 0);
-            std::copy(start, start + this->nbasis, to);
+            const auto *start = &(*this->lr_.gs.psi_all)(ik, start_band + ib, 0);
+            auto *to = &(*this->lr_.gs.psi)(ik, ib, 0);
+            std::copy(start, start + this->lr_.dim.nbasis, to);
         }
 #endif
         // copy the KS bands in the [nocc, nvirt] window
-        for (int ib = 0; ib < this->nbands; ++ib)
+        for (int ib = 0; ib < this->lr_.dim.nbands; ++ib)
         {
-            this->eig_ks(ik, ib) = this->eig_ks_all(ik, start_band + ib);
+            this->lr_.gs.eig(ik, ib) = this->lr_.gs.eig_all(ik, start_band + ib);
         }
     }
 
-    if (nspin == 2)
+    if (this->lr_.dim.nspin == 2)
     {
         const int nupdown_now =
             LR_Util::spin_population_difference(ks_sol.pelec->wg, this->kv.para_k.kpar, this->kv.para_k.rank_in_pool);
         if (!this->ks_initialized_)
         {
-            this->nupdown = nupdown_now;
+            this->lr_.dim.nupdown = nupdown_now;
             reset_dim_spin(); // shifts nocc/nvirt between the spin channels: must run exactly once
         }
-        else if (nupdown_now != this->nupdown)
+        else if (nupdown_now != this->lr_.dim.nupdown)
         {
             ModuleBase::WARNING_QUIT(
                 "ESolver_LR::refresh_from_ks_",
@@ -1170,7 +1114,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
     ModuleBase::GlobalFunc::DONE(this->ofs_running_, "INIT K-POINTS");
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
-    LR::check_lr_parameters(*this->inp_, this->xc_kernel, this->nspin);
+    LR::check_lr_parameters(*this->inp_, this->xc_kernel, this->lr_.dim.nspin);
 
     /// read orbitals and build the interpolation table
     two_center_bundle_own_.build_orb(ucell.ntype, ucell.orbital_fn.data(), inp.orbital_dir);
@@ -1190,24 +1134,24 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
 
     this->set_dim();
     //  setup 2d-block distribution for AO-matrix and KS wfc
-    LR_Util::setup_2d_division(this->paraMat_.para_2d(), 1, this->nbasis, this->nbasis);
-    LR::set_band_layout(this->paraMat_, this->nbasis, this->nbands, *this->ucell_,
+    LR_Util::setup_2d_division(this->lr_.gs.para_mat.para_2d(), 1, this->lr_.dim.nbasis, this->lr_.dim.nbasis);
+    LR::set_band_layout(this->lr_.gs.para_mat, this->lr_.dim.nbasis, this->lr_.dim.nbands, *this->ucell_,
                         this->inp_->ri_hartree_benchmark == "aims");
     if (this->inp_->cal_force)
     {
-        LR_Util::setup_2d_division(this->paraMat_all_.para_2d(), 1, this->nbasis, this->nbasis);
-        LR::set_band_layout(this->paraMat_all_, this->nbasis, this->inp_->nbands, *this->ucell_,
+        LR_Util::setup_2d_division(this->lr_.gs.para_mat_all.para_2d(), 1, this->lr_.dim.nbasis, this->lr_.dim.nbasis);
+        LR::set_band_layout(this->lr_.gs.para_mat_all, this->lr_.dim.nbasis, this->inp_->nbands, *this->ucell_,
                             this->inp_->ri_hartree_benchmark == "aims");
     }
 
     // read the ground state info
     // now ModuleIO::read_wfc_nao needs `Parallel_Orbitals` and can only read all the bands
     // it need improvement to read only the bands needed
-    this->psi_ks.reset(new psi::Psi<T>(
-        this->kv.get_nks(), this->paraMat_.ncol_bands, this->paraMat_.para_2d().nrloc(), this->kv.ngk, true));
+    this->lr_.gs.psi.reset(new psi::Psi<T>(
+        this->kv.get_nks(), this->lr_.gs.para_mat.ncol_bands, this->lr_.gs.para_mat.para_2d().nrloc(), this->kv.ngk, true));
     this->read_ks_wfc();
 
-    if (nspin == 2)
+    if (this->lr_.dim.nspin == 2)
     {
         // Complete file populations were read before selecting the occupied window.
         reset_dim_spin();
@@ -1220,7 +1164,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
 #endif
 
     LR_Util::setup_2d_division(
-        this->lr_.amp.para_c, 1, this->nbasis, this->nbands
+        this->lr_.amp.para_c, 1, this->lr_.dim.nbasis, this->lr_.dim.nbands
 #ifdef __MPI
         ,
         paraMat_.para_2d().ictxt()
