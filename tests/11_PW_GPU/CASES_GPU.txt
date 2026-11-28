@@ -12,3 +12,4 @@ scf_ppcg_al
 scf_ppcg_uspp_fe
 scf_ppcg_uspp_nacl
 scf_ppcg_uspp_hcl
+scf_ppcg_uspp_fe_20bands

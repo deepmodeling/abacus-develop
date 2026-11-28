@@ -300,6 +300,7 @@ class DiagoPPCG
         OperatorBlock &candidates);
 
     void update_one_block(
+        const HSOperator<T, Device> &op,
         T *psi,
         const std::vector<int> &cols,
         int l,

@@ -158,6 +158,88 @@ class DiagoPPCGProjectionTest : public ::testing::Test
         }
     }
 
+    void check_update_cancellation(const bool generalized)
+    {
+        const int dimension = 3;
+        const int ld = 4;
+        const int bands = 1;
+        const int blocks = 3;
+        const double perturbation = 1.0e-10;
+        const std::vector<T> h = {T(1), T(0), T(0), T(0), T(3), T(0.3, -0.2), T(0), T(0.3, 0.2), T(10)};
+        std::vector<T> s(dimension * dimension, T(0));
+        s[0] = T(1);
+        s[4] = T(1);
+        s[8] = T(1);
+        if (generalized)
+        {
+            s[4] = T(2);
+            s[8] = T(3);
+            s[5] = T(0.1, -0.05);
+            s[7] = T(0.1, 0.05);
+        }
+        DiagoPPCG<T, base_device::DEVICE_CPU> solver(1.0e-12, 20, bands, 1);
+        solver.ld_psi_ = ld;
+        solver.n_dim_ = dimension;
+        solver.n_band_ = bands;
+        solver.hpsi_.assign(ld, T(0));
+        solver.spsi_.assign(ld, T(0));
+        solver.p_.assign(ld, T(0));
+        solver.hp_.assign(ld, T(0));
+        solver.sp_.assign(ld, T(0));
+        DiagoPPCG<T, base_device::DEVICE_CPU>::SmallSubspace subspace;
+        subspace.psi_l.assign(ld, T(0));
+        subspace.w_l.assign(ld, T(0));
+        subspace.p_l.assign(ld, T(0));
+        subspace.psi_l[0] = T(1);
+        subspace.w_l[1] = T(1);
+        subspace.w_l[2] = T(perturbation);
+        subspace.p_l[1] = T(1);
+        const auto h_op = [&](const T *in, T *out, int leading, int count)
+        { dense_h_multiply(h.data(), dimension, in, out, leading, count); };
+        const auto s_op = [&](const T *in, T *out, int leading, int count)
+        { dense_h_multiply(s.data(), dimension, in, out, leading, count); };
+        subspace.hpsi_l.assign(ld, T(0));
+        subspace.spsi_l.assign(ld, T(0));
+        subspace.hw_l.assign(ld, T(0));
+        subspace.sw_l.assign(ld, T(0));
+        subspace.hp_l.assign(ld, T(0));
+        subspace.sp_l.assign(ld, T(0));
+        h_op(subspace.psi_l.data(), subspace.hpsi_l.data(), ld, bands);
+        s_op(subspace.psi_l.data(), subspace.spsi_l.data(), ld, bands);
+        h_op(subspace.w_l.data(), subspace.hw_l.data(), ld, bands);
+        s_op(subspace.w_l.data(), subspace.sw_l.data(), ld, bands);
+        h_op(subspace.p_l.data(), subspace.hp_l.data(), ld, bands);
+        s_op(subspace.p_l.data(), subspace.sp_l.data(), ld, bands);
+        // W and P nearly cancel when forming the new direction. The result
+        // is already transverse to X, so projection cancellation cannot detect it.
+        subspace.k.assign(blocks * blocks, T(0));
+        subspace.k[0] = T(1);
+        subspace.k[1] = T(1);
+        subspace.k[2] = T(-1);
+        const std::vector<int> columns(1, 0);
+        const ppcg_test::CallbackHSOperator<T> op(h_op, s_op);
+        std::vector<T> x(ld, T(0));
+        solver.update_one_block(op, x.data(), columns, bands, blocks, subspace);
+        solver.project_search_directions(op, x.data(), columns, columns);
+        std::vector<T> expected_h(ld, T(0));
+        std::vector<T> expected_s(ld, T(0));
+        h_op(solver.p_.data(), expected_h.data(), ld, bands);
+        s_op(solver.p_.data(), expected_s.data(), ld, bands);
+        double norm_squared = 0.0;
+        double h_error_squared = 0.0;
+        double s_error_squared = 0.0;
+        for (int row = 0; row < dimension; ++row)
+        {
+            norm_squared += std::norm(solver.p_[row]);
+            h_error_squared += std::norm(solver.hp_[row] - expected_h[row]);
+            s_error_squared += std::norm(solver.sp_[row] - expected_s[row]);
+        }
+        ASSERT_GT(norm_squared, 0.0);
+        EXPECT_LT(std::sqrt(h_error_squared / norm_squared), 1.0e-12);
+        EXPECT_LT(std::sqrt(s_error_squared / norm_squared), 1.0e-12);
+        EXPECT_EQ(solver.p_[dimension], T(0));
+    }
+
     void check_projection(const bool nearly_parallel, const bool zero_direction)
     {
         const int dimension = 2;
@@ -249,6 +331,12 @@ class DiagoPPCGProjectionTest : public ::testing::Test
         EXPECT_EQ(s_calls, expected_calls);
     }
 };
+
+TEST_F(DiagoPPCGProjectionTest, RefreshesImagesAfterDirectionCombinationCancellation)
+{
+    check_update_cancellation(false);
+    check_update_cancellation(true);
+}
 
 TEST_F(DiagoPPCGProjectionTest, RefreshesImagesAfterSevereProjectionCancellation) { check_projection(true, false); }
 

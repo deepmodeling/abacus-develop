@@ -1321,6 +1321,7 @@ bool DiagoPPCG<T, Device>::recover_competing_ritz(
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::update_one_block(
+    const HSOperator<T, Device> &op,
     T *psi,
     const std::vector<int> &cols,
     int l,
@@ -1400,6 +1401,44 @@ void DiagoPPCG<T, Device>::update_one_block(
     combine(subspace.basis, direction_coeff, subspace.p_new);
     combine(subspace.sbasis, direction_coeff, subspace.sp_new);
     combine(subspace.hbasis, direction_coeff, subspace.hp_new);
+
+    // A new direction combines W and P, whose nearly parallel contributions
+    // can cancel before the next projection. Reusing the same coefficients for
+    // HP/SP then amplifies their rounding error when the tiny P is normalized.
+    const int direction_count = dim - l;
+    std::vector<double> norms(dim, 0.0);
+    const T *direction_basis = subspace.basis.data() + ld_psi_ * l;
+    PPCGVectorOps<T, Device>::column_products(
+        n_dim_, ld_psi_, direction_count, direction_basis, direction_basis, norms.data());
+    double *new_norms = norms.data() + direction_count;
+    PPCGVectorOps<T, Device>::column_products(
+        n_dim_, ld_psi_, l, subspace.p_new.data(), subspace.p_new.data(), new_norms);
+    reduce_pool_values(norms.data(), dim);
+    std::vector<int> refresh;
+    for (int column = 0; column < l; ++column)
+    {
+        double reference_norm = 0.0;
+        for (int row = 0; row < direction_count; ++row)
+        {
+            reference_norm += norms[row] * std::norm(subspace.coeff_p[l + row + column * dim]);
+        }
+        if (new_norms[column] < 0.5 * reference_norm)
+        {
+            refresh.push_back(column);
+        }
+    }
+    if (!refresh.empty())
+    {
+        Workspace directions;
+        copy_cols(subspace.p_new.data(), refresh, directions);
+        Workspace h_directions(directions.size(), T(0));
+        Workspace s_directions(directions.size(), T(0));
+        const int count = int(refresh.size());
+        apply_h(op, directions.data(), h_directions.data(), count);
+        apply_s(op, directions.data(), s_directions.data(), count);
+        scatter_cols(subspace.hp_new.data(), refresh, h_directions);
+        scatter_cols(subspace.sp_new.data(), refresh, s_directions);
+    }
 
     scatter_cols(psi, cols, subspace.psi_new);
     scatter_cols(spsi_.data(), cols, subspace.spsi_new);
@@ -2172,7 +2211,7 @@ double DiagoPPCG<T, Device>::diag(
                 measure_local_overlap(subspace, local_dim);
                 const int valid_ritz_count = solve_small_generalized(local_dim, l, subspace);
                 collect_discarded_ritz(subspace, l, valid_ritz_count, discarded);
-                update_one_block(psi_in, cols, l, nblk, subspace);
+                update_one_block(op, psi_in, cols, l, nblk, subspace);
                 i0 += l;
             }
         }

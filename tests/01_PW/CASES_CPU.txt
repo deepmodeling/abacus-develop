@@ -130,6 +130,7 @@ relax_dftu_spin4
 821_PW_PPCG_USPP_Fe
 822_PW_PPCG_USPP_NaCl
 823_PW_PPCG_USPP_HCl
+825_PW_PPCG_USPP_Fe_20bands
 scf_deltaspin2
 scf_deltaspin4
 nscf_hse_same

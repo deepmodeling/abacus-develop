@@ -79,10 +79,10 @@ TEST_F(DiagoPPCGTridiagTest, ReusesProjectedOperatorImages)
 
     ASSERT_TRUE(solver.iteration_limit_reached());
     // Initial/final X applications, one W application per sweep, and one
-    // cancellation-triggered P refresh. No unconditional HP or projected SW
-    // recomputation is needed, including when S is not I.
-    EXPECT_EQ(h_calls, 5);
-    EXPECT_EQ(s_calls, 5);
+    // projection-triggered P refresh and one combination-triggered refresh.
+    // Neither requires an unconditional full operator-image refresh.
+    EXPECT_EQ(h_calls, 6);
+    EXPECT_EQ(s_calls, 6);
     double max_residual = 0.0;
     for (int j = 0; j < nband; ++j)
     {
@@ -252,12 +252,14 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
     {
         int sweeps;
         int interval;
+        int combination_refreshes;
     };
     // Ten sweeps need no periodic refresh; eighteen exercise the one at 16.
     // Each configuration additionally encounters one projection cancellation.
     // Each run encounters one competing discarded direction and
     // therefore add one conditional expanded Ritz solve, without another H call.
-    const Configuration configurations[] = {{10, 1}, {10, 4}, {10, 16}, {18, 1}, {18, 4}, {18, 16}};
+    // Direction-combination cancellation adds the listed selective refreshes.
+    const Configuration configurations[] = {{10, 1, 0}, {10, 4, 1}, {10, 16, 0}, {18, 1, 2}, {18, 4, 5}, {18, 16, 5}};
     for (const Configuration &configuration : configurations)
     {
         const int sweeps = configuration.sweeps;
@@ -299,7 +301,8 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
         const int expected_ritz = 1 + scheduled + final_extra + startup_extra + competing_extra;
         const int operator_refreshes = sweeps / 16;
         const int cancellation_refreshes = 1;
-        const int expected_applications = 2 + sweeps + 2 * operator_refreshes + cancellation_refreshes;
+        const int expected_applications =
+            2 + sweeps + 2 * operator_refreshes + cancellation_refreshes + configuration.combination_refreshes;
         EXPECT_EQ(solver.root_recovery_count(), competing_extra);
         EXPECT_EQ(solver.rayleigh_ritz_count(), expected_ritz);
         EXPECT_EQ(applications, expected_applications);
