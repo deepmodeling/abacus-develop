@@ -335,3 +335,132 @@ void DFPT_Phon::apply_asr(const std::string &asr_type, int q_idx, DFPT_PW_Data &
 }
 
 } // namespace ModuleDFPT
+
+namespace
+{
+
+/// flat 3x3 view of a Matrix3 (row-major) for the projection loops
+void flatten(const ModuleBase::Matrix3 &m, double r[9])
+{
+    r[0] = m.e11;
+    r[1] = m.e12;
+    r[2] = m.e13;
+    r[3] = m.e21;
+    r[4] = m.e22;
+    r[5] = m.e23;
+    r[6] = m.e31;
+    r[7] = m.e32;
+    r[8] = m.e33;
+}
+
+} // namespace
+
+namespace ModuleDFPT
+{
+
+void symmetrize_tensor3(const std::vector<ModuleBase::Matrix3> &rot_carts, ModuleBase::matrix &tensor)
+{
+    ModuleBase::TITLE("DFPT_Phon", "symmetrize_tensor3");
+    ModuleBase::timer::start("DFPT_Phon", "symmetrize_tensor3");
+    const int nops = static_cast<int>(rot_carts.size());
+    if (nops <= 1 || tensor.nr != 3 || tensor.nc != 3)
+    {
+        ModuleBase::timer::end("DFPT_Phon", "symmetrize_tensor3");
+        return; // QE symme.f90: IF (nsym == 1) RETURN
+    }
+    ModuleBase::matrix work(3, 3, true);
+    for (int g = 0; g < nops; ++g)
+    {
+        double r[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        flatten(rot_carts[g], r);
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                double s = 0.0;
+                for (int k = 0; k < 3; ++k)
+                {
+                    for (int l = 0; l < 3; ++l)
+                    {
+                        s += r[i * 3 + k] * tensor(k, l) * r[j * 3 + l];
+                    }
+                }
+                work(i, j) += s;
+            }
+        }
+    }
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            tensor(i, j) = work(i, j) / nops;
+        }
+    }
+    ModuleBase::timer::end("DFPT_Phon", "symmetrize_tensor3");
+}
+
+void symmetrize_born(
+    const std::vector<ModuleBase::Matrix3> &rot_carts, const std::vector<std::vector<int>> &atom_images,
+    std::vector<ModuleBase::matrix> &born)
+{
+    ModuleBase::TITLE("DFPT_Phon", "symmetrize_born");
+    ModuleBase::timer::start("DFPT_Phon", "symmetrize_born");
+    const int nops = static_cast<int>(rot_carts.size());
+    const int nat = static_cast<int>(born.size());
+    if (nops <= 1 || nat == 0 || static_cast<int>(atom_images.size()) != nops)
+    {
+        ModuleBase::timer::end("DFPT_Phon", "symmetrize_born");
+        return;
+    }
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        if (born[iat].nr != 3 || born[iat].nc != 3)
+        {
+            ModuleBase::timer::end("DFPT_Phon", "symmetrize_born");
+            return;
+        }
+    }
+    std::vector<ModuleBase::matrix> work(nat, ModuleBase::matrix(3, 3, true));
+    for (int g = 0; g < nops; ++g)
+    {
+        double r[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        flatten(rot_carts[g], r);
+        for (int iat = 0; iat < nat; ++iat)
+        {
+            const int source = atom_images[g][iat];
+            if (source < 0 || source >= nat)
+            {
+                ModuleBase::timer::end("DFPT_Phon", "symmetrize_born");
+                return;
+            }
+            for (int i = 0; i < 3; ++i)
+            {
+                for (int j = 0; j < 3; ++j)
+                {
+                    double s = 0.0;
+                    for (int k = 0; k < 3; ++k)
+                    {
+                        for (int l = 0; l < 3; ++l)
+                        {
+                            s += r[i * 3 + k] * born[source](k, l) * r[j * 3 + l];
+                        }
+                    }
+                    work[iat](i, j) += s;
+                }
+            }
+        }
+    }
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                born[iat](i, j) = work[iat](i, j) / nops;
+            }
+        }
+    }
+    ModuleBase::timer::end("DFPT_Phon", "symmetrize_born");
+}
+
+} // namespace ModuleDFPT
