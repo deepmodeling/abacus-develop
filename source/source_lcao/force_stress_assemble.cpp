@@ -245,7 +245,7 @@ void assemble_print_force(const UnitCell& ucell,
                           ModuleBase::matrix& fcs)
 {
     const int nat = ucell.nat;
-    const auto& input = PARAM.inp;
+    const Input_para& input = PARAM.inp;
     //---------------------------------
     // sum all parts of force!
     //---------------------------------
@@ -293,8 +293,11 @@ void assemble_print_force(const UnitCell& ucell,
     }
     GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
-    // this->printforce_total(ry, istestf, fcs);
-    ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", fcs, false);
+    // The coupled LR solver reports the ground-state force with the LR forces.
+    if (input.esolver_type != "ks-lr")
+    {
+        ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", fcs, false);
+    }
     ModuleIO::print_net_force(GlobalV::ofs_running, net_force);
     if (istestf)
     {

@@ -2741,6 +2741,19 @@ TEST_F(InputTest, Item_test2)
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it
             = find_label("diag_subspace", readinput.input_lists);
         EXPECT_EQ(it->second.get_availability(), "basis_type==pw and (ks_solver==dav_subspace or ks_solver==lobpcg)");
+        ModuleIO::InputValues values;
+        const std::string lobpcg = "lobpcg";
+        values["ks_solver"] = ModuleIO::InputValue(lobpcg);
+        for (const int backend : {0, 2})
+        {
+            values["diag_subspace"] = ModuleIO::InputValue(backend);
+            EXPECT_TRUE(it->second.domain.validate_requirements("diag_subspace", values).empty());
+        }
+        values["diag_subspace"] = ModuleIO::InputValue(1);
+        EXPECT_FALSE(it->second.domain.validate_requirements("diag_subspace", values).empty());
+        const std::string davidson = "dav_subspace";
+        values["ks_solver"] = ModuleIO::InputValue(davidson);
+        EXPECT_TRUE(it->second.domain.validate_requirements("diag_subspace", values).empty());
     }
     { // md_nstep
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("md_nstep", readinput.input_lists);
@@ -3337,4 +3350,38 @@ TEST_F(InputTest, DfptBroydenNdimRuleBoundaries)
         EXPECT_THAT(error, testing::HasSubstr("input-main.html#dfpt-broyden-ndim"));
         EXPECT_EQ(input.dfpt_broyden_ndim, previous_ndim);
     }
+}
+
+TEST_F(InputTest, PwDiagNmaxMustBePositive)
+{
+    ModuleIO::ReadInput reader(0);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>> items(reader.get_input_lists());
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item
+        = find_label("pw_diag_nmax", items);
+    ASSERT_NE(item, items.end());
+    ModuleIO::Input_Item& option = item->second;
+    EXPECT_TRUE(option.domain.validate_explicit(option.label, {"37"}).empty());
+    EXPECT_FALSE(option.domain.validate_explicit(option.label, {"0"}).empty());
+    EXPECT_FALSE(option.domain.validate_explicit(option.label, {"-1"}).empty());
+}
+
+TEST_F(InputTest, LobpcgLocking)
+{
+    ModuleIO::ReadInput reader(0);
+    Parameter param;
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>> items(reader.get_input_lists());
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator found
+        = find_label("lobpcg_locking", items);
+    ASSERT_NE(found, items.end());
+    ModuleIO::Input_Item& item = found->second;
+    EXPECT_EQ(param.inp.lobpcg_locking, "hard");
+    EXPECT_EQ(item.default_value, "hard");
+    EXPECT_TRUE(item.domain.validate_explicit(item.label, {"hard"}).empty());
+    EXPECT_TRUE(item.domain.validate_explicit(item.label, {"soft"}).empty());
+    EXPECT_FALSE(item.domain.validate_explicit(item.label, {"invalid"}).empty());
+    item.str_values = {"soft"};
+    item.read_value(item, param);
+    EXPECT_EQ(param.inp.lobpcg_locking, "soft");
+    item.get_final_value(item, param);
+    EXPECT_EQ(item.final_value.str(), "soft");
 }

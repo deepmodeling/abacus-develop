@@ -315,10 +315,10 @@ namespace LR
     template<typename T, typename TOpsR, typename TOpsL>
     void build_and_solve_zeq(TOpsR& ops_R, TOpsL& ops_L, const int nspin_x,
         const T* const X, container::Tensor& R, T* const Z,
-        const int nloc_per_band, const int nstates, const std::string& zvec_solver, const bool test_force)
+        const int nloc_per_band, const int nstates, const std::string& zvec_solver, const bool test_force, const std::vector<std::vector<ct::Tensor>>& window_density)
     {
         ModuleBase::timer::start("Z_vector", "build_and_solve_zeq");
-        ops_R.hPsi(X, R.template data<T>(), nloc_per_band, nstates);  // act each operator on X
+        ops_R.hPsi(X, R.template data<T>(), nloc_per_band, nstates, window_density);
         // std::cout << "The right side of the Z-vector equation:" << std::endl;
         // LR_Util::print_value(R.template data<T>(), nstates, nloc_per_band);
         solve_zeq_with(Z, R.template data<T>(), nloc_per_band, nstates, ops_L, nspin_x, zvec_solver, test_force);
@@ -334,6 +334,6 @@ namespace LR
         const std::string& spin_type,
         const std::string& in_dir,
         const bool openshell,
-        const std::string& zvec_solver);
+        const std::string& zvec_solver, const std::vector<std::vector<ct::Tensor>>& window_density);
 }
 #endif

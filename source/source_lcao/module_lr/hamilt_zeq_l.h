@@ -179,8 +179,10 @@ namespace LR
         }
 
     protected:
-        void set_dm(const int is, const T* const X) override
+        void set_dm(const int is, const T* const X,
+                    const std::vector<ct::Tensor>* density_add) override
         {
+            assert(density_add == nullptr); // The linear Hessian reads only its input Z.
             const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(this->psi_ks_, is, this->nk);
 #ifdef __MPI
             this->dm_buf_ = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, this->pc_,

@@ -460,6 +460,7 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_phon_asr.o\
     dfpt_phon_elec.o\
     dfpt_phon_ewald.o\
+    dfpt_nscf.o\
     dfpt_pw.o\
     dfpt_pw_data.o\
     dfpt_pw_data_resp.o\
@@ -1209,6 +1210,8 @@ OBJS_LR_GRAD=lr_force.o\
     grad_jt.o\
     gradient_output.o\
     lr_grad_cs.o\
+    window_response.o\
+    window_response_math.o\
     lr_grad_os.o\
     exx_proj.o\
     cvcx_serial.o\

@@ -34,6 +34,11 @@ public:
     LRI_CV();
     ~LRI_CV();
 
+    // Call after integral construction and handoff to LibRI have finished.
+    // Tensor copies held by consumers retain their shared storage.
+    // Later ionic steps rebuild missing entries from the retained radial tables.
+    void clear_cache();
+
     void set_info_ri(const Exx_Info_RI* p) { p_info_ri = p; }
 
     void set_orbitals(

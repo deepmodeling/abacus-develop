@@ -13,6 +13,7 @@ set(SOURCES
     dfpt_pert_vkb.cpp
     dfpt_pert_nl.cpp
     dfpt_stern.cpp
+    dfpt_nscf.cpp
     dfpt_rho.cpp
     dfpt_rho_mix.cpp
     dfpt_phon.cpp
@@ -31,6 +32,7 @@ set(HEADERS
     dfpt_kq_basis.h
     dfpt_pert.h
     dfpt_stern.h
+    dfpt_nscf.h
     dfpt_rho.h
     dfpt_phon.h
     dfpt_q0.h
