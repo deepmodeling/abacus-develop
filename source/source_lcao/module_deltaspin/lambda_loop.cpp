@@ -150,7 +150,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             if(this->state_.direction_only_)
             for (int ia = 0; ia < nat; ia++)
             {
-                const auto& target = this->state_.target_mag_[ia];
+                const ModuleBase::Vector3<double>& target = this->state_.target_mag_[ia];
                 const double norm = std::sqrt(target.x*target.x + target.y*target.y + target.z*target.z);
 
                 if (norm > 1e-8) {
@@ -208,7 +208,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         if(this->state_.direction_only_)
         for (int ia = 0; ia < nat; ia++)
         {
-            const auto& target = this->state_.target_mag_[ia];
+            const ModuleBase::Vector3<double>& target = this->state_.target_mag_[ia];
             const double norm = std::sqrt(target.x*target.x + target.y*target.y + target.z*target.z);
 
             if (norm > 1e-8) {
@@ -328,7 +328,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // Use target_mag_adj (copy with parallel components added) instead of mutating target_mag_
         if(this->state_.direction_only_)
         for (int ia = 0; ia < nat; ia++) {
-            const auto& target = target_mag_adj[ia];
+            const ModuleBase::Vector3<double>& target = target_mag_adj[ia];
             const double norm = std::sqrt(target.x*target.x + target.y*target.y + target.z*target.z);
 
             if (norm > 1e-8) {
@@ -365,7 +365,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // Use target_mag_adj (copy) instead of mutating target_mag_
         if(this->state_.direction_only_)
         for (int ia = 0; ia < nat; ia++) {
-            const auto& target = target_mag_adj[ia];
+            const ModuleBase::Vector3<double>& target = target_mag_adj[ia];
             const double norm = std::sqrt(target.x*target.x + target.y*target.y + target.z*target.z);
 
             if (norm > 1e-8) {

@@ -106,7 +106,7 @@ std::vector<std::string> _split_outside_enclose(const std::string& in,
     std::string cache;
     std::vector<std::string> words = FmtCore::split(in, delim);
     bool in_enclose = false;
-    for (auto& word: words)
+    for (std::string& word: words)
     {
         if (FmtCore::startswith(word, enclose[0]))
         {
@@ -195,12 +195,12 @@ std::map<std::string, std::vector<std::string>> _build_block_data(const std::vec
     std::vector<std::string> values;
     // first drop all elements that does not startswith "_" before the first element that startswith "_"
     std::vector<std::string> block_ = block;
-    auto it = std::find_if(block.begin(), block.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
+    std::vector<std::string>::const_iterator it = std::find_if(block.begin(), block.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
     if (it != block.begin())
     {
         block_.erase(block_.begin(), it);
     }
-    for (auto& elem: block_)
+    for (std::string& elem: block_)
     {
         if (FmtCore::startswith(elem, "_"))
         {
@@ -249,7 +249,7 @@ void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the m
     int i = 0;
     if (myrank == rank) // if the rank is the source rank, then pack the map to keys and values
     {
-        for (auto& elem: map)
+        for (std::pair<const std::string, std::vector<std::string>>& elem: map)
         {
             keys[i] = elem.first;
             values[i] = elem.second;
@@ -498,7 +498,7 @@ void ModuleIO::CifParser::read(const std::string& fcif,
     std::vector<std::string> blocks = FmtCore::split(FmtCore::strip(cache), "loop_");
     blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [](const std::string& s) { return s.empty(); }), blocks.end());
     
-    for (auto& block: blocks)
+    for (std::string& block: blocks)
     {
         std::vector<std::string> words = _split_loop_block(block);
         std::map<std::string, std::vector<std::string>> data = _build_block_data(words);

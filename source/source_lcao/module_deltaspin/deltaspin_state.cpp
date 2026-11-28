@@ -81,7 +81,7 @@ int ScState::get_npol() const
 int ScState::get_nw() const
 {
     int nw = 0;
-    for (const auto& pair : this->orbitalCounts)
+    for (const std::pair<const int, int>& pair : this->orbitalCounts)
     {
         nw += pair.second;
     }
@@ -100,17 +100,17 @@ int ScState::get_nw() const
  */
 int ScState::get_iwt(int itype, int iat, int orbital_index) const
 {
-    auto it1 = this->orbitalCounts.find(itype);
+    std::map<int, int>::const_iterator it1 = this->orbitalCounts.find(itype);
     if (it1 == this->orbitalCounts.end())
     {
         return 0;
     }
     int offset = 0;
-    for (auto it = this->orbitalCounts.begin(); it != it1; ++it)
+    for (std::map<int, int>::const_iterator it = this->orbitalCounts.begin(); it != it1; ++it)
     {
         offset += it->second;
     }
-    auto it2 = this->atomCounts.find(itype);
+    std::map<int, int>::const_iterator it2 = this->atomCounts.find(itype);
     if (it2 == this->atomCounts.end())
     {
         return offset;
@@ -246,10 +246,10 @@ void ScState::set_sc_lambda()
     this->check_atomCounts();
     int nat = this->get_nat();
     this->lambda_.resize(nat);
-    for (auto& itype_data: this->ScData)
+    for (std::pair<const int, std::vector<spinconstrain::ScAtomData>>& itype_data: this->ScData)
     {
         int itype = itype_data.first;
-        for (auto& element_data: itype_data.second)
+        for (spinconstrain::ScAtomData& element_data: itype_data.second)
         {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);
@@ -281,10 +281,10 @@ void ScState::set_target_mag()
     this->check_atomCounts();
     int nat = this->get_nat();
     this->target_mag_.resize(nat, 0.0);
-    for (auto& itype_data: this->ScData)
+    for (std::pair<const int, std::vector<spinconstrain::ScAtomData>>& itype_data: this->ScData)
     {
         int itype = itype_data.first;
-        for (auto& element_data: itype_data.second)
+        for (spinconstrain::ScAtomData& element_data: itype_data.second)
         {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);
@@ -341,10 +341,10 @@ void ScState::set_constrain()
         this->constrain_[iat].y = 0;
         this->constrain_[iat].z = 0;
     }
-    for (auto& itype_data: this->ScData)
+    for (std::pair<const int, std::vector<spinconstrain::ScAtomData>>& itype_data: this->ScData)
     {
         int itype = itype_data.first;
-        for (auto& element_data: itype_data.second)
+        for (spinconstrain::ScAtomData& element_data: itype_data.second)
         {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);

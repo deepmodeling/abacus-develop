@@ -22,14 +22,14 @@ HamiltULR<T>::HamiltULR(const std::string& xc_kernel,
     const std::vector<int>& nvirt,   ///< {up, down}
     const UnitCell& ucell_in,
     const std::vector<double>& orb_cutoff,
-    Grid_Driver& gd_in,
+    const Grid_Driver& gd_in,
     const psi::Psi<T>& psi_ks_in,
     const ModuleBase::matrix& eig_ks,
 #ifdef __EXX
     std::weak_ptr<Exx_LRI<T>> exx_lri_in,
     const double& exx_alpha,
 #endif
-    std::vector<std::shared_ptr<PotHxcLR>>& pot_in,
+    const std::vector<std::shared_ptr<PotHxcLR>>& pot_in,
     const K_Vectors& kv_in,
     const std::vector<Parallel_Blkcyclic>& pX_in,   ///< {up, down}
     const Parallel_Blkcyclic& pc_in,
@@ -77,12 +77,12 @@ HamiltULR<T>::HamiltULR(const std::string& xc_kernel,
 
     this->cal_dm_trans = [this, &psi_ks_in, &pc_in, naos, &nocc, &nvirt, &pmat_in](const int& is, const T* const X)->void
         {
-            const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks_in, is, nk);
+            const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks_in, is, nk);
             // LR_Util::print_value(X, pX_in[is].size());
 #ifdef __MPI
             std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X, pX[is], psi_ks_is, pc_in, naos, nocc[is], nvirt[is], pmat_in.para_2d(), (T)1.0 / (T)nk);
             if (this->tdm_sym)
-                for (auto& t: dm_trans_2d)
+                for (container::Tensor& t: dm_trans_2d)
                     LR_Util::matsym(t.data<T>(), naos, pmat_in.para_2d());
 #else
             std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_blas(X, psi_ks_is, nocc[is], nvirt[is], (T)1.0 / (T)nk);
@@ -102,7 +102,7 @@ HamiltULR<T>::HamiltULR(const std::string& xc_kernel,
 template<typename T>
 HamiltULR<T>::~HamiltULR()
 {
-    for (auto& op: ops)
+    for (hamilt::Operator<T>*& op: ops)
     {
         delete op;
     }
@@ -160,7 +160,7 @@ std::vector<T> HamiltULR<T>::matrix()const
     {
         const int no = this->nocc[is_bj];
         const int nv = this->nvirt[is_bj];
-        const auto& px = this->pX[is_bj];
+        const Parallel_Blkcyclic& px = this->pX[is_bj];
         const int loffset_bj = is_bj * ldim_is[0];
         const int goffset_bj = is_bj * gdim_is[0];
         for (int ik_bj = 0;ik_bj < nk;++ik_bj)
@@ -185,7 +185,7 @@ std::vector<T> HamiltULR<T>::matrix()const
                     {
                         const int goffset_ai = is_ai * gdim_is[0];
                         const int loffset_ai = is_ai * ldim_is[0];
-                        const auto& pax = this->pX[is_ai];
+                        const Parallel_Blkcyclic& pax = this->pX[is_ai];
                         hamilt::Operator<T>* node(this->ops[(is_ai << 1) + is_bj]);
                         while (node != nullptr)
                         {

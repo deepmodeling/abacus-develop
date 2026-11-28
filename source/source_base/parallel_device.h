@@ -24,6 +24,8 @@ void bcast_data(std::complex<float>* object, const int& n, const MPI_Comm& comm,
 void bcast_data(double* object, const int& n, const MPI_Comm& comm, int root = 0);
 void bcast_data(float* object, const int& n, const MPI_Comm& comm, int root = 0);
 void reduce_data(std::complex<double>* object, const int& n, const MPI_Comm& comm);
+// Sum host data into the same buffer on root. Non-root buffers are unchanged.
+void reduce_data_to_root(std::complex<double>* object, const int n, const MPI_Comm& comm, const int root);
 void reduce_data(std::complex<float>* object, const int& n, const MPI_Comm& comm);
 void reduce_data(double* object, const int& n, const MPI_Comm& comm);
 void reduce_data(float* object, const int& n, const MPI_Comm& comm);

@@ -8,6 +8,7 @@
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include <algorithm>
+#include <type_traits>
 
 using namespace LR;
 
@@ -62,7 +63,7 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
     this->nloc_per_state = nk * (openshell ? paraX_[0].size() + paraX_[1].size() : paraX_[0].size());
 
     this->X.resize(openshell ? 1 : nspin, LR_Util::newTensor<T>({nstates, nloc_per_state}));
-    for (auto &x : X)
+    for (container::Tensor& x : X)
     {
         x.zero();
     }
@@ -261,7 +262,7 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int *desc_src)
 #else
         for (int ib = 0; ib < this->nbands_z_; ++ib)
         {
-            const auto *start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
+            const T* start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
             std::copy(start, start + this->nbasis, &(*this->psi_ks_z_)(ik, ib, 0));
         }
 #endif
@@ -281,8 +282,12 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int *desc_src)
     // the same windows. Diagnose once, without changing the truncated eigenproblem.
     if (!this->ks_initialized_)
     {
-        const std::string warning =
-            LR_Util::force_window_warning(this->nbasis, this->eig_ks_all.nc, start_band, this->nvirt, this->nvirt_z_);
+        // Real-Gamma forces include the virtual-window response for both spin formulations.
+        // Retain diagnostics for missing occupied orbitals and uncomputed bands.
+        const bool virtual_response = std::is_same<T, double>::value && this->nk == 1 && start_band == 0;
+        const auto &diagnosed_virtuals = virtual_response ? this->nvirt_z_ : this->nvirt;
+        const std::string warning = LR_Util::force_window_warning(
+            this->nbasis, this->eig_ks_all.nc, start_band, diagnosed_virtuals, this->nvirt_z_);
         if (!warning.empty())
         {
             this->ofs_running_ << warning << std::endl;

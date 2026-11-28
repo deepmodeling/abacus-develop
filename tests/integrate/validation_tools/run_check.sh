@@ -48,9 +48,9 @@ exec_path=${exec_path//'${ABACUS_EXE}'/$ABACUS_EXE}
 exec_path=${exec_path//'$ABACUS_EXE'/$ABACUS_EXE}
 
 # command -v accepts both a path and a bare name looked up in PATH.
-command -v "$exec_path" >/dev/null || echo "Error! ABACUS path was wrong!!"
+command -v "$exec_path" > /dev/null || echo "Error! ABACUS path was wrong!!"
 
-command -v "$exec_path" >/dev/null || exit 0
+command -v "$exec_path" > /dev/null || exit 0
 
 CA=$(grep CHECKACCURACY $GENERAL_INFO_FILE | awk '{printf $2}')
 
@@ -62,7 +62,7 @@ echo "Test in $path_here"
 echo "Begin testing the example with $NP cores"
 
 #parallel test
-mpirun -np $NP "$exec_path" >log.txt
+mpirun -np $NP "$exec_path" > log.txt
 
 test -d OUT.autotest || echo "Some errors occured in ABACUS!"
 
@@ -72,15 +72,21 @@ test -d OUT.autotest || exit 0
 #if any input parameters for this script, just generate reference file.
 #----------------------------------------------------------------------
 if test -z $1; then
-  "$CATCH_SCRIPT" result.out || exit 1
+  if ! bash -e "$CATCH_SCRIPT" result.out; then
+    echo "Failed to collect validation results." >&2
+    exit 1
+  fi
   check_out result.out
 elif [ $1 == "debug" ]; then
   # Single_job.sh debug copies validation_tools/ into the case directory;
   # use that copy so local edits to the collectors take effect.
-  ./validation_tools/catch_properties.sh result.out || exit 1
+  if ! bash -e ./validation_tools/catch_properties.sh result.out; then
+    echo "Failed to collect validation results." >&2
+    exit 1
+  fi
   check_out result.out
 else
-  if ! "$CATCH_SCRIPT" result.ref.new; then
+  if ! bash -e "$CATCH_SCRIPT" result.ref.new; then
     rm -f result.ref.new
     exit 1
   fi

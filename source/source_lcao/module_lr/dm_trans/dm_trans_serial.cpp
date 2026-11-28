@@ -21,7 +21,7 @@ namespace LR
 
         const int naos = c.get_nbasis();
         std::vector<container::Tensor> dm_trans(nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { naos, naos }));
-        for (auto& dm : dm_trans)ModuleBase::GlobalFunc::ZEROS(dm.data<double>(), naos * naos);
+        for (container::Tensor& dm : dm_trans)ModuleBase::GlobalFunc::ZEROS(dm.data<double>(), naos * naos);
         // loop for AOs
         for (size_t isk = 0;isk < nks;++isk)
         {
@@ -58,7 +58,7 @@ namespace LR
         int nmo1, nmo2, imo1, imo2;
         LR_Util::set_dim(type, nocc, nvirt, nmo1, nmo2, imo1, imo2);
         std::vector<container::Tensor> dm_trans(nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { naos, naos }));
-        for (auto& dm : dm_trans)ModuleBase::GlobalFunc::ZEROS(dm.data<std::complex<double>>(), naos * naos);
+        for (container::Tensor& dm : dm_trans)ModuleBase::GlobalFunc::ZEROS(dm.data<std::complex<double>>(), naos * naos);
         // loop for AOs
         for (size_t isk = 0;isk < nks;++isk)
         {

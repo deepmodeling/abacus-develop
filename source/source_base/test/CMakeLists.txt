@@ -86,10 +86,6 @@ addtest(
   LIBS parameter base device
   SOURCES complexmatrix_test.cpp)
 addtest(
-  TARGET MODULE_BASE_integral
-  LIBS parameter
-  SOURCES math_integral_test.cpp ../math_integral.cpp)
-addtest(
   TARGET MODULE_BASE_sph_bessel_recursive
   LIBS parameter
   SOURCES sph_bessel_rec_test.cpp ../sph_bessel_rec_d1.cpp
@@ -269,4 +265,3 @@ if(ENABLE_GOOGLEBENCH)
     LIBS parameter
     SOURCES perf_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp)
 endif()
-

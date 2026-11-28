@@ -20,12 +20,13 @@ namespace ModuleDFPT
 /// running_log (nullable): the running log stream for the created-file
 /// confirmations (AGENTS rule 16); when null the confirmation goes to
 /// stdout only.
-void DFPT_Write_Dyn(const UnitCell& ucell,
-                    const DFPT_PW_Data& data,
-                    int nq,
-                    const std::string& out_dir,
-                    int my_rank,
-                    std::ostream* running_log);
+void DFPT_Write_Dyn(
+    const UnitCell &ucell,
+    const DFPT_PW_Data &data,
+    int nq,
+    const std::string &out_dir,
+    int my_rank,
+    std::ostream *running_log);
 } // namespace ModuleDFPT
 
 #endif // DFPT_WRITE_DYN_H

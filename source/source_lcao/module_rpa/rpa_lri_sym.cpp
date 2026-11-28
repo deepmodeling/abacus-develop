@@ -27,8 +27,8 @@ bool preserves_mesh(const ModuleBase::Matrix3& kg, const K_Vectors& kv, const Un
         }
     }
     // Check the actual mesh offset as well as its spacing.
-    const auto origin = kv.kvec_c_full.at(0) * cell.G.Inverse();
-    const auto delta = origin * kg - origin;
+    const ModuleBase::Vector3<double> origin = kv.kvec_c_full.at(0) * cell.G.Inverse();
+    const ModuleBase::Vector3<double> delta = origin * kg - origin;
     const double shifts[3] = {delta.x * kv.nmp[0], delta.y * kv.nmp[1], delta.z * kv.nmp[2]};
     for (const double shift : shifts)
     {
@@ -47,7 +47,7 @@ ModuleBase::Matrix3 anti_k_action(const ModuleBase::Matrix3& spatial)
 
 void RpaLriDetail::write_stru_sym(std::ostream& output, const UnitCell& cell, const K_Vectors& kv, const int nspin)
 {
-    const auto& symm = cell.symm;
+    const ModuleSymmetry::Symmetry& symm = cell.symm;
     std::vector<LibRpaSymmetryOperation> unitary_operations;
     std::vector<LibRpaSymmetryOperation> antiunitary_operations;
     std::vector<ModuleBase::Matrix3> unitary_rotations;
@@ -86,7 +86,7 @@ void RpaLriDetail::write_stru_sym(std::ostream& output, const UnitCell& cell, co
     write_librpa_symmetry_rows(output, unitary_operations, antiunitary_operations);
     if (nspin == 4)
     {
-        const auto spin_operations
+        const std::vector<LibRpaSpinSymmetryOperation> spin_operations
             = make_librpa_spin_symmetry_operations(cell.latvec, unitary_rotations, antiunitary_rotations);
         const int grey_group = symm.magnetic_nspin4 ? 0 : 1;
         write_librpa_spin_symmetry(output, grey_group, 1, spin_operations);

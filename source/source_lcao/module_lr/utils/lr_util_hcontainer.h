@@ -60,10 +60,10 @@ namespace LR_Util
     {
         for (int iap = 0; iap < HR.size_atom_pairs(); ++iap)
         {
-            auto ap = &const_cast<hamilt::HContainer<TR_from>&>(HR).get_atom_pair(iap);
+            hamilt::AtomPair<TR_from>* ap = &const_cast<hamilt::HContainer<TR_from>&>(HR).get_atom_pair(iap);
             const int ia = ap->get_atom_i();
             const int ja = ap->get_atom_j();
-            auto ap_real = HR_real.find_pair(ia, ja);
+            hamilt::AtomPair<TR_to>* ap_real = HR_real.find_pair(ia, ja);
             // under MPI-parallel (2D block-cyclic) HContainer, an atom pair not owned by this
             // rank is absent from find_pair() and returns nullptr here; skip it
             if (!ap_real)
@@ -73,9 +73,9 @@ namespace LR_Util
             for (int iR = 0;iR < ap->get_R_size();++iR)
             {
                 // R index may be different between the two HContainers, find by R value instead of R-index
-                auto dR = ap->get_R_index(iR);
-                auto ptr = ap->get_HR_values(iR).get_pointer();
-                auto ptr_real = ap_real->get_HR_values(dR.x, dR.y, dR.z).get_pointer();
+                ModuleBase::Vector3<int> dR = ap->get_R_index(iR);
+                TR_from* ptr = ap->get_HR_values(iR).get_pointer();
+                TR_to* ptr_real = ap_real->get_HR_values(dR.x, dR.y, dR.z).get_pointer();
                 for (int i = 0; i < ap->get_size(); ++i)
                 {
                     ptr_real[i] = (get_imag ? std::imag(ptr[i]) : std::real(ptr[i]));
@@ -93,8 +93,8 @@ namespace LR_Util
         const bool get_imag = (type == 'I' || type == 'i');
         for (size_t is = 0; is < DMR.get_dmr_vec().size(); ++is)
         {
-            auto dr = DMR.get_dmr_vec()[is]; //get_dmr_ptr() has bug when is=0
-            auto dr_real = DMR_real.get_dmr_vec()[is];
+            hamilt::HContainer<T>* dr = DMR.get_dmr_vec()[is]; //get_dmr_ptr() has bug when is=0
+            hamilt::HContainer<Real<T>>* dr_real = DMR_real.get_dmr_vec()[is];
             assert(dr != nullptr);
             assert(dr_real != nullptr);
             copy_hcontainer_real_imag_part(*dr, *dr_real, get_imag);
@@ -126,17 +126,17 @@ namespace LR_Util
         bool get_imag = (type == 'I' || type == 'i');
         for (int iap = 0; iap < HR.size_atom_pairs(); ++iap)
         {
-            auto ap = &HR.get_atom_pair(iap);
+            hamilt::AtomPair<std::complex<double>>* ap = &HR.get_atom_pair(iap);
             const int ia = ap->get_atom_i();
             const int ja = ap->get_atom_j();
-            auto ap_real = HR_real.find_pair(ia, ja);
+            hamilt::AtomPair<double>* ap_real = HR_real.find_pair(ia, ja);
             assert(ap_real != nullptr);
             for (int iR = 0;iR < ap->get_R_size();++iR)
             {
                 // R index may be different between the two HContainers, find by R value instead of R-index
-                auto dR = ap->get_R_index(iR);
-                auto ptr = ap->get_HR_values(iR).get_pointer();
-                auto ptr_real = ap_real->get_HR_values(dR.x, dR.y, dR.z).get_pointer();
+                ModuleBase::Vector3<int> dR = ap->get_R_index(iR);
+                std::complex<double>* ptr = ap->get_HR_values(iR).get_pointer();
+                double* ptr_real = ap_real->get_HR_values(dR.x, dR.y, dR.z).get_pointer();
                 for (int i = 0; i < ap->get_size(); ++i)
                 {
                     get_imag ? ptr[i].imag(ptr_real[i]) : ptr[i].real(ptr_real[i]);
@@ -151,10 +151,10 @@ namespace LR_Util
                        const Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff)
     {
-        const auto& pmat = *hR.get_paraV();
+        const Parallel_Orbitals& pmat = *hR.get_paraV();
         for (int iat1 = 0; iat1 < ucell.nat; iat1++)
         {
-            auto tau1 = ucell.get_tau(iat1);
+            ModuleBase::Vector3<double> tau1 = ucell.get_tau(iat1);
             int T1, I1;
             ucell.iat2iait(iat1, &I1, &T1);
             AdjacentAtomInfo adjs;
@@ -195,16 +195,16 @@ namespace LR_Util
         // Match by atom/R values: containers may store pairs and images in different orders.
         for (int iap = 0; iap < h1.size_atom_pairs(); ++iap)
         {
-            const auto& ap1 = h1.get_atom_pair(iap);
+            const hamilt::AtomPair<TR1>& ap1 = h1.get_atom_pair(iap);
             const int iat1 = ap1.get_atom_i();
             const int iat2 = ap1.get_atom_j();
-            const auto* ap2 = h2.find_pair(iat1, iat2);
+            const hamilt::AtomPair<TR2>* ap2 = h2.find_pair(iat1, iat2);
             assert(ap2);
             for (int iR = 0; iR < ap1.get_R_size(); ++iR)
             {
-                const auto& R = ap1.get_R_index(iR);
-                const auto& mat1 = ap1.get_HR_values(R.x, R.y, R.z);
-                const auto& mat2 = ap2->get_HR_values(R.x, R.y, R.z);
+                const ModuleBase::Vector3<int>& R = ap1.get_R_index(iR);
+                const hamilt::BaseMatrix<TR1>& mat1 = ap1.get_HR_values(R.x, R.y, R.z);
+                const hamilt::BaseMatrix<TR2>& mat2 = ap2->get_HR_values(R.x, R.y, R.z);
                 const int size = mat1.get_col_size() * mat1.get_row_size();
                 const TR1* values1 = mat1.get_pointer();
                 const TR2* values2 = mat2.get_pointer();
@@ -228,7 +228,7 @@ namespace LR_Util
     void transpose_DMR(module_dm::DensityMatrix<TK, double>& dm, const Parallel_Orbitals& pv)
     {
         // 1. transpose dm(k)
-        for (auto& dk : dm.get_dmk_vec())
+        for (std::vector<TK>& dk : dm.get_dmk_vec())
         {
 #ifdef __MPI
             // dm(k) is 2D-block-cyclic distributed, so the transpose needs the PBLAS routine

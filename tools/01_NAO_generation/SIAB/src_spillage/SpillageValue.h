@@ -26,14 +26,14 @@ class SpillageValue
 
     void out();
 
-    void save_level(const int& ilevel);
+    void save_level(const int &ilevel);
 
   private:
     // spillage value for each structure.
-    double* value;
+    double *value;
 
     // the previous spillage value for each structure.
-    double* value_old;
+    double *value_old;
 
     // spillage for all structures.
     matrix value_each_level;
@@ -42,7 +42,7 @@ class SpillageValue
     // eg. 5 different dimers.
     int dim;
 
-    void allocate(const int& dim_in);
+    void allocate(const int &dim_in);
 
     void reset();
 

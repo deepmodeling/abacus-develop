@@ -72,10 +72,10 @@ namespace LR
 #endif
             this->cal_dm_trans = [this, &psi_ks, &pc, naos, &nocc, &nvirt, &pmat](const int& is, const T* X)->void
                 {
-                    const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
+                    const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
                     std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                    for (auto& t: dm_trans_2d)
+                    for (container::Tensor& t: dm_trans_2d)
                         LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
 #else
                     std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_blas(X, psi_ks_is, nocc[is], nvirt[is]);
@@ -179,9 +179,11 @@ namespace LR
         }
 
     protected:
-        void set_dm(const int is, const T* const X) override
+        void set_dm(const int is, const T* const X,
+                    const std::vector<ct::Tensor>* density_add) override
         {
-            const auto psi_ks_is = LR_Util::get_psi_spin(this->psi_ks_, is, this->nk);
+            assert(density_add == nullptr); // The linear Hessian reads only its input Z.
+            const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(this->psi_ks_, is, this->nk);
 #ifdef __MPI
             this->dm_buf_ = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, this->pc_,
                 this->naos_, this->nocc[is], this->nvirt[is], this->pmat_.para_2d());

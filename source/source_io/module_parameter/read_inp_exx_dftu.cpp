@@ -253,11 +253,8 @@ masking is unsupported.)";
         item.default_value = "cpu";
         item.set_availability("basis_type==lcao");
         read_sync_string(input.device_exx);
+        item.domain.set_choices({"cpu", "gpu"});
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.device_exx != "cpu" && para.input.device_exx != "gpu")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "device_exx must be cpu or gpu");
-            }
             if (para.input.device_exx == "gpu")
             {
                 if (para.input.basis_type != "lcao" || para.input.device != "gpu")
@@ -546,7 +543,7 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
             }
             if (para.input.basis_type == "pw" && para.input.exx_singularity_correction == "limits")
             {
-                const auto gamma_item = std::find_if(this->input_lists.begin(), this->input_lists.end(),
+                const std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator gamma_item = std::find_if(this->input_lists.begin(), this->input_lists.end(),
                     [](const std::pair<std::string, Input_Item>& entry) {
                         return entry.first == "exx_gamma_extra";
                     });
@@ -567,7 +564,7 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
                 if (scheme == "limits")
                 {
                     bool has_fock = false;
-                    for (const auto& alpha : para.input.exx_fock_alpha)
+                    for (const std::string& alpha : para.input.exx_fock_alpha)
                     {
                         has_fock = has_fock || std::stod(alpha) != 0.0;
                     }
@@ -726,7 +723,7 @@ void ReadInput::item_dftu()
         read_sync_int(input.dft_plus_u);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
-            for (auto& val: para.input.l_channel)
+            for (int& val: para.input.l_channel)
             {
                 if (val != -1)
                 {
@@ -805,7 +802,7 @@ void ReadInput::item_dftu()
                                          "orbital_corr should have the same "
                                          "number of elements as ntype");
             }
-            for (auto& val: para.input.l_channel)
+            for (const int& val: para.input.l_channel)
             {
                 if (val < -1 || val > 3)
                 {
@@ -845,7 +842,7 @@ void ReadInput::item_dftu()
                                          "hubbard_u should have the same "
                                          "number of elements as ntype");
             }
-            for (auto& value: para.sys.hubbard_u)
+            for (const double& value: para.sys.hubbard_u)
             {
                 if (value < -1.0e-3)
                 {
@@ -907,7 +904,7 @@ void ReadInput::item_dftu()
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
-            for (auto& val: para.input.l_channel)
+            for (int& val: para.input.l_channel)
             {
                 if (val != -1)
                 {

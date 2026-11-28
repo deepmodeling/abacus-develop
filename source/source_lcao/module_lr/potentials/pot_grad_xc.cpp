@@ -72,14 +72,14 @@ namespace LR
     {
         ModuleBase::TITLE("PotGradXCLR", "cal_v_eff");
         ModuleBase::timer::start("PotGradXCLR", "cal_v_eff");
-        const auto& kxc = this->xc_kernel_components_;
+        const KernelXC& kxc = this->xc_kernel_components_;
 
         if (kxc.openshell)
         {
             throw std::domain_error("open shell (S2_updown) unfinished in "
                 + std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
-        const auto& g = kxc.gxc(this->triplet_);
+        const LR::KernelXC::GxcCoef& g = kxc.gxc(this->triplet_);
 
         // Branch on THIS kernel's own GGA-ness, not the ground state's: in a cross-functional
         // run (e.g. TDLDA@PBE) `XC_Functional::get_func_type()` reflects `dft_functional` (PBE,
@@ -111,8 +111,11 @@ namespace LR
             const double* const e_st = g.e_st.data();
             const double* const e_t2 = g.e_t2.data();
             const double* const e_q = g.e_q.data();
-            const double* const c_s = g.c_s.data();
-            const double* const c_t = g.c_t.data();
+            const auto& coefficients = kxc.closed_shell_gga(this->triplet_);
+            const double* const rs = coefficients.rho_sigma.data();
+            const double* const ss = coefficients.sigma_sigma.data();
+            // nspin=1 gxc includes the singlet factor 4; nspin=2 already uses spin sums.
+            const double transition_gradient_factor = (kxc.nspin() == 1) ? 8. : 2.;
             const double* const a_s2 = g.a_s2.data();
             const double* const a_st = g.a_st.data();
             const double* const a_t2 = g.a_t2.data();
@@ -134,7 +137,7 @@ namespace LR
                 const double q = drho1[ir] * drho1[ir];         // $\nabla\rho^1\cdot\nabla\rho^1$
                 const double e = e_s2[ir] * (s * s) + e_st[ir] * (s * t)
                     + e_t2[ir] * (t * t) + e_q[ir] * q;
-                gdot_terms[ir] = -(drho * e + drho1[ir] * (c_s[ir] * s + c_t[ir] * t));
+                gdot_terms[ir] = -(drho * e + drho1[ir] * (transition_gradient_factor * (rs[ir] * s + ss[ir] * t)));
             }
             XC_Functional::grad_dot(gdot_terms, v_tmp, &this->rho_basis_, this->tpiba_);
 
@@ -179,7 +182,7 @@ namespace LR
         ModuleBase::TITLE("PotGradXCLR", "cal_v_eff_openshell");
         ModuleBase::timer::start("PotGradXCLR", "cal_v_eff_openshell");
         using namespace LR::libxc_idx;
-        const auto& kxc = this->xc_kernel_components_;
+        const KernelXC& kxc = this->xc_kernel_components_;
         assert(tau == 0 || tau == 1);
         const std::vector<double>& v2rs = kxc.v2rhosigma;
         const std::vector<double>& v2s2 = kxc.v2sigma2;
@@ -187,6 +190,7 @@ namespace LR
         const std::vector<double>& v3r2s = kxc.v3rho2sigma;
         const std::vector<double>& v3rs2 = kxc.v3rhosigma2;
         const std::vector<double>& v3s3 = kxc.v3sigma3;
+        const std::vector<double>& sigma_jacobian = kxc.sigma_jacobian();
 
         // Branch on THIS kernel's own GGA-ness, not the ground state's (see `cal_v_eff`).
         if (!kxc.is_gga())   // LDA: only $g^{\rho\rho\rho}$ survives
@@ -277,6 +281,8 @@ namespace LR
             // $u'_a$ and $u''_a$ do not depend on $\tau$; only the $\theta$ weights and the
             // channel selector below do.
             ModuleBase::Vector3<double> E(0., 0., 0.);
+            const double* const rho_sigma_coefficients = v2rs.data() + o6;
+            const double* const sigma_sigma_coefficients = v2s2.data() + o6;
             for (int a = 0;a < 3;++a)
             {
                 const double th = theta[tau][a];
@@ -285,16 +291,9 @@ namespace LR
                     continue;
                 }
                 const int c = chan[tau][a];
-                double up = 0.;
+                const double up = sigma_potential_derivative(
+                    rho_sigma_coefficients, sigma_sigma_coefficients, a, s, S, 0, 2);
                 double upp = 0.;
-                for (int s0 = 0; s0 < 2; ++s0)
-                {
-                    up += s[s0] * v2rs[o6 + rs(s0, a)];
-                }
-                for (int b = 0; b < 3; ++b)
-                {
-                    up += S[b] * v2s2[o6 + p2[a][b]];
-                }
 
                 for (int s0 = 0;s0 < 2;++s0) {
                     for (int s1 = 0; s1 < 2; ++s1)
@@ -319,7 +318,10 @@ namespace LR
                     upp += Q[b] * v2s2[o6 + p2[a][b]];
                 }
 
-                E += th * (drho[c] * upp + dr1[c] * (2. * up));
+                // Prepared-sigma coefficients carry J; explicit transition-gradient
+                // factors retain their full derivative, including below the floor.
+                const double jacobian = sigma_jacobian.empty() ? 1.0 : sigma_jacobian[3 * ir + a];
+                E += th * (drho[c] * (upp * jacobian) + dr1[c] * (2. * up));
             }
             gdot_terms[ir] = -E;   // `grad_dot` then yields $-\nabla\cdot\boldsymbol{E}_\tau$
         }

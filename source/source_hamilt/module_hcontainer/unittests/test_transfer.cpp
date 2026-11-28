@@ -137,8 +137,8 @@ TEST_F(TransferTest, serialToPara)
         auto value = [&](int k, int l) -> double
         { return ((double(atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
         double *data = atom_pair.get_pointer(0);
-        auto row_indexes = paraV->get_indexes_row(atom_i);
-        auto col_indexes = paraV->get_indexes_col(atom_j);
+        std::vector<int> row_indexes = paraV->get_indexes_row(atom_i);
+        std::vector<int> col_indexes = paraV->get_indexes_col(atom_j);
         for (int k = 0; k < row_indexes.size(); k++)
         {
             for (int l = 0; l < col_indexes.size(); l++)
@@ -269,8 +269,8 @@ TEST_F(TransferTest, paraToSerial)
         auto value = [&](int k, int l) -> double
         { return (((atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
         double *data = atom_pair.get_pointer(0);
-        auto row_indexes = paraV->get_indexes_row(atom_i);
-        auto col_indexes = paraV->get_indexes_col(atom_j);
+        std::vector<int> row_indexes = paraV->get_indexes_row(atom_i);
+        std::vector<int> col_indexes = paraV->get_indexes_col(atom_j);
         for (int k = 0; k < row_indexes.size(); k++)
         {
             for (int l = 0; l < col_indexes.size(); l++)
@@ -422,8 +422,8 @@ TEST_F(TransferTest, serialAllToParaAll)
         auto value = [&](int k, int l) -> double
         { return ((double(atom_i * test_nw + k) * test_size + atom_j) * test_nw + l) * dsize; };
         double *data = atom_pair.get_pointer(0);
-        auto row_indexes = paraV->get_indexes_row(atom_i);
-        auto col_indexes = paraV->get_indexes_col(atom_j);
+        std::vector<int> row_indexes = paraV->get_indexes_row(atom_i);
+        std::vector<int> col_indexes = paraV->get_indexes_col(atom_j);
         for (int k = 0; k < row_indexes.size(); k++)
         {
             for (int l = 0; l < col_indexes.size(); l++)
@@ -462,8 +462,8 @@ TEST_F(TransferTest, paraAllToserialAll)
         auto value = [&](int k, int l) -> double
         { return ((double(atom_i * test_nw + k) * test_size + atom_j) * test_nw + l); };
         double *data = atom_pair.get_pointer(0);
-        auto row_indexes = paraV->get_indexes_row(atom_i);
-        auto col_indexes = paraV->get_indexes_col(atom_j);
+        std::vector<int> row_indexes = paraV->get_indexes_row(atom_i);
+        std::vector<int> col_indexes = paraV->get_indexes_col(atom_j);
         for (int k = 0; k < row_indexes.size(); k++)
         {
             for (int l = 0; l < col_indexes.size(); l++)

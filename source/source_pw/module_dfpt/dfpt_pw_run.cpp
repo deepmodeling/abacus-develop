@@ -152,8 +152,7 @@ double DFPT_PW::Impl::run_displacement_irrep_pass(int q_idx, int irrep)
             if (nlcc_any && xc_ != nullptr)
             {
                 const int slot = 3 * iat + idir;
-                if (slot < static_cast<int>(dvxc_core.size())
-                    && static_cast<int>(dvxc_core[slot].size()) == nrxx)
+                if (slot < static_cast<int>(dvxc_core.size()) && static_cast<int>(dvxc_core[slot].size()) == nrxx)
                 {
                     dvxc_r = dvxc_core[slot];
                 }
@@ -178,6 +177,79 @@ void DFPT_PW::Impl::run_q0_post(int q_idx)
         return;
     }
     q0_.compute_born(gs_psi_, wg_, eig_, data_);
+    symmetrize_q0_tensors();
+}
+
+void DFPT_PW::Impl::symmetrize_q0_tensors()
+{
+    ModuleBase::TITLE("DFPT_PW", "symmetrize_q0_tensors");
+    ModuleBase::timer::start("DFPT_PW", "symmetrize_q0_tensors");
+    // QE symme.f90 semantics: the projection runs only when a nontrivial
+    // crystal point group was analyzed (IF (nsym == 1) RETURN); under
+    // symmetry -1 the raw tensors stay untouched and visible.
+    if (ModuleSymmetry::Symmetry::symm_flag != 1 || ucell_->symm.nrotk <= 1)
+    {
+        ModuleBase::timer::end("DFPT_PW", "symmetrize_q0_tensors");
+        return;
+    }
+    // cartesian images of the fractional operations, following the
+    // symmetrize_mat3 construction (R = latvec^-1 G latvec); the group
+    // average is immune to the forward/backward convention because the
+    // cartesian images of a point group are orthogonal
+    std::vector<ModuleBase::Matrix3> rot_carts;
+    rot_carts.reserve(ucell_->symm.nrotk);
+    const ModuleBase::Matrix3 lat = ucell_->latvec;
+    const ModuleBase::Matrix3 inv_lat = lat.Inverse();
+    for (int isym = 0; isym < ucell_->symm.nrotk; ++isym)
+    {
+        rot_carts.push_back(inv_lat * ucell_->symm.gmatrix[isym] * lat);
+    }
+    // per-operation atom images from the symmetry module
+    std::vector<std::vector<int>> atom_images(ucell_->symm.nrotk);
+    for (int isym = 0; isym < ucell_->symm.nrotk; ++isym)
+    {
+        atom_images[isym].resize(ucell_->nat);
+        for (int iat = 0; iat < ucell_->nat; ++iat)
+        {
+            atom_images[isym][iat] = ucell_->symm.get_rotated_atom(isym, iat);
+        }
+    }
+    // dielectric tensor
+    ModuleBase::matrix eps = data_.get_dielectric();
+    if (eps.nr == 3 && eps.nc == 3)
+    {
+        symmetrize_tensor3(rot_carts, eps);
+        data_.set_dielectric(eps);
+    }
+    // Born charges (audit print of the raw values before the projection)
+    std::vector<ModuleBase::matrix> borns(ucell_->nat, ModuleBase::matrix(3, 3, true));
+    bool has_born = false;
+    for (int iat = 0; iat < ucell_->nat; ++iat)
+    {
+        const ModuleBase::matrix za = data_.get_born(iat);
+        if (za.nr == 3 && za.nc == 3)
+        {
+            borns[iat] = za;
+            has_born = true;
+        }
+    }
+    if (has_born)
+    {
+        std::cout << " DFPT raw (unsymmetrized) Born effective charges:" << std::endl;
+        for (int iat = 0; iat < ucell_->nat; ++iat)
+        {
+            std::cout << "  atom " << iat << ": " << borns[iat](0, 0) << " " << borns[iat](0, 1) << " "
+                      << borns[iat](0, 2) << " / " << borns[iat](1, 0) << " " << borns[iat](1, 1) << " "
+                      << borns[iat](1, 2) << " / " << borns[iat](2, 0) << " " << borns[iat](2, 1) << " "
+                      << borns[iat](2, 2) << std::endl;
+        }
+        symmetrize_born(rot_carts, atom_images, borns);
+        for (int iat = 0; iat < ucell_->nat; ++iat)
+        {
+            data_.set_born(iat, borns[iat]);
+        }
+    }
+    ModuleBase::timer::end("DFPT_PW", "symmetrize_q0_tensors");
 }
 
 void DFPT_PW::Impl::run_assemble(int q_idx)
@@ -228,8 +300,8 @@ void DFPT_PW::run()
         {
             pimpl_->data_.set_converged(q_idx, irrep, false);
             pimpl_->data_.set_current_iter(q_idx, irrep, 0);
-            while (!pimpl_->data_.get_converged(q_idx, irrep)
-                   && pimpl_->data_.get_current_iter(q_idx, irrep) < pimpl_->max_iter_)
+            while (!pimpl_->data_.get_converged(q_idx, irrep) &&
+                   pimpl_->data_.get_current_iter(q_idx, irrep) < pimpl_->max_iter_)
             {
                 pimpl_->run_displacement_irrep_pass(q_idx, irrep);
                 pimpl_->data_.set_current_iter(q_idx, irrep, pimpl_->data_.get_current_iter(q_idx, irrep) + 1);

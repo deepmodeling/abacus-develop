@@ -97,12 +97,13 @@ namespace LR
             // combination. `PotGradXCLR` picks it via the `triplet` flag.
             if (LR_Util::has_local_xc(xc_kernel))
             {
-                const auto lr_potential = pot.lock();
-                const auto& kernel = lr_potential->xc_kernel_components();
-                const auto& rho_basis = lr_potential->get_rho_basis();
+                const std::shared_ptr<LR::PotHxcLR> lr_potential = pot.lock();
+                const LR::KernelXC& kernel = lr_potential->xc_kernel_components();
+                const ModulePW::PW_Basis& rho_basis = lr_potential->get_rho_basis();
                 const bool triplet = spin_type == "triplet";
+                const int kernel_nspin = kernel.nspin();
                 this->pot_grad = std::make_shared<PotGradXCLR>(kernel, rho_basis, ucell,
-                    lr_potential->nrxx, nspin, triplet);
+                    lr_potential->nrxx, kernel_nspin, triplet);
                 hamilt::Operator<T>* op_gxc = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks,
                     *this->DM_trans, this->pot_grad, ucell, orb_cutoff, gd, kv, pX, pc, pmat,
                     { 0 }, T(-2.0), ATYPE::CC_vo, hamilt::calculation_type::lr_dmtrans_gxc);
@@ -125,10 +126,10 @@ namespace LR
             // transposing the density matrix on the way in restores it.
             this->cal_dm_trans = [this, &psi_ks, &pc, naos, &nocc, &nvirt, &pmat](const int& is, const T* X)->void
                 {
-                    const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
+                    const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
                     std::vector<ct::Tensor> dm_trans_2d = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                    for (auto& t: dm_trans_2d)
+                    for (container::Tensor& t: dm_trans_2d)
                     {
                         LR_Util::mattrans(t.data<T>(), naos, pmat.para_2d());
                     }
@@ -152,12 +153,12 @@ namespace LR
                     }
                 };
 
-            this->cal_dm_diff = [this, &psi_ks, &pc, naos, &nocc, &nvirt, &pmat](const int& is, const T* const X)->void
+            this->cal_dm_diff = [this, &psi_ks, &pc, naos, &nocc, &nvirt, &pmat](const int& is, const T* const X, const std::vector<ct::Tensor>* density_add)->void
                 {
-                    const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
+                    const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
                     std::vector<ct::Tensor> dm_diff_2d = cal_dm_diff_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
-                    for (auto& t: dm_diff_2d)
+                    for (container::Tensor& t: dm_diff_2d)
                         LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
 #else
                     std::vector<ct::Tensor> dm_diff_2d = cal_dm_diff_blas(X, psi_ks_is, naos, nocc[is], nvirt[is]);
@@ -166,6 +167,10 @@ namespace LR
 #endif
                     for (int ik = 0; ik < this->nk; ++ik)
                     {
+                        if (density_add != nullptr)
+                        {
+                            dm_diff_2d[ik] = dm_diff_2d[ik] + density_add->at(ik);
+                        }
                         this->DM_diff->set_dmk_ptr(ik, dm_diff_2d[ik].data<T>());
                     }
                     // std::cout << "difference density matrix" << std::endl;
@@ -176,12 +181,21 @@ namespace LR
         }
         virtual void hPsi(const T* const psi, T* const hpsi, const int ld_psi, const int nband) const override
         {
+            const std::vector<std::vector<ct::Tensor>> no_density;
+            this->hPsi(psi, hpsi, ld_psi, nband, no_density);
+        }
+        // Each state supplies symmetric Dwin; only the linear Hgs[T] term reads it.
+        void hPsi(const T* psi, T* hpsi, const int ld_psi, const int nband,
+                  const std::vector<std::vector<ct::Tensor>>& window_density) const
+        {
+            assert(window_density.empty() || window_density.size() == nband);
             assert(ld_psi == this->nk * this->pX[0].size());
             for (int ib = 0;ib < nband;++ib)
             {
                 const int offset = ib * ld_psi;
                 this->cal_dm_trans(0, psi + offset);  // transition density matrix, only for test
-                this->cal_dm_diff(0, psi + offset);  // difference density matrix
+                const auto* density_add = window_density.empty() ? nullptr : &window_density[ib];
+                this->cal_dm_diff(0, psi + offset, density_add);  // T + Dwin
                 hamilt::Operator<T>* node(this->ops);
                 while (node != nullptr)
                 {
@@ -193,7 +207,7 @@ namespace LR
 
     private:
         std::unique_ptr<module_dm::DensityMatrix<T, T>> DM_diff;
-        std::function<void(const int&, const T* const)> cal_dm_diff;
+        std::function<void(const int&, const T*, const std::vector<ct::Tensor>*)> cal_dm_diff;
         std::shared_ptr<PotLRBase> pot_grad;
     };
 
@@ -326,9 +340,10 @@ namespace LR
         /// Rebuild BOTH density matrices from the `is` block of X: the CXC operators read
         /// $D^X$ (transposed, un-symmetrized -- see the closed-shell `Z_vector_R` for why),
         /// the CC_vo operators read the difference density matrix $T$ (symmetrized).
-        void set_dm(const int is, const T* const X) override
+        void set_dm(const int is, const T* const X,
+                    const std::vector<ct::Tensor>* density_add) override
         {
-            const auto psi_ks_is = LR_Util::get_psi_spin(this->psi_ks_, is, this->nk);
+            const psi::Psi<T> psi_ks_is = LR_Util::get_psi_spin(this->psi_ks_, is, this->nk);
 #ifdef __MPI
             this->dmx_buf_ = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, this->pc_,
                 this->naos_, this->nocc[is], this->nvirt[is], this->pmat_.para_2d());
@@ -364,6 +379,11 @@ namespace LR
             for (int ik = 0;ik < this->nk;++ik)
             {
                 this->DM_trans->set_dmk_ptr(ik, this->dmx_buf_[ik].template data<T>());
+                if (density_add != nullptr)
+                {
+                    const int block = is * this->nk + ik;
+                    this->dmd_buf_[ik] = this->dmd_buf_[ik] + density_add->at(block);
+                }
                 this->DM_diff->set_dmk_ptr(ik, this->dmd_buf_[ik].template data<T>());
             }
         }

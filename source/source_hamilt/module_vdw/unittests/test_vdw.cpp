@@ -9,6 +9,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include <memory>
 #include <unistd.h>
 #ifdef __DFTD4
 #include "source_hamilt/module_vdw/vdwd4.h"
@@ -195,7 +196,7 @@ double vdw_energy(stru_ &structure, const Input_para &input)
     UnitCell cell;
     construct_ucell(structure, cell);
     cell.atoms[0].ncpp.zv = 4.0; // neutral Si cell for D4 (input.nelec = 8); D2 and D3 ignore it
-    auto vdw_solver = vdw::make_vdw(cell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(cell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     ClearUcell(cell);
     return result.energy;
@@ -208,7 +209,7 @@ void expect_stress_matches_finite_strain(const stru_ &base, const Input_para &in
     UnitCell cell;
     construct_ucell(reference, cell);
     cell.atoms[0].ncpp.zv = 4.0;
-    auto vdw_solver = vdw::make_vdw(cell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(cell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
     const double omega = cell.omega;
     ClearUcell(cell);
@@ -380,7 +381,7 @@ TEST_F(vdwd2Test, D2R0ZeroQuit)
 
 TEST_F(vdwd2Test, D2GetEnergy)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     const double ene = result.energy;
     EXPECT_NEAR(ene, -0.034526673470525196, 1E-10);
@@ -388,7 +389,7 @@ TEST_F(vdwd2Test, D2GetEnergy)
 
 TEST_F(vdwd2Test, D2GetForce)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
     EXPECT_NEAR(result.energy, -0.034526673470525196, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -404,7 +405,7 @@ TEST_F(vdwd2Test, D2GetForce)
 
 TEST_F(vdwd2Test, D2GetStress)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
     EXPECT_NEAR(result.energy, -0.034526673470525196, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -467,7 +468,7 @@ TEST_F(vdwd3Test, AutomaticXcInferenceFromPseudopotential)
     ucell.atoms[0].ncpp.xc_func = "GGA_X_PBE+GGA_C_PBE";
 
     testing::internal::CaptureStdout();
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     testing::internal::GetCapturedStdout();
 
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
@@ -482,14 +483,14 @@ TEST_F(vdwd3Test, FullyCustomParametersDoNotRequireKnownFunctional)
     input.vdw_a1 = "1.217";
     input.vdw_a2 = "1.0";
 
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     EXPECT_NEAR(result.energy, -0.022043153033290883, 1E-10);
 }
 
 TEST_F(vdwd3Test, D30GetEnergy)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     const double ene = result.energy;
     EXPECT_NEAR(ene, -0.022043153033290883, 1E-10);
@@ -499,14 +500,14 @@ TEST_F(vdwd3Test, D30LibxcFunctionalName)
 {
     input.dft_functional = "XC_GGA_X_PBE+XC_GGA_C_PBE";
 
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     EXPECT_NEAR(result.energy, -0.022043153033290883, 1E-10);
 }
 
 TEST_F(vdwd3Test, D30GetForce)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
     EXPECT_NEAR(result.energy, -0.022043153033290883, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -522,7 +523,7 @@ TEST_F(vdwd3Test, D30GetForce)
 
 TEST_F(vdwd3Test, D30GetStress)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
     EXPECT_NEAR(result.energy, -0.022043153033290883, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -555,7 +556,7 @@ TEST_F(vdwd3Test, EmptyAtomsAreExcluded)
 TEST_F(vdwd3Test, D3bjGetEnergy)
 {
     input.vdw_method = "d3_bj";
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     const double ene = result.energy;
     EXPECT_NEAR(ene, -0.047425367813039881, 1E-10);
@@ -564,7 +565,7 @@ TEST_F(vdwd3Test, D3bjGetEnergy)
 TEST_F(vdwd3Test, D3bjGetForce)
 {
     input.vdw_method = "d3_bj";
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
     EXPECT_NEAR(result.energy, -0.047425367813039881, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -581,7 +582,7 @@ TEST_F(vdwd3Test, D3bjGetForce)
 TEST_F(vdwd3Test, D3bjGetStress)
 {
     input.vdw_method = "d3_bj";
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
     EXPECT_NEAR(result.energy, -0.047425367813039881, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -650,7 +651,7 @@ TEST_F(vdwd3abcTest, InconsistentPseudopotentialXcIsRejected)
 
 TEST_F(vdwd3abcTest, D30GetEnergy)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     const double ene = result.energy;
     EXPECT_NEAR(ene, -0.015864127638792386, 1E-10);
@@ -658,7 +659,7 @@ TEST_F(vdwd3abcTest, D30GetEnergy)
 
 TEST_F(vdwd3abcTest, D30GetForce)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
     EXPECT_NEAR(result.energy, -0.015864127638792386, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -674,7 +675,7 @@ TEST_F(vdwd3abcTest, D30GetForce)
 
 TEST_F(vdwd3abcTest, D30GetStress)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
     EXPECT_NEAR(result.energy, -0.015864127638792386, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -694,7 +695,7 @@ TEST_F(vdwd3abcTest, D30GetStress)
 TEST_F(vdwd3abcTest, D3bjGetEnergy)
 {
     input.vdw_method = "d3_bj";
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     const double ene = result.energy;
     EXPECT_NEAR(ene, -0.030643056581152218, 1E-10);
@@ -703,7 +704,7 @@ TEST_F(vdwd3abcTest, D3bjGetEnergy)
 TEST_F(vdwd3abcTest, D3bjGetForce)
 {
     input.vdw_method = "d3_bj";
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
     EXPECT_NEAR(result.energy, -0.030643056581152218, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -720,7 +721,7 @@ TEST_F(vdwd3abcTest, D3bjGetForce)
 TEST_F(vdwd3abcTest, D3bjGetStress)
 {
     input.vdw_method = "d3_bj";
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
     EXPECT_NEAR(result.energy, -0.030643056581152218, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -800,7 +801,7 @@ class vdwd4Test : public testing::Test
 
 TEST_F(vdwd4Test, D4GetEnergy)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     const double ene = result.energy;
     EXPECT_NEAR(ene, -0.049988366372568399, 1E-10);
@@ -811,7 +812,7 @@ TEST_F(vdwd4Test, D4LibxcFunctionalName)
     input.vdw_d4_xc = "default";
     input.dft_functional = "XC_GGA_X_PBE+XC_GGA_C_PBE";
 
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     EXPECT_NEAR(result.energy, -0.049988366372568399, 1E-10);
 }
@@ -820,7 +821,7 @@ TEST_F(vdwd4Test, D4GetEnergyForChargedSystem)
 {
     input.nelec = 7.0;
 
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     const double ene = result.energy;
     EXPECT_NEAR(ene, -0.043594505741178208, 1E-10);
@@ -828,7 +829,7 @@ TEST_F(vdwd4Test, D4GetEnergyForChargedSystem)
 
 TEST_F(vdwd4Test, D4GetForce)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
     EXPECT_NEAR(result.energy, -0.049988366372568399, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -844,7 +845,7 @@ TEST_F(vdwd4Test, D4GetForce)
 
 TEST_F(vdwd4Test, D4GetStress)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
     EXPECT_NEAR(result.energy, -0.049988366372568399, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -876,7 +877,7 @@ TEST_F(vdwd4Test, EmptyAtomsAreExcluded)
 TEST_F(vdwd4Test, D4SGetEnergy)
 {
     input.vdw_d4_model = "d4s";
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
     const double ene = result.energy;
     EXPECT_NEAR(ene, -0.056385156117091439, 1E-10);
@@ -885,7 +886,7 @@ TEST_F(vdwd4Test, D4SGetEnergy)
 TEST_F(vdwd4Test, D4SGetForce)
 {
     input.vdw_d4_model = "d4s";
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
     EXPECT_NEAR(result.energy, -0.056385156117091439, 1E-10);
     ASSERT_TRUE(result.has_force);
@@ -902,7 +903,7 @@ TEST_F(vdwd4Test, D4SGetForce)
 TEST_F(vdwd4Test, D4SGetStress)
 {
     input.vdw_d4_model = "d4s";
-    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::unique_ptr<vdw::Vdw> vdw_solver = vdw::make_vdw(ucell, input);
     const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
     EXPECT_NEAR(result.energy, -0.056385156117091439, 1E-10);
     ASSERT_TRUE(result.has_force);

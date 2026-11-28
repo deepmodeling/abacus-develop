@@ -1117,21 +1117,21 @@ void ReadInput::item_lr_tddft()
         item.type = "Vector of String (>=1 values)";
         item.description = R"(The method to initalize the xc kernel.
 * "default": Calculate xc kernel from the ground-state charge density.
-* "file": Read the xc kernel on grid from the provided files. The following words should be the paths of ".cube" files, where the first 1 (nspin==1) or 3 (nspin==2, namely spin-aa, spin-ab and spin-bb) will be read in. The parameter xc_kernel will be invalid. Now only LDA-type kernel is supported as the potential will be calculated by directly multiplying the transition density.
+* "file": Read the xc kernel on grid from the provided files. The following words should be the paths of ".cube" files, where the first 1 (nspin==1) or 3 (nspin==2, namely spin-aa, spin-ab and spin-bb) will be read in. For `nspin=1, lr_target_spin=triplet`, provide three spin-resolved files (aa, ab, bb) as well. The parameter xc_kernel will be invalid. Now only LDA-type kernel is supported as the potential will be calculated by directly multiplying the transition density.
 [NOTE] The "file" and "from_charge_file" modes support spectra only. Excited-state forces and relaxation require the consistent ground-state density and its response; externally supplied kernels or frozen densities do not provide these derivatives.
 * "from_charge_file": Calculate fxc from the charge density read from the provided files. The following words should be the paths of ".cube" files, where the first nspin files will be read in.)";
         item.default_value = "\"default\"";
         item.unit = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            auto& ifxc = para.input.lr_init_xc_kernel;
+            std::vector<std::string>& ifxc = para.input.lr_init_xc_kernel;
             for (int i = 0; i < count; i++) { ifxc.push_back(item.str_values[i]); }
             };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.lr_init_xc_kernel.empty()) { para.input.lr_init_xc_kernel.push_back("default"); }
             };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const auto& input = para.input;
+            const Input_para& input = para.input;
             const bool lr = input.esolver_type == "lr" || input.esolver_type == "ks-lr";
             const bool forces = input.cal_force || input.calculation == "relax";
             const bool external_kernel = !input.lr_init_xc_kernel.empty()
@@ -1180,7 +1180,7 @@ void ReadInput::item_lr_tddft()
 * If omitted, non-positive, or larger than the occupied majority-spin channel, all occupied orbitals are used.
 * The full occupied window is determined by the effective electron number (including nelec_delta once) and the ground-state spin populations. For nspin=2, the minority-spin window has abs(N_up-N_down) fewer occupied orbitals.
 
-[NOTE] For reliable excited-state forces and relaxation, retain all occupied orbitals. With a truncated occupied or virtual X window, the current analytic force is an approximation and may differ from finite differences of the selected truncated excitation energy. Zero-padding X into a larger Z virtual space is retained, but does not restore every active/inactive orbital-response term. Check force/window convergence.)";
+[NOTE] Retain all occupied orbitals for reliable excited-state forces and relaxation: response from omitted occupied orbitals is not restored. For real-Gamma calculations, the force includes the response of a truncated virtual window within the available KS bands, provided the retained/discarded virtual boundary is nondegenerate. This correction does not recover uncomputed KS bands (nbands < NLOCAL) or converge the excitation model with respect to its orbital window. Check window convergence.)";
         item.default_value = "all occupied orbitals";
         item.unit = "";
         read_sync_int(input.nocc);
@@ -1194,7 +1194,7 @@ void ReadInput::item_lr_tddft()
         item.type = "Integer";
         item.description = R"(The number of virtual orbitals (starting from LUMO) used in the LR-TDDFT calculation.
 
-[NOTE] For reliable excited-state forces and relaxation, use all occupied orbitals, nbands = NLOCAL (the AO basis size), and the full spin-resolved virtual window, nvirt = nbands - nocc. Merely setting nvirt = nbands - nocc is insufficient when nbands < NLOCAL. The Z virtual window is widened to the available ground-state bands and X is zero-padded without changing the selected excitation energy; this does not make the force an exact derivative of a truncated-X problem. Changing nvirt itself generally changes the excitation energies. Truncated-window forces remain available with a warning and require convergence checks, especially before optimization.)";
+[NOTE] For real-Gamma calculations with all occupied orbitals, analytic forces include the retained/discarded virtual-subspace response without changing the selected truncated excitation energy. The Z equation spans the available KS virtuals. The orbital-energy gap across the retained/discarded virtual boundary must be nonzero: a degenerate boundary is rejected; increase nvirt to include the complete multiplet. The correction does not recover omitted occupied orbitals or uncomputed KS bands. Use nbands = NLOCAL (the AO basis size) to make every AO-supported virtual available. Complex/multi-k force requests with a truncated virtual window are rejected; use the full available virtual window to avoid this restriction. Changing nvirt generally changes energies and forces, so convergence of the excitation window remains necessary, especially before optimization.)";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.nvirt);
@@ -1228,8 +1228,7 @@ Ignored outside `calculation = relax`: a single-point run solves and reports the
         item.default_value = "0";
         item.unit = "";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            // Both parameters only steer a relaxation. A single-point run solves and reports every
-            // state, so they are dead there and must not be able to abort it.
+            // The state index only selects a relaxation target; single points report every state.
             if (para.input.calculation != "relax")
             {
                 return;
@@ -1243,16 +1242,6 @@ Ignored outside `calculation = relax`: a single-point run solves and reports the
             if (para.input.lr_nstates > 0 && para.input.lr_target_state >= para.input.lr_nstates)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "lr_target_state must be < lr_nstates");
-            }
-            const std::vector<std::string> spins = { "singlet", "triplet", "updown" };
-            if (std::find(spins.begin(), spins.end(), para.input.lr_target_spin) == spins.end())
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lr_target_spin must be singlet, triplet or updown");
-            }
-            if (para.input.lr_target_spin == "triplet" && para.input.nspin == 1)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                    "lr_target_spin=triplet requires nspin=2: only the singlet channel is built at nspin=1");
             }
         };
         read_sync_int(input.lr_target_state);
@@ -1362,19 +1351,30 @@ The threshold proposes candidates; it cannot tell a true degeneracy from an acci
     }
     {
         Input_Item item("lr_target_spin");
-        item.annotation = "spin channel of lr_target_state: singlet, triplet or updown";
+        item.annotation = "nspin=1 LR channel, or nspin=2 relaxation target: singlet, triplet or updown";
         item.category = "Linear Response TDDFT";
         item.type = "String";
         item.description = R"(Which spin channel `lr_target_state` indexes.
 
-* singlet / triplet: the two closed-shell channels solved at `nspin = 2`. At `nspin = 1` only `singlet` exists.
+* singlet / triplet: the two closed-shell channels solved at `nspin = 2`. At `nspin = 1`, only the channel selected here is solved (default: `singlet`).
 * updown: the single spin-conserving channel of an open-shell calculation (`lr_unrestricted`, or a spin-polarised ground state with a non-zero moment).
 
 An open-shell calculation has only one channel, so any value is accepted there and relaxes that channel; an explicit `triplet` is reported as ignored. A closed-shell calculation rejects `updown`, since singlet and triplet are separate states with separate gradients.
 
-Ignored outside `calculation = relax`.)";
+At `nspin = 2` this selects only the relaxation target; single-point runs still solve both closed-shell channels.)";
         item.default_value = "singlet";
         item.unit = "";
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const std::string& spin = para.input.lr_target_spin;
+            if (spin != "singlet" && spin != "triplet" && spin != "updown")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_target_spin must be singlet, triplet or updown");
+            }
+            if (para.input.nspin == 1 && spin == "updown")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_target_spin=updown requires nspin=2");
+            }
+        };
         read_sync_string(input.lr_target_spin);
         this->add_item(item);
     }

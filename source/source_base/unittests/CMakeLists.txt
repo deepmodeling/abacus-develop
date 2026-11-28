@@ -11,6 +11,16 @@ addtest(
   LIBS parameter base device
   SOURCES test_filename.cpp)
 
+addtest(
+  TARGET MODULE_BASE_integral
+  LIBS parameter base device
+  SOURCES test_math_integral.cpp)
+
+addtest(
+  TARGET MODULE_BASE_net_force
+  LIBS parameter base device
+  SOURCES test_mathzone.cpp)
+
 # alltoallv_data is an MPI wrapper, so this target keeps __MPI.
 addtest(
   TARGET MODULE_BASE_test_parallel_device

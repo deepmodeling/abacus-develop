@@ -85,7 +85,7 @@ namespace LR
             break;
         default: return;   // S2_updown indexes single components, nothing to pre-contract
         }
-        auto& fxc = *this->xc_kernel_components_;
+        const LR::KernelXC& fxc = *this->xc_kernel_components_;
         if (this->v2rho2_comb_.empty() && !fxc.v2rho2.empty())
         {
             this->v2rho2_comb_.resize(nrxx);
@@ -196,8 +196,8 @@ namespace LR
     // check per access, which also blocks vectorization) on every kernel component.
     void PotHxcLR::set_integral_func(const SpinType& s, const XCType& xc)
     {
-        auto& funcs = this->kernel_to_potential_;
-        auto& fxc = *this->xc_kernel_components_;
+        std::map<SpinType, Tfunc>& funcs = this->kernel_to_potential_;
+        const LR::KernelXC& fxc = *this->xc_kernel_components_;
         if (xc == XCType::LDA) {
             switch (s)
             {
@@ -280,8 +280,9 @@ namespace LR
 
                         double* const vxc = scratch().vxc.data();
                         Vec3* const e_drho = scratch().gdot.data();
-                        const Vec3* const rs2 = fxc.v2rhosigma_2drho.data();
-                        const Vec3* const ss4 = fxc.v2sigma2_4drho.data();
+                        const auto& coefficients = fxc.closed_shell_gga(false);
+                        const double* const rs2 = coefficients.rho_sigma.data();
+                        const double* const ss4 = coefficients.sigma_sigma.data();
                         const Vec3* const dgs = fxc.drho_gs.at(0).data();
                         const double* const vsig = fxc.vsigma.data();
                         const double* const rr = fxc.v2rho2.data();
@@ -292,8 +293,8 @@ namespace LR
 #endif
                         for (int ir = 0;ir < nrxx;++ir)
                         {
-                            e_drho[ir] = -(rs2[ir] * rho[ir]
-                                + ss4[ir] * (dgs[ir] * drho[ir])
+                            e_drho[ir] = -(dgs[ir] * (rs2[ir] * rho[ir]
+                                + ss4[ir] * (dgs[ir] * drho[ir]))
                                 + drho[ir] * (vsig[ir] * 2.));
                         }
                         XC_Functional::grad_dot(e_drho, vxc, &this->rho_basis_, this->tpiba_);
@@ -304,7 +305,7 @@ namespace LR
 #endif
                         for (int ir = 0;ir < nrxx;++ir)
                         {
-                            vxc[ir] += rr[ir] * rho[ir] + rs2[ir] * drho[ir];
+                            vxc[ir] += rr[ir] * rho[ir] + rs2[ir] * (dgs[ir] * drho[ir]);
                         }
                         BlasConnector::axpy(nrxx, ModuleBase::e2 * prefac, vxc, 1, v_eff.c, 1);
                     };
@@ -326,10 +327,9 @@ namespace LR
 
                         double* const vxc = scratch().vxc.data();
                         Vec3* const gdot = scratch().gdot.data();
-                        const Vec3* const rs = triplet ? fxc.v2rhosigma_drho_triplet.data()
-                                                       : fxc.v2rhosigma_drho_singlet.data();
-                        const Vec3* const ss = triplet ? fxc.v2sigma2_drho_triplet.data()
-                                                       : fxc.v2sigma2_drho_singlet.data();
+                        const auto& coefficients = fxc.closed_shell_gga(triplet);
+                        const double* const rs = coefficients.rho_sigma.data();
+                        const double* const ss = coefficients.sigma_sigma.data();
                         const Vec3* const dgs = fxc.drho_gs.at(0).data();
                         const double* const vsig = this->vsigma_comb_.data();   // 2*vsigma_uu -+ vsigma_ud
                         const double* const rr = this->v2rho2_comb_.data();     // v2rho2_uu -+ v2rho2_ud
@@ -340,8 +340,8 @@ namespace LR
 #endif
                         for (int ir = 0;ir < nrxx;++ir)
                         {
-                            gdot[ir] = -(rs[ir] * rho[ir]
-                                + ss[ir] * (dgs[ir] * drho[ir])
+                            gdot[ir] = -(dgs[ir] * (rs[ir] * rho[ir]
+                                + ss[ir] * (dgs[ir] * drho[ir]))
                                 + drho[ir] * vsig[ir]);
                         }
                         XC_Functional::grad_dot(gdot, vxc, &this->rho_basis_, this->tpiba_);
@@ -352,7 +352,7 @@ namespace LR
 #endif
                         for (int ir = 0;ir < nrxx;++ir)
                         {
-                            vxc[ir] += rho[ir] * rr[ir] + drho[ir] * rs[ir];
+                            vxc[ir] += rho[ir] * rr[ir] + (drho[ir] * dgs[ir]) * rs[ir];
                         }
                         BlasConnector::axpy(nrxx, ModuleBase::e2 * prefac, vxc, 1, v_eff.c, 1);
                     };
@@ -372,79 +372,65 @@ namespace LR
                         const double* const vsig = fxc.vsigma.data();
                         const double* const rr = fxc.v2rho2.data();
 
-                        // the four (sigma, sigma') blocks: which pre-contracted arrays to read,
-                        // which vsigma component multiplies drho^X, and which v2rho2 component.
-                        const int blk = ispin_op[0] << 1 | ispin_op[1];
-                        const Vec3* rs = nullptr;
-                        const Vec3* su = nullptr;
-                        const Vec3* sd = nullptr;
-                        int i_vsig = 0;
-                        int i_rr = 0;
-                        double vsig_fac = 1.;
-                        // `rs2` is the v2rhosigma array used again in the non-divergence term;
-                        // for the off-diagonal blocks it is the transposed one (ud vs du).
-                        const Vec3* rs2 = nullptr;
-                        switch (blk)
+                        const int output_spin = ispin_op[0];
+                        const int input_spin = ispin_op[1];
+                        if (output_spin < 0 || output_spin > 1 || input_spin < 0 || input_spin > 1)
                         {
-                        case 0: // (0,0)
-                            rs = fxc.v2rhosigma_drho_uu.data();
-                            rs2 = rs;
-                            su = fxc.v2sigma2_drho_uu_u.data();
-                            sd = fxc.v2sigma2_drho_uu_d.data();
-                            i_vsig = 0;
-                            vsig_fac = 2.;
-                            i_rr = 0;
-                            break;
-                        case 1: // (0,1): rho_d, drho_u
-                            rs = fxc.v2rhosigma_drho_du.data();
-                            rs2 = fxc.v2rhosigma_drho_ud.data();
-                            su = fxc.v2sigma2_drho_ud_u.data();
-                            sd = fxc.v2sigma2_drho_ud_d.data();
-                            i_vsig = 1;
-                            vsig_fac = 1.;
-                            i_rr = 1;
-                            break;
-                        case 2: // (1,0): rho_u, drho_d
-                            rs = fxc.v2rhosigma_drho_ud.data();
-                            rs2 = fxc.v2rhosigma_drho_du.data();
-                            su = fxc.v2sigma2_drho_du_u.data();
-                            sd = fxc.v2sigma2_drho_du_d.data();
-                            i_vsig = 1;
-                            vsig_fac = 1.;
-                            i_rr = 1;
-                            break;
-                        case 3: // (1,1)
-                            rs = fxc.v2rhosigma_drho_dd.data();
-                            rs2 = rs;
-                            su = fxc.v2sigma2_drho_dd_u.data();
-                            sd = fxc.v2sigma2_drho_dd_d.data();
-                            i_vsig = 2;
-                            vsig_fac = 2.;
-                            i_rr = 2;
-                            break;
-                        default:
                             throw std::runtime_error("Invalid ispin_op");
                         }
-                        // 1. the terms in grad_dot int f_uu
+                        const double* const rho_sigma = fxc.v2rhosigma.data();
+                        const double* const sigma_sigma = fxc.v2sigma2.data();
+                        // Each input spin perturbs two adjacent sigma invariants. Select all
+                        // spin-dependent gradients and coefficient indices before the grid loops.
+                        const int in0 = input_spin;
+                        const int in1 = input_spin + 1;
+                        const int out0 = output_spin;
+                        const int out1 = output_spin + 1;
+                        const Vec3* const gs_gradient[2] = {dgs_u, dgs_d};
+                        const Vec3* const in_gradient0 = gs_gradient[libxc_idx::chan[input_spin][in0]];
+                        const Vec3* const in_gradient1 = gs_gradient[libxc_idx::chan[input_spin][in1]];
+                        const Vec3* const out_gradient0 = gs_gradient[libxc_idx::chan[output_spin][out0]];
+                        const Vec3* const out_gradient1 = gs_gradient[libxc_idx::chan[output_spin][out1]];
+                        const double in_weight0 = libxc_idx::theta[input_spin][in0];
+                        const double in_weight1 = libxc_idx::theta[input_spin][in1];
+                        const double out_weight0 = libxc_idx::theta[output_spin][out0];
+                        const double out_weight1 = libxc_idx::theta[output_spin][out1];
+                        const int rs0 = 3 * input_spin + out0;
+                        const int rs1 = 3 * input_spin + out1;
+                        const int ss00 = libxc_idx::p2[out0][in0];
+                        const int ss01 = libxc_idx::p2[out0][in1];
+                        const int ss10 = libxc_idx::p2[out1][in0];
+                        const int ss11 = libxc_idx::p2[out1][in1];
+                        const int local_rs0 = 3 * output_spin + in0;
+                        const int local_rs1 = 3 * output_spin + in1;
+                        const int spin_pair = output_spin + input_spin;
+                        const double gradient_weight = (output_spin == input_spin) ? 2. : 1.;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-                        for (int ir = 0;ir < nrxx;++ir)
+                        for (int ir = 0; ir < nrxx; ++ir)
                         {
-                            gdot[ir] = -(rs[ir] * rho[ir]
-                                + su[ir] * (dgs_u[ir] * drho[ir])
-                                + sd[ir] * (dgs_d[ir] * drho[ir])
-                                + drho[ir] * (vsig[ir * 3 + i_vsig] * vsig_fac));
+                            const double sigma0 = in_weight0 * (in_gradient0[ir] * drho[ir]);
+                            const double sigma1 = in_weight1 * (in_gradient1[ir] * drho[ir]);
+                            const double* const rs = rho_sigma + 6 * ir;
+                            const double* const ss = sigma_sigma + 6 * ir;
+                            const double derivative0 = rs[rs0] * rho[ir] + ss[ss00] * sigma0 + ss[ss01] * sigma1;
+                            const double derivative1 = rs[rs1] * rho[ir] + ss[ss10] * sigma0 + ss[ss11] * sigma1;
+                            gdot[ir] = -(out_gradient0[ir] * (out_weight0 * derivative0)
+                                + out_gradient1[ir] * (out_weight1 * derivative1)
+                                + drho[ir] * (gradient_weight * vsig[3 * ir + spin_pair]));
                         }
                         XC_Functional::grad_dot(gdot, vxc, &this->rho_basis_, this->tpiba_);
-
-                        // 2. terms not in grad_dot
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-                        for (int ir = 0;ir < nrxx;++ir)
+                        for (int ir = 0; ir < nrxx; ++ir)
                         {
-                            vxc[ir] += rho[ir] * rr[3 * ir + i_rr] + drho[ir] * rs2[ir];
+                            const double sigma0 = in_weight0 * (in_gradient0[ir] * drho[ir]);
+                            const double sigma1 = in_weight1 * (in_gradient1[ir] * drho[ir]);
+                            const double* const rs = rho_sigma + 6 * ir;
+                            vxc[ir] += rho[ir] * rr[3 * ir + spin_pair]
+                                + rs[local_rs0] * sigma0 + rs[local_rs1] * sigma1;
                         }
                         BlasConnector::axpy(nrxx, ModuleBase::e2, vxc, 1, v_eff.c, 1);
                     };

@@ -42,11 +42,14 @@ run_tddft_props() {
       reference_rows=$(awk 'NF { count++ } END { print count+0 }' "$current1ref")
       current_rows=$(awk 'NF { count++ } END { print count+0 }' "$current1cal")
       if [ "$reference_rows" -gt 0 ] && [ "$current_rows" -ge "$reference_rows" ]; then
-        python3 "$COMPARE_SCRIPT" "$current1ref" "$current1cal" -tol "$current_tol"
-        current_status=$?
+        if python3 "$COMPARE_SCRIPT" "$current1ref" "$current1cal" -tol "$current_tol"; then
+          current_status=0
+        else
+          current_status=$?
+        fi
       fi
     fi
-    echo "CompareCurrent_pass $current_status" >>$props_result_file
+    record_compare_status "$props_result_file" "CompareCurrent_pass" "$current_status"
   fi
 
   #--------------------------------------------
@@ -55,7 +58,7 @@ run_tddft_props() {
   if ! test -z "$out_efield" && [ "$out_efield" == 1 ]; then
     efield_refs=(efield_*.txt.ref)
     if [ ! -e "${efield_refs[0]}" ]; then
-      echo "CompareEfieldReference_pass 1" >>$props_result_file
+      record_compare_status "$props_result_file" "CompareEfieldReference_pass" 1
     else
       for efield_ref in "${efield_refs[@]}"; do
         efield_name=${efield_ref%.ref}

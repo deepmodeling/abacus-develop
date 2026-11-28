@@ -38,8 +38,6 @@ class ElecStatePW : public ElecState
 
     void cal_tau(const psi::Psi<T, Device>& psi) override;
 
-    double get_spin_constrain_energy() override;
-
     //! calculate becsum for uspp
     void cal_becsum(const psi::Psi<T, Device>& psi);
 

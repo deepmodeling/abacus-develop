@@ -35,7 +35,7 @@ void Setup_Psi_pw::before_runner_impl(const UnitCell& ucell,
 
     allocate_psi(this->psi_cpu, kv.get_nks(), kv.ngk, PARAM.globalv.nbands_l, pw_wfc.npwk_max);
 
-    auto* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
+    psi::PSIPrepare<T, Device>* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
     // before_runner_impl is invoked only once before the ion dynamics starts,
     // so istep == 0 here ensures any one-time informational warnings are
     // printed from this initial setup call.
@@ -177,7 +177,7 @@ void Setup_Psi_pw::init_impl(hamilt::Hamilt<T, Device>* p_hamilt)
 {
     if (!this->already_initpsi)
     {
-        auto* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
+        psi::PSIPrepare<T, Device>* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
         p_psi_init->initialize_psi(this->psi_cpu, this->get_psi_t<T, Device>(), p_hamilt, GlobalV::ofs_running);
         this->already_initpsi = true;
     }
@@ -224,7 +224,7 @@ void Setup_Psi_pw::init(hamilt::HamiltBase* p_hamilt)
 template <typename T, typename Device>
 void Setup_Psi_pw::copy_d2h_impl()
 {
-    auto* psi_t = this->get_psi_t<T, Device>();
+    psi::Psi<T, Device>* psi_t = this->get_psi_t<T, Device>();
     this->castmem_d2h_impl<T, Device>(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
                                       psi_t->get_pointer() - psi_t->get_psi_bias(),
                                       this->psi_cpu[0].size());

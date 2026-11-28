@@ -1,13 +1,13 @@
 #include "source_pw/module_pwdft/dftu_base_io.h"
 
-#include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
 #include "source_base/timer.h"
+#include "source_cell/unitcell.h"
 #include "source_main/version.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 
 #include <ctime>
 #include <fstream>
@@ -26,7 +26,7 @@ OccmatSocLayout lcao_soc_layout(const int dft_plus_u)
 // Write the STRU-style provenance header shared by occ_mat.txt and the
 // per-ionic-step snapshot files: ABACUS version, local timestamp and the
 // 1-based relaxation step this file belongs to.
-static void write_provenance_header(std::ostream& os, const int istep)
+static void write_provenance_header(std::ostream &os, const int istep)
 {
     std::time_t now = std::time(nullptr);
     std::tm tm_local;
@@ -38,10 +38,11 @@ static void write_provenance_header(std::ostream& os, const int istep)
     os << "# Ionic_Step " << istep + 1 << "\n\n";
 }
 
-static void validate_output_configuration(const char* context,
-                                          const int istep,
-                                          const int iter,
-                                          const OccmatOutputCfg& cfg)
+static void validate_output_configuration(
+    const char *context,
+    const int istep,
+    const int iter,
+    const OccmatOutputCfg &cfg)
 {
     if (istep < 0)
     {
@@ -53,12 +54,11 @@ static void validate_output_configuration(const char* context,
     }
     if (cfg.out_freq_ion < 0 || cfg.out_freq_elec < 1 || cfg.scf_nmax < 1)
     {
-        ModuleBase::WARNING_QUIT(context,
-                                 "invalid occupation-matrix output frequency configuration");
+        ModuleBase::WARNING_QUIT(context, "invalid occupation-matrix output frequency configuration");
     }
 }
 
-bool is_ion_step_output_step(const int istep, const OccmatOutputCfg& cfg)
+bool is_ion_step_output_step(const int istep, const OccmatOutputCfg &cfg)
 {
     if (cfg.out_freq_ion <= 0)
     {
@@ -67,26 +67,23 @@ bool is_ion_step_output_step(const int istep, const OccmatOutputCfg& cfg)
     return (istep % cfg.out_freq_ion == 0);
 }
 
-bool is_elec_snapshot_trigger(const int iter,
-                              const bool conv_esolver,
-                              const OccmatOutputCfg& cfg)
+bool is_elec_snapshot_trigger(const int iter, const bool conv_esolver, const OccmatOutputCfg &cfg)
 {
     const bool periodic = (iter % cfg.out_freq_elec == 0);
     const bool last_step = (iter == cfg.scf_nmax);
     return periodic || last_step || conv_esolver;
 }
 
-std::string gen_ion_step_occ_mat_filename(const std::string& out_dir, const int istep)
+std::string gen_ion_step_occ_mat_filename(const std::string &out_dir, const int istep)
 {
     std::stringstream ss;
     ss << out_dir << "occ_matg" << (istep + 1) << ".txt";
     return ss.str();
 }
 
-std::string find_first_existing_file(const std::string& dir,
-                                     const std::vector<std::string>& candidates)
+std::string find_first_existing_file(const std::string &dir, const std::vector<std::string> &candidates)
 {
-    for (const std::string& name : candidates)
+    for (const std::string &name : candidates)
     {
         const std::string full = dir + name;
         std::ifstream probe(full.c_str());
@@ -104,9 +101,7 @@ std::string find_first_existing_file(const std::string& dir,
 /// Each occupation matrix is broadcast as one contiguous block
 /// (matrix::c stores nr * nc consecutive doubles) instead of element by
 /// element.
-void local_occup_bcast(const UnitCell& ucell,
-                       OccupationMatrix& occ,
-                       const std::vector<int>& l_channel)
+void local_occup_bcast(const UnitCell &ucell, OccupationMatrix &occ, const std::vector<int> &l_channel)
 {
     ModuleBase::TITLE("DFTU_BASE", "local_occup_bcast");
     const int nspin = occ.nspin();
@@ -125,23 +120,20 @@ void local_occup_bcast(const UnitCell& ucell,
             {
                 for (int spin = 0; spin < 2; spin++)
                 {
-                    Parallel_Common::bcast_double(occ.mat(iat, l, spin).c,
-                                                  occ.mat(iat, l, spin).nr * occ.mat(iat, l, spin).nc);
+                    Parallel_Common::bcast_double(
+                        occ.mat(iat, l, spin).c, occ.mat(iat, l, spin).nr * occ.mat(iat, l, spin).nc);
                 }
             }
             else if (nspin == 4) // SOC
             {
-                Parallel_Common::bcast_double(occ.mat(iat, l, 0).c,
-                                              occ.mat(iat, l, 0).nr * occ.mat(iat, l, 0).nc);
+                Parallel_Common::bcast_double(occ.mat(iat, l, 0).c, occ.mat(iat, l, 0).nr * occ.mat(iat, l, 0).nc);
             }
         }
     }
 }
 #endif
 
-
-static void prepare_ion_step_file(const std::string& global_out_dir,
-                                  const int istep)
+static void prepare_ion_step_file(const std::string &global_out_dir, const int istep)
 {
     // Only the root process creates the per-ionic-step file.
     if (GlobalV::MY_RANK != 0)
@@ -156,23 +148,21 @@ static void prepare_ion_step_file(const std::string& global_out_dir,
     ofs_ion_step.open(ion_step_fn, std::ios::out | std::ios::trunc);
     if (!ofs_ion_step)
     {
-        ModuleBase::WARNING_QUIT("DFTU_BASE::prepare_ion_step_file",
-                                 "Can't create per-ionic-step occupation-matrix file");
+        ModuleBase::WARNING_QUIT(
+            "DFTU_BASE::prepare_ion_step_file", "Can't create per-ionic-step occupation-matrix file");
     }
     // Provenance header shared with occ_mat.txt.
     write_provenance_header(ofs_ion_step, istep);
 }
 
-void prepare_ion_step_output(const std::string& global_out_dir,
-                             const int istep,
-                             const int iter,
-                             const OccmatOutputCfg& cfg)
+void prepare_ion_step_output(
+    const std::string &global_out_dir,
+    const int istep,
+    const int iter,
+    const OccmatOutputCfg &cfg)
 {
     ModuleBase::TITLE("DFTU_BASE", "prepare_ion_step_output");
-    validate_output_configuration("DFTU_BASE::prepare_ion_step_output",
-                                  istep,
-                                  iter,
-                                  cfg);
+    validate_output_configuration("DFTU_BASE::prepare_ion_step_output", istep, iter, cfg);
     const bool ion_step_output = is_ion_step_output_step(istep, cfg);
     if (cfg.out_occ_mat && ion_step_output && iter == 1)
     {
@@ -185,12 +175,13 @@ void prepare_ion_step_output(const std::string& global_out_dir,
 // charge-density convergence threshold, the actual charge-density
 // residual and the full occupation matrices. When occmat_ready is false,
 // the matrix body is an "N/A" placeholder.
-static void write_snapshot_section(std::ostream& os,
-                                   const Plus_U_Base& dftu,
-                                   const UnitCell& ucell,
-                                   const OccmatStepInfo& step,
-                                   const bool occmat_ready,
-                                   const OccmatSocLayout& soc_layout)
+static void write_snapshot_section(
+    std::ostream &os,
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    const OccmatStepInfo &step,
+    const bool occmat_ready,
+    const OccmatSocLayout &soc_layout)
 {
     os << "# Electronic step " << step.iter << "\n";
     os << "# scf_thr " << std::scientific << std::setprecision(8) << step.scf_thr << "\n";
@@ -211,14 +202,15 @@ static void write_snapshot_section(std::ostream& os,
     os << "\n";
 }
 
-void append_ion_step_snapshot(const Plus_U_Base& dftu,
-                              const UnitCell& ucell,
-                              const std::string& global_out_dir,
-                              const OccmatStepInfo& step,
-                              const bool conv_esolver,
-                              const bool occmat_ready,
-                              const OccmatOutputCfg& cfg,
-                              const OccmatSocLayout& soc_layout)
+void append_ion_step_snapshot(
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    const std::string &global_out_dir,
+    const OccmatStepInfo &step,
+    const bool conv_esolver,
+    const bool occmat_ready,
+    const OccmatOutputCfg &cfg,
+    const OccmatSocLayout &soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "append_ion_step_snapshot");
 
@@ -234,10 +226,7 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
         return;
     }
 
-    validate_output_configuration("DFTU_BASE::append_ion_step_snapshot",
-                                  step.istep,
-                                  step.iter,
-                                  cfg);
+    validate_output_configuration("DFTU_BASE::append_ion_step_snapshot", step.istep, step.iter, cfg);
 
     const bool ion_step_output = is_ion_step_output_step(step.istep, cfg);
     const bool elec_trigger = is_elec_snapshot_trigger(step.iter, conv_esolver, cfg);
@@ -252,8 +241,8 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
     ofs_ion_step.open(ion_step_fn, std::ios::app);
     if (!ofs_ion_step)
     {
-        ModuleBase::WARNING_QUIT("DFTU_BASE::append_ion_step_snapshot",
-                                 "Can't open per-ionic-step occupation-matrix file");
+        ModuleBase::WARNING_QUIT(
+            "DFTU_BASE::append_ion_step_snapshot", "Can't open per-ionic-step occupation-matrix file");
     }
 
     // A direct caller may not have prepared the file at iter 1. Add the
@@ -268,13 +257,13 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
                          << " to file: " << ion_step_fn << std::endl;
 }
 
-
-void write_latest_occmat(const Plus_U_Base& dftu,
-                         const UnitCell& ucell,
-                         const std::string& global_out_dir,
-                         const OccmatStepInfo& step,
-                         const OccmatOutputCfg& cfg,
-                         const OccmatSocLayout& soc_layout)
+void write_latest_occmat(
+    const Plus_U_Base &dftu,
+    const UnitCell &ucell,
+    const std::string &global_out_dir,
+    const OccmatStepInfo &step,
+    const OccmatOutputCfg &cfg,
+    const OccmatSocLayout &soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "write_latest_occmat");
 
@@ -300,6 +289,5 @@ void write_latest_occmat(const Plus_U_Base& dftu,
     write_snapshot_section(ofdftu, dftu, ucell, step, true, soc_layout);
     write_occup_eigenvalues(dftu, ucell, ofdftu, soc_layout);
 }
-
 
 } // namespace DFTU_BASE

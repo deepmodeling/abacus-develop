@@ -4,9 +4,23 @@ abacus_disable_feature_definitions(__ROCM)
 addtest(TARGET MODULE_RI_smooth_cut_coulomb SOURCES test_smooth_cut_coulomb.cpp
                                                     ../smooth_cut_coulomb.cpp)
 if(ENABLE_LCAO)
+  # CMake 4.3 rejects imported targets that are linked directly to an
+  # executable here, so forward the LibRI usage requirements through a local
+  # interface target instead.
+  add_library(module_ri_libri_usage INTERFACE)
+  target_link_libraries(module_ri_libri_usage INTERFACE LibRI::LibRI)
+  addtest(
+    TARGET MODULE_RI_lri_cv
+    LIBS base parameter device module_ri_libri_usage
+    SOURCES test_lri_cv.cpp ../lri_cv.cpp
+            ../../../source_basis/module_ao/orb_atomic_lm.cpp)
+  # This ownership test uses the CV lifecycle, not integral assembly.
+  target_compile_options(MODULE_RI_lri_cv PRIVATE -ffunction-sections
+                                                  -fdata-sections)
+  target_link_options(MODULE_RI_lri_cv PRIVATE -Wl,--gc-sections)
   addtest(
     TARGET MODULE_RI_exx_workspace
-    LIBS base parameter device LibRI::LibRI ${math_libs}
+    LIBS base parameter device module_ri_libri_usage ${math_libs}
     SOURCES test_exx_workspace.cpp ../exx_workspace.cpp ../lri_cv.cpp
             ../../../source_basis/module_ao/orb_atomic_lm.cpp)
   # Link the compiled LRI lifecycle while keeping unrelated integral assembly out
@@ -43,7 +57,8 @@ target_link_options(MODULE_RI_invmat_ri PRIVATE -Wl,--gc-sections)
 addtest(
   TARGET MODULE_RI_hybrid_gauge_phase_test
   LIBS parameter base device
-  SOURCES test_hybrid_gauge_phase.cpp ../hybrid_gauge_phase.cpp ../mix_dmk_2d.cpp)
+  SOURCES test_hybrid_gauge_phase.cpp ../hybrid_gauge_phase.cpp
+          ../mix_dmk_2d.cpp)
 
 addtest(
   TARGET MODULE_RI_hybrid_image_domain_test

@@ -90,13 +90,13 @@ inline std::vector<hamilt::HContainer<double>> cal_hs_grad(const char job,
             const int it0 = ucell.iat2it[iat0];
             const Atom& atom0 = ucell.atoms[it0];
             const ModuleBase::Vector3<double> tau0 = ucell.get_tau(iat0);
-            auto row_indexes = pv.get_indexes_row(iat0);
+            std::vector<int> row_indexes = pv.get_indexes_row(iat0);
 
             const int iat1 = *it++;
             const int it1 = ucell.iat2it[iat1];
             const Atom& atom1 = ucell.atoms[it1];
             const ModuleBase::Vector3<double> tau1 = ucell.get_tau(iat1);
-            auto col_indexes = pv.get_indexes_col(iat1);
+            std::vector<int> col_indexes = pv.get_indexes_col(iat1);
 
             const int nR = *it++;
 

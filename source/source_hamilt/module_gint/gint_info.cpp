@@ -94,9 +94,9 @@ void GintInfo::init_atoms_(int ntype, const Atom *atoms, const Numerical_Orbital
     // TODO: USE OPENMP TO PARALLELIZE THIS LOOP
     for (int i = 0; i < ntype; i++)
     {
-        const auto &atom = atoms[i];
+        const Atom& atom = atoms[i];
         orbs_[i] = Phi[i];
-        const auto *orb = &orbs_[i];
+        const Numerical_Orbital* orb = &orbs_[i];
 
         // rcut extends to the maximum big grids in x, y, z directions
         Vec3i ext_bgrid = biggrid_info_->max_ext_bgrid_num(atom.Rcut);
@@ -114,7 +114,7 @@ void GintInfo::init_atoms_(int ntype, const Atom *atoms, const Numerical_Orbital
             const Vec3d tau_in_biggrid = biggrid_info_->get_cartesian_coord(delta);
 
             const Vec3i ucell_idx_atom = unitcell_info_->get_unitcell_idx(atom_bgrid_idx);
-            auto &r_to_atom = atoms_[iat];
+            std::map<ModuleBase::Vector3<int>, ModuleGint::GintAtom>& r_to_atom = atoms_[iat];
 
             for (int bgrid_x = atom_bgrid_idx.x - ext_bgrid.x; bgrid_x <= atom_bgrid_idx.x + ext_bgrid.x; bgrid_x++)
             {
@@ -137,7 +137,7 @@ void GintInfo::init_atoms_(int ntype, const Atom *atoms, const Numerical_Orbital
                         // The index of the unitcell containing the biggrid relative to the unitcell containing the
                         // atom.
                         const Vec3i ucell_idx_rel = ucell_idx_bgrid - ucell_idx_atom;
-                        auto it = r_to_atom.find(ucell_idx_rel);
+                        std::map<ModuleBase::Vector3<int>, ModuleGint::GintAtom>::iterator it = r_to_atom.find(ucell_idx_rel);
                         // if the gint_atom is not in the map,
                         // it means this is the first time we find this atom may affect some biggrids,
                         // add it to the r_to_atom map
@@ -234,7 +234,7 @@ void GintInfo::init_ijr_info_(const UnitCell &ucell, Grid_Driver &gd)
         const Atom *atom1 = &(ucell.atoms[T1]);
         for (int I1 = 0; I1 < atom1->na; ++I1)
         {
-            auto &tau1 = atom1->tau[I1];
+            const ModuleBase::Vector3<double>& tau1 = atom1->tau[I1];
             const int iat1 = ucell.itia2iat(T1, I1);
             // whether this atom is in this processor.
             if (this->is_atom_in_proc_[iat1])
@@ -268,7 +268,7 @@ void GintInfo::init_ijr_info_(const UnitCell &ucell, Grid_Driver &gd)
                         if (distance < rcut - 1.0e-15)
                         {
                             // calculate R index
-                            auto &R_index = gd.getBox(ad);
+                            const ModuleBase::Vector3<int>& R_index = gd.getBox(ad);
                             // insert this atom-pair into this->hr_gint
                             hamilt::AtomPair<double> tmp_atom_pair(
                                 iat1, iat2, R_index.x, R_index.y, R_index.z, orb_index.data(), orb_index.data(),
@@ -295,7 +295,7 @@ void GintInfo::init_bgrid_batches_(int batch_size)
         {
             bgrid_vec.push_back(biggrids_[j]);
         }
-        auto bgrid_batch = std::make_shared<BatchBigGrid>(bgrid_vec);
+        std::shared_ptr<BatchBigGrid> bgrid_batch = std::make_shared<BatchBigGrid>(bgrid_vec);
         bgrid_batches_.push_back(bgrid_batch);
     }
 }

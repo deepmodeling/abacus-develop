@@ -12,16 +12,17 @@
 namespace hamilt
 {
 template <typename Real, typename Device>
-std::complex<Real>* VelocityWorkspace<Real, Device>::prepare(const std::int64_t count)
+std::complex<Real> *VelocityWorkspace<Real, Device>::prepare(const std::int64_t count)
 {
     using CtDevice = typename ct::PsiToContainer<Device>::type;
-    if (count > capacity_ || coefficients_.data_type() != ct::DataTypeToEnum<Complex>::value
-        || coefficients_.device_type() != ct::DeviceTypeToEnum<CtDevice>::value)
+    if (count > capacity_ || coefficients_.data_type() != ct::DataTypeToEnum<Complex>::value ||
+        coefficients_.device_type() != ct::DeviceTypeToEnum<CtDevice>::value)
     {
         const std::int64_t workspace_elements = 8 * count;
         const std::int64_t capacity = std::max<std::int64_t>(1, workspace_elements);
         const std::int64_t projection_elements = 4 * count;
-        coefficients_ = ct::Tensor(ct::DataTypeToEnum<Complex>::value, ct::DeviceTypeToEnum<CtDevice>::value, {capacity});
+        coefficients_ =
+            ct::Tensor(ct::DataTypeToEnum<Complex>::value, ct::DeviceTypeToEnum<CtDevice>::value, {capacity});
         host_.resize(projection_elements);
         capacity_ = count;
     }
@@ -29,14 +30,15 @@ std::complex<Real>* VelocityWorkspace<Real, Device>::prepare(const std::int64_t 
 }
 
 template <typename Real, typename Device>
-void VelocityWorkspace<Real, Device>::contract(const UnitCell& cell,
-                                               const pseudopot_cell_vnl& pp,
-                                               const int spin,
-                                               const int bands,
-                                               const int npol,
-                                               const Real scale,
-                                               const ModulePW::PW_Basis_K& basis,
-                                               Complex* buffer)
+void VelocityWorkspace<Real, Device>::contract(
+    const UnitCell &cell,
+    const pseudopot_cell_vnl &pp,
+    const int spin,
+    const int bands,
+    const int npol,
+    const Real scale,
+    const ModulePW::PW_Basis_K &basis,
+    Complex *buffer)
 {
     ModuleBase::timer::start("VelocityWorkspace", "contract");
     const std::int64_t count = static_cast<std::int64_t>(bands) * pp.nkb;
@@ -55,14 +57,14 @@ void VelocityWorkspace<Real, Device>::contract(const UnitCell& cell,
         {
             const std::int64_t remaining = projection_elements - offset;
             const int chunk_size = static_cast<int>(std::min(max_chunk, remaining));
-            Complex* chunk = buffer + offset;
-            Complex* host_chunk = host_.data() + offset;
+            Complex *chunk = buffer + offset;
+            Complex *host_chunk = host_.data() + offset;
             Parallel_Common::reduce_dev<Complex, Device>(chunk, chunk_size, basis.pool_world, host_chunk);
             offset += chunk_size;
         }
     }
 #endif
-    Complex* output = buffer + projection_elements;
+    Complex *output = buffer + projection_elements;
     base_device::memory::set_memory_op<Complex, Device>()(output, 0, projection_elements);
     for (int component = 0; component < 4; ++component)
     {
@@ -71,43 +73,24 @@ void VelocityWorkspace<Real, Device>::contract(const UnitCell& cell,
         int atom = 0;
         const int stride = component == 0 ? pp.nkb : 3 * pp.nkb;
         const std::int64_t gradient_offset = static_cast<std::int64_t>(component - 1) * pp.nkb;
-        const Complex* input = component == 0 ? buffer : buffer + count + gradient_offset;
-        Complex* component_output = output + component * count;
+        const Complex *input = component == 0 ? buffer : buffer + count + gradient_offset;
+        Complex *component_output = output + component * count;
         for (int type = 0; type < cell.ntype; ++type)
         {
             // Both kernels advance sum and atom by reference.
             if (npol == 2)
             {
-                nonlocal_pw_op<Real, Device>()(nullptr,
-                                               cell.atoms[type].na,
-                                               bands,
-                                               cell.atoms[type].ncpp.nh,
-                                               sum,
-                                               atom,
-                                               stride,
-                                               pp.deeq_nc.getBound2(),
-                                               pp.deeq_nc.getBound3(),
-                                               pp.deeq_nc.getBound4(),
-                                               pp.template get_deeq_nc_data<Real>(),
-                                               component_output,
-                                               input);
+                nonlocal_pw_op<Real, Device>()(
+                    nullptr, cell.atoms[type].na, bands, cell.atoms[type].ncpp.nh, sum, atom, stride,
+                    pp.deeq_nc.getBound2(), pp.deeq_nc.getBound3(), pp.deeq_nc.getBound4(),
+                    pp.template get_deeq_nc_data<Real>(), component_output, input);
             }
             else
             {
-                nonlocal_pw_op<Real, Device>()(nullptr,
-                                               cell.atoms[type].na,
-                                               bands,
-                                               cell.atoms[type].ncpp.nh,
-                                               sum,
-                                               atom,
-                                               spin,
-                                               stride,
-                                               pp.deeq.getBound2(),
-                                               pp.deeq.getBound3(),
-                                               pp.deeq.getBound4(),
-                                               pp.template get_deeq_data<Real>(),
-                                               component_output,
-                                               input);
+                nonlocal_pw_op<Real, Device>()(
+                    nullptr, cell.atoms[type].na, bands, cell.atoms[type].ncpp.nh, sum, atom, spin, stride,
+                    pp.deeq.getBound2(), pp.deeq.getBound3(), pp.deeq.getBound4(), pp.template get_deeq_data<Real>(),
+                    component_output, input);
             }
         }
     }
@@ -120,7 +103,7 @@ void VelocityWorkspace<Real, Device>::contract(const UnitCell& cell,
         {
             const std::int64_t remaining = projection_elements - offset;
             const int chunk_size = static_cast<int>(std::min(max_chunk, remaining));
-            Complex* chunk = output + offset;
+            Complex *chunk = output + offset;
             ModuleBase::scal_op<Real, Device>()(chunk_size, &factor, chunk, 1);
             offset += chunk_size;
         }

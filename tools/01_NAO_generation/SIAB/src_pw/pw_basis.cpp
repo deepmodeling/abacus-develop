@@ -168,7 +168,9 @@ void PW_Basis::setup_gg(void)
         const double tmp = sqrt(this->ggpsi) + k_mod;
         const double tmp2 = tmp * tmp;
         if (this->ggwfc2 < tmp2)
+        {
             this->ggwfc2 = tmp2;
+        }
     }
 
     OUT(ofs_running, "NKS", NKS);
@@ -176,7 +178,7 @@ void PW_Basis::setup_gg(void)
     OUT(ofs_running, "ggwfc2(Ry)", ggwfc2 * tpiba2);
 
     // (1.4) initialize itia2iat
-    this->itia2iat = new int*[NTYPE];
+    this->itia2iat = new int *[NTYPE];
     int iat = 0;
     for (int it = 0; it < NTYPE; it++)
     {
@@ -233,7 +235,7 @@ void PW_Basis::set_igk(void)
     OUT(ofs_running, "npwx", npwx);
 
     // set igk
-    this->igk = new int*[NKS];
+    this->igk = new int *[NKS];
     for (int ik = 0; ik < NKS; ik++)
     {
         igk[ik] = new int[this->ngk[ik]];
@@ -372,7 +374,7 @@ void PW_Basis::setup_structure_factor(void)
     std::complex<double> ci_tpi = NEG_IMAG_UNIT * TWO_PI;
     std::complex<double> x;
 
-    this->strucFac = new std::complex<double>*[NTYPE];
+    this->strucFac = new std::complex<double> *[NTYPE];
     for (int it = 0; it < NTYPE; it++)
     {
         this->strucFac[it] = new std::complex<double>[ngmw];
@@ -393,9 +395,8 @@ void PW_Basis::setup_structure_factor(void)
                 //----------------------------------------------------------
                 // e^{-i G*tau}
 
-                const double theta
-                    = TWO_PI
-                      * (gcar[ig].x * CARPOSX[it][ia] + gcar[ig].y * CARPOSY[it][ia] + gcar[ig].z * CARPOSZ[it][ia]);
+                const double theta = TWO_PI * (gcar[ig].x * CARPOSX[it][ia] + gcar[ig].y * CARPOSY[it][ia] +
+                                                  gcar[ig].z * CARPOSZ[it][ia]);
                 sum_cos += cos(theta);
                 sum_sin += sin(theta);
             }
@@ -452,13 +453,13 @@ void PW_Basis::setup_structure_factor(void)
     return;
 }
 
-complex<double>* PW_Basis::get_sk(const int ik, const int it, const int ia) const
+complex<double> *PW_Basis::get_sk(const int ik, const int it, const int ia) const
 {
     timer::tick("PW_Basis", "get_sk");
-    const double arg
-        = (CARKX[ik] * CARPOSX[it][ia] + CARKY[ik] * CARPOSY[it][ia] + CARKZ[ik] * CARPOSZ[it][ia]) * TWO_PI;
+    const double arg =
+        (CARKX[ik] * CARPOSX[it][ia] + CARKY[ik] * CARPOSY[it][ia] + CARKZ[ik] * CARPOSZ[it][ia]) * TWO_PI;
     const std::complex<double> kphase = complex<double>(cos(arg), -sin(arg));
-    std::complex<double>* sk = new std::complex<double>[this->ngk[ik]];
+    std::complex<double> *sk = new std::complex<double>[this->ngk[ik]];
     const int iat = this->itia2iat[it][ia];
 
     for (int ig = 0; ig < this->ngk[ik]; ig++)
@@ -486,8 +487,8 @@ complex<double>* PW_Basis::get_sk(const int ik, const int it, const int ia) cons
             QUIT();
         }
 
-        sk[ig] = kphase * this->eigts1(iat, this->ig1[iig]) * this->eigts2(iat, this->ig2[iig])
-                 * this->eigts3(iat, this->ig3[iig]);
+        sk[ig] = kphase * this->eigts1(iat, this->ig1[iig]) * this->eigts2(iat, this->ig2[iig]) *
+                 this->eigts3(iat, this->ig3[iig]);
     }
     timer::tick("PW_Basis", "get_sk");
     return sk;
@@ -516,7 +517,7 @@ void PW_Basis::table(void)
         this->ylm[ik].create(total_lm, npw);
 
         // (1) get the vector k+G
-        Vector3<double>* gk = new Vector3<double>[npw];
+        Vector3<double> *gk = new Vector3<double>[npw];
         for (int ig = 0; ig < npw; ig++)
         {
             gk[ig] = this->get_1qvec_cartesian(ik, ig);
@@ -557,7 +558,7 @@ void PW_Basis::table(void)
 }
 
 // init psi1d for each Level.
-void PW_Basis::allocate_psi1d(const int& il)
+void PW_Basis::allocate_psi1d(const int &il)
 {
     TITLE("PW_Basis", "allocate_psi1d");
 
@@ -566,7 +567,9 @@ void PW_Basis::allocate_psi1d(const int& il)
     this->Dk = 0.01;
     this->kmesh = static_cast<int>(sqrt(ECUT) / Dk) + 1 + 4;
     if (kmesh % 2 == 0)
+    {
         ++kmesh;
+    }
 
     this->psi1d.create(NTYPE, LMAXUSED + 1, NMAXUSED, kmesh);
 
@@ -598,8 +601,8 @@ void PW_Basis::calculate_psi1d(void)
                 {
                     for (int ikm = 0; ikm < kmesh; ikm++)
                     {
-                        this->psi1d(it, l, n, ikm)
-                            += input.Coef.C4(it, l, n, ie) * Numerical_Basis::bessel_basis.TableOne(l, ie, ikm);
+                        this->psi1d(it, l, n, ikm) +=
+                            input.Coef.C4(it, l, n, ie) * Numerical_Basis::bessel_basis.TableOne(l, ie, ikm);
                     }
                 }
             }
@@ -609,7 +612,7 @@ void PW_Basis::calculate_psi1d(void)
     return;
 }
 
-void PW_Basis::allocate_psi3d(const int& level)
+void PW_Basis::allocate_psi3d(const int &level)
 {
 
     // allocate the number of wave functions.
@@ -624,7 +627,7 @@ void PW_Basis::allocate_psi3d(const int& level)
     return;
 }
 
-void PW_Basis::calculate_psi3d(const int& ilevel, const int& ik)
+void PW_Basis::calculate_psi3d(const int &ilevel, const int &ik)
 {
     // TITLE("PW_Basis", "calculate_psi3d");
     timer::tick("PW_Basis", "calculate_psi3d");
@@ -635,13 +638,13 @@ void PW_Basis::calculate_psi3d(const int& ilevel, const int& ik)
 
     const int npw = ngk[ik];
 
-    Vector3<double>* gk = new Vector3<double>[npw];
+    Vector3<double> *gk = new Vector3<double>[npw];
     for (int ig = 0; ig < npw; ig++)
     {
         gk[ig] = this->get_1qvec_cartesian(ik, ig);
     }
 
-    double* flq = new double[npw];
+    double *flq = new double[npw];
     for (int iw = 0; iw < this->nwfc2; iw++)
     {
         // for each wave function in nwfc2(it, i, l, n)
@@ -659,7 +662,7 @@ void PW_Basis::calculate_psi3d(const int& ilevel, const int& ik)
         }
 
         // get the structure wave functions for each k point.
-        std::complex<double>* sk = this->get_sk(ik, it, ia);
+        std::complex<double> *sk = this->get_sk(ik, it, ia);
 
         const int lm = l * l + m;
         for (int ig = 0; ig < npw; ig++)
@@ -676,7 +679,7 @@ void PW_Basis::calculate_psi3d(const int& ilevel, const int& ik)
     return;
 }
 
-complex<double> PW_Basis::calculateS(const int& iw, const int& iw2, const int& ik)
+complex<double> PW_Basis::calculateS(const int &iw, const int &iw2, const int &ik)
 {
     std::complex<double> overlap = 0.0;
     for (int ig = 0; ig < ngk[ik]; ig++)
@@ -690,7 +693,12 @@ complex<double> PW_Basis::calculateS(const int& iw, const int& iw2, const int& i
     return overlap;
 }
 
-void PW_Basis::update_psi1d(const int& il, const int& ic, const int& ie, const double& c4_now, const double& c4_old)
+void PW_Basis::update_psi1d(
+    const int &il,
+    const int &ic,
+    const int &ie,
+    const double &c4_now,
+    const double &c4_old)
 {
     timer::tick("PW_Basis", "update_psi1d");
 
@@ -732,8 +740,8 @@ void PW_Basis::update_psi1d(const int& il, const int& ic, const int& ie, const d
                     for (int ikm = 0; ikm < kmesh; ikm++)
                     {
                         // a small trick
-                        this->psi1d(it, l, n, ikm)
-                            += (c4_now - c4_old) * Numerical_Basis::bessel_basis.TableOne(l, ie, ikm);
+                        this->psi1d(it, l, n, ikm) +=
+                            (c4_now - c4_old) * Numerical_Basis::bessel_basis.TableOne(l, ie, ikm);
                     }
                 }
             }
@@ -748,7 +756,7 @@ void PW_Basis::update_psi1d(const int& il, const int& ic, const int& ie, const d
     return;
 }
 
-void PW_Basis::update_psi3d(const int& il, const int& ic, const int& ik)
+void PW_Basis::update_psi3d(const int &il, const int &ic, const int &ik)
 {
     //    TITLE("PW_Basis","update_psi1d3d");
     timer::tick("PW_Basis", "update_psi3d");
@@ -759,12 +767,14 @@ void PW_Basis::update_psi3d(const int& il, const int& ic, const int& ik)
     static int l_old;
     static int n_old;
     static bool allocate = false;
-    static int* ic_last;
+    static int *ic_last;
     if (!allocate)
     {
         ic_last = new int[NKS];
         for (int ik = 0; ik < NKS; ik++)
+        {
             ic_last[ik] = -1;
+        }
         allocate = true;
     }
 
@@ -774,14 +784,14 @@ void PW_Basis::update_psi3d(const int& il, const int& ic, const int& ik)
     n_old = -1;
 
     // (1) get the vector k+G
-    Vector3<double>* gk = new Vector3<double>[npw];
+    Vector3<double> *gk = new Vector3<double>[npw];
     for (int ig = 0; ig < npw; ig++)
     {
         gk[ig] = this->get_1qvec_cartesian(ik, ig);
     }
-    double* flq = new double[npw];
-    std::complex<double>* sk = new std::complex<double>[1];
-    std::complex<double>* samepart = new std::complex<double>[npw];
+    double *flq = new double[npw];
+    std::complex<double> *sk = new std::complex<double>[1];
+    std::complex<double> *samepart = new std::complex<double>[npw];
     for (int iw = 0; iw < this->nwfc2; iw++)
     {
         const int ic1 = mz.Level[il].wayd[iw].ic;
@@ -864,7 +874,11 @@ void PW_Basis::update_psi3d(const int& il, const int& ic, const int& ik)
     return;
 }
 
-double PW_Basis::Polynomial_Interpolation(const int& it, const int& l, const int& n, const double& gnorm) const
+double PW_Basis::Polynomial_Interpolation(
+    const int &it,
+    const int &l,
+    const int &n,
+    const double &gnorm) const
 {
     const double position = gnorm / this->Dk;
     const int iq = static_cast<int>(position);
@@ -873,12 +887,12 @@ double PW_Basis::Polynomial_Interpolation(const int& it, const int& l, const int
     const double x1 = 1.0 - x0;
     const double x2 = 2.0 - x0;
     const double x3 = 3.0 - x0;
-    const double y = this->psi1d(it, l, n, iq) * x1 * x2 * x3 / 6.0 + this->psi1d(it, l, n, iq) * x0 * x2 * x3 / 2.0
-                     - this->psi1d(it, l, n, iq) * x1 * x0 * x3 / 2.0 + this->psi1d(it, l, n, iq) * x1 * x2 * x0 / 6.0;
+    const double y = this->psi1d(it, l, n, iq) * x1 * x2 * x3 / 6.0 + this->psi1d(it, l, n, iq) * x0 * x2 * x3 / 2.0 -
+                     this->psi1d(it, l, n, iq) * x1 * x0 * x3 / 2.0 + this->psi1d(it, l, n, iq) * x1 * x2 * x0 / 6.0;
     return y;
 }
 
-void PW_Basis::calculate_Jlq(const int& ik, const int& iw, const int& ie)
+void PW_Basis::calculate_Jlq(const int &ik, const int &iw, const int &ie)
 {
     // TITLE("PW_Basis", "calculate_Jlq");
     timer::tick("PW_Basis", "calculate_Jlq");
@@ -890,8 +904,8 @@ void PW_Basis::calculate_Jlq(const int& ik, const int& iw, const int& ie)
     const int m = iwindex[iw].m;
 
     // generate 1d Jlq.
-    Vector3<double>* gk = new Vector3<double>[npw];
-    double* flq = new double[npw];
+    Vector3<double> *gk = new Vector3<double>[npw];
+    double *flq = new double[npw];
     for (int ig = 0; ig < npw; ig++)
     {
         gk[ig] = this->get_1qvec_cartesian(ik, ig);
@@ -904,7 +918,7 @@ void PW_Basis::calculate_Jlq(const int& ik, const int& iw, const int& ie)
     // generate 3d Jlq.
     delete[] Jlq;
     Jlq = new std::complex<double>[npw];
-    std::complex<double>* sk = this->get_sk(ik, it, ia);
+    std::complex<double> *sk = this->get_sk(ik, it, ia);
 
     const int lm = l * l + m;
     std::complex<double> lphase = pow(IMAG_UNIT, l);
@@ -921,7 +935,7 @@ void PW_Basis::calculate_Jlq(const int& ik, const int& iw, const int& ie)
     return;
 }
 
-complex<double> PW_Basis::calculate_Jlq_Phi(const int& ik, const int& mu)
+complex<double> PW_Basis::calculate_Jlq_Phi(const int &ik, const int &mu)
 {
     const int npw = this->ngk[ik];
     complex<double> overlap = std::complex<double>(0, 0);

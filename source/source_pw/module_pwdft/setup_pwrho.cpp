@@ -1,17 +1,17 @@
 #include "source_pw/module_pwdft/setup_pwrho.h"
+#include "source_base/parallel_comm.h"           // use POOL_WORLD
 #include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
-#include "source_io/module_output/print_info.h" // use print_rhofft
-#include "source_base/parallel_comm.h" // use POOL_WORLD
+#include "source_io/module_output/print_info.h"  // use print_rhofft
 
 void pw::setup_pwrho(
-        UnitCell& ucell, // unitcell 
-        const bool double_grid, // for USPP
-        bool &pw_rho_flag, // flag for allocation of pw_rho
-        ModulePW::PW_Basis* &pw_rho, // pw for rhod
-        ModulePW::PW_Basis* &pw_rhod, // pw for rhod
-        ModulePW::PW_Basis_Big* &pw_big, // pw for rhod
-        const std::string &classname,
-        const Input_para& inp) // input parameters *
+    UnitCell &ucell,                 // unitcell
+    const bool double_grid,          // for USPP
+    bool &pw_rho_flag,               // flag for allocation of pw_rho
+    ModulePW::PW_Basis *&pw_rho,     // pw for rhod
+    ModulePW::PW_Basis *&pw_rhod,    // pw for rhod
+    ModulePW::PW_Basis_Big *&pw_big, // pw for rhod
+    const std::string &classname,
+    const Input_para &inp) // input parameters *
 {
     ModuleBase::TITLE("pw", "setup_pwrho");
 
@@ -19,17 +19,17 @@ void pw::setup_pwrho(
     std::string fft_precision = inp.precision;
 
     // LCAO basis doesn't support GPU acceleration on FFT currently
-    if(inp.basis_type == "lcao")
+    if (inp.basis_type == "lcao")
     {
         fft_device = "cpu";
     }
 
     // single, double, or mixing precision calculations
-    if ((inp.precision=="single") || (inp.precision=="mixing"))
+    if ((inp.precision == "single") || (inp.precision == "mixing"))
     {
         fft_precision = "mixing";
     }
-    else if (inp.precision=="double")
+    else if (inp.precision == "double")
     {
         fft_precision = "double";
     }
@@ -57,7 +57,7 @@ void pw::setup_pwrho(
     }
 
     // initialize pw_big
-    pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rhod);
+    pw_big = static_cast<ModulePW::PW_Basis_Big *>(pw_rhod);
     pw_big->setbxyz(inp.bx, inp.by, inp.bz);
 
     //! initialie the plane wave basis for rho
@@ -101,7 +101,7 @@ void pw::setup_pwrho(
     //! initialize the double grid (for uspp) if necessary
     if (double_grid)
     {
-        ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
+        ModulePW::PW_Basis_Sup *pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup *>(pw_rhod);
 #ifdef __MPI
         pw_rhod->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
@@ -130,11 +130,11 @@ void pw::setup_pwrho(
     return;
 }
 
-
-void pw::teardown_pwrho(bool &pw_rho_flag,
-        const bool double_grid,
-        ModulePW::PW_Basis* &pw_rho, // pw for rhod
-        ModulePW::PW_Basis* &pw_rhod) // pw for rhod
+void pw::teardown_pwrho(
+    bool &pw_rho_flag,
+    const bool double_grid,
+    ModulePW::PW_Basis *&pw_rho,  // pw for rhod
+    ModulePW::PW_Basis *&pw_rhod) // pw for rhod
 {
     if (pw_rho_flag == true)
     {
@@ -149,6 +149,5 @@ void pw::teardown_pwrho(bool &pw_rho_flag,
         pw_rhod = nullptr;
     }
 
-   return;
+    return;
 }
-

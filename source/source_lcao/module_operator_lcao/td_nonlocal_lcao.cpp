@@ -71,7 +71,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_
     this->adjs_all.reserve(this->ucell->nat);
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
     {
-        auto tau0 = ucell->get_tau(iat0);
+        ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
         AdjacentAtomInfo adjs;
@@ -159,7 +159,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
-        const auto tau0 = ucell->get_tau(iat0);
+        const ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
         const AdjacentAtomInfo& adjs = this->adjs_all[iat0];
@@ -243,7 +243,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     }
                     const int iw1 = entry / npol;
                     std::vector<std::vector<std::complex<double>>> nlm;
-                    auto* lcao_nl = static_cast<LCAONonlocalInfo*>(this->ucell->infoNL.get());
+                    LCAONonlocalInfo* lcao_nl = static_cast<LCAONonlocalInfo*>(this->ucell->infoNL.get());
                     module_rt::snap_psibeta_half_tddft(orb_,
                                                        lcao_nl->get_nonlocal(),
                                                        nlm,
@@ -285,7 +285,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             const int thread_id = omp_get_thread_num();
             std::set<int> ad_atom_set_thread;
             int i = 0;
-            for (const auto iat1: ad_atom_set)
+            for (const int iat1: ad_atom_set)
             {
                 if (i % num_threads == thread_id)
                 {

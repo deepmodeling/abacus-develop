@@ -89,7 +89,7 @@ case "${with_cmake}" in
       else
         strip_components=1
       fi
-      tar --strip-components=${strip_components} -xvf ${cmake_pkg} -C ${pkg_install_dir} >install.log 2>&1 || tail_excerpt install.log
+      tar --strip-components=${strip_components} -xvf ${cmake_pkg} -C ${pkg_install_dir} > install.log 2>&1 || tail_excerpt install.log
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage0/$(basename ${SCRIPT_NAME})"
     fi
     ;;
@@ -112,7 +112,7 @@ case "${with_cmake}" in
 esac
 if [ "${with_cmake}" != "__DONTUSE__" ]; then
   if [ "${with_cmake}" != "__SYSTEM__" ]; then
-    cat <<EOF >"${BUILDDIR}/setup_cmake"
+    cat << EOF > "${BUILDDIR}/setup_cmake"
 prepend_path PATH "${pkg_install_dir}/bin"
 EOF
     filter_setup "${BUILDDIR}/setup_cmake" $SETUPFILE

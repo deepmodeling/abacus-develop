@@ -373,7 +373,7 @@ void DP::initialize_type_map_(const std::vector<std::string> &type_labels)
     std::cout << "\n type map of model file " << dp_file << " " << std::endl;
     std::cout << " ----------------------------------------------------------------";
     int count = 0;
-    for (auto it = label.begin(); it != label.end(); ++it)
+    for (std::unordered_map<std::string, int>::iterator it = label.begin(); it != label.end(); ++it)
     {
         if (count % 5 == 0)
         {

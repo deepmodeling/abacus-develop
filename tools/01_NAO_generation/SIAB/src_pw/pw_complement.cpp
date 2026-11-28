@@ -2,12 +2,13 @@
 
 #include "heapsort.h"
 
-int PW_complement::get_total_pw_number(const double& ggcut_start,
-                                       const double& ggcut_end,
-                                       const int& nx,
-                                       const int& ny,
-                                       const int& nz,
-                                       const Matrix3& GGT)
+int PW_complement::get_total_pw_number(
+    const double &ggcut_start,
+    const double &ggcut_end,
+    const int &nx,
+    const int &ny,
+    const int &nz,
+    const Matrix3 &GGT)
 {
     TITLE("PW_complement", "get_total_pw_number");
     if (ggcut_end <= 0.0)
@@ -46,15 +47,16 @@ int PW_complement::get_total_pw_number(const double& ggcut_start,
     return ngm;
 }
 
-void PW_complement::get_total_pw(double* gg,
-                                 Vector3<double>* ig,
-                                 const double& ggcut_start,
-                                 const double& ggcut_end,
-                                 const int& nx,
-                                 const int& ny,
-                                 const int& nz,
-                                 const Matrix3& GGT, // GGT = G*GT.
-                                 int& ngm            // number of total plane waves.
+void PW_complement::get_total_pw(
+    double *gg,
+    Vector3<double> *ig,
+    const double &ggcut_start,
+    const double &ggcut_end,
+    const int &nx,
+    const int &ny,
+    const int &nz,
+    const Matrix3 &GGT, // GGT = G*GT.
+    int &ngm            // number of total plane waves.
 )
 {
     TITLE("PW_complement", "get_total_pw");
@@ -101,7 +103,12 @@ void PW_complement::get_total_pw(double* gg,
     return;
 }
 
-void PW_complement::get_FFT_dimension(const Matrix3& latvec, const double& ggcut, int& nx_tmp, int& ny_tmp, int& nz_tmp)
+void PW_complement::get_FFT_dimension(
+    const Matrix3 &latvec,
+    const double &ggcut,
+    int &nx_tmp,
+    int &ny_tmp,
+    int &nz_tmp)
 {
     TITLE("PW_complement", "get_FFT_dimension");
     // read in the FFT dimension (Nx, Ny, Nz) from paratab,
@@ -203,16 +210,17 @@ void PW_complement::get_FFT_dimension(const Matrix3& latvec, const double& ggcut
 // the 3D G-grid and the FFT grid.
 // generate : gg_global, g_global, ig_global
 //==========================================================
-void PW_complement::setup_GVectors(const Matrix3& G,
-                                   const int& ngmc_g_in,
-                                   double* gg,
-                                   Vector3<double>* ig,
-                                   Vector3<double>* g)
+void PW_complement::setup_GVectors(
+    const Matrix3 &G,
+    const int &ngmc_g_in,
+    double *gg,
+    Vector3<double> *ig,
+    Vector3<double> *g)
 {
     TITLE("PW_complement", "setup_GVectors");
     timer::tick("PW_complement", "setup_GVectors");
 
-    int* ind = new int[ngmc_g_in]; // auxiliary array for the 1d G vector index
+    int *ind = new int[ngmc_g_in]; // auxiliary array for the 1d G vector index
     ZEROS(ind, ngmc_g_in);
     ind[0] = 0; // ind[0]=0, meaning ind[] is not initialized.
 
@@ -230,7 +238,7 @@ void PW_complement::setup_GVectors(const Matrix3& G,
     // G1d[i] is the vector in 3d grid, G1d2[i] is its norm.
     /***************************************************************/
 
-    Vector3<double>* igsort = new Vector3<double>[ngmc_g_in];
+    Vector3<double> *igsort = new Vector3<double>[ngmc_g_in];
     for (int i = 0; i < ngmc_g_in; i++)
     {
         igsort[i] = ig[ind[i]];

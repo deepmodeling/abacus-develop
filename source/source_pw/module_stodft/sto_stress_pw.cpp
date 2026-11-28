@@ -84,7 +84,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
     }
 
     bool ry = false;
-    const bool screen = PARAM.inp.test_stress;
+    const bool screen = PARAM.inp.test_stress && PARAM.inp.calculation != "md";
     ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, GlobalV::ofs_running);
 
     if (screen)
