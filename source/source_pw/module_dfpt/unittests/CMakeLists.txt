@@ -246,3 +246,10 @@ if(ENABLE_MPI)
             # Shared cubic-cell / stru_lib fixture.
             test_dfpt_stru_fixture.cpp)
 endif()
+
+# The little-group enumeration is self-contained (no cell fixture), so its
+# test links only the module itself plus base.
+addtest(
+  TARGET MODULE_DFPT_symm_serial
+  LIBS device base
+  SOURCES test_dfpt_symm.cpp ../dfpt_symm.cpp)

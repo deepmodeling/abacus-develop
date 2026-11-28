@@ -13,6 +13,7 @@ set(SOURCES
     dfpt_pert_vkb.cpp
     dfpt_pert_nl.cpp
     dfpt_stern.cpp
+    dfpt_symm.cpp
     dfpt_nscf.cpp
     dfpt_rho.cpp
     dfpt_rho_mix.cpp
