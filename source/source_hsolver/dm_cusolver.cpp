@@ -101,7 +101,6 @@ bool solve_with_gpu_dm(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::
     const bool root = layout.irproc() == 0 && layout.icproc() == 0;
     const bool serial = layout.nrproc() == 1 && layout.ncproc() == 1;
     const std::size_t matrix_size = static_cast<std::size_t>(n) * n;
-    const std::size_t wave_size = static_cast<std::size_t>(n) * bands;
     const int block_size = layout.nb();
     Parallel_Blkcyclic gathered_layout;
     int gathered_context = -1;
@@ -134,20 +133,17 @@ bool solve_with_gpu_dm(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::
     const double* s_pointer = sk.p;
     std::vector<double> h;
     std::vector<double> s;
-    std::vector<double> host_wave;
     if (!serial)
     {
         const std::size_t root_matrix_size = root ? matrix_size : 1;
-        const std::size_t root_wave_size = root ? wave_size : 1;
         h.resize(root_matrix_size);
         s.resize(root_matrix_size);
         Cpdgemr2d(n, n, hk.p, 1, 1, distributed_desc, h.data(), 1, 1, full_desc, context);
         Cpdgemr2d(n, n, sk.p, 1, 1, distributed_desc, s.data(), 1, 1, full_desc, context);
-        host_wave.resize(root_wave_size);
         h_pointer = h.data();
         s_pointer = s.data();
-        host_wave_pointer = host_wave.data();
-        // H is dead after diagonalization; reuse its gather buffer for the returned DM.
+        // After upload, H's gather buffer can receive eigenvectors and then DM.
+        host_wave_pointer = h.data();
         host_dm = h.data();
     }
     std::unique_ptr<Diag_Cusolver_gvd> solver;
@@ -174,7 +170,6 @@ bool solve_with_gpu_dm(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::
         else Cdgebr2d(context, &scope, &topology, bands, 1, eigenvalues, bands, 0, 0);
         Cpdgemr2d(n, bands, host_wave_pointer, 1, 1, wave_desc,
                   wave_pointer, 1, 1, distributed_wave_desc, context);
-        std::vector<double>().swap(host_wave);
     }
     // Keep the owning solver alive through ABACUS's actual occupation calculation.
     elecstate::calculate_weights(state->ekb, state->wg, state->klist, state->eferm,

@@ -33,19 +33,20 @@ void check_retained_density(const bool subset)
         std::vector<double> legacy_values(n);
         std::vector<double> retained_values(n);
         std::vector<double> legacy_wave(elements);
-        std::vector<double> host_wave(wave_elements);
+        // H can receive the returned eigenvectors once its input has been uploaded.
+        double* host_wave = h.data();
         std::vector<double> density(elements);
         std::vector<double> weights(bands);
         Diag_Cusolver_gvd legacy;
         legacy.solve_full(n, n, h.data(), s.data(), legacy_values.data(), legacy_wave.data(), false);
         if (subset)
         {
-            const bool solved = retained.solve_subset(n, bands, h.data(), s.data(), retained_values.data(), host_wave.data(), true);
+            const bool solved = retained.solve_subset(n, bands, h.data(), s.data(), retained_values.data(), host_wave, true);
             ASSERT_TRUE(solved);
         }
         else
         {
-            retained.solve_full(n, bands, h.data(), s.data(), retained_values.data(), host_wave.data(), true);
+            retained.solve_full(n, bands, h.data(), s.data(), retained_values.data(), host_wave, true);
         }
         for (int band = 0; band < bands; ++band)
         {
@@ -57,7 +58,7 @@ void check_retained_density(const bool subset)
         weights[1] = 0.0;
         weights[2] = 0.125;
         // The direct DM must not depend on the host eigenvector materialization.
-        std::fill(host_wave.begin(), host_wave.end(), 0.0);
+        std::fill_n(host_wave, wave_elements, 0.0);
         const bool ready = retained.density_from_retained(bands, weights.data(), density.data(), error);
         ASSERT_TRUE(ready);
         EXPECT_TRUE(error.empty());
