@@ -1,6 +1,8 @@
 #include "source_lcao/module_lr/lr_core.h"
 
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_basis/module_nao/two_center_integrator.h"
@@ -18,6 +20,7 @@
 #include "source_lcao/module_lr/lr_gs.h"
 #include "source_lcao/module_lr/lr_sforce.h"
 #include "source_lcao/module_lr/lr_zeq.h"
+#include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 
 #include <algorithm>
@@ -55,6 +58,71 @@ void Core<T>::fill_z(const int* desc_src, const K_Vectors& kv, const bool cal_fo
     this->zw.nvirt = std::move(z.nvirt);
     this->zw.nbands = z.nbands;
     this->zw.nloc = z.nloc;
+}
+
+template <typename T>
+void Core<T>::refresh_gs(const KsBands<T>& bands, const K_Vectors& kv, const Input_para& inp, const bool first,
+                         std::ostream& log)
+{
+    // The ground-state solver owns `psi` and reuses it across ionic steps, so it cannot be stolen.
+    // `eig_all` / `wg_all` are nspin x nbands matrices -- a few kB, copied rather than aliased so
+    // that they survive the KS solver overwriting its `pelec` on the next step.
+    this->gs.psi_all = bands.psi;
+    this->gs.eig_all = *bands.ekb;
+    this->gs.wg_all = *bands.wg;
+    const int max_occupied_bands = *std::max_element(this->dim.nocc.begin(), this->dim.nocc.end());
+    const int start_band = this->dim.nocc_max - max_occupied_bands;
+
+    for (int ik = 0; ik < kv.get_nks(); ++ik)
+    {
+        // copy the KS orbitals in the [nocc, nvirt] window
+#ifdef __MPI
+        this->gs.psi_all->fix_k(ik);
+        this->gs.psi->fix_k(ik);
+        const int first_band = start_band + 1;
+        Cpxgemr2d(this->dim.nbasis, this->dim.nbands, this->gs.psi_all->get_pointer(), 1, first_band,
+                  const_cast<int*>(bands.pv->desc_wfc), this->gs.psi->get_pointer(), 1, 1,
+                  const_cast<int*>(this->amp.para_c.desc()), this->amp.para_c.ictxt());
+#else
+        // serial: each band is `nbasis` contiguous coefficients, so the window is a plain
+        // band-by-band copy
+        for (int ib = 0; ib < this->dim.nbands; ++ib)
+        {
+            const auto* start = &(*this->gs.psi_all)(ik, start_band + ib, 0);
+            auto* to = &(*this->gs.psi)(ik, ib, 0);
+            std::copy(start, start + this->dim.nbasis, to);
+        }
+#endif
+        // copy the KS bands in the [nocc, nvirt] window
+        for (int ib = 0; ib < this->dim.nbands; ++ib)
+        {
+            this->gs.eig(ik, ib) = this->gs.eig_all(ik, start_band + ib);
+        }
+    }
+
+    if (this->dim.nspin == 2)
+    {
+        const int nupdown_now = LR_Util::spin_population_difference(*bands.wg, kv.para_k.kpar, kv.para_k.rank_in_pool);
+        if (first)
+        {
+            this->dim.nupdown = nupdown_now;
+            apply_spin_pol(this->dim, inp); // shifts nocc/nvirt between the spin channels: exactly once
+        }
+        else if (nupdown_now != this->dim.nupdown)
+        {
+            ModuleBase::WARNING_QUIT(
+                "LR::Core::refresh_gs",
+                "the ground-state spin population changed between ionic steps, but nocc/nvirt and"
+                " the distributions built from them were fixed at the first step.");
+        }
+    }
+
+    // the Z-vector window: after `apply_spin_pol`, so nocc/nvirt/openshell are final
+#ifdef __MPI
+    this->fill_z(bands.pv->desc_wfc, kv, inp.cal_force, first, log);
+#else
+    this->fill_z(nullptr, kv, inp.cal_force, first, log);
+#endif
 }
 
 template <typename T>
@@ -303,6 +371,10 @@ template void Core<std::complex<double>>::read_wfc(const std::string&, const Inp
                                                    std::ostream&);
 template void Core<double>::fill_z(const int*, const K_Vectors&, bool, bool, std::ostream&);
 template void Core<std::complex<double>>::fill_z(const int*, const K_Vectors&, bool, bool, std::ostream&);
+template void Core<double>::refresh_gs(const KsBands<double>&, const K_Vectors&, const Input_para&, bool,
+                                       std::ostream&);
+template void Core<std::complex<double>>::refresh_gs(const KsBands<std::complex<double>>&, const K_Vectors&,
+                                                     const Input_para&, bool, std::ostream&);
 
 template std::vector<ModuleBase::matrix> Core<double>::cal_force(int, const ModuleBase::matrix&, int);
 template std::vector<ModuleBase::matrix> Core<std::complex<double>>::cal_force(int, const ModuleBase::matrix&, int);

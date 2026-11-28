@@ -54,6 +54,16 @@ struct GsState
     Parallel_Orbitals para_mat_all;
 };
 
+/// All-band ground-state data owned by the ground-state solver, handed over for one refresh.
+template <typename T>
+struct KsBands
+{
+    psi::Psi<T>* psi = nullptr;              ///< all-band KS orbitals
+    const ModuleBase::matrix* ekb = nullptr; ///< all-band eigenvalues
+    const ModuleBase::matrix* wg = nullptr;  ///< all-band occupations
+    const Parallel_Orbitals* pv = nullptr;   ///< distribution of `psi`
+};
+
 /// The excitation amplitudes and their distribution.
 struct Amp
 {
@@ -131,6 +141,10 @@ struct Core
     void read_wfc(const std::string& in_dir, const Input_para& inp, const K_Vectors& kv, std::ostream& log);
     /// Widen the ground-state window into the Z window used by the force path.
     void fill_z(const int* desc_src, const K_Vectors& kv, bool cal_force, bool first, std::ostream& log);
+    /// Re-read the band window that follows the current geometry, then rebuild the Z window.
+    /// `first` selects the one-time spin-channel setup; later calls only validate it.
+    void refresh_gs(const KsBands<T>& bands, const K_Vectors& kv, const Input_para& inp, bool first,
+                    std::ostream& log);
 
     /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
     /// restricts it to that one state; -1 does all `nstates`.

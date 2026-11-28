@@ -767,60 +767,14 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell &ucell)
 {
     ModuleBase::TITLE("ESolver_LR", "refresh_from_ks_");
     ModuleESolver::ESolver_KS_LCAO<T, TR> &ks_sol = *this->ks_;
-    // The ground-state solver owns `psi` and reuses it across ionic steps, so it cannot be stolen.
-    // `eig_ks_all` / `wg_ks_all` are nspin x nbands matrices -- a few kB, copied rather than aliased
-    // so that they survive the KS solver overwriting `pelec` on the next step.
-    this->lr_.gs.psi_all = ks_sol.psi;
-    this->lr_.gs.eig_all = ks_sol.pelec->ekb;
-    this->lr_.gs.wg_all = ks_sol.pelec->wg;
-    const int max_occupied_bands = *std::max_element(this->lr_.dim.nocc.begin(), this->lr_.dim.nocc.end());
-    const int start_band = this->lr_.dim.nocc_max - max_occupied_bands;
 
-    for (int ik = 0; ik < this->kv.get_nks(); ++ik)
-    {
-        // copy the KS orbitals in the [nocc, nvirt] window
-#ifdef __MPI
-        this->lr_.gs.psi_all->fix_k(ik);
-        this->lr_.gs.psi->fix_k(ik);
-        const int first_band = start_band + 1;
-        Cpxgemr2d(
-            this->lr_.dim.nbasis, this->lr_.dim.nbands, this->lr_.gs.psi_all->get_pointer(), 1, first_band, ks_sol.pv.desc_wfc,
-            this->lr_.gs.psi->get_pointer(), 1, 1, const_cast<int *>(this->lr_.amp.para_c.desc()), this->lr_.amp.para_c.ictxt());
-#else
-        // serial: each band is `nbasis` contiguous coefficients, so the window is a plain
-        // band-by-band copy (this loop used to compute the two pointers and copy nothing,
-        // leaving `psi_ks` uninitialized in every non-MPI build)
-        for (int ib = 0; ib < this->lr_.dim.nbands; ++ib)
-        {
-            const auto *start = &(*this->lr_.gs.psi_all)(ik, start_band + ib, 0);
-            auto *to = &(*this->lr_.gs.psi)(ik, ib, 0);
-            std::copy(start, start + this->lr_.dim.nbasis, to);
-        }
-#endif
-        // copy the KS bands in the [nocc, nvirt] window
-        for (int ib = 0; ib < this->lr_.dim.nbands; ++ib)
-        {
-            this->lr_.gs.eig(ik, ib) = this->lr_.gs.eig_all(ik, start_band + ib);
-        }
-    }
+    LR::KsBands<T> bands;
+    bands.psi = ks_sol.psi;
+    bands.ekb = &ks_sol.pelec->ekb;
+    bands.wg = &ks_sol.pelec->wg;
+    bands.pv = &ks_sol.pv;
+    this->lr_.refresh_gs(bands, this->kv, *this->inp_, !this->ks_initialized_, this->ofs_running_);
 
-    if (this->lr_.dim.nspin == 2)
-    {
-        const int nupdown_now =
-            LR_Util::spin_population_difference(ks_sol.pelec->wg, this->kv.para_k.kpar, this->kv.para_k.rank_in_pool);
-        if (!this->ks_initialized_)
-        {
-            this->lr_.dim.nupdown = nupdown_now;
-            reset_dim_spin(); // shifts nocc/nvirt between the spin channels: must run exactly once
-        }
-        else if (nupdown_now != this->lr_.dim.nupdown)
-        {
-            ModuleBase::WARNING_QUIT(
-                "ESolver_LR::refresh_from_ks_",
-                "the ground-state spin population changed between ionic steps, but nocc/nvirt and"
-                " the distributions built from them were fixed at the first step.");
-        }
-    }
     // `gint_info_` stays owned by the KS solver: its `before_scf` rebuilds and re-publishes it
     // init potential and calculate kernels using ground state charge
     init_pot(*ks_sol.pelec->charge);
@@ -845,13 +799,6 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell &ucell)
     // the grid-integration tables hang off a static pointer that the ground-state solver
     // re-publishes in its `before_scf`; make sure it names the object we integrate on
     ModuleGint::Gint::set_gint_info(this->ks_->gint_info_.get());
-
-    // the Z-vector window: after `reset_dim_spin`, so nocc/nvirt/openshell are final
-#ifdef __MPI
-    this->fill_z_window_(ks_sol.pv.desc_wfc);
-#else
-    this->fill_z_window_(nullptr);
-#endif
 }
 
 template <typename T, typename TR>
