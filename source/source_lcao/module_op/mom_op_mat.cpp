@@ -1,6 +1,7 @@
 #include "mom_op_mat.h"
 
 #include "source_base/basis_flattened_indexing.h"
+#include "source_base/parallel_blkcyc.h"
 #include "source_base/timer.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
@@ -63,6 +64,26 @@ void calculate(const int istep,
         return;
     }
 
+    int rank = 0;
+#ifdef __MPI
+    const MPI_Comm comm = pv.para_2d().comm();
+    if (comm != MPI_COMM_NULL)
+    {
+        MPI_Comm_rank(comm, &rank);
+    }
+#endif
+    if (rank != 0)
+    {
+        ModuleBase::timer::end("Momentum_op", "calculate");
+        return;
+    }
+
+    // Assemble on rank 0 in a serial layout. A distributed HContainer owns
+    // only rank-local matrix elements and cannot be written directly as the
+    // complete CSR matrix.
+    Parallel_Blkcyclic serial_layout;
+    serial_layout.set_serial(pv.para_2d().nrglb(), pv.para_2d().ncglb());
+
     // --- Convert the two-center bundle into the legacy LCAO_Orbitals layout ---
     LCAO_Orbitals lcao_orb;
     two_center_bundle.to_LCAO_Orbitals(lcao_orb,
@@ -85,7 +106,7 @@ void calculate(const int istep,
         &ucell,
         &gd,
         basis,
-        pv.para_2d(),
+        serial_layout,
         lcao_orb,
         two_center_bundle.overlap_orb.get());
 
