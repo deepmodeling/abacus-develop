@@ -60,25 +60,24 @@ template <>
 void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<double>> &exx_ks)
 {
     ModuleBase::TITLE("ESolver_LR<double>", "share_exx_lri");
-    this->exx_lri = exx_ks->make_lr_workspace(*this->ucell_, this->kv);
+    this->exx_lri = LR::make_lr_exx<double>(exx_ks, *this->ucell_, this->kv);
 }
 template <>
 void ModuleESolver::ESolver_LR<std::complex<double>>::share_exx_lri(
     std::shared_ptr<Exx_LRI<std::complex<double>>> &exx_ks)
 {
     ModuleBase::TITLE("ESolver_LR<complex>", "share_exx_lri");
-    this->exx_lri = exx_ks->make_lr_workspace(*this->ucell_, this->kv);
+    this->exx_lri = LR::make_lr_exx<std::complex<double>>(exx_ks, *this->ucell_, this->kv);
 }
 template <>
 void ModuleESolver::ESolver_LR<std::complex<double>>::share_exx_lri(std::shared_ptr<Exx_LRI<double>> &exx_ks)
 {
-    throw std::runtime_error(
-        "ESolver_LR<std::complex<double>>::share_exx_lri: cannot share double to std::complex<double>");
+    this->exx_lri = LR::make_lr_exx<std::complex<double>>(exx_ks, *this->ucell_, this->kv);
 }
 template <>
 void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>> &exx_ks)
 {
-    throw std::runtime_error("ESolver_LR<double>::share_exx_lri: cannot share std::complex<double> to double");
+    this->exx_lri = LR::make_lr_exx<double>(exx_ks, *this->ucell_, this->kv);
 }
 #endif
 

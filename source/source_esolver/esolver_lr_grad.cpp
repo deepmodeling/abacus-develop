@@ -7,6 +7,7 @@
 #include "source_lcao/module_lr/gradient_inputs.h"
 #include "source_lcao/module_lr/gradient_output.h"
 #include "source_lcao/module_lr/lr_amp.h"
+#include "source_lcao/module_lr/lr_dm.h"
 #include "source_lcao/module_lr/lr_force.h"
 #include "source_lcao/module_lr/zeq_solver.h"
 #include <algorithm>
@@ -20,46 +21,8 @@ template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge &chg_gs)
 {
     ModuleBase::TITLE("ESolver_LR", "init_pot_gs");
-    std::vector<std::string> pot_register;
-    if (this->inp_->vl_in_h)
-    {
-        if (!this->ks_)
-        { // on the `ks-lr` path `sfac()`/`vloc()` alias the ground-state solver's, which
-            // `ESolver_FP::before_scf` already refreshed for the current geometry
-            //! 11) calculate the structure factor
-            // the has_float_data flag below is read the same way core ABACUS reads it at the
-            // analogous call site (source_esolver/esolver_fp.cpp's `this->sf.setup(...)`), so this
-            // mirrors the established convention rather than introducing a new global dependency.
-            this->sfac().setup(&(*this->ucell_), pgrid(), this->pw_rhod, PARAM.globalv.has_float_data);
-            this->vloc().init_vloc((*this->ucell_), this->pw_rho);
-        }
-        pot_register.push_back("local");
-    }
-    if (this->inp_->vh_in_h)
-    {
-        pot_register.push_back("hartree");
-    }
-    pot_register.push_back("xc");
-
-    // initialize the ground state potential
-    this->pot_gs = LR_Util::make_unique<elecstate::Potential>(
-        this->pw_rhod, this->pw_rho, &(*this->ucell_), &this->vloc().vloc, &this->sfac(), &this->solvent,
-        &this->etxc_gs, &this->vtxc_gs);
-    this->pot_gs.get()->pot_register(pot_register);
-    XC_Functional::set_xc_type((*this->ucell_).atoms[0].ncpp.xc_func); // set XC type of the ground state
-    this->pot_gs->init_pot(&chg_gs);                                   // call update_from_charge inside
-    if (LR_Util::has_local_xc(this->xc_kernel))
-    {
-        XC_Functional::set_xc_type(this->xc_kernel); // recover the excited state xc kernel type
-    }
-    if (this->inp_->test_force)
-    {
-        this->pot_gs_hartree = LR_Util::make_unique<elecstate::Potential>(
-            this->pw_rhod, this->pw_rho, &(*this->ucell_), &this->vloc().vloc, &this->sfac(), &this->solvent,
-            &this->etxc_gs, &this->vtxc_gs);
-        this->pot_gs_hartree->pot_register({"hartree"});
-        this->pot_gs_hartree->init_pot(&chg_gs); // call update_from_charge inside
-    }
+    this->gs_pot_.refresh(*this->inp_, this->xc_kernel, *this->ucell_, this->pw_rhod, this->pw_rho, pgrid(), chg_gs,
+                          this->sfac(), this->vloc(), this->solvent, !this->ks_, PARAM.globalv.has_float_data);
 }
 
 template <typename T, typename TR>
@@ -367,20 +330,12 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
 template <typename T, typename TR>
 module_dm::DensityMatrix<T, double> ModuleESolver::ESolver_LR<T, TR>::cal_dm_gs()
 {
-    module_dm::DensityMatrix<T, double> dm_gs(&this->paraMat_, this->nspin, this->kv.kvec_d, this->nk);
     // `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path (it is aliased straight
     // from the ground-state solver's own `psi`), but per `this->paraMat_all_` on the
-    // read-from-file path (where it was allocated with that descriptor's own sizes). Using the
-    // wrong one here reads `psi_ks_all_`'s local block with the wrong block size/process-grid
-    // assumption -- invisible at nprocs=1, where every descriptor degenerates to one block, but
-    // silently wrong at nprocs>1. `refresh_from_ks_`/`fill_z_window_` already make this same
-    // distinction for their `Cpxgemr2d` source descriptor; this mirrors it.
+    // read-from-file path (where it was allocated with that descriptor's own sizes).
     const Parallel_Orbitals *const pv_all = this->ks_ ? &this->ks_->pv : &this->paraMat_all_;
-    module_dm::dm_from_psi(pv_all, this->wg_ks_all, *this->psi_ks_all_, dm_gs); // nbands is important here
-    LR_Util::initialize_DMR(
-        dm_gs, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_); // nbands is not important here
-    dm_gs.cal_dmr(-1);
-    return dm_gs;
+    return LR::make_gs_dm<T>(*this->psi_ks_all_, this->wg_ks_all, *pv_all, this->paraMat_, *this->ucell_, this->gd(),
+                             this->orb_cutoff_, this->nspin, this->kv.kvec_d, this->nk);
 }
 
 template <typename T, typename TR>
@@ -419,7 +374,7 @@ void ModuleESolver::ESolver_LR<T, TR>::test_force()
     ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "Ground State FORCE (eV/Angstrom)", force_gs, false);
     /// ======================================= END test 1 =========================================
     ///========================== test 2: reproduce the DX Hartree term =========================
-    ModuleBase::matrix f_hxc_potgs = lr_force.reproduce_force_gs_loc(dm_gs, *this->pot_gs_hartree);
+    ModuleBase::matrix f_hxc_potgs = lr_force.reproduce_force_gs_loc(dm_gs, *this->gs_pot_.pot_hartree());
     ModuleIO::print_force(
         this->ofs_running_, (*this->ucell_),
         "GS Hartree force calculated by 'cal_pulay_fs' from potential (eV/Angstrom)", f_hxc_potgs, false);

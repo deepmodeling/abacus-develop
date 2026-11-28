@@ -17,6 +17,7 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/module_gint/gint_info.h"
 #include "source_lcao/module_lr/hamilt_casida.h"
+#include "source_lcao/module_lr/potentials/lr_gs_pot.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/state_track.h"
 #ifdef __EXX
@@ -123,10 +124,7 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     ModuleBase::matrix wg_ks_all; /// occupation number of all bands of ground state
 
     // @brief only needed for force calculation
-    std::unique_ptr<elecstate::Potential> pot_gs;
-    std::unique_ptr<elecstate::Potential> pot_gs_hartree; /// ground-state Hartree potential, only used for test_force
-    double etxc_gs = 0.;
-    double vtxc_gs = 0.;
+    LR::GsPot gs_pot_;
 
     std::shared_ptr<LR::PotHxcLR>
         pot_hxc_gs; /// used in lr-grad, in the ground-state Hxc gradient term coming from dF/dC

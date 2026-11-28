@@ -23,10 +23,12 @@ if(ENABLE_LCAO)
     operator_casida/operator_lr_hxc.cpp
     operator_casida/operator_lr_exx.cpp
     potentials/pot_hxc_lrtd.cpp
+    potentials/lr_gs_pot.cpp
     potentials/pot_grad_xc.cpp
     kernel_pots.cpp
     lr_dim.cpp
     lr_gs.cpp
+    lr_dm.cpp
     init_helpers.cpp
     hsolver_lrtd.cpp
     zeq_solver.cpp
