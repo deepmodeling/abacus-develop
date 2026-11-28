@@ -450,7 +450,8 @@ OBJS_HAMILT_OF=kedf_tf.o\
     kedf_manager.o\
     evolve_ofdft.o\
 
-OBJS_DFPT=dfpt_hamilt_shift.o\
+OBJS_DFPT=dfpt_symm.o\
+    dfpt_hamilt_shift.o\
     dfpt_kq_basis.o\
     dfpt_metal.o\
     dfpt_pert.o\
