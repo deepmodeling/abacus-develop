@@ -589,10 +589,6 @@ The LDOS is evaluated once after all ionic steps finish; the cube header records
                 ModuleBase::WARNING_QUIT("ReadInput",
                     "out_stru must be one of 0, 1, 2. For backward compatibility, true/false are also accepted.");
             }
-            if (para.input.out_freq_stru < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "the optional second out_stru value must be >= 0.");
-            }
         };
         sync_int(input.out_stru);
         item.get_final_value = [](Input_Item& item, const Parameter& para) {

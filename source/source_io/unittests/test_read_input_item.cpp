@@ -2988,7 +2988,7 @@ TEST_F(InputTest, OutStru)
     {
         it->second.str_values = {"1", "-1"};
         it->second.read_value(it->second, param);
-        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EQ(TestParameters::input(param).out_freq_stru, -1);
     }
 
     // --- Backward-compatible boolean aliases (true -> 1, false -> 0) ---

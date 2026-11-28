@@ -519,11 +519,23 @@ std::string ReadInput::prepare_input(Parameter& param)
         }
         if (!valid)
         {
-            errors += input_diagnostic(item->label, longstring(item->str_values), "supplied",
-                                       starts_with_boolean ? "Expected a Boolean and an optional Integer."
-                                                           : (is_out_stru
-                                                                  ? "Expected 0, 1, 2 (or a Boolean) and an optional nonnegative Integer."
-                                                                  : "Expected one Integer and an optional precision Integer."));
+            std::string expected_format_text;
+            if (starts_with_boolean)
+            {
+                expected_format_text = "Expected a Boolean and an optional Integer.";
+            }
+            else if (is_out_stru)
+            {
+                expected_format_text = "Expected 0, 1, 2 (or a Boolean) and an optional nonnegative Integer.";
+            }
+            else
+            {
+                expected_format_text = "Expected one Integer and an optional precision Integer.";
+            }
+            const std::string expected_format = expected_format_text;
+            const std::string diagnostic
+                = input_diagnostic(item->label, longstring(item->str_values), "supplied", expected_format);
+            errors += diagnostic;
         }
     }
 
@@ -595,6 +607,10 @@ std::string ReadInput::prepare_input(Parameter& param)
     if (param.input.out_mat_tk[1] <= 0)
     {
         errors += "Invalid INPUT parameter 'out_mat_tk': precision must be a positive integer.\n";
+    }
+    if (param.input.out_freq_stru < 0)
+    {
+        errors += "Invalid INPUT parameter 'out_stru': the optional second value must be >= 0.\n";
     }
 
     // Snapshot typed effective values once for shared domain and dependency checks.
