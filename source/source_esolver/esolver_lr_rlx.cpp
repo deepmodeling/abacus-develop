@@ -1,7 +1,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_esolver/esolver_lr_lcao_tddft.h"
-#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_io/module_output/output_log.h"
 #include "source_lcao/module_lr/cal_edm.h"
 #include "source_lcao/module_lr/grad_degen.h"
@@ -19,70 +18,12 @@ using namespace LR;
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
 {
-    this->excited_relax_ = (this->inp_->calculation == "relax");
-    if (!this->excited_relax_)
+    this->target_.setup(*this->inp_, this->openshell, this->nspin, this->nstates, this->ofs_running_);
+    if (this->target_.active())
     {
-        return;
+        this->force_gs_.create(this->ucell_->nat, 3);
+        this->lr_force_.create(this->ucell_->nat, 3);
     }
-
-    // The Z-vector equation has no complex solver (see zeq_solver.h), so an
-    // excited-state gradient only exists at gamma. Fail here rather than after the SCF.
-    if (!std::is_same<T, double>::value)
-    {
-        ModuleBase::WARNING_QUIT(
-            "ESolver_LR", "excited-state relaxation currently requires gamma-only sampling: the complex "
-                          "Z-vector solver is not implemented.");
-    }
-    if (this->inp_->lr_target_state >= this->nstates)
-    {
-        ModuleBase::WARNING_QUIT(
-            "ESolver_LR", "lr_target_state is beyond the states actually solved (lr_nstates <= 0 expands to "
-                          "all particle-hole pairs, which may be fewer than requested).");
-    }
-
-    // `openshell` is only settled after the ground-state occupations have been read, which is why
-    // this cannot live in the input-file checks
-    const std::string &spin = this->inp_->lr_target_spin;
-    if (this->openshell)
-    {
-        // An open-shell calculation solves one spin-conserving channel, so there is nothing to
-        // choose: whatever lr_target_spin says, this is the state that gets relaxed. Only an
-        // explicit `triplet` is worth mentioning -- `singlet` is the default and expresses no
-        // intent, and `updown` is already the right name for this channel.
-        if (spin == "triplet")
-        {
-            this->ofs_running_ << " WARNING: lr_target_spin=triplet is ignored. This is an"
-                                  " open-shell calculation with a single spin-conserving channel (updown), which is"
-                                  " what the relaxation will follow."
-                               << std::endl;
-        }
-        this->target_is_ = 0;
-    }
-    else
-    {
-        // Closed shell is the opposite case: singlet and triplet are genuinely different states
-        // with different gradients, so `updown` here is ambiguous rather than redundant -- it
-        // usually means lr_unrestricted was meant to be set.
-        if (spin == "updown")
-        {
-            ModuleBase::WARNING_QUIT(
-                "ESolver_LR", "lr_target_spin=updown, but this is a closed-shell calculation, where singlet and "
-                              "triplet are separate states with separate gradients. Pick one of them, or set "
-                              "lr_unrestricted to run spin-unrestricted.");
-        }
-        this->target_is_ = (spin == "triplet") ? 1 : 0;
-        if (this->target_is_ >= this->nspin)
-        {
-            ModuleBase::WARNING_QUIT(
-                "ESolver_LR", "lr_target_spin=triplet requires nspin=2: the triplet channel is not built here.");
-        }
-    }
-    this->force_gs_.create(this->ucell_->nat, 3);
-    this->lr_force_.create(this->ucell_->nat, 3);
-    this->target_state_ = this->inp_->lr_target_state; // seed; overlap takes over from step 2
-    this->ofs_running_ << " Excited-state relaxation follows state " << this->inp_->lr_target_state << " of the "
-                       << (this->openshell ? "updown" : (this->target_is_ == 1 ? "triplet" : "singlet"))
-                       << " channel, tracked by cross-geometry orbital and amplitude overlap." << std::endl;
 }
 
 /// Compare roots in a common electron-hole basis using exact cross-geometry AO overlap.
@@ -90,25 +31,19 @@ template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::follow_target_state_(std::ofstream &ofs)
 {
     ModuleBase::timer::start("ESolver_LR", "follow_target_state_");
-    if (!this->excited_relax_)
+    if (!this->target_.active())
     {
         ModuleBase::timer::end("ESolver_LR", "follow_target_state_");
         return;
     }
-    const int channel = this->openshell ? 0 : this->target_is_;
+    const int channel = this->openshell ? 0 : this->target_.ispin();
     const T *const amplitudes = this->X[channel].template data<T>();
     const TwoCenterIntegrator &overlap_integrator = *this->tcb().overlap_orb;
-    const bool reference_first = LR_Util::tolower(this->inp_->lr_degen_mode) == "jt";
-    const LR::RootInputs<T> inputs{*this->ucell_, this->orb_cutoff_, overlap_integrator, *this->psi_ks, this->paraC_,
-        this->paraMat_, this->paraX_, this->nocc, this->nvirt, this->openshell, this->target_is_, reference_first};
-    const int energy_offset = channel * this->nstates;
     std::vector<double> energies(this->nstates);
-    std::copy_n(this->pelec->ekb.c + energy_offset, this->nstates, energies.begin());
-    const bool single_state = LR_Util::tolower(this->inp_->lr_degen_mode) == "state";
-    const double group_threshold = single_state ? 0.0 : this->inp_->lr_degen_thr;
-    LR::follow_cross_root(
-        inputs, amplitudes, this->nloc_per_state, this->nstates, this->inp_->lr_target_state, energies, group_threshold,
-        this->target_state_, this->target_X_prev_, this->target_basis_prev_, ofs);
+    std::copy_n(this->pelec->ekb.c + this->target_.ekb_off(this->nstates), this->nstates, energies.begin());
+    this->target_.follow(*this->inp_, *this->ucell_, this->orb_cutoff_, overlap_integrator, *this->psi_ks, this->paraC_,
+                         this->paraMat_, this->paraX_, this->nocc, this->nvirt, amplitudes, this->nloc_per_state,
+                         this->nstates, energies, ofs);
     ModuleBase::timer::end("ESolver_LR", "follow_target_state_");
 }
 
@@ -117,15 +52,15 @@ double ModuleESolver::ESolver_LR<T, TR>::cal_energy()
 {
     // Outside a relaxation nothing consumes this, and returning a non-zero value would change
     // what the existing single-point outputs report.
-    if (!this->excited_relax_)
+    if (!this->target_.active())
     {
         return 0.0;
     }
-    // `target_omega_()` is the multiplet average under `lr_degen_mode = average` and the
-    // single state otherwise, matching whatever `cal_lr_force_relax_` produced the gradient of.
-    // The energy-based optimisers line-search on this, so the two must not describe different
+    // `omega` is the multiplet average under `lr_degen_mode = average` and the single state
+    // otherwise, matching whatever `cal_lr_force_relax_` produced the gradient of. The
+    // energy-based optimisers line-search on this, so the two must not describe different
     // surfaces.
-    return this->etot_gs_ + this->target_omega_();
+    return this->etot_gs_ + this->target_.omega(this->pelec->ekb.c, this->nstates);
 }
 
 template <typename T, typename TR>
@@ -133,7 +68,7 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force(BaseCell &basecell, ModuleBase:
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     const UnitCell &ucell = static_cast<const UnitCell &>(basecell);
-    if (!this->excited_relax_)
+    if (!this->target_.active())
     { // single-point runs print the gradients of every state from `after_all_runners` instead
         return;
     }
@@ -181,100 +116,38 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::pad_group_to_z_(const int ispin, co
 }
 
 template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::resolve_target_multiplet_()
-{
-    // Keyed on `target_state_`, not on `lr_target_state`: the overlap tracking re-chooses the
-    // followed root at every ionic step, and the multiplet has to be the one containing the root
-    // actually being followed. They differ as soon as two surfaces have crossed.
-    this->target_group_.clear();
-    if (LR_Util::tolower(this->inp_->lr_degen_mode) == "state")
-    {
-        return;
-    }
-    const int ekb_off = this->openshell ? 0 : this->target_is_ * this->nstates;
-    std::vector<double> omega(this->nstates);
-    for (int ist = 0; ist < this->nstates; ++ist)
-    {
-        omega[ist] = this->pelec->ekb.c[ekb_off + ist];
-    }
-    const std::vector<std::vector<int>> groups = LR::group_degenerate_states(omega, this->inp_->lr_degen_thr);
-    for (const std::vector<int> &g : groups)
-    {
-        if (std::find(g.begin(), g.end(), this->target_state_) == g.end())
-        {
-            continue;
-        }
-        // a one-member group means the target is not degenerate here, and averaging over it would
-        // be the single-state path with extra steps
-        const bool average = LR_Util::tolower(this->inp_->lr_degen_mode) == "average";
-        if (average && g.size() > 3)
-        {
-            this->ofs_running_ << " WARNING: tracked group has " << g.size()
-                               << " roots; average supports at most three. Following the selected single root."
-                               << std::endl;
-        }
-        else if (!average && g.size() > 3)
-        {
-            ModuleBase::WARNING_QUIT(
-                "ESolver_LR",
-                "JT forces support only two- or three-state multiplets; reduce lr_degen_thr or use state mode");
-        }
-        else if (g.size() > 1)
-        {
-            this->target_group_ = g;
-        }
-        break;
-    }
-}
-
-template <typename T, typename TR>
-double ModuleESolver::ESolver_LR<T, TR>::target_omega_() const
-{
-    if (this->target_group_.empty())
-    {
-        return this->pelec->ekb.c[this->target_ekb_offset_()];
-    }
-    const int ekb_off = this->openshell ? 0 : this->target_is_ * this->nstates;
-    double sum = 0.0;
-    for (const int ist : this->target_group_)
-    {
-        sum += this->pelec->ekb.c[ekb_off + ist];
-    }
-    return sum / static_cast<double>(this->target_group_.size());
-}
-
-template <typename T, typename TR>
 ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_lr_force_relax_(std::ofstream &ofs)
 {
-    this->resolve_target_multiplet_();
-    if (this->target_group_.empty())
+    this->target_.resolve_group(*this->inp_, this->pelec->ekb.c, this->nstates, this->ofs_running_);
+    const std::vector<int> &group = this->target_.group();
+    if (group.empty())
     {
-        return this->cal_force(this->target_is_, this->target_state_)[0];
+        return this->cal_force(this->target_.ispin(), this->target_.state())[0];
     }
     const bool jt_mode = (LR_Util::tolower(this->inp_->lr_degen_mode) == "jt");
     // `average` needs only the DIAGONAL of the gradient matrix: the average is basis-independent by
     // construction, so the off-diagonal part (and the extra d(d-1)/2 solves it costs) is not
     // involved. The Jahn-Teller direction is orthogonal to the average and does need them.
-    const int d = static_cast<int>(this->target_group_.size());
-    const int ekb_off = this->openshell ? 0 : this->target_is_ * this->nstates;
-    const ct::Tensor Xz = this->pad_group_to_z_(this->target_is_, this->target_group_);
+    const int d = static_cast<int>(group.size());
+    const int ekb_off = this->target_.ekb_off(this->nstates);
+    const ct::Tensor Xz = this->pad_group_to_z_(this->target_.ispin(), group);
     std::vector<double> omega(d);
     for (int k = 0; k < d; ++k)
     {
-        omega[k] = this->pelec->ekb.c[ekb_off + this->target_group_[k]];
+        omega[k] = this->pelec->ekb.c[ekb_off + group[k]];
     }
     const std::vector<ModuleBase::matrix> forces =
-        this->openshell ? this->cal_force_openshell_Xz(Xz, omega, this->target_group_.front())
-                        : this->cal_force_Xz(this->target_is_, Xz, omega, this->target_group_.front());
-    ofs << " Followed state " << this->target_state_ << " is degenerate with";
-    for (const int ist : this->target_group_)
+        this->openshell ? this->cal_force_openshell_Xz(Xz, omega, group.front())
+                        : this->cal_force_Xz(this->target_.ispin(), Xz, omega, group.front());
+    ofs << " Followed state " << this->target_.state() << " is degenerate with";
+    for (const int ist : group)
     {
-        if (ist != this->target_state_)
+        if (ist != this->target_.state())
         {
             ofs << " " << ist;
         }
     }
-    ofs << " (Omega_bar = " << this->target_omega_() << " Ry)." << std::endl;
+    ofs << " (Omega_bar = " << this->target_.omega(this->pelec->ekb.c, this->nstates) << " Ry)." << std::endl;
     if (!jt_mode)
     {
         ofs << " lr_degen_mode=average: following the multiplet average, which keeps the"
@@ -292,9 +165,10 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_jt_force_(
     // Regime (c): descend the Jahn-Teller branch. This needs the whole gradient matrix, so the
     // off-diagonal elements are assembled here -- d(d-1)/2 further Z-vector solves on top of the
     // d diagonal ones already in `diag`.
-    const int d = static_cast<int>(this->target_group_.size());
+    const std::vector<int> &group = this->target_.group();
+    const int d = static_cast<int>(group.size());
     const std::vector<std::vector<ModuleBase::matrix>> g =
-        this->cal_grad_matrix_degenerate(this->target_is_, this->target_group_, diag, ofs);
+        this->cal_grad_matrix_degenerate(this->target_.ispin(), group, diag, ofs);
     const int nat = diag[0].nr;
     const int ncoord = nat * 3;
     // flatten to the layout `find_jt_direction` takes: one d x d block per nuclear coordinate.
@@ -315,9 +189,9 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_jt_force_(
         }
     }
     const LR::JTDirection jt = LR::find_jt_direction(gflat, ncoord, d);
-    const int channel = this->openshell ? 0 : this->target_is_;
+    const int channel = this->openshell ? 0 : this->target_.ispin();
     const T *const amplitudes = this->X[channel].template data<T>();
-    LR::save_mixed_root(amplitudes, this->nloc_per_state, this->target_group_, jt.mixing, this->target_X_prev_);
+    this->target_.save_mixed(amplitudes, this->nloc_per_state, jt.mixing);
     std::vector<double> jt_part;
     const std::vector<double> sym = LR::split_symmetric_part(gflat, ncoord, d, jt.mixing, jt_part);
 
@@ -364,8 +238,8 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_jt_force_(
 
     // The force handed back is that of the descending branch, q(v) with v the optimal mixing --
     // i.e. the branch's own gradient, which is what a relaxation must follow. Once a step has
-    // split the multiplet, `resolve_target_multiplet_` finds no group and the ordinary
-    // single-state path takes over, so this mode is self-limiting by construction.
+    // split the multiplet, `resolve_group` finds no group and the ordinary single-state path
+    // takes over, so this mode is self-limiting by construction.
     ModuleBase::matrix f(nat, 3);
     for (int iat = 0; iat < nat; ++iat)
     {

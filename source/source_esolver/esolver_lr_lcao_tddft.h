@@ -19,6 +19,7 @@
 #include "source_lcao/module_lr/hamilt_casida.h"
 #include "source_lcao/module_lr/potentials/lr_gs_pot.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
+#include "source_lcao/module_lr/lr_relax.h"
 #include "source_lcao/module_lr/state_track.h"
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
@@ -165,34 +166,18 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// resolve and validate `lr_target_state` / `lr_target_spin`; call once the dimensions
     /// (and therefore `openshell`) are final
     void setup_relax_target_();
-    bool excited_relax_ = false;  ///< driving `calculation = relax` from an excited state
-    int target_is_ = 0;           ///< spin block of the relaxed state in `X` and `pelec->ekb`
+    /// The followed state/multiplet. Seeded from `lr_target_state`, then re-chosen at every
+    /// later step by cross-geometry group overlap; following a fixed index instead makes the
+    /// force discontinuous as soon as two surfaces cross.
+    LR::RelaxTarget<T> target_;
     double etot_gs_ = 0.0;        ///< ground-state total energy of the current step (Ry)
     ModuleBase::matrix force_gs_; ///< ground-state force of the current step (Ry/Bohr, F = -dE/dR)
     /// The LR part of the excited-state force, -d(Omega)/dR (Ry/Bohr).
     ModuleBase::matrix lr_force_;
-    /// The state currently being followed, as an index into `X` / `pelec->ekb`.
-    /// Seeded from `lr_target_state` on the first ionic step, then re-chosen at every
-    /// later step by cross-geometry group overlap, then the single/JT reference.
-    /// Following a fixed INDEX instead is what makes a relaxation fail near a
-    /// degeneracy: the index always names the n-th lowest root, so as soon as two
-    /// surfaces cross, "the target" jumps to a different diabatic state and the force
-    /// is discontinuous. CG assumes a conservative field and cannot recover from that.
-    int target_state_ = -1;
-    /// Previous ionic step's amplitude for the followed state (local part), the
-    /// reference the overlap is taken against. Empty on the first step.
-    std::vector<T> target_X_prev_;
-    LR::RootBasis<T> target_basis_prev_;
     /// Match the old subspace to current energy groups and refresh the single/group references.
     /// `ofs` receives the note when the followed root changes index, and the warning when
     /// no current root resembles the previous one.
     void follow_target_state_(std::ofstream &ofs);
-
-    /// index of the relaxed state inside `pelec->ekb`
-    int target_ekb_offset_() const
-    {
-        return this->openshell ? this->target_state_ : this->target_is_ * this->nstates + this->target_state_;
-    }
 
     std::vector<std::string> spin_types;
 
@@ -306,16 +291,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// LVC data of every multiplet found at this geometry, rebuilt on each call of
     /// `cal_force_and_grad_matrix_`. Empty unless `lr_degen_thr > 0`.
     std::vector<MultipletLVC> multiplet_lvc_;
-    /// The multiplet `lr_target_state` belongs to, or empty when the target is non-degenerate
-    /// or `lr_degen_mode = state`. Refreshed every ionic step by
-    /// `resolve_target_multiplet_`, and it is what makes `cal_energy` and the reported gradient
-    /// describe the same surface.
-    std::vector<int> target_group_;
-    /// Fill `target_group_` from the excitation energies of the current geometry.
-    void resolve_target_multiplet_();
-    /// The excitation energy the relaxation is minimising: the target state's own, or the
-    /// multiplet average when `target_group_` is set.
-    double target_omega_() const;
     /// The LR half of the force for the current geometry, following whichever surface
     /// `lr_degen_mode` selects. `ofs` receives the note when that is not a single state.
     ModuleBase::matrix cal_lr_force_relax_(std::ofstream &ofs);

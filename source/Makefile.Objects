@@ -1197,6 +1197,7 @@ OBJS_TENSOR=tensor.o\
     lr_dim.o\
     lr_gs.o\
     lr_dm.o\
+    lr_relax.o\
     lr_gs_pot.o\
     esolver_lr_orb.o\
     esolver_lr_init.o\

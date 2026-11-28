@@ -76,7 +76,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
 
     // a relaxation writes these once per ionic step; without the suffix every step would overwrite
     // the last, and the trajectory would be impossible to inspect afterwards
-    const std::string step_suffix = this->excited_relax_ ? "_step" + std::to_string(istep) : "";
+    const std::string step_suffix = this->target_.active() ? "_step" + std::to_string(istep) : "";
     auto efile_out = [this, &step_suffix](const std::string &label) -> std::string
     { return this->out_dir + "Excitation_Energy_" + label + step_suffix + ".dat"; };
     auto vfile_out = [this, &step_suffix](const std::string &label) -> std::string
@@ -203,7 +203,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
             }
         }
     }
-    if (this->excited_relax_)
+    if (this->target_.active())
     {
         // Re-select which root to follow BEFORE taking the gradient, so the force belongs to
         // the same diabatic state as the previous step's.
@@ -217,7 +217,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
         // One line per ionic step with the two halves of the energy and of the gradient. Without
         // it the relaxation only reports a force, and whether E_gs + Omega actually goes down --
         // the thing being minimised -- cannot be read off the log at all.
-        const double omega = this->target_omega_();
+        const double omega = this->target_.omega(this->pelec->ekb.c, this->nstates);
         auto max_abs = [](const ModuleBase::matrix &m) -> double
         {
             double v = 0.0;
@@ -345,7 +345,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
                 // ====================================================
             }
         }
-        if (this->inp_->cal_force && !this->excited_relax_)
+        if (this->inp_->cal_force && !this->target_.active())
         {
             this->cal_force_and_grad_matrix_(is, this->ofs_running_);
         }
