@@ -145,6 +145,9 @@ struct Core
     /// `first` selects the one-time spin-channel setup; later calls only validate it.
     void refresh_gs(const KsBands<T>& bands, const K_Vectors& kv, const Input_para& inp, bool first,
                     std::ostream& log);
+    /// Set up the AO/band distributions and the band window on the ground-state solver's layout.
+    void setup_ks_layout(const Parallel_Orbitals& pv, const K_Vectors& kv, const UnitCell& ucell,
+                         const Input_para& inp);
 
     /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
     /// restricts it to that one state; -1 does all `nstates`.

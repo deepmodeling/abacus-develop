@@ -676,50 +676,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell &ucell, cons
 
     this->set_dim();
 
-    // KS and LR must use the same AO distribution, including its BLACS grid.
-    const int ks_block_size = ks_sol.pv.para_2d().nb();
-    LR_Util::setup_2d_division(
-        this->lr_.gs.para_mat.para_2d(), ks_block_size, this->lr_.dim.nbasis, this->lr_.dim.nbasis
-#ifdef __MPI
-        ,
-        ks_sol.pv.para_2d().ictxt()
-#endif
-    );
-    LR::set_band_layout(this->lr_.gs.para_mat, this->lr_.dim.nbasis, this->lr_.dim.nbands, *this->ucell_,
-                        this->inp_->ri_hartree_benchmark == "aims");
-    if (this->inp_->cal_force)
-    {
-        LR_Util::setup_2d_division(
-            this->lr_.gs.para_mat_all.para_2d(), ks_block_size, this->lr_.dim.nbasis, this->lr_.dim.nbasis
-#ifdef __MPI
-            ,
-            ks_sol.pv.para_2d().ictxt()
-#endif
-        );
-        LR::set_band_layout(this->lr_.gs.para_mat_all, this->lr_.dim.nbasis, this->inp_->nbands, *this->ucell_,
-                            this->inp_->ri_hartree_benchmark == "aims");
-    }
-
-    this->lr_.gs.para_mat.atom_begin_row = ks_sol.pv.atom_begin_row;
-    this->lr_.gs.para_mat.atom_begin_col = ks_sol.pv.atom_begin_col;
-    this->lr_.gs.para_mat.iat2iwt_ = ucell.get_iat2iwt();
-
-    LR_Util::setup_2d_division(
-        this->lr_.amp.para_c, ks_block_size, this->lr_.dim.nbasis, this->lr_.dim.nbands
-#ifdef __MPI
-        ,
-        this->lr_.gs.para_mat.para_2d().ictxt()
-#endif
-    );
-
-    // allocate psi_ks and eig_ks in the [nocc, nvirt] window
-#ifdef __MPI
-    this->lr_.gs.psi.reset(
-        new psi::Psi<T>(this->kv.get_nks(), this->lr_.amp.para_c.ncloc(), this->lr_.amp.para_c.nrloc(), this->kv.ngk, true));
-#else
-    this->lr_.gs.psi.reset(new psi::Psi<T>(this->kv.get_nks(), this->lr_.dim.nbands, this->lr_.dim.nbasis, this->kv.ngk, true));
-#endif
-    this->lr_.gs.eig.create(this->kv.get_nks(), this->lr_.dim.nbands);
+    this->lr_.setup_ks_layout(ks_sol.pv, this->kv, *this->ucell_, *this->inp_);
     this->pelec = new elecstate::ElecStateLCAO<T>();
     orb_cutoff_ = ks_sol.orb_.cutoffs();
 

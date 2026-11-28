@@ -126,6 +126,53 @@ void Core<T>::refresh_gs(const KsBands<T>& bands, const K_Vectors& kv, const Inp
 }
 
 template <typename T>
+void Core<T>::setup_ks_layout(const Parallel_Orbitals& pv, const K_Vectors& kv, const UnitCell& ucell,
+                              const Input_para& inp)
+{
+    // KS and LR must use the same AO distribution, including its BLACS grid.
+    const int ks_block_size = pv.para_2d().nb();
+    LR_Util::setup_2d_division(this->gs.para_mat.para_2d(), ks_block_size, this->dim.nbasis, this->dim.nbasis
+#ifdef __MPI
+                               ,
+                               pv.para_2d().ictxt()
+#endif
+    );
+    LR::set_band_layout(this->gs.para_mat, this->dim.nbasis, this->dim.nbands, ucell,
+                        inp.ri_hartree_benchmark == "aims");
+    if (inp.cal_force)
+    {
+        LR_Util::setup_2d_division(this->gs.para_mat_all.para_2d(), ks_block_size, this->dim.nbasis, this->dim.nbasis
+#ifdef __MPI
+                                   ,
+                                   pv.para_2d().ictxt()
+#endif
+        );
+        LR::set_band_layout(this->gs.para_mat_all, this->dim.nbasis, inp.nbands, ucell,
+                            inp.ri_hartree_benchmark == "aims");
+    }
+
+    this->gs.para_mat.atom_begin_row = pv.atom_begin_row;
+    this->gs.para_mat.atom_begin_col = pv.atom_begin_col;
+    this->gs.para_mat.iat2iwt_ = ucell.get_iat2iwt();
+
+    LR_Util::setup_2d_division(this->amp.para_c, ks_block_size, this->dim.nbasis, this->dim.nbands
+#ifdef __MPI
+                               ,
+                               this->gs.para_mat.para_2d().ictxt()
+#endif
+    );
+
+    // allocate psi_ks and eig_ks in the [nocc, nvirt] window
+#ifdef __MPI
+    this->gs.psi.reset(
+        new psi::Psi<T>(kv.get_nks(), this->amp.para_c.ncloc(), this->amp.para_c.nrloc(), kv.ngk, true));
+#else
+    this->gs.psi.reset(new psi::Psi<T>(kv.get_nks(), this->dim.nbands, this->dim.nbasis, kv.ngk, true));
+#endif
+    this->gs.eig.create(kv.get_nks(), this->dim.nbands);
+}
+
+template <typename T>
 GradientInputs<T> Core<T>::gradient_inputs() const
 {
     return {*this->refs.ucell, *this->refs.kv, *this->refs.gd, *this->refs.orb_cutoff, this->gs.para_mat,
@@ -375,6 +422,10 @@ template void Core<double>::refresh_gs(const KsBands<double>&, const K_Vectors&,
                                        std::ostream&);
 template void Core<std::complex<double>>::refresh_gs(const KsBands<std::complex<double>>&, const K_Vectors&,
                                                      const Input_para&, bool, std::ostream&);
+template void Core<double>::setup_ks_layout(const Parallel_Orbitals&, const K_Vectors&, const UnitCell&,
+                                            const Input_para&);
+template void Core<std::complex<double>>::setup_ks_layout(const Parallel_Orbitals&, const K_Vectors&, const UnitCell&,
+                                                          const Input_para&);
 
 template std::vector<ModuleBase::matrix> Core<double>::cal_force(int, const ModuleBase::matrix&, int);
 template std::vector<ModuleBase::matrix> Core<std::complex<double>>::cal_force(int, const ModuleBase::matrix&, int);
