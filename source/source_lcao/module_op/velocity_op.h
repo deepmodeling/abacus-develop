@@ -12,7 +12,7 @@
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_base/vector3.h"
-#include "source_io/module_hs/pos_op_mat.h"
+#include "source_lcao/module_op/pos_op_mat.h"
 
 class Parallel_Blkcyclic; // Defined in source/source_base/parallel_blkcyc.h
 

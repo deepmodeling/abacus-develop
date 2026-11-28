@@ -56,7 +56,7 @@ out_dmr              1    # MAT/dmrs{spin}g{step}_nao.csr
 out_hsk              1    # MAT/hk{ki}s{spin}g{step}_nao.txt, sk{ki}g{step}_nao.txt
 out_hsr              1    # MAT/hrs{spin}g{step}_nao.csr, srg{step}_nao.csr
 out_mat_ds           1    # MAT/dsrxg{step}_nao.csr, dsryg{step}_nao.csr, dsrzg{step}_nao.csr (spin-independent)
-out_mat_l            1    # MAT/lxg{step}_nao.csr, lyg{step}_nao.csr, lzg{step}_nao.csr (H(R)-style CSR;
+out_mat_l            1    # MAT/lrxg{step}_nao.csr, lryg{step}_nao.csr, lrzg{step}_nao.csr (H(R)-style CSR;
                           # imaginary part only, the NAO basis is real; not supported for nspin=4)
 out_mat_r            1    # MAT/rrxg{step}_nao.csr, rryg{step}_nao.csr, rrzg{step}_nao.csr (three components)
 out_mat_t            1    # MAT/trg{step}_nao.csr (spin-independent)

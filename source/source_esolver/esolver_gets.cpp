@@ -8,9 +8,10 @@
 #include "source_cell/read_pp_ucell.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/param_update.h"
-#include "source_io/module_hs/angmom_op_mat.h"
+#include "source_lcao/module_op/angmom_op_mat.h"
 #include "source_io/module_hs/hsr_legacy.h"
-#include "source_io/module_hs/pos_op_mat.h"
+#include "source_lcao/module_op/mom_op_mat.h"
+#include "source_lcao/module_op/pos_op_mat.h"
 #include "source_io/module_output/print_info.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/lcao_domain.h"
@@ -220,6 +221,22 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
                                     my_rank,
                                     istep,
                                     l_out_app_flag);
+    }
+
+    //! The momentum matrix p = -i nabla + i [V_nl, r] is built from the orbital
+    //! tables and the pseudopotential projectors only, so out_mat_p is also
+    //! honored in the get_s workflow.
+    if (this->inp_->out_mat_p[0])
+    {
+        const int get_s_istep = -1; // get_s has no ionic step; use -1 for no step suffix
+        Momentum_op::calculate(get_s_istep,
+                               ucell,
+                               gd,
+                               two_center_bundle_,
+                               this->pv,
+                               orb_,
+                               global_matrix_dir,
+                               *this->inp_);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");

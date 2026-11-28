@@ -15,7 +15,8 @@
 
 // functions
 #include "../module_unk/berryphase.h"                          // use berryphase
-#include "../module_hs/angmom_op_mat.h"                       // use Angmom_op()
+#include "source_lcao/module_op/angmom_op_mat.h"              // use Angmom_op()
+#include "source_lcao/module_op/mom_op_mat.h"                 // use Momentum_op::calculate()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
 #include "source_io/module_ml/io_npz.h"                       // use ModuleIO::output_mat_npz()
 #include "source_io/module_dhs/write_dh.h"                    // use ModuleIO::write_dH_components()
@@ -784,6 +785,22 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           &ofs_running,
                                                           my_rank);
         mylcalculator.calculate(inp.suffix, global_mat_dir, ucell, pv, inp.out_mat_l[1], my_rank, istep_in, out_app_flag);
+    }
+
+    //------------------------------------------------------------------
+    //! 9b) Output momentum operator matrix p = -i nabla + i [V_nl, r]
+    //------------------------------------------------------------------
+    if (inp.out_mat_p[0])
+    {
+        ModuleBase::ensure_directory(global_mat_dir);
+        Momentum_op::calculate(istep,
+                               ucell,
+                               gd,
+                               two_center_bundle,
+                               pv,
+                               orb,
+                               global_mat_dir,
+                               inp);
     }
 
     //------------------------------------------------------------------

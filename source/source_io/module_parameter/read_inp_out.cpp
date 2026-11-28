@@ -1453,7 +1453,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output the expectation values of angular momentum operators";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print the expectation value of the angular momentum operators Lx, Ly and Lz in the basis of the localized atomic orbitals. The three components are written as sparse matrices into lx_nao.csr, ly_nao.csr and lz_nao.csr (or lxg{step+1}_nao.csr etc. when out_app_flag = 2), using the same self-describing header and CSR layout as the H(R)/S(R) output, so the values are indexed by the global NAO orbital indices. Because the NAO basis functions are real, every matrix element is purely imaginary: the files store only the imaginary part of the matrix element, and its real part is identically zero. This output is not supported for nspin = 4; an INPUT file that enables out_mat_l with nspin = 4 is rejected during parameter parsing. It is also honored when calculation = get_s, where the matrices are built directly from the orbital tables without an SCF cycle. The second integer controls the precision of the output.";
+        item.description = "Whether to print the expectation value of the angular momentum operators Lx, Ly and Lz in the basis of the localized atomic orbitals. The three components are written as sparse matrices into lrx_nao.csr, lry_nao.csr and lrz_nao.csr (or lrxg{step+1}_nao.csr etc. when out_app_flag = 2), using the same self-describing header and CSR layout as the H(R)/S(R) output, so the values are indexed by the global NAO orbital indices. Because the NAO basis functions are real, every matrix element is purely imaginary: the files store only the imaginary part of the matrix element, and its real part is identically zero. This output is not supported for nspin = 4; an INPUT file that enables out_mat_l with nspin = 4 is rejected during parameter parsing. It is also honored when calculation = get_s, where the matrices are built directly from the orbital tables without an SCF cycle. The second integer controls the precision of the output.";
         item.default_value = "False 8";
         item.unit = "";
         item.set_availability("basis_type==lcao");
@@ -1467,6 +1467,27 @@ For binary output, each file uses the same basename as text output with a .dat s
             catch (const std::out_of_range&) {/* do nothing */}
         };
         sync_intvec(input.out_mat_l, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_p");
+        item.annotation = "output the momentum operator matrices in the local basis";
+        item.category = "Output information";
+        item.type = R"(Boolean \[Integer\](optional))";
+        item.description = "Whether to print the momentum operator matrices px, py and pz in the basis of the localized atomic orbitals, including the nonlocal pseudopotential commutator term i[V_nl, r]. The three components are written as sparse matrices into prx_nao.csr, pry_nao.csr and prz_nao.csr (or prxg{step+1}_nao.csr etc. when out_app_flag = 2), using the same self-describing header and CSR layout as the H(R)/S(R) output. Because the NAO basis functions are real, every matrix element is purely imaginary: the files store the complex element with its real part identically zero. This output is not supported for nspin = 4; an INPUT file that enables out_mat_p with nspin = 4 is rejected during parameter parsing. The second integer controls the precision of the output.";
+        item.default_value = "False 8";
+        item.unit = "";
+        item.set_availability("basis_type==lcao");
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_p needs at least 1 value");
+            para.input.out_mat_p[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_p[1] = 8;
+            if (count >= 2) try { para.input.out_mat_p[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) {/* do nothing */}
+        };
+        sync_intvec(input.out_mat_p, 2, 0);
         this->add_item(item);
     }
     {

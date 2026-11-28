@@ -183,6 +183,7 @@ props_init() {
   has_mat_syns=$(get_input_key_value "cal_syns" "INPUT")
   has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
   has_mat_l=$(get_input_key_value "out_mat_l" "INPUT")
+  has_mat_p=$(get_input_key_value "out_mat_p" "INPUT")
   has_scan=$(get_input_key_value "dft_functional" "INPUT")
   out_chg=$(get_input_key_value "out_chg" "INPUT")
   has_ldos=$(get_input_key_value "out_ldos" "INPUT")

@@ -126,8 +126,8 @@ printf 'INPUT_PARAMETERS\ncalculation get_s\nout_mat_l 1\n' > "${angular_case_di
 printf 'Driver atomic_world 0.01\n' > "${angular_case_dir}/OUT.autotest/running_get_s.log"
 touch "${angular_case_dir}/sr_nao.csr.ref" "${angular_case_dir}/OUT.autotest/sr_nao.csr"
 for axis in x y z; do
-  printf 'value 1\n' > "${angular_case_dir}/l${axis}_nao.csr.ref"
-  printf 'value 1\n' > "${angular_case_dir}/OUT.autotest/l${axis}_nao.csr"
+  printf 'value 1\n' > "${angular_case_dir}/lr${axis}_nao.csr.ref"
+  printf 'value 1\n' > "${angular_case_dir}/OUT.autotest/lr${axis}_nao.csr"
 done
 (
   cd "${angular_case_dir}"
@@ -139,9 +139,9 @@ done
 for axis in x y z; do
   for failure in different missing; do
     if [ "${failure}" = different ]; then
-      printf 'value 2\n' > "${angular_case_dir}/OUT.autotest/l${axis}_nao.csr"
+      printf 'value 2\n' > "${angular_case_dir}/OUT.autotest/lr${axis}_nao.csr"
     else
-      rm "${angular_case_dir}/OUT.autotest/l${axis}_nao.csr"
+      rm "${angular_case_dir}/OUT.autotest/lr${axis}_nao.csr"
     fi
     (
       cd "${angular_case_dir}"
@@ -160,7 +160,7 @@ for axis in x y z; do
       exit 1
     fi
   done
-  printf 'value 1\n' > "${angular_case_dir}/OUT.autotest/l${axis}_nao.csr"
+  printf 'value 1\n' > "${angular_case_dir}/OUT.autotest/lr${axis}_nao.csr"
 done
 
 # Keep upstream's renamed VXC files while retaining failure propagation in

@@ -816,6 +816,7 @@ if(ENABLE_LCAO)
             gint
             hcontainer
             numerical_atomic_orbitals
+            op
             lr
             rdmft)
   if(ENABLE_LIBRI)

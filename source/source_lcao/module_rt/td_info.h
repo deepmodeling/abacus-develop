@@ -5,7 +5,7 @@
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_estate/module_pot/td_field_manager.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "source_io/module_hs/pos_op_mat.h"
+#include "source_lcao/module_op/pos_op_mat.h"
 #include "source_lcao/module_ri/abfs_vector3_order.h"
 
 #include <map>

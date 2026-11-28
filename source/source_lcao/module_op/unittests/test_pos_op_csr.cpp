@@ -2,9 +2,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "csr_test_helpers.h"
+#include "source_io/module_hs/unittests/csr_test_helpers.h"
 
-#include "source_io/module_hs/pos_op_csr.h"
+#include "source_lcao/module_op/pos_op_csr.h"
 
 #include <fstream>
 #include <string>

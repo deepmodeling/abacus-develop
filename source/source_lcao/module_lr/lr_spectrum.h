@@ -6,7 +6,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_basis/module_nao/two_center_bundle.h"
-#include "source_lcao/module_rt/velocity_op.h"
+#include "source_lcao/module_op/velocity_op.h"
 #include "source_lcao/module_lr/utils/spectrum_mo.h"
 
 namespace LR

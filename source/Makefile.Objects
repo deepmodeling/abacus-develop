@@ -72,6 +72,7 @@ VPATH=./src_global:\
 ./source_hamilt/module_hcontainer:\
 ./source_lcao:\
 ./source_lcao/module_rt:\
+./source_lcao/module_op:\
 ./source_lcao/module_deepks:\
 ./source_lcao/module_dftu:\
 ./source_lcao/module_deltaspin:\
@@ -843,12 +844,12 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_other.o\
     module_parameter/read_inp_out.o\
     module_parameter/read_set_globalv.o\
-    module_hs/angmom_op_mat.o\
+    module_op/angmom_op_mat.o\
 
-OBJS_IO_LCAO=module_hs/pos_op_mat.o\
-      module_hs/pos_op_basis.o\
-      module_hs/pos_op_calc.o\
-      module_hs/pos_op_writer.o\
+OBJS_IO_LCAO=module_op/pos_op_mat.o\
+      module_op/pos_op_basis.o\
+      module_op/pos_op_calc.o\
+      module_op/pos_op_writer.o\
       module_hs/vxc_op_mat.o\
       module_hs/vxc_op_tools.o\
       module_output/write_orb_info.o\
@@ -878,7 +879,8 @@ OBJS_IO_LCAO=module_hs/pos_op_mat.o\
       module_dhs/write_dh.o\
       module_dhs/write_dh_terms.o\
       module_hs/hterm_writer.o\
-      module_hs/pos_op_csr.o\
+      module_op/pos_op_csr.o\
+      module_op/mom_op_mat.o\
       module_hs/vxc_op_r.o\
       module_hs/vxc_op_lip.o\
 

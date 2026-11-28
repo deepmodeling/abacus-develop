@@ -92,7 +92,6 @@ if(ENABLE_LCAO)
     module_mulliken/output_dmk.cpp
     module_mulliken/output_mulliken.cpp
     module_ml/io_npz.cpp
-    module_hs/angmom_op_mat.cpp
     module_dhs/write_dh.cpp
     module_dhs/write_dh_terms.cpp)
   list(
@@ -108,11 +107,6 @@ if(ENABLE_LCAO)
     module_hs/hsr_legacy.cpp
     module_hs/hterm_writer.cpp
     module_hs/lat_r_csr.cpp
-    module_hs/pos_op_csr.cpp
-    module_hs/pos_op_basis.cpp
-    module_hs/pos_op_calc.cpp
-    module_hs/pos_op_writer.cpp
-    module_hs/pos_op_mat.cpp
     module_hs/vxc_op_tools.cpp
     module_hs/vxc_op_mat.cpp
     module_hs/vxc_op_r.cpp

@@ -210,6 +210,19 @@ class HContainer
     const Parallel_Orbitals *get_paraV() const { return this->paraV; };
 
     /**
+     * @brief get the flattened basis indexing, if this container uses the
+     *        BasisFlattenedIndexing + Parallel_Blkcyclic layout
+     * @return const BasisFlattenedIndexing*, nullptr for the paraV layout
+     */
+    const BasisFlattenedIndexing *get_basis_index() const { return this->basis_index; };
+
+    /**
+     * @brief get the block-cyclic distribution paired with the flattened basis
+     * @return const Parallel_Blkcyclic*, nullptr for the paraV layout
+     */
+    const Parallel_Blkcyclic *get_matrix_dist() const { return this->matrix_dist; };
+
+    /**
      * @brief allocate memory for all <IJR> matrix
      * if data_array is not nullptr,
      *     use memory after data_array for each BaseMatrix;

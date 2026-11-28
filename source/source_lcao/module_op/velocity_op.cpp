@@ -3,7 +3,7 @@
 #include "source_base/parallel_blkcyc.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_lcao/module_rt/snap_psb_half_tddft.h"
+#include "source_basis/module_ao/orb_read.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #include <omp.h>
@@ -174,6 +174,8 @@ void Velocity_op<TR>::initialize_grad_term(const Grid_Driver* GridD)
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     for (int dir=0;dir<3;dir++)
     {
+        // allocate() is idempotent on already-allocated pairs, so it is safe to
+        // call even when initialize_vcomm_r() has created these HContainers.
         this->current_term[dir]->allocate(nullptr, true);
     }
 
