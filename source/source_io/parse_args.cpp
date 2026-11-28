@@ -161,7 +161,6 @@ void print_build_info()
     print_info("Libnpy Support", ABACUS_LIBNPY_VERSION);
     print_info("DeePMD-kit Support", ABACUS_DEEPMD_VERSION);
     print_info("NEP Support", ABACUS_NEP_VERSION);
-    print_info("TensorFlow Support", ABACUS_TENSORFLOW_VERSION);
 
     // --- 11. Other Libraries ---
     print_section("Other Libraries");

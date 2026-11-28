@@ -13,14 +13,17 @@
 #
 
 find_package(PkgConfig QUIET)
+set(_plumed_use_pkgconfig FALSE)
 if(PkgConfig_FOUND)
   pkg_check_modules(PLUMED_PKG QUIET IMPORTED_TARGET GLOBAL plumed)
+  set(_plumed_use_pkgconfig ${PLUMED_PKG_FOUND})
 endif()
 
-if(PLUMED_PKG_FOUND)
+if(_plumed_use_pkgconfig)
   set(PLUMED_INCLUDE_DIRS ${PLUMED_PKG_INCLUDE_DIRS})
   set(PLUMED_LIBRARIES ${PLUMED_PKG_LINK_LIBRARIES})
   set(PLUMED_VERSION ${PLUMED_PKG_VERSION})
+  set(_plumed_required_vars PLUMED_PKG_FOUND)
 else()
   # Fallback: manual discovery, e.g. -DPLUMED_ROOT=/path/to/prefix
   find_path(
@@ -32,20 +35,27 @@ else()
     NAMES plumed
     HINTS ${PLUMED_ROOT}
     PATH_SUFFIXES "lib")
+  set(_plumed_required_vars PLUMED_LIBRARIES PLUMED_INCLUDE_DIRS)
 endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
   PLUMED
-  REQUIRED_VARS PLUMED_LIBRARIES PLUMED_INCLUDE_DIRS
+  REQUIRED_VARS ${_plumed_required_vars}
   VERSION_VAR PLUMED_VERSION)
 
 if(PLUMED_FOUND AND NOT TARGET PLUMED::plumed)
-  add_library(PLUMED::plumed UNKNOWN IMPORTED)
-  set_target_properties(
-    PLUMED::plumed
-    PROPERTIES IMPORTED_LOCATION "${PLUMED_LIBRARIES}"
-               INTERFACE_INCLUDE_DIRECTORIES "${PLUMED_INCLUDE_DIRS}")
+  if(_plumed_use_pkgconfig)
+    add_library(PLUMED::plumed ALIAS PkgConfig::PLUMED_PKG)
+  else()
+    add_library(PLUMED::plumed INTERFACE IMPORTED)
+    set_target_properties(
+      PLUMED::plumed
+      PROPERTIES INTERFACE_LINK_LIBRARIES "${PLUMED_LIBRARIES}"
+                 INTERFACE_INCLUDE_DIRECTORIES "${PLUMED_INCLUDE_DIRS}")
+  endif()
 endif()
 
+unset(_plumed_required_vars)
+unset(_plumed_use_pkgconfig)
 mark_as_advanced(PLUMED_INCLUDE_DIRS PLUMED_LIBRARIES)

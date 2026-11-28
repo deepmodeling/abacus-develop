@@ -75,7 +75,7 @@ set(_abacus_feature_definitions
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
   list(APPEND _abacus_feature_definitions COMMIT_INFO)
 endif()
-if(DEFINED DeePMD_DIR)
+if(ENABLE_DEEPMD)
   list(APPEND _abacus_feature_definitions __DPMD HIGH_PREC)
   if(DEFINED DeePMD_INPUT_NLIST_COMM_ARGS AND DeePMD_INPUT_NLIST_COMM_ARGS
                                               GREATER 0)
@@ -172,9 +172,10 @@ if(USE_DSP)
     endif()
     list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
   else()
-    message(STATUS
-      "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
-      "eigensolver falls back to the configured LAPACK provider (zhegvx).")
+    message(
+      STATUS
+        "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
+        "eigensolver falls back to the configured LAPACK provider (zhegvx).")
   endif()
 endif()
 
@@ -185,12 +186,11 @@ if(USE_KML)
     list(APPEND _abacus_linalg_libs KML::LAPACK)
   endif()
   list(APPEND _abacus_linalg_libs KML::FFTW3)
-  list(APPEND _abacus_linalg_include_dirs ${KML_INCLUDE_DIRS})
   if(ENABLE_FLOAT_FFTW)
     list(APPEND _abacus_linalg_libs KML::FFTW3_FLOAT)
   endif()
 elseif(MKL_FOUND)
-  list(APPEND _abacus_linalg_libs ${MKL_LIBRARIES})
+  list(APPEND _abacus_linalg_libs ${ABACUS_MKL_LIBRARIES})
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     list(APPEND _abacus_linalg_libs ifcore)
   endif()
@@ -213,7 +213,6 @@ else()
     list(APPEND _abacus_linalg_libs FFTW3::FFTW3_OMP)
   endif()
   list(APPEND _abacus_linalg_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-  list(APPEND _abacus_linalg_include_dirs ${FFTW3_INCLUDE_DIRS})
   if(ENABLE_FLOAT_FFTW)
     list(APPEND _abacus_linalg_libs FFTW3::FFTW3_FLOAT)
   endif()
@@ -281,7 +280,7 @@ foreach(
 endforeach()
 
 if(MKL_FOUND)
-  abacus_add_target_compile_requirements("${MKL_LIBRARIES}")
+  abacus_add_target_compile_requirements("${ABACUS_MKL_LIBRARIES}")
 endif()
 
 # ------------------------------------------------------------------------------
@@ -292,55 +291,14 @@ set(_abacus_feature_libs
     $<$<BOOL:${ENABLE_JSON}>:nlohmann_json::nlohmann_json>
     $<$<BOOL:${ENABLE_ELPA}>:ELPA::ELPA>
     $<$<BOOL:${ENABLE_PEXSI}>:PEXSI::PEXSI>
-    $<$<BOOL:${ENABLE_CNPY}>:cnpy>
-    $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
+    $<$<BOOL:${ENABLE_CNPY}>:CNPY::cnpy>
     $<$<BOOL:${ENABLE_LIBRI}>:LibRI::LibRI>
     $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
     $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>
-    $<$<BOOL:${ENABLE_NEP}>:nep::nep_cpu>)
+    $<$<BOOL:${ENABLE_DEEPMD}>:${ABACUS_DEEPMD_TARGET}>
+    $<$<BOOL:${ENABLE_NEP}>:nep::nep_cpu>
+    $<$<BOOL:${ENABLE_MLALGO}>:libnpy::npy>)
 set(_abacus_feature_include_dirs)
-set(_abacus_feature_compile_options)
-
-if(ENABLE_ELPA)
-  list(APPEND _abacus_feature_include_dirs ${ELPA_INCLUDE_DIR})
-endif()
-
-if(ENABLE_MLALGO)
-  if(libnpy_INCLUDE_DIR)
-    list(APPEND _abacus_feature_include_dirs ${libnpy_INCLUDE_DIR})
-  endif()
-  if(libnpy_SOURCE_DIR)
-    list(APPEND _abacus_feature_include_dirs ${libnpy_SOURCE_DIR}/include)
-  endif()
-endif()
-
-if(ENABLE_MLALGO OR DEFINED Torch_DIR)
-  list(APPEND _abacus_feature_include_dirs ${TORCH_INCLUDE_DIRS})
-  list(APPEND _abacus_feature_compile_options ${ABACUS_TORCH_CXX_FLAGS})
-endif()
-
-if(ENABLE_CNPY)
-  if(cnpy_INCLUDE_DIR)
-    list(APPEND _abacus_feature_include_dirs ${cnpy_INCLUDE_DIR})
-  endif()
-  if(cnpy_SOURCE_DIR)
-    list(APPEND _abacus_feature_include_dirs ${cnpy_SOURCE_DIR})
-  endif()
-endif()
-
-if(DEFINED DeePMD_DIR)
-  if(DeePMDC_FOUND)
-    list(APPEND _abacus_feature_libs DeePMD::deepmd_c)
-  else()
-    list(APPEND _abacus_feature_libs DeePMD::deepmd_cc)
-  endif()
-  list(APPEND _abacus_feature_include_dirs ${DeePMD_DIR}/include)
-endif()
-
-if(DEFINED TensorFlow_DIR AND TensorFlow_FOUND)
-  list(APPEND _abacus_feature_libs TensorFlow::tensorflow_cc)
-  list(APPEND _abacus_feature_include_dirs ${TensorFlow_DIR}/include)
-endif()
 
 if(USE_DSP)
   list(APPEND _abacus_feature_libs ${OMPI_LIBRARY1}
@@ -396,16 +354,8 @@ endif()
 
 target_link_libraries(abacus_feature_libs INTERFACE ${_abacus_feature_libs})
 
-if(DEFINED DeePMD_DIR
-   AND UNIX
-   AND NOT APPLE)
-  target_link_options(abacus_feature_libs INTERFACE "LINKER:--no-as-needed")
-endif()
-
 target_include_directories(abacus_compile_requirements
                            INTERFACE ${_abacus_feature_include_dirs})
-target_compile_options(abacus_compile_requirements
-                       INTERFACE ${_abacus_feature_compile_options})
 
 foreach(
   _abacus_feature_target IN
@@ -413,13 +363,17 @@ foreach(
         LibRI::LibRI
         ddla::ddla
         cereal::cereal
+        LibRI::LibRI
+        LibComm::LibComm
+        libnpy::npy
+        CNPY::cnpy
+        torch
         ELPA::ELPA
+        PLUMED::plumed
         Libxc::xc
         dftd4::dftd4
-        DeePMD::deepmd_c
-        DeePMD::deepmd_cc
+        ${ABACUS_DEEPMD_TARGET}
         nep::nep_cpu
-        TensorFlow::tensorflow_cc
         ZLIB::ZLIB
         PEXSI::PEXSI
         NCCL::NCCL
@@ -433,6 +387,12 @@ foreach(
         roc::hipsolver)
   abacus_add_target_compile_requirements(${_abacus_feature_target})
 endforeach()
+
+# The C++ API inherits its ABI definition from the core library. The C wrapper
+# does not impose the core library's C++ ABI on ABACUS.
+if(ABACUS_DEEPMD_TARGET STREQUAL "DeePMD::deepmd_cc")
+  abacus_add_target_compile_requirements(DeePMD::deepmd)
+endif()
 
 # ------------------------------------------------------------------------------
 # Per-target feature definitions and common compile usage requirements
@@ -846,7 +806,7 @@ endif()
 target_link_libraries(${ABACUS_BIN_NAME} PRIVATE abacus::link_libs)
 
 # Torch includes some LAPACK routines, but with floating-point exceptions.
-if(ENABLE_MLALGO OR DEFINED Torch_DIR)
+if(ENABLE_MLALGO)
   target_link_libraries(${ABACUS_BIN_NAME} PRIVATE ${TORCH_LIBRARIES})
 endif()
 

@@ -24,5 +24,14 @@ endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(LibComm DEFAULT_MSG LIBCOMM_DIR)
 
+if(LibComm_FOUND)
+  if(NOT TARGET LibComm::LibComm)
+    add_library(LibComm::LibComm INTERFACE IMPORTED)
+    set_target_properties(
+      LibComm::LibComm PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+                                  "${LIBCOMM_DIR}/include")
+  endif()
+endif()
+
 # Copy the results to the output variables and target.
 mark_as_advanced(LIBCOMM_DIR)

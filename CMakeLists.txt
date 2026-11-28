@@ -56,6 +56,7 @@ option(ENABLE_PLUMED "Enable using the PLUMED enhanced-sampling library" OFF)
 option(ENABLE_JSON "Enable JSON output" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_NEP "Enable NEP_CPU" OFF)
+option(ENABLE_DEEPMD "Enable DeePMD-kit" OFF)
 
 option(DEBUG_INFO "Print message to debug" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
@@ -516,72 +517,20 @@ if(ENABLE_ASAN)
 endif()
 
 if(ENABLE_MLALGO)
-  find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
-  if(NOT libnpy_SOURCE_DIR)
-    include(FetchContent)
-    FetchContent_Declare(
-      libnpy
-      GIT_REPOSITORY https://github.com/llohse/libnpy.git
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
-    FetchContent_MakeAvailable(libnpy)
-  else()
-
-  endif()
-endif()
-
-# Torch uses outdated components to detect CUDA arch, causing failure on
-# latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
-# "major.minor" if required.
-if(ENABLE_MLALGO OR DEFINED Torch_DIR)
+  find_package(Libnpy REQUIRED)
+  # Torch's CUDA architecture detection may need TORCH_CUDA_ARCH_LIST on
+  # recent CUDA toolkits.
   find_package(Torch REQUIRED)
   if(NOT Torch_VERSION VERSION_LESS "2.1.0")
     set_if_higher(CMAKE_CXX_STANDARD 17)
   elseif(NOT Torch_VERSION VERSION_LESS "1.5.0")
     set_if_higher(CMAKE_CXX_STANDARD 14)
   endif()
-  set(ABACUS_TORCH_CXX_FLAGS "${TORCH_CXX_FLAGS}")
 endif()
 
 if(ENABLE_CNPY)
-  find_path(cnpy_SOURCE_DIR cnpy.h HINTS ${libnpy_INCLUDE_DIR})
-  if(NOT cnpy_SOURCE_DIR)
-    include(FetchContent)
-    FetchContent_Declare(
-      cnpy
-      GIT_REPOSITORY https://github.com/rogersce/cnpy.git
-      GIT_PROGRESS TRUE)
-    FetchContent_MakeAvailable(cnpy)
-  else()
-
-  endif()
-
-  # find ZLIB and link
-  find_package(ZLIB REQUIRED)
+  find_package(CNPY REQUIRED)
 endif()
-
-function(git_submodule_update)
-  if(GIT_SUBMOD_RESULT EQUAL "0")
-    message(DEBUG "Submodule init'ed")
-  else()
-    find_package(Git REQUIRED)
-    if(NOT EXISTS "${PROJECT_SOURCE_DIR}/.git")
-      message(FATAL_ERROR "Not a git repository; cannot update submodules")
-    endif()
-
-    message(STATUS "Updating submodules")
-    execute_process(
-      COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      RESULT_VARIABLE GIT_SUBMOD_RESULT)
-    if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-      message(
-        FATAL_ERROR
-          "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}."
-      )
-    endif()
-  endif()
-endfunction()
 
 if(ENABLE_LIBRI)
   set_if_higher(CMAKE_CXX_STANDARD 14)
@@ -605,16 +554,13 @@ if(ENABLE_LIBXC)
   endif()
 endif()
 
-if(DEFINED DeePMD_DIR)
-  find_package(DeePMD REQUIRED)
+if(ENABLE_DEEPMD)
+  find_package(DeePMD CONFIG REQUIRED)
+  include(SetupDeePMD)
 endif()
 
 if(ENABLE_NEP)
   find_package(NEP_CPU CONFIG REQUIRED)
-endif()
-
-if(DEFINED TensorFlow_DIR)
-  find_package(TensorFlow REQUIRED)
 endif()
 
 if(ENABLE_PLUMED)

@@ -48,7 +48,7 @@ If machine learning algorithms, including DeePKS and machine learning based kine
 - [Libnpy](https://github.com/llohse/libnpy/)
 
 ```bash
-cmake -B build -DENABLE_MLALGO=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
+cmake -B build -DENABLE_MLALGO=ON -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
 ```
 
 > CMake will try to download Libnpy if it cannot be found locally.
@@ -60,22 +60,10 @@ cmake -B build -DENABLE_MLALGO=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlib
 If the Deep Potential model is employed in Molecule Dynamics calculations, the following prerequisites and steps are needed:
 
 - [DeePMD-kit](https://github.com/deepmodeling/deepmd-kit)
-- [TensorFlow](https://www.tensorflow.org/) (optional)
-- [LibTorch](https://pytorch.org/) (optional)
 
-In the simplest case, the `tensorflow_cc` and `torch` libraries are in the same directory as the `deepmd_c`/`deepmd_cc` libraries, then
-```bash
-cmake -B build -DDeePMD_DIR=/dir_to_deepmd-kit
-```
-DeePMD-kit supports TensorFlow backend but its libraries are placed at another directory, then
+ABACUS support both [LibTorch](https://pytorch.org/) and [TensorFlow](https://www.tensorflow.org/) backend of DeePMD, depending on how DeePMD library was built.
 
-```bash
-cmake -B build -DDeePMD_DIR=/dir_to_deepmd-kit -DTensorFlow_DIR=/dir_to_tensorflow
-```
-Similarly, DeePMD-kit supports PyTorch backend but its libraries are placed at another directory, then
-```bash
-cmake -B build -DDeePMD_DIR=/dir_to_deepmd-kit -DTorch_DIR=/dir_to_pytorch
-```
+To build ABACUS with DeePMD support, pass `-DENABLE_DEEPMD=ON` to CMake.
 
 ## Build with NEP
 
@@ -84,10 +72,6 @@ This interface enables running MD simulations with the NEP model. It requires th
 ## Build with LibRI support
 
 The new EXX implementation directly depends on [LibRI](https://github.com/abacusmodeling/LibRI) to provide RI implementation, while LibRI requires two external dependencies: [LibComm](https://github.com/abacusmodeling/LibComm) for inter-process communication, and [cereal](https://github.com/USCiLab/cereal) for serialization. Set `-DENABLE_LIBRI=ON` to build with these libraries.
-
-```{note}
-`ENABLE_LIBCOMM` is deprecated because LibComm is not a standalone ABACUS feature. CMake locates it automatically as a dependency of LibRI. If you prefer using manually downloaded libraries, enable LibRI and provide their locations via `-DLIBRI_DIR=/path/to/LibRI` and `-DLIBCOMM_DIR=/path/to/LibComm`.
-```
 
 Experimental LCAO GPU contractions additionally require `ENABLE_LIBRI_GPU=ON`
 (default OFF), `USE_CUDA=ON`, LibRI v0.3.0.0 or newer, and a CUDA
@@ -149,17 +133,7 @@ ABACUS can use the external [DFT-D4](https://github.com/dftd4/dftd4) library for
 
 DFT-D4 must be built and installed with CMake, so that ABACUS can locate it through the exported `dftd4-config.cmake` package. Meson-built installations, including the Conda package of `dftd4`, are not supported unless they provide a compatible CMake package file.
 
-To build ABACUS with DFT-D4 support, pass `-DENABLE_DFTD4=ON` to CMake and provide `CMAKE_PREFIX_PATH` environment variable.
-
-In the input file, enable DFT-D4 with:
-
-```text
-vdw_method d4
-vdw_d4_xc pbe
-vdw_d4_model d4    # or d4s for the smooth D4S model
-```
-
-If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `dft_functional` or pseudopotential metadata and pass it to the DFT-D4 library. The `vdw_d4_model` keyword selects the dispersion model inside the DFT-D4 library; the default is `d4`, while `d4s` enables the smooth D4S model.
+To build ABACUS with DFT-D4 support, pass `-DENABLE_DFTD4=ON` to CMake.
 
 ## Build with JSON support
 
@@ -170,22 +144,22 @@ ABACUS uses [nlohmann-json](https://github.com/nlohmann/json) for optional JSON 
 To build tests for ABACUS, define `BUILD_TESTING` flag. You can also specify path to local installation of [Googletest](https://github.com/google/googletest) by setting `GTEST_DIR` flags. If not found in local, the configuration process will try to download it automatically.
 
 ```bash
-cmake -B build -DBUILD_TESTING=1
+cmake -B build -DBUILD_TESTING=ON
 ```
 
 After building, unit tests can be performed with `ctest`.
 
 To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tests with name matched by given pattern.
 
-## Build Performance Tests
+### Build Performance Tests
 
-To build performance tests for ABACUS, define `ENABLE_GOOGLEBENCH` flag. You can also specify the path to a local installation of [Google Benchmark](https://github.com/google/benchmark.git) by setting `BENCHMARK_DIR` flags. If not found locally, the configuration process will try to download it automatically.
+To build performance tests for ABACUS, also enable `ENABLE_GOOGLEBENCH`. You can also specify the path to a local installation of [Google Benchmark](https://github.com/google/benchmark.git) by setting `BENCHMARK_DIR` flags. If not found locally, the configuration process will try to download it automatically.
 
 ```bash
-cmake -B build -DENABLE_GOOGLEBENCH=1
+cmake -B build -DBUILD_TESTING=ON -DENABLE_GOOGLEBENCH=ON
 ```
 
-Google Benchmark requires Google Test to build and run the tests. When setting `ENABLE_GOOGLEBENCH` to ON, `BUILD_TESTING` is automatically enabled. After building and installing, performance tests can be executed with `ctest`.
+Google Benchmark requires Google Test to build and run the tests. After building and installing, performance tests can be executed with `ctest`.
 
 ## Build with CUDA support
 

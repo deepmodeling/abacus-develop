@@ -98,7 +98,7 @@ add_test(
 
 # Select the same ScaLAPACK/BLACS provider as the main build.
 if(MKL_FOUND)
-  set(BLACS_LIB ${MKL_LIBRARIES})
+  set(BLACS_LIB ${ABACUS_MKL_LIBRARIES})
 else()
   set(BLACS_LIB ScaLAPACK::ScaLAPACK)
 endif()
