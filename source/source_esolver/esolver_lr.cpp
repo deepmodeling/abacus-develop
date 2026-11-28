@@ -1,10 +1,7 @@
 #include "esolver_lr.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_lcao/module_lr/hamilt_ulr.h"
-#include "source_lcao/module_lr/hsolver_lrtd.h"
 #include "source_lcao/module_lr/lr_density.h"
 #include "source_lcao/module_lr/lr_spectrum.h"
-#include "source_lcao/module_lr/operator_casida/operator_lr_diag.h"
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/utils/lr_io.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
@@ -21,7 +18,6 @@
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_lcao/module_lr/lr_gs.h"
-#include <cassert>
 #include <complex>
 #include <memory>
 #include "source_estate/module_dm/dm_from_psi.h"
@@ -104,140 +100,9 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     this->setup_eigenvectors_X();
     this->pelec->ekb.create(this->lr_.dim.nspin, this->lr_.dim.nstates);
 
-    // set once here rather than inside the solver branches: the open-shell `spectrum` branch used
-    // to leave it empty, and both `after_all_runners` and the gradient index it
-    this->lr_.amp.spin_types =
-        this->lr_.dim.openshell ? std::vector<std::string>({"updown"}) : std::vector<std::string>({"singlet", "triplet"});
+    // solve the TDA eigenproblem (or read its states back under `lr_solver = spectrum`)
+    this->lr_.solve(this->pelec->ekb.c, istep);
 
-    // a relaxation writes these once per ionic step; without the suffix every step would overwrite
-    // the last, and the trajectory would be impossible to inspect afterwards
-    const std::string step_suffix = this->lr_.relax.target.active() ? "_step" + std::to_string(istep) : "";
-    auto efile_out = [this, &step_suffix](const std::string &label) -> std::string
-    { return this->out_dir + "Excitation_Energy_" + label + step_suffix + ".dat"; };
-    auto vfile_out = [this, &step_suffix](const std::string &label) -> std::string
-    {
-        return this->out_dir + "Excitation_Amplitude_" + label + step_suffix + "_" +
-               std::to_string(this->my_rank_ + 1) + ".dat";
-    };
-    if (this->inp_->lr_solver == "elpa")
-    {
-        ModuleBase::WARNING_QUIT("ESolver_LR", "ESolver_LR doesn't support elpa now.");
-    }
-    else if (this->inp_->lr_solver != "spectrum")
-    {
-        auto write_states = [this, &efile_out, &vfile_out](
-                                const std::string &label, const Real<T> *e, const T *v, const int &dim, const int &nst,
-                                const int &prec = 8) -> void
-        {
-            if (this->my_rank_ == 0)
-            {
-                assert(nst == LR_Util::write_value(efile_out(label), prec, e, nst));
-            }
-            assert(nst * dim == LR_Util::write_value(vfile_out(label), prec, v, nst, dim));
-        };
-        std::vector<double> precondition(this->inp_->lr_solver == "lapack" ? 0 : this->lr_.amp.nloc, 1.0);
-        // allocate and initialize A matrix and density matrix
-        if (this->lr_.dim.openshell)
-        {
-            for (int is : {0, 1})
-            {
-                if (this->inp_->lr_solver != "lapack")
-                {
-                    const int offset_is = is * this->lr_.amp.para_x[0].size();
-                    OperatorLRDiag<double> pre_op(
-                        this->lr_.gs.eig.c + is * this->lr_.dim.nk * (this->lr_.dim.nocc[0] + this->lr_.dim.nvirt[0]), this->lr_.amp.para_x[is], this->lr_.dim.nk, this->lr_.dim.nocc[is],
-                        this->lr_.dim.nvirt[is], false);
-                    pre_op.act(1, offset_is, 1, precondition.data() + offset_is, precondition.data() + offset_is);
-                }
-            }
-            std::cout << "Solving spin-conserving excitation for open-shell system." << std::endl;
-            HamiltULR<T> hulr(
-                xc_kernel, this->lr_.dim.nspin, this->lr_.dim.nbasis, this->lr_.dim.nocc, this->lr_.dim.nvirt, *this->ucell_, orb_cutoff_, this->gd(),
-                *this->lr_.gs.psi, this->lr_.gs.eig,
-#ifdef __EXX
-                this->exx_lri, this->exx_info.info_global.hybrid_alpha,
-#endif
-                this->lr_.pot.pot, this->kv, this->lr_.amp.para_x, this->lr_.amp.para_c, this->lr_.gs.para_mat);
-            LR::HSolver::solve(
-                hulr, this->lr_.amp.x[0].template data<T>(), this->lr_.amp.nloc, this->lr_.dim.nstates, this->lr_.dim.nk, this->lr_.dim.nocc, this->lr_.dim.nvirt,
-                this->lr_.amp.para_x, this->pelec->ekb.c, this->inp_->lr_solver, this->inp_->lr_thr, precondition, true);
-            if (this->inp_->out_wfc_lr)
-            {
-                write_states("openshell", this->pelec->ekb.c, this->lr_.amp.x[0].template data<T>(), this->lr_.amp.nloc, this->lr_.dim.nstates);
-            }
-        }
-        else
-        {
-            if (this->inp_->lr_solver != "lapack")
-            {
-                OperatorLRDiag<double> pre_op(
-                    this->lr_.gs.eig.c, this->lr_.amp.para_x[0], this->lr_.dim.nk, this->lr_.dim.nocc[0], this->lr_.dim.nvirt[0], false);
-                pre_op.act(1, this->lr_.amp.nloc, 1, precondition.data(), precondition.data());
-            }
-            const std::vector<std::string> &spin_types = this->lr_.amp.spin_types;
-            for (int is = 0; is < this->lr_.dim.nspin; ++is)
-            {
-                std::cout << " Calculating " << spin_types[is] << " excitations" << std::endl;
-                HamiltLR<T> hlr(
-                    xc_kernel, this->lr_.dim.nspin, this->lr_.dim.nbasis, this->lr_.dim.nocc, this->lr_.dim.nvirt, *this->ucell_, orb_cutoff_, this->gd(),
-                    *this->lr_.gs.psi, this->lr_.gs.eig,
-#ifdef __EXX
-                    this->exx_lri, this->exx_info.info_global.hybrid_alpha,
-#endif
-                    this->lr_.pot.pot[is], this->kv, this->lr_.amp.para_x, this->lr_.amp.para_c, this->lr_.gs.para_mat, spin_types[is], this->in_dir,
-                    this->out_dir, this->inp_->ri_hartree_benchmark,
-                    (this->inp_->ri_hartree_benchmark == "aims" ? this->inp_->aims_nbasis : std::vector<int>({})));
-                LR::HSolver::solve(
-                    hlr, this->lr_.amp.x[is].template data<T>(), this->lr_.amp.nloc, this->lr_.dim.nstates, this->lr_.dim.nk, this->lr_.dim.nocc, this->lr_.dim.nvirt,
-                    this->lr_.amp.para_x, this->pelec->ekb.c + is * this->lr_.dim.nstates, this->inp_->lr_solver, this->inp_->lr_thr,
-                    precondition, true);
-                if (this->inp_->out_wfc_lr)
-                {
-                    write_states(
-                        spin_types[is], this->pelec->ekb.c + is * this->lr_.dim.nstates, this->lr_.amp.x[is].template data<T>(),
-                        this->lr_.amp.nloc, this->lr_.dim.nstates);
-                }
-            }
-        }
-    }
-    else // lr_solver == "spectrum", read the eigenvalues
-    {
-        auto efile_in = [&](const std::string &label) -> std::string
-        { return this->in_dir + "Excitation_Energy_" + label + ".dat"; };
-        auto vfile_in = [this](const std::string &label) -> std::string
-        { return this->in_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(this->my_rank_ + 1) + ".dat"; };
-
-        auto read_states = [&](const std::string &label, Real<T> *e, T *v, const int &dim, const int &nst) -> void
-        {
-            if (this->my_rank_ == 0)
-            {
-                assert(nst == LR_Util::read_value(efile_in(label), e, nst));
-                std::cout << "Rank " << this->my_rank_ << ": finish reading " << efile_in(label) << std::endl;
-            }
-#ifdef __MPI
-            // in velocity gauge, the eigenvalues may be used to calculate the transition dipole, so we'd better
-            // broadcast them
-            MPI_Bcast(e, nst, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif
-            assert(nst * dim == LR_Util::read_value(vfile_in(label), v, nst, dim));
-            std::cout << "Rank " << this->my_rank_ << ": finish reading " << vfile_in(label) << std::endl;
-        };
-        std::cout << "reading the excitation states from file: \n";
-        if (this->lr_.dim.openshell)
-        {
-            read_states("openshell", this->pelec->ekb.c, this->lr_.amp.x[0].template data<T>(), this->lr_.amp.nloc, this->lr_.dim.nstates);
-        }
-        else
-        {
-            const std::vector<std::string> &spin_types = this->lr_.amp.spin_types;
-            for (int is = 0; is < this->lr_.dim.nspin; ++is)
-            {
-                read_states(
-                    spin_types[is], this->pelec->ekb.c + is * this->lr_.dim.nstates, this->lr_.amp.x[is].template data<T>(), this->lr_.amp.nloc,
-                    this->lr_.dim.nstates);
-            }
-        }
-    }
     if (this->lr_.relax.target.active())
     {
         // Re-select which root to follow BEFORE taking the gradient, so the force belongs to

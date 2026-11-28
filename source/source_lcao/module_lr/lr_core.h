@@ -100,7 +100,7 @@ struct Refs
 {
     const UnitCell* ucell = nullptr;
     const K_Vectors* kv = nullptr;
-    const Grid_Driver* gd = nullptr;
+    Grid_Driver* gd = nullptr;
     const std::vector<double>* orb_cutoff = nullptr;
     const ModulePW::PW_Basis* rho = nullptr;
     const ModulePW::PW_Basis* rhod = nullptr;
@@ -150,6 +150,9 @@ struct Core
                          const Input_para& inp);
     /// Set up the same distributions for the standalone path, where the ground state comes from files.
     void setup_file_layout(const K_Vectors& kv, const UnitCell& ucell, const Input_para& inp);
+    /// Solve the TDA eigenproblem, or read its states from file under `lr_solver = spectrum`.
+    /// The `nspin x nstates` eigenvalues are written to `ekb`.
+    void solve(double* ekb, int istep);
 
     /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
     /// restricts it to that one state; -1 does all `nstates`.
