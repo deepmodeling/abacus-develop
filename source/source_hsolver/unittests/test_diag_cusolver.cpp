@@ -1,5 +1,6 @@
 #include "source_hsolver/kernels/cuda/diag_cusolver.cuh"
 #include "gtest/gtest.h"
+#include <cuda_runtime_api.h>
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -83,10 +84,12 @@ TEST(CusolverRetainedDm, FractionalSignedWeightsAfterHostMaterialization)
     check_retained_density(false);
 }
 
+#if CUDART_VERSION >= 10010
 TEST(CusolverRetainedDm, SubsetFractionalSignedWeightsAfterHostMaterialization)
 {
     check_retained_density(true);
 }
+#endif
 
 TEST(CusolverRetainedDm, ComplexSolveInvalidatesRealEigenvectors)
 {
@@ -128,8 +131,10 @@ TEST(CusolverRetainedDm, HostOnlySolveReleasesRetainedEigenvectors)
     ASSERT_TRUE(solver.density_from_retained(n, weights, density, error));
     solver.solve_full(n, n, h, s, values, wave, false);
     EXPECT_FALSE(solver.density_from_retained(n, weights, density, error));
+#if CUDART_VERSION >= 10010
     ASSERT_TRUE(solver.solve_subset(n, 1, h, s, values, wave, true));
     ASSERT_TRUE(solver.density_from_retained(1, weights, density, error));
     ASSERT_TRUE(solver.solve_subset(n, 1, h, s, values, wave, false));
     EXPECT_FALSE(solver.density_from_retained(1, weights, density, error));
+#endif
 }
