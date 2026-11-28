@@ -42,6 +42,38 @@ void set_x_init(std::vector<ct::Tensor>& X, const ModuleBase::matrix& eig_ks, co
                 const std::vector<Parallel_Blkcyclic>& para_x, int nstates, int nloc, int nk, bool openshell,
                 std::ostream& log);
 
+/// The excitation amplitudes and their distribution, as allocated by `setup_x`.
+template <typename T>
+struct XAmp
+{
+    std::vector<ct::Tensor> x;
+    std::vector<Parallel_Blkcyclic> para_x;
+    int nloc = 0;
+};
+
+/// Allocate the amplitude distribution and fill the initial guess (skipped for `spectrum_only`).
+template <typename T>
+XAmp<T> setup_x(const Parallel_Blkcyclic& para_c, const std::vector<int>& nocc, const std::vector<int>& nvirt,
+                const std::vector<int>& npairs, const ModuleBase::matrix& eig_ks, int states, int nk, int nspin,
+                bool openshell, bool spectrum_only, std::ostream& log);
+
+/// Ground-state wavefunctions read for the LR run.
+template <typename T>
+struct GsWfc
+{
+    std::unique_ptr<psi::Psi<T>> all_own; ///< owned buffer of the full-band copy
+    psi::Psi<T>* all = nullptr;           ///< full-band view (null when forces are off)
+    ModuleBase::matrix eig_all;           ///< [nks, nbands] eigenvalues of the full-band copy
+    ModuleBase::matrix wg_all;            ///< [nks, nbands] weights of the full-band copy
+};
+
+/// Read the KS window, plus the full-band copy when `cal_force` is set.
+template <typename T>
+GsWfc<T> read_gs_wfc(psi::Psi<T>& psi, ModuleBase::matrix& eig, ModuleBase::matrix& wg,
+                     const Parallel_Orbitals& pmat, const Parallel_Orbitals& pmat_all, const std::string& in_dir,
+                     const Input_para& inp, int nocc_in, int nvirt_in, int nocc_max, int nbands, int nbasis,
+                     const K_Vectors& kv, bool cal_force, std::ostream& log);
+
 /// AIMS benchmark: eigenvalues from band_out and eigenvectors from KS_eigenvectors.out.
 template <typename T>
 void read_wfc_aims(psi::Psi<T>& psi, ModuleBase::matrix& eig, const std::string& in_dir, int nocc_in, int nvirt_in,

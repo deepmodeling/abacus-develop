@@ -270,6 +270,62 @@ ZWin<T> build_z_win(psi::Psi<T>* psi_all, const ModuleBase::matrix& eig_all, con
     return z;
 }
 
+template <typename T>
+XAmp<T> setup_x(const Parallel_Blkcyclic& para_c, const std::vector<int>& nocc, const std::vector<int>& nvirt,
+                const std::vector<int>& npairs, const ModuleBase::matrix& eig_ks, const int states, const int nk,
+                const int nspin, const bool openshell, const bool spectrum_only, std::ostream& log)
+{
+    AmpLayout layout = make_amp_layout(para_c, nocc, nvirt, nk, openshell);
+    XAmp<T> out;
+    out.para_x = std::move(layout.para_x);
+    out.nloc = layout.nloc;
+    out.x.resize(openshell ? 1 : nspin, LR_Util::newTensor<T>({states, out.nloc}));
+    for (auto& x : out.x)
+    {
+        x.zero();
+    }
+    if (!spectrum_only)
+    {
+        set_x_init<T>(out.x, eig_ks, nocc, nvirt, npairs, out.para_x, states, out.nloc, nk, openshell, log);
+    }
+    return out;
+}
+
+template <typename T>
+GsWfc<T> read_gs_wfc(psi::Psi<T>& psi, ModuleBase::matrix& eig, ModuleBase::matrix& wg,
+                     const Parallel_Orbitals& pmat, const Parallel_Orbitals& pmat_all, const std::string& in_dir,
+                     const Input_para& inp, const int nocc_in, const int nvirt_in, const int nocc_max,
+                     const int nbands, const int nbasis, const K_Vectors& kv, const bool cal_force,
+                     std::ostream& log)
+{
+    eig.create(kv.get_nks(), nbands);
+    wg.create(kv.get_nks(), nbands);
+    if (inp.ri_hartree_benchmark == "aims") // for aims benchmark
+    {
+        read_wfc_aims<T>(psi, eig, in_dir, nocc_in, nvirt_in, nbands, nbasis);
+    }
+    else if (!read_wfc_win<T>(in_dir, pmat, psi, eig, wg, kv, inp.nspin, inp.init_wfc_file_format == "binary",
+                              nocc_max - nocc_in))
+    {
+        ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
+    }
+    GsWfc<T> out;
+    if (cal_force)
+    { // allocate the full-band copy needed by the force path
+        out.all_own.reset(new psi::Psi<T>(kv.get_nks(), pmat_all.ncol_bands, pmat_all.para_2d().nrloc(), kv.ngk, true));
+        out.all = out.all_own.get();
+        out.eig_all.create(kv.get_nks(), inp.nbands);
+        out.wg_all.create(kv.get_nks(), inp.nbands);
+        if (!read_wfc_all<T>(in_dir, pmat_all, *out.all, out.eig_all, out.wg_all, kv, inp.nspin,
+                             inp.init_wfc_file_format == "binary"))
+        {
+            ModuleBase::WARNING_QUIT("ESolver_LR", "read all ground-state wavefunctions for force calculation failed.");
+        }
+        log << " Read in all the KS wavefunctions for force calculation. " << std::endl;
+    }
+    return out;
+}
+
 void read_gs_chg(const std::string& in_dir, const Input_para& inp, int nspin, const UnitCell& ucell,
                  Parallel_Grid& pgrid, ModulePW::PW_Basis* pw_rho, Charge& chg, int rank, std::ostream& log)
 {
@@ -339,6 +395,22 @@ template ZWin<double> build_z_win<double>(psi::Psi<double>*, const ModuleBase::m
 template ZWin<std::complex<double>> build_z_win<std::complex<double>>(
     psi::Psi<std::complex<double>>*, const ModuleBase::matrix&, const std::vector<int>&, const std::vector<int>&, int,
     int, int, int, bool, const K_Vectors&, const Parallel_Blkcyclic&, const Parallel_Orbitals&, const int*, bool, bool,
+    std::ostream&);
+
+template XAmp<double> setup_x<double>(const Parallel_Blkcyclic&, const std::vector<int>&, const std::vector<int>&,
+                                      const std::vector<int>&, const ModuleBase::matrix&, int, int, int, bool, bool,
+                                      std::ostream&);
+template XAmp<std::complex<double>> setup_x<std::complex<double>>(const Parallel_Blkcyclic&, const std::vector<int>&,
+                                                                 const std::vector<int>&, const std::vector<int>&,
+                                                                 const ModuleBase::matrix&, int, int, int, bool, bool,
+                                                                 std::ostream&);
+template GsWfc<double> read_gs_wfc<double>(psi::Psi<double>&, ModuleBase::matrix&, ModuleBase::matrix&,
+                                           const Parallel_Orbitals&, const Parallel_Orbitals&, const std::string&,
+                                           const Input_para&, int, int, int, int, int, const K_Vectors&, bool,
+                                           std::ostream&);
+template GsWfc<std::complex<double>> read_gs_wfc<std::complex<double>>(
+    psi::Psi<std::complex<double>>&, ModuleBase::matrix&, ModuleBase::matrix&, const Parallel_Orbitals&,
+    const Parallel_Orbitals&, const std::string&, const Input_para&, int, int, int, int, int, const K_Vectors&, bool,
     std::ostream&);
 
 } // namespace LR

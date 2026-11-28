@@ -233,9 +233,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// reset nocc, nvirt, npairs after read ground-state wavefunction when nspin=2
     void reset_dim_spin();
 
-    /// setup Parallel_Orbitals info. beyond Parallel_Blkcyclic
-    void set_parallel_orbitals_band(Parallel_Orbitals &p, const int nbands_in);
-
     ///========================== for gradient calculation =========================
     void init_pot_groundstate(const Charge &chg_gs);
     /// Solve the Z-vector equation for `nst` independent blocks of `Xz`.
