@@ -76,6 +76,9 @@ class csrFileReader : public FileReader
     // get matrix dimension
     int getMatrixDimension() const;
 
+    /// Description line from the cell-aware header (empty for compact format).
+    const std::string& getDescription() const;
+
   private:
     void parseCompactHeader();
     void parseCellHeader();
@@ -88,6 +91,8 @@ class csrFileReader : public FileReader
     int step = 0;
     int matrixDimension = 0;
     int numberOfR = 0;
+    /// Description line parsed from the cell-aware header.
+    std::string description_;
 };
 
 } // namespace ModuleIO

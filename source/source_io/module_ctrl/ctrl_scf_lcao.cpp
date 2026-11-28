@@ -896,14 +896,14 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     {
         if (cal_exx && inp.calculation != "nscf") // Peize Lin add if 2022.11.14
         {
-            const std::string file_name_exx = global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
+            const std::string file_name_exx = global_out_dir + "HexxR";
             if (real_number)
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exd->get_Hexxs());
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exd->get_Hexxs(), 0.0);
             }
             else
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exc->get_Hexxs());
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exc->get_Hexxs(), 0.0);
             }
         }
     }

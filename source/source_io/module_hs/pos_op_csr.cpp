@@ -66,7 +66,8 @@ void assemble_csr(const std::string& output_filename,
             std::string(),
             false,
             0.0,
-            true};
+            true,
+            ""};
         ModuleIO::detail::write_csr_text_header(out_r, header);
     }
 

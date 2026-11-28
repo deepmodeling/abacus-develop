@@ -233,7 +233,8 @@ void ModuleIO::save_dH_sparse(const int& istep,
                         std::string(),
                         false,
                         0.0,
-                        true};
+                        true,
+                        ""};
                     ModuleIO::detail::write_csr_text_header(comp.ofs[ispin], header);
                 }
             }

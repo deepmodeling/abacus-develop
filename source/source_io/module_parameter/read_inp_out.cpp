@@ -1353,6 +1353,17 @@ For binary output, each file uses the same basename as text output with a .dat s
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_exx");
+        item.annotation = "output Hexx(R) CSR matrix for EXX restart";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to write the exact-exchange Hamiltonian matrix Hexx(R) in CSR text format, together with the EXX energy embedded in the file header, into OUT.${suffix}/HexxR_{is}.csr (one file per spin channel). This output replaces the legacy restart_save mechanism and is the counterpart read back by init_exx = file. It only takes effect for LCAO calculations with exact exchange (dft_functional / xc_functional selects a hybrid functional), and is written only after the first SCF loop (i.e. when two_level_step > 0 or istep > 0) to avoid persisting an incomplete exchange matrix.";
+        item.default_value = "False";
+        item.unit = "";
+        read_sync_bool(input.out_mat_exx);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_ds");
         item.annotation = "output of derivative of S(R) matrix";
         item.category = "Output information";

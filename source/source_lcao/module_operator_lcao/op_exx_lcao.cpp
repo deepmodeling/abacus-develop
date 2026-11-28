@@ -270,15 +270,16 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             {
                 // read HexxR first and reallocate hR according to the read-in HexxR
                 const std::string file_name_exx_csr
-                    = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(PARAM.globalv.myrank);
+                    = PARAM.globalv.global_readin_dir + "HexxR";
                 // Read HexxR in CSR format
+                double eexx_read = 0.0;
                 if (exx_info_ptr->info_ri.real_number)
                 {
-                    ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
+                    ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd, eexx_read);
                 }
                 else
                 {
-                    ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
+                    ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc, eexx_read);
                 }
             }
             else if (check_exist(file_name_list_cereal()))
@@ -393,7 +394,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             {
                 // read in Hexx(R)
                 const std::string restart_HR_path
-                    = GlobalC::restart.folder + "HexxR" + std::to_string(PARAM.globalv.myrank);
+                    = GlobalC::restart.folder + "HexxR";
                 int all_exist = 1;
                 for (int is = 0; is < PARAM.inp.nspin; ++is)
                 {
@@ -411,13 +412,14 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 if (all_exist)
                 {
                     // Read HexxR in CSR format
+                    double eexx_read = 0.0;
                     if (exx_info_ptr->info_ri.real_number)
                     {
-                        ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
+                        ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd, eexx_read);
                     }
                     else
                     {
-                        ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
+                        ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc, eexx_read);
                     }
                 }
                 else

@@ -129,6 +129,7 @@ void csrFileReader<T>::parseCellHeader()
     };
     if (!parseStepMarker(ss, step)) { invalid(); }
     readLine(); // matrix description
+    description_ = ss.str();
     readLine();
     int spins = 0;
     if (!(ss >> spins) || spins <= 0) { invalid(); }
@@ -311,6 +312,13 @@ template <typename T>
 int csrFileReader<T>::getStep() const
 {
     return step;
+}
+
+// function to get description line
+template <typename T>
+const std::string& csrFileReader<T>::getDescription() const
+{
+    return description_;
 }
 
 // T of AtomPair can be double

@@ -394,7 +394,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
         bool& conv_esolver)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_iter_finish");
-    if (GlobalC::restart.info_save.save_H && (this->two_level_step > 0 || istep > 0)
+    if (PARAM.inp.out_mat_exx && (this->two_level_step > 0 || istep > 0)
         && (!this->info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
     {
         ////////// for Add_Hexx_Type::k
@@ -415,13 +415,8 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
                                        Hexxk_save.get_hk());
         }*/
         ////////// for Add_Hexx_Type:R
-        const std::string& restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
-        ModuleIO::write_Hexxs_csr(restart_HR_path, ucell, this->get_Hexxs());
-
-        if (GlobalV::MY_RANK == 0)
-        {
-            GlobalC::restart.save_disk("Eexx", 0, 1, &elec.f_en.exx);
-        }
+        const std::string restart_HR_path = PARAM.globalv.global_out_dir + "HexxR";
+        ModuleIO::write_Hexxs_csr(restart_HR_path, ucell, this->get_Hexxs(), elec.f_en.exx);
     }
 
     if (this->info_global.cal_exx && conv_esolver)

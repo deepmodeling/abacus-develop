@@ -11,18 +11,22 @@
 #include <cereal/types/memory.hpp>
 #include <cereal/types/valarray.hpp>
 #include <RI/global/Tensor.h>
+#include <iomanip>
 #include <map>
+#include <sstream>
 
 namespace ModuleIO
 {
     template<typename Tdata>
     void read_Hexxs_csr(const std::string& file_name, const UnitCell& ucell,
         const int nspin, const int nbasis,
-        std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
+        std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
+        double& eexx)
     {
         ModuleBase::TITLE("ModuleIO", "read_Hexxs_csr");
         Hexxs.clear();
         Hexxs.resize(nspin);
+        eexx = 0.0;
         for (int is = 0;is < nspin;++is)
         {
             const std::string path = file_name + "_" + std::to_string(is) + ".csr";
@@ -31,6 +35,22 @@ namespace ModuleIO
             if (csr.getMatrixDimension() != nbasis)
             {
                 ModuleBase::WARNING_QUIT("read_Hexxs_csr", "HexxR matrix dimension does not match the LCAO basis");
+            }
+            // Parse E_exx from the description line of the first spin file
+            if (is == 0)
+            {
+                const std::string& desc = csr.getDescription();
+                const std::string tag = "E_exx = ";
+                const size_t pos = desc.find(tag);
+                if (pos != std::string::npos)
+                {
+                    std::istringstream iss(desc.substr(pos + tag.size()));
+                    if (!(iss >> eexx))
+                    {
+                        ModuleBase::WARNING_QUIT("read_Hexxs_csr",
+                            "Failed to parse E_exx from CSR description: " + desc);
+                    }
+                }
             }
             const std::string confirmation = "Read HexxR from " + path;
             std::cout << confirmation << std::endl;
@@ -125,7 +145,8 @@ namespace ModuleIO
 
     template<typename Tdata>
     void write_Hexxs_csr(const std::string& file_name, const UnitCell& ucell,
-        const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
+        const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
+        const double eexx)
     {
         ModuleBase::TITLE("ModuleIO", "write_Hexxs_csr");
         std::set<Abfs::Vector3_Order<int>> all_R_coor;
@@ -142,6 +163,11 @@ namespace ModuleIO
         }
         Parallel_Orbitals pv;
         pv.para_2d().set_serial(matrix_dimension, matrix_dimension);
+
+        // Format E_exx for embedding in the CSR description line
+        std::ostringstream eexx_ss;
+        eexx_ss << ", E_exx = " << std::setprecision(10) << eexx << " Ry";
+
         for (int is = 0;is < Hexxs.size();++is)
         {
             for (const auto& HexxA : Hexxs[is])
@@ -160,7 +186,12 @@ namespace ModuleIO
             options.threshold = sparse_threshold;
             options.binary = false;
             options.istep = -1;
-            options.reduce = false;
+            options.reduce = true;
+            options.csr_format = true;
+            options.ucell = &ucell;
+            options.nspin = static_cast<int>(Hexxs.size());
+            options.ispin = is;
+            options.description_suffix = eexx_ss.str();
             ModuleIO::save_sparse(
                 calculate_RI_Tensor_sparse(sparse_threshold, Hexxs[is], ucell),
                 all_R_coor,
@@ -173,12 +204,14 @@ template void read_Hexxs_csr<double>(const std::string&,
                                      const UnitCell&,
                                      const int,
                                      const int,
-                                     std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>&);
+                                     std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>&,
+                                     double&);
 template void read_Hexxs_csr<std::complex<double>>(const std::string&,
                                                    const UnitCell&,
                                                    const int,
                                                    const int,
-                                                   std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>&);
+                                                   std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>&,
+                                                   double&);
 template void read_Hexxs_cereal<double>(const std::string&,
                                         std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>&);
 template void read_Hexxs_cereal<std::complex<double>>(const std::string&,
@@ -193,8 +226,10 @@ template std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, st
                                                      const UnitCell&);
 template void write_Hexxs_csr<double>(const std::string&,
                                       const UnitCell&,
-                                      const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>&);
+                                      const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>&,
+                                      const double);
 template void write_Hexxs_csr<std::complex<double>>(const std::string&,
                                                     const UnitCell&,
-                                                    const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>&);
+                                                    const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>&,
+                                                    const double);
 } // namespace ModuleIO

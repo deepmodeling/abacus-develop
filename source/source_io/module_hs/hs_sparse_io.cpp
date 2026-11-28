@@ -84,7 +84,7 @@ void write_csr_style_header(std::ofstream& ofs,
 
     const ModuleIO::detail::CsrTextHeader header = {
         step, description, options.nspin, ispin_one_based, nlocal, output_R_number,
-        options.ucell, std::string(), false, 0.0, true};
+        options.ucell, std::string(), false, 0.0, true, options.description_suffix};
     ModuleIO::detail::write_csr_text_header(ofs, header);
 }
 } // namespace
