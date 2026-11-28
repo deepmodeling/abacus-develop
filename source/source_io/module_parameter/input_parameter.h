@@ -52,6 +52,7 @@ struct Input_para
     std::string init_wfc_file_format = "";   ///< normalized file format: "txt" or "binary"
     int pw_seed = 0;                    ///< random seed for initializing wave functions
     std::string init_chg = "atomic";    ///< "file","atomic"
+    std::string init_exx = "none";      ///< "none","file": read Hexx(R) and E_exx from read_file_dir
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density
     std::string chg_extrap = "default"; ///< xiaohui modify 2015-02-01
     bool init_vel = false;              ///< read velocity from STRU or not  liuyu 2021-07-14

@@ -36,20 +36,25 @@ namespace ModuleIO
             {
                 ModuleBase::WARNING_QUIT("read_Hexxs_csr", "HexxR matrix dimension does not match the LCAO basis");
             }
-            // Parse E_exx from the description line of the first spin file
+            // Parse E_exx from the description line of the first spin file.
+            // It is mandatory: a CSR file written without out_mat_exx carries no
+            // E_exx and cannot be used to restart the EXX outer loop.
             if (is == 0)
             {
                 const std::string& desc = csr.getDescription();
                 const std::string tag = "E_exx = ";
                 const size_t pos = desc.find(tag);
-                if (pos != std::string::npos)
+                if (pos == std::string::npos)
                 {
-                    std::istringstream iss(desc.substr(pos + tag.size()));
-                    if (!(iss >> eexx))
-                    {
-                        ModuleBase::WARNING_QUIT("read_Hexxs_csr",
-                            "Failed to parse E_exx from CSR description: " + desc);
-                    }
+                    ModuleBase::WARNING_QUIT("read_Hexxs_csr",
+                        "E_exx is missing from the CSR description line of " + path
+                        + "; the file was probably written without out_mat_exx = 1.");
+                }
+                std::istringstream iss(desc.substr(pos + tag.size()));
+                if (!(iss >> eexx))
+                {
+                    ModuleBase::WARNING_QUIT("read_Hexxs_csr",
+                        "Failed to parse E_exx from CSR description: " + desc);
                 }
             }
             const std::string confirmation = "Read HexxR from " + path;

@@ -213,7 +213,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell &ucell, const int istep, const
     }
     if (this->p_hamilt == nullptr)
     {
-        const bool load_exx_flag = !GlobalC::restart.info_load.restart_exx && GlobalC::restart.info_load.load_H;
+        const bool load_exx_flag = this->exx_nao.need_load_hexx(*this->inp_);
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, *(this->basis_index_), this->pv.para_2d(), this->pelec->pot, this->kv,
             two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_,

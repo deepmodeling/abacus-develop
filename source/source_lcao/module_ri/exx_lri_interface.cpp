@@ -231,7 +231,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(
             this->refresh_symmetry(kv, ucell, pv);
         }
 
-        if ((GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx)
+        if ((this->hexx_loaded_ && !this->restart_exx_)
             || (istep > 0)
             || (PARAM.inp.init_wfc == "file"))
         {
@@ -358,18 +358,12 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, con
     {
         // add exx
         // Peize Lin add 2016-12-03
-        if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx
+        if (this->hexx_loaded_ && !this->restart_exx_
             && this->two_level_step == 0 && iter == 1)
         {
-            if (GlobalV::MY_RANK == 0)
-            {
-                try
-                    { GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx); }
-                catch (const std::exception& e)
-                    { std::cout << "WARNING: Cannot read Eexx from disk, the energy of the 1st loop will be wrong, sbut it does not influence the subsequent loops." << std::endl; }
-            }
-            Parallel_Common::bcast_double(this->exx_ptr->Eexx);
-            this->exx_ptr->Eexx /= this->info_global.hybrid_alpha;
+            // E_exx was read together with Hexx(R) from the CSR header. Convert it
+            // back to the un-scaled value expected by Eexx (see set_exx below).
+            this->exx_ptr->Eexx = this->eexx_loaded_ / this->info_global.hybrid_alpha;
         }
         bool cal_exx = this->info_global.cal_exx;
         double hybrid_alpha = this->info_global.hybrid_alpha;
@@ -481,7 +475,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     ModuleBase::TITLE("Exx_LRI_Interface","exx_after_converge");
     auto restart_reset = [this]()
     { // avoid calling restart related procedure in the subsequent ion steps
-        GlobalC::restart.info_load.restart_exx = true;
+        this->restart_exx_ = true;
         // Keep the energy paired with Hexxs until cal_exx_elec replaces both.
         // Clearing only Eexx makes the next ionic step use an exchange
         // Hamiltonian without its corresponding energy contribution.

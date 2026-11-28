@@ -31,6 +31,9 @@ class Exx_NAO
 
     void init(const UnitCell& ucell, Exx_Info& exx_info);
 
+    /// @brief whether Hexx(R) should be loaded from file at the current ionic step
+    bool need_load_hexx(const Input_para& inp) const;
+
     void before_runner(
             UnitCell& ucell, // unitcell
             K_Vectors &kv, // k points

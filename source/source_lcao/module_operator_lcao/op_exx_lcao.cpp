@@ -392,9 +392,9 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             }
             else if (this->add_hexx_type == Add_Hexx_Type::R)
             {
-                // read in Hexx(R)
-                const std::string restart_HR_path
-                    = GlobalC::restart.folder + "HexxR";
+                // read in Hexx(R) from the directory specified by read_file_dir.
+                // Only the CSR format (with E_exx embedded in the header) is supported.
+                const std::string restart_HR_path = PARAM.inp.read_file_dir + "HexxR";
                 int all_exist = 1;
                 for (int is = 0; is < PARAM.inp.nspin; ++is)
                 {
@@ -409,55 +409,29 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 #ifdef __MPI
                 Parallel_Reduce::reduce_min(all_exist);
 #endif
-                if (all_exist)
+                if (!all_exist)
                 {
-                    // Read HexxR in CSR format
-                    double eexx_read = 0.0;
-                    if (exx_info_ptr->info_ri.real_number)
+                    ModuleBase::WARNING_QUIT("OperatorEXX",
+                        "init_exx = file but HexxR CSR file is missing under " + restart_HR_path);
+                }
+                double eexx_read = 0.0;
+                if (exx_info_ptr->info_ri.real_number)
+                {
+                    ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd, eexx_read);
+                    if (this->exd != nullptr)
                     {
-                        ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd, eexx_read);
-                    }
-                    else
-                    {
-                        ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc, eexx_read);
+                        this->exd->set_hexx_loaded(eexx_read);
                     }
                 }
                 else
                 {
-                    // Read HexxR in binary format (old version)
-                    const std::string restart_HR_path_cereal
-                        = GlobalC::restart.folder + "HexxR_" + std::to_string(PARAM.globalv.myrank);
-                    std::ifstream ifs(restart_HR_path_cereal, std::ios::binary);
-                    int all_exist_cereal = ifs ? 1 : 0;
-#ifdef __MPI
-                    Parallel_Reduce::reduce_min(all_exist_cereal);
-#endif
-                    if (!all_exist_cereal)
+                    ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc, eexx_read);
+                    if (this->exc != nullptr)
                     {
-                        // no HexxR file in CSR or binary format
-                        this->restart = false;
-                    }
-                    else
-                    {
-                        if (exx_info_ptr->info_ri.real_number)
-                        {
-                            ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxd);
-                        }
-                        else
-                        {
-                            ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxc);
-                        }
+                        this->exc->set_hexx_loaded(eexx_read);
                     }
                 }
             }
-
-            if (!this->restart)
-            {
-                std::cout << "WARNING: Hexx not found, restart from the non-exx loop." << std::endl
-                          << "If the loaded charge density is EXX-solved, this may lead to poor convergence."
-                          << std::endl;
-            }
-            GlobalC::restart.info_load.load_H_finish = this->restart;
         }
     }
 }
