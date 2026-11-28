@@ -20,6 +20,7 @@
 #include "source_lcao/module_lr/potentials/lr_gs_pot.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/lr_mpl.h"
+#include "source_lcao/module_lr/lr_zeq.h"
 #include "source_lcao/module_lr/lr_relax.h"
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
@@ -236,7 +237,8 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     ///========================== for gradient calculation =========================
     void init_pot_groundstate(const Charge &chg_gs);
     /// Solve the Z-vector equation for `nst` independent blocks of `Xz`.
-    ct::Tensor solve_zvector_eqation(const int ispin, const int nst, const ct::Tensor &Xz);
+    /// Ground-state ingredients of the force path, filled once per call.
+    LR::GsForceCtx<T> gs_force_ctx_() const;
     /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
     /// restricts it to that one state: geometry relaxation follows a single state, and the
     /// Z-vector solve dominates the cost. -1 does all `nstates`.

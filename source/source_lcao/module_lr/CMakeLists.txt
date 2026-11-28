@@ -31,6 +31,7 @@ if(ENABLE_LCAO)
     lr_dm.cpp
     lr_relax.cpp
     lr_mpl.cpp
+    lr_zeq.cpp
     init_helpers.cpp
     hsolver_lrtd.cpp
     zeq_solver.cpp

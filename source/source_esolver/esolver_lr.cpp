@@ -537,29 +537,16 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::pad_X_to_z_(const int ispin, const 
 }
 
 template <typename T, typename TR>
-ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int ispin, const int nst, const ct::Tensor &Xz)
+LR::GsForceCtx<T> ModuleESolver::ESolver_LR<T, TR>::gs_force_ctx_() const
 {
-    ModuleBase::TITLE("ESolver_LR", "cal_force");
-    ModuleBase::timer::start("ESolver_LR", "solve_zvector_eqation");
-    // `Z_vector_equation` treats X and Z as `nst` independent blocks of `nloc_per_state_z_`,
-    // and the blocks need not be eigenvectors of the Casida equation in the order the
-    // diagonalizer returned them -- `build_mpl_` feeds it linear combinations.
-    // X arrives already widened into the Z window (`Xz`), which spans every virtual band the
-    // ground state produced rather than the `nvirt` window X was solved in -- the Brillouin
-    // condition the Z-vector enforces holds in EVERY occupied-virtual rotation. The padded
-    // entries are zero, so every X-derived quantity (D^X, T) is unchanged; only the space Z is
-    // solved in grows. Both the closed- and the open-shell path go through here.
-    ct::Tensor Z = LR_Util::newTensor<T>({nst, this->nloc_per_state_z_});
-    // construct and solve the Z-vector equation
-    const LR::GradientInputs<T> inputs = this->gradient_inputs_();
-    const T *const x_data = Xz.template data<T>();
-    T *const z_data = Z.template data<T>();
-    std::weak_ptr<PotHxcLR> pot_weak = inputs.pot[ispin];
-    Z_vector_equation(
-        inputs, x_data, z_data, nst, pot_weak, this->spin_types[ispin], this->in_dir, this->openshell,
-        this->inp_->lr_grad_solver);
-    ModuleBase::timer::end("ESolver_LR", "solve_zvector_eqation");
-    return Z;
+    // `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path (it is aliased straight
+    // from the ground-state solver's own `psi`), but per `this->paraMat_all_` on the
+    // read-from-file path, where it was allocated with that descriptor's own sizes.
+    const Parallel_Orbitals *const pv_all = this->ks_ ? &this->ks_->pv : &this->paraMat_all_;
+    const LR::ForceSettings settings{
+        this->nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
+    return {*this->psi_ks_all_, this->wg_ks_all, *pv_all, *this->pw_rho, *this->pw_rhod, this->vloc(), this->sfac(),
+            this->tcb(), settings, this->openshell, this->inp_->lr_grad_solver, this->in_dir};
 }
 
 template <typename T, typename TR>
@@ -613,22 +600,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(
     const int label_begin)
 {
     ModuleBase::timer::start("ESolver_LR", "cal_force_Xz");
-    const int nst = static_cast<int>(omega.size());
-    const int channel = ispin;
-    const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz);
-    const auto dm_gs = this->cal_dm_gs();
-    const LR::GradientInputs<T> inputs = this->gradient_inputs_();
-    const LR::ForceSettings force_settings{
-        this->nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
-    LR_Force<T> force_terms(
-        *this->ucell_, this->kv.kvec_d, this->paraMat_, *this->pw_rhod, *this->pw_rho, this->vloc(), this->sfac(),
-        this->gd(), this->tcb(), force_settings, this->ofs_running_
-#ifdef __EXX
-        ,
-        inputs.exx_lri, inputs.hybrid_alpha
-#endif
-    );
-    const auto forces = LR::evaluate_closed_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, ispin);
+    const auto forces = LR::force_xz<T>(this->gradient_inputs_(), this->gs_force_ctx_(), ispin, Xz, omega, label_begin);
     ModuleBase::timer::end("ESolver_LR", "cal_force_Xz");
     return forces;
 }
@@ -728,22 +700,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     const ct::Tensor &Xz, const std::vector<double> &omega, const int label_begin)
 {
     ModuleBase::timer::start("ESolver_LR", "cal_force_openshell_Xz");
-    const int nst = static_cast<int>(omega.size());
-    const int channel = 0;
-    const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz);
-    const auto dm_gs = this->cal_dm_gs();
-    const LR::GradientInputs<T> inputs = this->gradient_inputs_();
-    const LR::ForceSettings force_settings{
-        this->nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
-    LR_Force<T> force_terms(
-        *this->ucell_, this->kv.kvec_d, this->paraMat_, *this->pw_rhod, *this->pw_rho, this->vloc(), this->sfac(),
-        this->gd(), this->tcb(), force_settings, this->ofs_running_
-#ifdef __EXX
-        ,
-        inputs.exx_lri, inputs.hybrid_alpha
-#endif
-    );
-    const auto forces = LR::evaluate_open_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin);
+    const auto forces = LR::force_xz_os<T>(this->gradient_inputs_(), this->gs_force_ctx_(), Xz, omega, label_begin);
     ModuleBase::timer::end("ESolver_LR", "cal_force_openshell_Xz");
     return forces;
 }
