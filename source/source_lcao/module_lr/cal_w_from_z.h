@@ -232,7 +232,7 @@ namespace LR
         const std::vector<int> ld_x = { static_cast<int>(nk * px[0].size()), static_cast<int>(nk * px[1].size()) };
         const std::vector<int> ld_oo = { static_cast<int>(nk * p_occ_occ[0].size()), static_cast<int>(nk * p_occ_occ[1].size()) };
         const std::vector<int> off_x = { 0, ld_x[0] };
-        const int nband_window = nocc[0] + nvirt[0];   // common KS window, see `set_dimension`
+        const int nband_window = nocc[0] + nvirt[0];   // common KS window, see `set_dim`
 
         W.assign(2, {});
         for (int is: {0, 1})

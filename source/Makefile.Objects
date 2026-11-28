@@ -1196,10 +1196,16 @@ OBJS_TENSOR=tensor.o\
     lr_spectrum.o\
     lr_spectrum_velocity.o\
     hamilt_casida.o\
-    esolver_lr_orb.o\
-    esolver_lr_init.o\
-    esolver_lr_cfg.o\
-    esolver_lr_lcao_tddft.o\
+    lr_dim.o\
+    lr_gs.o\
+    lr_dm.o\
+    lr_relax.o\
+    lr_mpl.o\
+    lr_zeq.o\
+    lr_sforce.o\
+    lr_core.o\
+    lr_gs_pot.o\
+    esolver_lr.o\
 
 OBJS_LR_GRAD=lr_force.o\
     xc_kxc.o\
@@ -1220,8 +1226,6 @@ OBJS_LR_GRAD=lr_force.o\
     cal_edm.o\
     zeqlin_solv.o\
     pot_grad_xc.o\
-    esolver_lr_grad.o\
-    esolver_lr_rlx.o\
 
 OBJS_RDMFT=rdmft.o\
         rdmft_tools.o\

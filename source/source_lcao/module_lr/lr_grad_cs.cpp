@@ -23,7 +23,7 @@ std::vector<ModuleBase::matrix> evaluate_closed_shell_force(
     assert(static_cast<int>(Xz.shape().dim_size(0)) == nst);
     // `ist_begin`/`ist_end` label the blocks in the output only; the gradient itself never looks
     // up a state, it only uses `omega[i]`. That is what lets a caller pass excitation vectors
-    // that are not the stored eigenvectors (see `cal_grad_matrix_degenerate`).
+    // that are not the stored eigenvectors (see `LR::build_mpl`).
     const int ist_begin = label_begin;
     const int ist_end = label_begin + nst;
     const std::vector<int>& nvirt_g = inputs.nvirt;

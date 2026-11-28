@@ -2847,7 +2847,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     // nocc no longer has a reset_value here: it's resolved from ground-state spin populations
-    // after SCF (see esolver_lr_lcao_tddft.cpp), not at INPUT-parse time.
+    // after SCF (see esolver_lr.cpp), not at INPUT-parse time.
     { // lr_grad_solver
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator it = find_label("lr_grad_solver", readinput.input_lists);
         for (const std::string solver : { "cg", "lapack" })

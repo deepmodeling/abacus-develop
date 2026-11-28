@@ -182,5 +182,27 @@ ct::Tensor pad_amplitudes(const std::vector<ct::Tensor>& X, const bool openshell
     return Xz;
 }
 
+template <typename T>
+ct::Tensor pad_group(const std::vector<ct::Tensor>& X, const bool openshell,
+    const std::vector<Parallel_Blkcyclic>& px, const std::vector<Parallel_Blkcyclic>& px_z,
+    const std::vector<int>& nocc, const std::vector<int>& nvirt,
+    const int nk, const int nloc, const int nloc_z,
+    const int ispin, const std::vector<int>& group)
+{
+    const int d = static_cast<int>(group.size());
+    ct::Tensor Xz = LR_Util::newTensor<T>({ d, nloc_z });
+    Xz.zero();
+    // One at a time rather than as a range: `group` is sorted, but nothing guarantees its members
+    // are contiguous in the state list.
+    for (int k = 0; k < d; ++k)
+    {
+        const ct::Tensor one = pad_amplitudes<T>(X, openshell, px, px_z, nocc, nvirt, nk, nloc, nloc_z, ispin,
+            group[k], 1);
+        std::copy(one.template data<T>(), one.template data<T>() + nloc_z,
+            Xz.template data<T>() + static_cast<size_t>(k) * nloc_z);
+    }
+    return Xz;
+}
+
 }
 #endif
