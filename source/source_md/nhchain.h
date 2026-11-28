@@ -40,6 +40,8 @@ class Nose_Hoover : public MD_base
     const double *get_v_omega() const { return v_omega; }
 
   private:
+    friend class NHC_test;
+
     void setup(ModuleESolver::ESolver *p_esolver, const std::string &global_readin_dir, DomainDecomposition &decomp);
     void first_half(std::ofstream &ofs);
     void second_half();

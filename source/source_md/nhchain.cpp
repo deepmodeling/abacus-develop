@@ -608,7 +608,17 @@ void Nose_Hoover::baro_thermo()
 
             /// update rescale factor of lattice velocity
             scale *= exp(-v_peta[0] * delta / 2.0);
+            if (!std::isfinite(scale) || scale <= 0.0)
+            {
+                 ModuleBase::WARNING_QUIT("Nose_Hoover::baro_thermo",
+                                          "Invalid NPT barostat velocity scale. Check md_pfreq and md_dt.");
+            }
             kecurrent = ke_omega * scale * scale;
+            if (!std::isfinite(kecurrent))
+            {
+                 ModuleBase::WARNING_QUIT("Nose_Hoover::baro_thermo",
+                                          "Non-finite NPT barostat kinetic energy. Check md_pfreq and md_dt.");
+            }
 
             /// propogate g_peta
             g_peta[0] = (kecurrent - lkt_press) / mass_peta[0];

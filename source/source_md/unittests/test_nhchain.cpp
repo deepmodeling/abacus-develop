@@ -4,6 +4,9 @@
 #include "source_md/unittests/setcell.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #define doublethreshold 1e-12
 /************************************************
  *  unit test of functions in nhchain.h
@@ -64,7 +67,54 @@ class NHC_test : public testing::Test
         delete mdrun;
         delete p_esolver;
     }
+
+    void run_barostat(const double thermostat_velocity, const double barostat_kinetic_energy)
+    {
+        Nose_Hoover *nhc = static_cast<Nose_Hoover *>(mdrun);
+        inp.mdp.md_pchain = 1;
+        inp.mdp.md_pmode = "iso";
+        nhc->md_dt = 1.0;
+        nhc->t_target = 1.0;
+        nhc->mass_peta[0] = std::numeric_limits<double>::max();
+        nhc->v_peta[0] = thermostat_velocity;
+        nhc->v_peta[1] = 0.0;
+        nhc->g_peta[0] = 0.0;
+
+        // Isolate the first integration substep and one lattice component.
+        std::fill(nhc->w, nhc->w + nhc->nys, 0.0);
+        nhc->w[0] = 1.0;
+        std::fill(nhc->pflag, nhc->pflag + 6, 0);
+        nhc->pflag[0] = 1;
+        nhc->mass_omega[0] = 1.0;
+        nhc->v_omega[0] = std::sqrt(barostat_kinetic_energy);
+        nhc->baro_thermo();
+    }
 };
+
+TEST_F(NHC_test, BarostatRejectsZeroScale)
+{
+    // exp(-2000 / 2) underflows to zero.
+    EXPECT_EXIT(run_barostat(2000.0, 1.0), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(NHC_test, BarostatRejectsInfiniteScale)
+{
+    // exp(2000 / 2) overflows to infinity.
+    EXPECT_EXIT(run_barostat(-2000.0, 1.0), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(NHC_test, BarostatRejectsNaNScale)
+{
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_EXIT(run_barostat(nan, 1.0), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(NHC_test, BarostatRejectsNonFiniteKineticEnergy)
+{
+    // The scale remains finite, but its square overflows the kinetic energy.
+    const double energy = std::numeric_limits<double>::max() / 2.0;
+    EXPECT_EXIT(run_barostat(-2.0, energy), testing::ExitedWithCode(1), "");
+}
 
 TEST_F(NHC_test, setup)
 {
