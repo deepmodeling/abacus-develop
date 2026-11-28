@@ -160,6 +160,7 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     void initialize_from_ks_(UnitCell &ucell, const Input_para &inp);
     /// re-read everything that depends on the atomic positions, once per ionic step
     void refresh_from_ks_(UnitCell &ucell);
+    int last_ionic_step_ = 1; ///< one-based step of the final LR spectrum
     bool ks_initialized_ = false; ///< whether `initialize_from_ks_` has already run
     bool exx_owned_ = false;      ///< `exx_lri` was built here (so its Cs/Vs are ours to refresh)
 

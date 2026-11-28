@@ -3,6 +3,7 @@
 #include "hcontainer_funcs.h"
 #include "source_base/module_out/csr_reader.h"
 #include "source_base/module_out/sparse_matrix.h"
+#include "source_base/tool_quit.h"
 #include "transfer.h"
 
 #include <fstream>
@@ -56,9 +57,14 @@ void Read_HContainer<T>::read()
     {
 #endif
         ModuleIO::csrFileReader<T> csr(this->_filename);
-        int step = csr.getStep();
-        int matrix_dimension = csr.getMatrixDimension();
-        int r_number = csr.getNumberOfR();
+        const int matrix_dimension = csr.getMatrixDimension();
+        if (matrix_dimension != this->_nlocal)
+        {
+            const std::string message =
+                "Matrix dimension in " + this->_filename + " does not match the number of basis functions.";
+            ModuleBase::WARNING_QUIT("Read_HContainer::read", message);
+        }
+        const int r_number = csr.getNumberOfR();
 
         // construct serial hcontainer firstly
         //  prepare atom index mapping from csr row/col to atom index

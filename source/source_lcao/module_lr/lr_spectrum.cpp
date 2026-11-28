@@ -3,6 +3,9 @@
 #include "source_base/global_variable.h"
 #include "source_lcao/module_lr/dm_trans/dm_trans.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/tool_quit.h"
+#include "source_io/module_output/provenance_header.h"
+#include "source_io/module_output/write_notice.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
@@ -176,7 +179,8 @@ void LR::LR_Spectrum<T>::oscillator_strength()
 }
 
 template<typename T>
-void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& freq, const double eta)
+void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& freq, const double eta,
+                                                    const int ionic_step, std::ofstream& running_log)
 {
     // ============test dipole================
     // this->cal_transition_dipoles_length();
@@ -185,17 +189,26 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
     // this->write_transition_dipole(this->out_dir + "dipole_velocity.dat");
     // exit(0);
     // ============test dipole================
+    if (this->my_rank != 0)
+    {
+        return;
+    }
     ModuleBase::TITLE("LR::LR_Spectrum", "optical_absorption");
     // 4*pi^2/V * mean_squared_dipole *delta(w-Omega_S)
     // = -8*pi*Omega_S/V * mean_squared_dipole * Im[1/[(w+i\eta)^2-\Omega_S^2]]
     // = -4*pi/V * oscilator_strength * Im[1/[(w+i\eta)^2-\Omega_S^2]]
     std::vector<double>& osc = this->oscillator_strength_;
-    std::ofstream ofs(this->out_dir + "absorption.dat");
-
-    if (this->my_rank == 0)
-    { 
-        ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; 
+    const std::string filename = this->out_dir + "absorption.dat";
+    std::ofstream ofs(filename);
+    if (!ofs)
+    {
+        const std::string message = "Cannot write " + filename;
+        ModuleBase::WARNING_QUIT("optical_absorption_method1", message);
     }
+    const std::string timestamp = ModuleIO::local_timestamp();
+    ofs << ModuleIO::prov_step(ionic_step, timestamp);
+    ofs << "# " << freq.size() << " # number of points\n";
+    ofs << "# Frequency (eV) | wave length(nm) | Absorption (a.u.)\n";
 
     double FourPI_div_c = ModuleBase::FOUR_PI / 137.036;
     double fac = 4 * M_PI / ucell.omega * ModuleBase::e2 / this->nk;   // e2 for Ry to Hartree in the denominator
@@ -206,20 +219,21 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
         double abs = 0.0;
         // for (int i = 0;i < osc.size();++i) { abs += (osc[i] / (f_complex * f_complex - omega[i] * omega[i])).imag() * freq[f] * FourPI_div_c; }
         for (int i = 0;i < osc.size();++i) { abs += (osc[i] / (f_complex * f_complex - omega[i] * omega[i])).imag() * fac; }
-        if (this->my_rank == 0) { ofs << freq[f] * ModuleBase::Ry_to_eV << "\t" << 91.126664 / freq[f] << "\t" << std::abs(abs) << std::endl; }
+        ofs << freq[f] * ModuleBase::Ry_to_eV << '\t' << 91.126664 / freq[f] << '\t' << std::abs(abs) << '\n';
     }
     ofs.close();
+    ModuleIO::write_notice(running_log, "LR absorption spectrum", filename);
 }
 
 template<typename T>
-void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
+void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype, const int energy_precision)
 {
     ModuleBase::TITLE("LR::LR_Spectrum", "transition_analysis");
     ModuleBase::timer::start("LR_Spectrum", "transition_analysis");
     std::ofstream ofs;
     std::ofstream ofs_k;
     const int nbands = nocc[0] + nvirt[0];
-    const bool use_td_weight = (this->vmo_ptr != nullptr && LR_Util::tolower(this->gauge) == "velocity");
+    const bool use_td_weight = (this->vmo_ptr != nullptr);
     if (this->my_rank == 0)
     {
         ofs.open(this->out_dir + "trans_analysis_" + spintype + ".dat");
@@ -230,9 +244,12 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
         ofs << std::setw(8) << "State" << std::setw(30) << "Excitation Energy (Ry, eV)" <<
             std::setw(90) << "Transition dipole x, y, z (a.u.)" << std::setw(30) << "Oscillator strength(a.u.)" << '\n';
         ofs << "------------------------------------------------------------------------------------ \n";
+        const int digits = energy_precision > 0 ? energy_precision : 6;
+        const int padded_digits = digits + 8;
+        const int energy_width = energy_precision > 0 ? std::max(15, padded_digits) : 15;
         for (int istate = 0;istate < nstate;++istate)
-            ofs << std::setw(8) << istate << std::setw(15) << std::setprecision(6) << omega[istate]
-            << std::setw(15) << omega[istate] * ModuleBase::Ry_to_eV
+            ofs << std::setw(8) << istate << std::setw(energy_width) << std::setprecision(digits) << omega[istate]
+            << std::setw(energy_width) << omega[istate] * ModuleBase::Ry_to_eV
             << std::setprecision(4) << std::setw(30) << transition_dipole_[istate].x 
             << std::setw(30) << transition_dipole_[istate].y << std::setw(30) << transition_dipole_[istate].z
             << std::setprecision(6) << std::setw(30) << oscillator_strength_[istate] << std::endl;
@@ -248,7 +265,7 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
         ofs_k << "# weight2(k) = sum_{state,spin,direction,occ,virt} |td * X|^2 + |td *Y|^2, where td index as (spin,dir,k,occ,virt).\n";
         if (!use_td_weight)
         {
-            ofs_k << "# NOTE: td-weighted statistics require abs_gauge velocity and a valid velocity_mo pointer.\n";
+            ofs_k << "# NOTE: td-weighted statistics require optical velocity matrix elements.\n";
         }
         else { ofs_k << "# \n"; }
         
@@ -425,14 +442,18 @@ std::map<std::string, int> LR::LR_Spectrum<T>::get_pair_info(const int i)
 }
 
 template<typename T>
-void LR::LR_Spectrum<T>::write_transition_dipole(const std::string& filename)
+void LR::LR_Spectrum<T>::write_transition_dipole(const std::string& filename, const int energy_precision)
 {
     std::ofstream ofs(filename);
     ofs << "Transition dipole moment (a.u.)" << std::endl;
-    ofs << std::setw(6) << "State" << std::setw(13) << "Energy (eV)" << std::setw(15) << "x" << std::setw(23) << "|x|^2" << std::setw(19) << "y" << std::setw(23) <<"|y|^2" << std::setw(19) << "z" << std::setw(23) <<"|z|^2" << std::setw(13) << "average" << std::endl;
+    const int digits = energy_precision > 0 ? energy_precision : 6;
+    const int padded_digits = digits + 8;
+    const int energy_width = energy_precision > 0 ? std::max(13, padded_digits) : 13;
+    ofs << std::setw(6) << "State" << std::setw(energy_width) << "Energy (eV)" << std::setw(15) << "x" << std::setw(23) << "|x|^2" << std::setw(19) << "y" << std::setw(23) <<"|y|^2" << std::setw(19) << "z" << std::setw(23) <<"|z|^2" << std::setw(13) << "average" << std::endl;
     for (int istate = 0;istate < nstate;++istate)
     {
-        ofs << std::setw(4) << istate << std::setw(13) << std::setprecision(6) << omega[istate] * ModuleBase::Ry_to_eV
+        ofs << std::setw(4) << istate << std::setw(energy_width) << std::setprecision(digits)
+            << omega[istate] * ModuleBase::Ry_to_eV << std::setprecision(6)
         << std::setw(29) << transition_dipole_[istate].x << std::setw(13) << std::norm(transition_dipole_[istate].x)
         << std::setw(29) << transition_dipole_[istate].y << std::setw(13) << std::norm(transition_dipole_[istate].y)
         << std::setw(29) << transition_dipole_[istate].z << std::setw(13) << std::norm(transition_dipole_[istate].z)

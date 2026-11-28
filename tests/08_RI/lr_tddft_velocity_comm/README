@@ -1,0 +1,4 @@
+H2 with two k points, HSE orbitals, nspin=1, and an RPA response kernel.
+Both LCAO bands are included. The default optical velocity uses the full
+Hamiltonian commutator, including Fock exchange. Autotest compares all 100
+points in the text spectrum absorption.dat with the reference table.

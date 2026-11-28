@@ -93,6 +93,27 @@ In gamma-only mode, every generated file reports one Bravais lattice vector and 
 # representation: gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)
 ```
 
+### Using the matrices for LR-TDDFT absorption
+
+The full-Hamiltonian [velocity commutator](../input_files/input-main.md#abs_gauge) is available for MPI LCAO LR-TDDFT with `gamma_only 0`. If the ground-state functional uses exact exchange, LR-TDDFT selects it when `abs_gauge` is omitted. To select it explicitly, use `abs_gauge velocity_comm`. With `ks-lr`, the ground-state solver supplies the matrices in memory.
+
+For standalone `lr`, add the following to the SCF or NSCF input that supplies the orbitals:
+
+```text
+gamma_only 0
+out_hsr 1 12
+out_app_flag 0
+```
+
+Place `hrs1_nao.csr` and `sr_nao.csr` in the LR `read_file_dir` alongside the matching wavefunctions. For `nspin 2`, also place `hrs2_nao.csr` there. ABACUS calculates the position integrals internally. The single `nspin 1` Hamiltonian block is used at its original scale, with spin degeneracy included in the singlet transition amplitude.
+
+For local and semilocal functionals without exact exchange, use `abs_gauge velocity`. Its direct momentum and nonlocal pseudopotential integrals avoid the additional finite-AO projection used to form the full commutator.
+
+LR-TDDFT reports excitation energies with 17 significant digits. Use
+`abs_gauge none` to report energies without evaluating optical matrix
+elements. The absorption spectrum is a text table. It keeps the legacy
+filename `absorption.dat` for compatibility with existing readers.
+
 ### Native Binary CSR Format
 
 Set `out_hsr 2` to write the same H(R) and S(R) matrix sets with a `.dat` suffix. For example, an `nspin = 2` calculation writes `hrs1_nao.dat`, `hrs2_nao.dat`, and `sr_nao.dat`. When `out_app_flag` is 2, the one-based ionic step is included before `_nao`, for example `hrs1g1_nao.dat` and `srg1_nao.dat`.

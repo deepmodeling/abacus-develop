@@ -1,0 +1,27 @@
+INPUT_PARAMETERS
+suffix                     autotest
+pseudo_dir                 ../../PP_ORB
+orbital_dir                ../../PP_ORB
+calculation                scf
+esolver_type               ks-lr
+basis_type                 lcao
+gamma_only                 0
+symmetry                   -1
+nspin                      1
+nbands                     2
+ks_solver                  scalapack_gvx
+
+dft_functional             hse
+exx_singularity_correction limits
+ecutwfc                    24
+scf_thr                    1e-9
+scf_nmax                   80
+mixing_type                broyden
+mixing_beta                0.5
+
+xc_kernel                  rpa
+nocc                       1
+nvirt                      1
+lr_nstates                 2
+lr_solver                  lapack
+abs_wavelen_range          40 300

@@ -376,7 +376,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
     /// read orbitals and build the interpolation table
     two_center_bundle_own_.build_orb(ucell.ntype, ucell.orbital_fn.data(), inp.orbital_dir);
 
-    LCAO_Orbitals orb;
+    LCAO_Orbitals& orb = this->orb_;
     two_center_bundle_own_.to_LCAO_Orbitals(
         orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax, inp.out_element_info, inp.cal_force);
     orb_cutoff_ = orb.cutoffs();

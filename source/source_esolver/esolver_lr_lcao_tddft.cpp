@@ -1,6 +1,7 @@
 // LR execution flow and final spectrum/density output.
 #include "esolver_lr_lcao_tddft.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_lr/hamilt_ulr.h"
 #include "source_lcao/module_lr/hsolver_lrtd.h"
 #include "source_lcao/module_lr/lr_density.h"
@@ -37,6 +38,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
+    this->last_ionic_step_ = istep + 1;
     ModuleBase::TITLE("ESolver_LR", "runner");
     ModuleBase::timer::start("ESolver_LR", "runner");
 
@@ -96,14 +98,24 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     else if (this->inp_->lr_solver != "spectrum")
     {
         auto write_states = [this, &efile_out, &vfile_out](
-                                const std::string &label, const Real<T> *e, const T *v, const int &dim, const int &nst,
-                                const int &prec = 8) -> void
+            const std::string& label, const Real<T>* e, const T* v, const int dim, const int nst)
         {
             if (this->my_rank_ == 0)
             {
-                assert(nst == LR_Util::write_value(efile_out(label), prec, e, nst));
+                const std::string energy_file = efile_out(label);
+                if (!LR_Util::write_excitation_energy_file(energy_file, e, nst))
+                {
+                    ModuleBase::WARNING_QUIT("ESolver_LR", "Failed to write " + energy_file);
+                }
+                this->ofs_running_ << " Write LR excitation energies to " << energy_file << '\n';
             }
-            assert(nst * dim == LR_Util::write_value(vfile_out(label), prec, v, nst, dim));
+            const std::string amplitude_file = vfile_out(label);
+            const int amplitude_digits = 8;
+            if (LR_Util::write_value(amplitude_file, amplitude_digits, v, nst, dim) != nst * dim)
+            {
+                ModuleBase::WARNING_QUIT("ESolver_LR", "Failed to write " + amplitude_file);
+            }
+            this->ofs_running_ << " Write LR excitation amplitudes to " << amplitude_file << '\n';
         };
         std::vector<double> precondition(this->inp_->lr_solver == "lapack" ? 0 : nloc_per_state, 1.0);
         // allocate and initialize A matrix and density matrix
@@ -294,13 +306,49 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
     const std::string gauge = LR_Util::tolower(this->inp_->abs_gauge);
     const bool calculate_spectrum = gauge != "none";
     const std::vector<double> spatial_weights = LR_Util::spatial_k_weights(this->kv.wk, nspin);
-    // cal spectrum
-    if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
+    const bool use_velocity = gauge == "velocity" || gauge == "velocity_comm";
+    const int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
+    if (gauge == "velocity")
     {
-        const int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
         this->velocity_mo = LR_Util::cal_velocity_mo(
             *this->ucell_, this->gd(), this->tcb(), this->paraMat_, this->paraC_, this->kv, *this->psi_ks, this->nk,
             nspin_tmp, this->nbasis, this->nocc, this->nvirt);
+    }
+    if (gauge == "velocity_comm")
+    {
+        std::vector<const hamilt::HContainer<double>*> hr;
+        hamilt::HContainer<double> overlap(&this->paraMat_);
+        hamilt::HContainer<double> hr_up(&this->paraMat_);
+        hamilt::HContainer<double> hr_down(&this->paraMat_);
+        const hamilt::HContainer<double>* sr = &overlap;
+        const LCAO_Orbitals& orbitals = this->ks_ ? this->ks_->orb_ : this->orb_;
+        if (this->ks_)
+        {
+            auto* hamilt = static_cast<hamilt::HamiltLCAO<T, TR>*>(this->ks_->p_hamilt);
+            const auto spin_blocks = hamilt->getHR_vector();
+            hr.assign(spin_blocks.begin(), spin_blocks.end());
+            sr = hamilt->getSR();
+        }
+        else
+        {
+            const std::string overlap_path = this->in_dir + "sr_nao.csr";
+            const std::string up_path = this->in_dir + "hrs1_nao.csr";
+            LR_Util::read_velocity_matrix_R(overlap, overlap_path, ucell, this->nbasis, this->my_rank_,
+                                           this->ofs_running_);
+            LR_Util::read_velocity_matrix_R(hr_up, up_path, ucell, this->nbasis, this->my_rank_,
+                                           this->ofs_running_);
+            hr.push_back(&hr_up);
+            if (nspin_tmp == 2)
+            {
+                const std::string down_path = this->in_dir + "hrs2_nao.csr";
+                LR_Util::read_velocity_matrix_R(hr_down, down_path, ucell, this->nbasis, this->my_rank_,
+                                               this->ofs_running_);
+                hr.push_back(&hr_down);
+            }
+        }
+        this->velocity_mo = LR_Util::cal_commutator_velocity_mo(
+            ucell, this->gd(), orbitals, this->paraMat_, this->paraC_, this->kv, *this->psi_ks,
+            this->nk, nspin_tmp, this->nocc, this->nvirt, this->inp_->cal_force, *sr, hr);
     }
     std::vector<double> freq;
     if (calculate_spectrum)
@@ -319,14 +367,13 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
             freq[i] = 91.126664 / (lambda_min + 0.01 * static_cast<double>(i + 1) * lambda_diff);
         }
     }
-    // auto spin_types = (nspin == 2 && !openshell) ? std::vector<std::string>({ "singlet", "triplet" }) :
-    // std::vector<std::string>({ "updown" }); for (int is = 0;is < this->X.size() - 1;++is)
+    const int energy_precision = LR_Util::lr_excitation_energy_digits;
     for (int is = 0; is < this->X.size(); ++is)
     {
         if (!calculate_spectrum)
         {
-            const double *const energies = &this->pelec->ekb.c[is * nstates];
-            LR_Util::print_excitation_energies(this->ofs_running_, energies, nstates, spin_types[is]);
+            const double* const energies = &this->pelec->ekb.c[is * nstates];
+            LR_Util::print_excitation_energies(this->ofs_running_, energies, nstates, spin_types[is], energy_precision);
         }
         else
         {
@@ -334,21 +381,24 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
                 nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks, *this->ucell_, this->kv,
                 spatial_weights, this->gd(), this->orb_cutoff_, this->tcb(), this->paraX_, this->paraC_, this->paraMat_,
                 &this->pelec->ekb.c[is * nstates], this->eig_ks.c, this->X[is].template data<T>(), nstates, openshell,
-                LR_Util::tolower(this->inp_->abs_gauge), this->my_rank_, this->out_dir);
-            if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
+                gauge, this->my_rank_, this->out_dir);
+            if (use_velocity)
             {
                 spectrum.set_vmo(this->velocity_mo.data());
             }
             spectrum.cal_spectrum();
-            spectrum.transition_analysis(spin_types[is] + "_tda");
-            if (spin_types[is] != "triplet") // triplets has no transition dipole and no contribution to the spectrum
+            const std::string channel = spin_types[is] + "_tda";
+            spectrum.transition_analysis(channel, energy_precision);
+            if (spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
             {
-                spectrum.optical_absorption_method1(freq, this->inp_->abs_broadening);
-                spectrum.write_transition_dipole(this->out_dir + "trans_dipole_" + spin_types[is] + "_tda.dat");
-                // =============================================== for test
-                // ==================================================== spectrum.optical_absorption_method2(freq,
-                // this->inp_->abs_broadening); if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity") {   // TEST
-                // the formula v/omega rather than v/(e_a-e_i)
+                spectrum.optical_absorption_method1(
+                    freq, this->inp_->abs_broadening, this->last_ionic_step_, this->ofs_running_);
+                const std::string dipole_filename = this->out_dir + "trans_dipole_" + channel + ".dat";
+                spectrum.write_transition_dipole(dipole_filename, energy_precision);
+                // =============================================== for test ====================================================
+                // spectrum.optical_absorption_method2(freq, this->inp_->abs_broadening);
+                // if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
+                // {   // TEST the formula v/omega rather than v/(e_a-e_i)
                 //     spectrum.test_transition_dipoles_velocity_omega();
                 //     spectrum.write_transition_dipole(this->out_dir +
                 //         "trans_dipole_" + spin_types[is] + "_vomega_tda.dat");

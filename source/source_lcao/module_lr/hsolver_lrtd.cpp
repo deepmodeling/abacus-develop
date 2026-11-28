@@ -36,13 +36,17 @@ namespace LR
         };
 
         template<typename T>
-        inline void print_eigs(const std::vector<T>& eigs, const std::string& label = "", const double factor = 1.0)
+        inline void print_eigs(const std::vector<T>& eigs, const std::string& label,
+            const double factor)
         {
-            std::streamsize old = std::cout.precision();
-            std::cout << label << std::setprecision(8) << std::endl;
+            const std::streamsize old_precision = std::cout.precision();
+            const std::ios_base::fmtflags old_flags = std::cout.flags();
+            const int digits = LR_Util::lr_excitation_energy_digits;
+            std::cout << label << std::defaultfloat << std::setprecision(digits) << std::endl;
             for (const T& e : eigs) { std::cout << e * factor << " "; }
             std::cout << std::endl;
-            std::cout.precision(old);
+            std::cout.precision(old_precision);
+            std::cout.flags(old_flags);
         }
 
         /// eigensolver for common Hamilt
@@ -86,7 +90,7 @@ namespace LR
                 {
                     std::vector<std::complex<double>> eig_complex(gdim);
                     LR_Util::diag_lapack_nh(gdim, Amat_full.data(), eig_complex.data());
-                    print_eigs(eig_complex, "Right eigenvalues: of the non-Hermitian matrix: (Ry)");
+                    print_eigs(eig_complex, "Right eigenvalues: of the non-Hermitian matrix: (Ry)", 1.0);
                     for (int i = 0; i < gdim; i++) { eigenvalue[i] = eig_complex[i].real(); }
                 }
                 bool openshell = std::is_same<THamilt, HamiltULR<T>>::value;
@@ -158,7 +162,7 @@ namespace LR
             for (int ist = 0;ist < nband;++ist) { eig[ist] = eigenvalue[ist]; }
 
             // 6. output eigenvalues and eigenvectors
-            print_eigs(eigenvalue, "eigenvalues: (Ry)");
+            print_eigs(eigenvalue, "eigenvalues: (Ry)", 1.0);
             print_eigs(eigenvalue, "eigenvalues: (eV)", ModuleBase::Ry_to_eV);
 
             // normalization is already satisfied

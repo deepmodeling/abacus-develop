@@ -152,6 +152,8 @@ endif()
 
 addtest(TARGET MODULE_LR_spectrum_weights SOURCES test_spectrum_weights.cpp)
 
+addtest(TARGET MODULE_LR_util_print SOURCES test_lr_util_print.cpp)
+
 if(ENABLE_LIBXC)
   addtest(
     TARGET MODULE_LR_pot_hxc_lrtd

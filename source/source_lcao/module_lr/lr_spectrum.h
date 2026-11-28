@@ -9,6 +9,8 @@
 #include "source_lcao/module_rt/velocity_op.h"
 #include "source_lcao/module_lr/utils/spectrum_mo.h"
 
+#include <iosfwd>
+
 namespace LR
 {
     template<typename T>
@@ -38,19 +40,27 @@ namespace LR
         void set_full(bool tag) { this->is_full = tag; };
         void cal_spectrum(){
             std::cout << "Calculating transition dipole moments in " << this->gauge << " gauge." << std::endl;
-            this->gauge == "velocity" ? this->cal_transition_dipoles_velocity(this->eig_ks) : this->cal_transition_dipoles_length();
+            if (this->gauge == "velocity" || this->gauge == "velocity_comm")
+            {
+                this->cal_transition_dipoles_velocity(this->eig_ks);
+            }
+            else
+            {
+                this->cal_transition_dipoles_length();
+            }
             this->oscillator_strength();
         }
         /// @brief calculate the optical absorption spectrum with $Im[1/[(w+i\eta)^2-\Omega_S^2]]$
-        void optical_absorption_method1(const std::vector<double>& freq, const double eta);
+        void optical_absorption_method1(const std::vector<double>& freq, const double eta,
+                                        const int ionic_step, std::ofstream& running_log);
         /// @brief calculate the optical absorption spectrum with lorentzian delta function
         void optical_absorption_method2(const std::vector<double>& freq, const double eta);
         /// @brief print out the transition dipole moment and the main contributions to the transition amplitude
-        void transition_analysis(const std::string& spintype);
+        void transition_analysis(const std::string& spintype, const int energy_precision);
 
         //========================================== test functions ==============================================
         /// @brief write transition dipole
-        void write_transition_dipole(const std::string& filename);
+        void write_transition_dipole(const std::string& filename, const int energy_precision);
         /// @brief calculate transition dipole in velocity gauge using excitation eigenvalues instead of KS differences
         void test_transition_dipoles_velocity_omega();
 

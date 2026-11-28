@@ -23,11 +23,7 @@ bool init_general_exx_info(General_Exx_Info &info, const Input_para &inp)
     std::string dft_functional_lower = inp.dft_functional;
     std::transform(inp.dft_functional.begin(), inp.dft_functional.end(), dft_functional_lower.begin(), tolower);
     bool generate_opt_orb = false;
-    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" ||
-        dft_functional_lower == "hse" || dft_functional_lower == "scan0" || dft_functional_lower == "muller" ||
-        dft_functional_lower == "power" || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22" ||
-        dft_functional_lower == "lc_pbe" || dft_functional_lower == "lc_wpbe" || dft_functional_lower == "lrc_wpbe" ||
-        dft_functional_lower == "lrc_wpbeh" || dft_functional_lower == "cam_pbeh")
+    if (xc_uses_exact_exchange(dft_functional_lower))
     {
         info.cal_exx = true;
 

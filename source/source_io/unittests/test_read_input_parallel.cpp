@@ -829,9 +829,64 @@ TEST_F(InputParaTest, OpticalGaugeCanDisableSpectrum)
         item.check_value(item, param);
         EXPECT_EQ(param.inp.abs_gauge, gauge);
     }
-    item.str_values = {"invalid"};
-    item.read_value(item, param);
-    EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+    const auto error = item.domain.validate_explicit(item.label, {"invalid"});
+    EXPECT_FALSE(error.empty());
+}
+
+TEST_F(InputParaTest, OpticalGaugeDefaultsToCommutatorForGroundStateExactExchange)
+{
+    ModuleIO::ReadInput reader(0);
+    const auto& list = reader.get_input_lists();
+    const std::map<std::string, ModuleIO::Input_Item> items(list.begin(), list.end());
+    auto item = items.at("abs_gauge");
+    const auto set = [&items](Parameter& parameter, const std::string& label, const std::string& value) {
+        auto option = items.at(label);
+        option.str_values = {value};
+        option.read_value(option, parameter);
+    };
+    for (const std::string functional : {"HSE", "cam_pbeh", "hf", "pbe0", "wp22"})
+    {
+        Parameter parameter;
+        set(parameter, "basis_type", "lcao");
+        set(parameter, "esolver_type", "ks-lr");
+        set(parameter, "dft_functional", functional);
+        set(parameter, "xc_kernel", "rpa");
+        item.reset_value(item, parameter);
+        EXPECT_EQ(parameter.inp.abs_gauge, "velocity_comm") << functional;
+        item.check_value(item, parameter);
+    }
+
+    Parameter parameter;
+    set(parameter, "basis_type", "lcao");
+    set(parameter, "esolver_type", "ks-lr");
+    set(parameter, "dft_functional", "pbe");
+    set(parameter, "xc_kernel", "hse");
+    item.reset_value(item, parameter);
+    EXPECT_EQ(parameter.inp.abs_gauge, "velocity");
+
+    set(parameter, "dft_functional", "hse");
+    set(parameter, "xc_kernel", "hse");
+    set(parameter, "gamma_only", "1");
+    item.reset_value(item, parameter);
+    EXPECT_EQ(parameter.inp.abs_gauge, "velocity");
+
+    set(parameter, "gamma_only", "0");
+    set(parameter, "esolver_type", "lr");
+    set(parameter, "xc_kernel", "bse");
+    item.reset_value(item, parameter);
+    EXPECT_EQ(parameter.inp.abs_gauge, "velocity");
+
+    set(parameter, "esolver_type", "ks-lr");
+    set(parameter, "dft_functional", "hse");
+    set(parameter, "xc_kernel", "hse");
+    for (const std::string gauge : {"velocity", "velocity_comm", "length", "none"})
+    {
+        item.str_values = {gauge};
+        item.read_value(item, parameter);
+        item.reset_value(item, parameter);
+        EXPECT_EQ(parameter.inp.abs_gauge, gauge);
+        item.check_value(item, parameter);
+    }
 }
 
 TEST_F(InputParaTest, ScalarLrSpinSelection)

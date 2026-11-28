@@ -1,26 +1,35 @@
 #ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_PRINT_H
 #define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_PRINT_H
 
-#include <ATen/tensor.h>
 #include "source_base/constants.h"
-#include <iomanip>
-#include <ostream>
+#include "source_base/parallel_blkcyc.h"
 #include "source_psi/psi.h"
+
+#include <ATen/tensor.h>
+#include <array>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <map>
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif
 namespace LR_Util
 {
+    constexpr int lr_excitation_energy_digits = std::numeric_limits<double>::max_digits10;
+
     /// Report selected excitation energies without evaluating optical matrix elements.
-    /// Match transition_analysis's energy precision so existing energy regressions apply.
     inline void print_excitation_energies(std::ostream& log, const double* energies,
-                                         const int nstates, const std::string& channel)
+                                         const int nstates, const std::string& channel,
+                                         const int energy_precision)
     {
         const std::ios_base::fmtflags flags = log.flags();
         const std::streamsize precision = log.precision();
         log << " LR excitation energies: " << channel << '\n';
         log << " State   Excitation Energy (Ry, eV)\n";
-        log << std::defaultfloat << std::setprecision(6);
+        const int digits = energy_precision > 0 ? energy_precision : 6;
+        log << std::defaultfloat << std::setprecision(digits);
         for (int state = 0; state < nstates; ++state)
         {
             log << state << ' ' << energies[state] << ' '
@@ -87,6 +96,21 @@ namespace LR_Util
         ofs.close();
         return res;
     }
+    inline bool write_excitation_energy_file(const std::string& file, const double* energies,
+                                             const int nstates)
+    {
+        std::ofstream ofs(file);
+        const int decimals = lr_excitation_energy_digits - 1;
+        ofs << std::scientific << std::setprecision(decimals);
+        for (int state = 0; state < nstates; ++state)
+        {
+            ofs << energies[state] << ' ';
+        }
+        ofs << '\n';
+        ofs.close();
+        return static_cast<bool>(ofs);
+    }
+
     template<typename T>
     int print_value(const T* ptr, const int& size)
     {
