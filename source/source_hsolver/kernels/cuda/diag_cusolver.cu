@@ -8,7 +8,6 @@
 
 #include <cuda_runtime.h>
 
-#include <chrono>
 #include <sstream>
 
 namespace
@@ -117,30 +116,6 @@ struct DeviceBuffers
         CHECK_CUDA(cudaMemcpy(v, h, eigenvector_bytes, cudaMemcpyDeviceToHost));
     }
 };
-void report_solver_memory(const int n, const std::size_t workspace_bytes)
-{
-    std::size_t available = 0;
-    std::size_t total = 0;
-    CHECK_CUDA(cudaMemGetInfo(&available, &total));
-    const std::size_t matrix_bytes = sizeof(double) * static_cast<std::size_t>(n) * n;
-    std::printf("DM_DIRECT_SOLVER_MEMORY n=%d matrix_bytes=%zu workspace_bytes=%zu free_at_peak=%zu total=%zu\n",
-                n, matrix_bytes, workspace_bytes, available, total);
-}
-
-void report_real_solver(const char* algorithm, const int n, const int bands,
-                        const std::chrono::steady_clock::time_point& started)
-{
-    const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
-    const std::chrono::steady_clock::duration duration = finished - started;
-    const double seconds = std::chrono::duration<double>(duration).count();
-    const std::size_t hs_bytes = 2 * sizeof(double) * static_cast<std::size_t>(n) * n;
-    const std::size_t vector_bytes = sizeof(double) * static_cast<std::size_t>(n) * bands;
-    const std::size_t eigenvalue_bytes = sizeof(double) * static_cast<std::size_t>(bands);
-    std::printf("DM_DIRECT_SOLVER algorithm=%s n=%d host_columns=%d seconds=%.9e hs_h2d_calls=2 hs_h2d_bytes=%zu "
-                "psi_d2h_calls=1 psi_d2h_bytes=%zu eigenvalue_d2h_calls=1 eigenvalue_d2h_bytes=%zu "
-                "info_d2h_calls=1 info_d2h_bytes=4 info=0\n",
-                algorithm, n, bands, seconds, hs_bytes, vector_bytes, eigenvalue_bytes);
-}
 } // namespace
 
 Diag_Cusolver_gvd::Diag_Cusolver_gvd() { CHECK_CUSOLVER(cusolverDnCreate(&handle_)); }
@@ -155,8 +130,13 @@ void Diag_Cusolver_gvd::release_eigenvectors()
 {
     if (eigenvectors_ != nullptr) CHECK_CUDA(cudaFree(eigenvectors_));
     if (weighted_vectors_ != nullptr) CHECK_CUDA(cudaFree(weighted_vectors_));
+    if (density_workspace_ != nullptr) CHECK_CUDA(cudaFree(density_workspace_));
+    if (occupations_ != nullptr) CHECK_CUDA(cudaFree(occupations_));
     eigenvectors_ = nullptr;
     weighted_vectors_ = nullptr;
+    density_workspace_ = nullptr;
+    occupations_ = nullptr;
+    workspace_elements_ = 0;
     rows_ = 0;
     bands_ = 0;
 }
@@ -177,7 +157,6 @@ bool Diag_Cusolver_gvd::solve_subset(
     const bool retain_vectors)
 {
     release_eigenvectors();
-    const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
     if (nbands <= 0 || nbands > n)
     {
         solver_error("Dsygvdx", n, nbands, "invalid eigenpair count", nbands);
@@ -204,7 +183,6 @@ bool Diag_Cusolver_gvd::solve_subset(
         return false;
     }
     CHECK_CUDA(alloc_status);
-    if (retain_vectors) report_solver_memory(n, work_bytes);
 
     status = cusolverDnDsygvdx(
         handle_, problem_type, job, CUSOLVER_EIG_RANGE_I, triangle, n, device.h, n, device.s, n, unused_bound,
@@ -229,11 +207,15 @@ bool Diag_Cusolver_gvd::solve_subset(
     {
         eigenvectors_ = device.h;
         weighted_vectors_ = device.s;
+        density_workspace_ = device.work;
+        occupations_ = device.eigenvalues;
+        workspace_elements_ = static_cast<std::size_t>(lwork);
         rows_ = n;
         bands_ = nbands;
         device.h = nullptr;
         device.s = nullptr;
-        report_real_solver("Dsygvdx", n, nbands, started);
+        device.work = nullptr;
+        device.eigenvalues = nullptr;
     }
     return true;
 }
@@ -262,7 +244,6 @@ void Diag_Cusolver_gvd::solve_full(
     const bool retain_vectors)
 {
     release_eigenvectors();
-    const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
     DeviceBuffers<double> device;
     device.upload(n, h, s);
     int lwork = 0;
@@ -271,7 +252,6 @@ void Diag_Cusolver_gvd::solve_full(
     check_status(status, "Dsygvd workspace query", n, nbands);
     const std::size_t work_bytes = sizeof(double) * static_cast<std::size_t>(lwork);
     CHECK_CUDA(cudaMalloc(&device.work, work_bytes));
-    if (retain_vectors) report_solver_memory(n, work_bytes);
     status = cusolverDnDsygvd(
         handle_, problem_type, job, triangle, n, device.h, n, device.s, n, device.eigenvalues, device.work, lwork,
         device.info);
@@ -283,11 +263,15 @@ void Diag_Cusolver_gvd::solve_full(
     {
         eigenvectors_ = device.h;
         weighted_vectors_ = device.s;
+        density_workspace_ = device.work;
+        occupations_ = device.eigenvalues;
+        workspace_elements_ = static_cast<std::size_t>(lwork);
         rows_ = n;
         bands_ = nbands;
         device.h = nullptr;
         device.s = nullptr;
-        report_real_solver("Dsygvd", n, nbands, started);
+        device.work = nullptr;
+        device.eigenvalues = nullptr;
     }
 }
 
@@ -370,36 +354,31 @@ __global__ void weight_retained_columns(const int rows, const int columns,
 
 bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, double* density, std::string& error)
 {
-    const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
     error.clear();
-    if (eigenvectors_ == nullptr || weighted_vectors_ == nullptr || bands <= 0 || bands > bands_
+    if (eigenvectors_ == nullptr || weighted_vectors_ == nullptr || density_workspace_ == nullptr
+        || occupations_ == nullptr || bands <= 0 || bands > bands_
         || weights == nullptr || density == nullptr)
     {
         density_error(error, "validate retained eigenvectors", "invalid eigenvector state or DM arguments",
                       -1, rows_, bands, 0);
         return false;
     }
-    const std::size_t matrix_bytes = sizeof(double) * static_cast<std::size_t>(rows_) * rows_;
+    const std::size_t matrix_elements = static_cast<std::size_t>(rows_) * rows_;
+    const std::size_t matrix_bytes = sizeof(double) * matrix_elements;
     const std::size_t weight_bytes = sizeof(double) * static_cast<std::size_t>(bands);
-    double* device_density = nullptr;
-    double* device_weights = nullptr;
+    if (workspace_elements_ < matrix_elements)
+    {
+        density_error(error, "reuse cuSOLVER workspace", "workspace is smaller than the density matrix",
+                      -1, rows_, bands, matrix_bytes);
+        return false;
+    }
+    // Reuse the completed solve's workspace and eigenvalue storage without new device arrays.
+    double* device_density = density_workspace_;
+    double* device_weights = occupations_;
+    cudaError_t cuda_status = cudaSuccess;
     cublasHandle_t handle = nullptr;
-    int weight_calls = 0;
-    int density_calls = 0;
-    std::size_t transferred_weights = 0;
-    std::size_t transferred_density = 0;
-    cudaError_t cuda_status = cudaMalloc(&device_density, matrix_bytes);
-    bool success = density_cuda_status(cuda_status, "allocate density matrix (cudaMalloc)", rows_, bands, matrix_bytes, error);
-    if (success)
-    {
-        cuda_status = cudaMalloc(&device_weights, weight_bytes);
-        success = density_cuda_status(cuda_status, "allocate occupations (cudaMalloc)", rows_, bands, weight_bytes, error);
-    }
-    if (success)
-    {
-        const cublasStatus_t status = cublasCreate(&handle);
-        success = density_blas_status(status, "create cuBLAS handle", rows_, bands, error);
-    }
+    const cublasStatus_t create_status = cublasCreate(&handle);
+    bool success = density_blas_status(create_status, "create cuBLAS handle", rows_, bands, error);
     if (success)
     {
         const cublasStatus_t status = cublasSetMathMode(handle, CUBLAS_DEFAULT_MATH);
@@ -407,10 +386,8 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
     }
     if (success)
     {
-        ++weight_calls;
         cuda_status = cudaMemcpy(device_weights, weights, weight_bytes, cudaMemcpyHostToDevice);
         success = density_cuda_status(cuda_status, "upload occupations", rows_, bands, weight_bytes, error);
-        if (success) transferred_weights = weight_bytes;
     }
     if (success)
     {
@@ -433,27 +410,13 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
     }
     if (success)
     {
-        ++density_calls;
         cuda_status = cudaMemcpy(density, device_density, matrix_bytes, cudaMemcpyDeviceToHost);
         success = density_cuda_status(cuda_status, "download density matrix", rows_, bands, matrix_bytes, error);
-        if (success) transferred_density = matrix_bytes;
     }
     if (success)
     {
         cuda_status = cudaDeviceSynchronize();
         success = density_cuda_status(cuda_status, "synchronize density matrix", rows_, bands, 0, error);
-    }
-    if (device_density != nullptr)
-    {
-        cuda_status = cudaFree(device_density);
-        const bool released = density_cuda_status(cuda_status, "release density matrix", rows_, bands, matrix_bytes, error);
-        success = released && success;
-    }
-    if (device_weights != nullptr)
-    {
-        cuda_status = cudaFree(device_weights);
-        const bool released = density_cuda_status(cuda_status, "release occupations", rows_, bands, weight_bytes, error);
-        success = released && success;
     }
     if (handle != nullptr)
     {
@@ -461,11 +424,5 @@ bool Diag_Cusolver_gvd::density_from_retained(int bands, const double* weights, 
         const bool released = density_blas_status(status, "destroy cuBLAS handle", rows_, bands, error);
         success = released && success;
     }
-    const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
-    const std::chrono::steady_clock::duration duration = finished - started;
-    const double seconds = std::chrono::duration<double>(duration).count();
-    std::printf("DM_DIRECT_DEVICE n=%d bands=%d seconds=%.9e success=%d psi_h2d_calls=0 psi_h2d_bytes=0 "
-                "weights_h2d_calls=%d weights_h2d_bytes=%zu dm_d2h_calls=%d dm_d2h_bytes=%zu\n",
-                rows_, bands, seconds, success, weight_calls, transferred_weights, density_calls, transferred_density);
     return success;
 }

@@ -95,16 +95,18 @@ protected:
     std::unique_ptr<Diag_Cusolver_gvd> solver;
 };
 
-TEST_F(CusolverDensityFailure, DensityAllocationReportsRequestedBytes)
+TEST_F(CusolverDensityFailure, ReusesSolverArraysWithoutDeviceAllocations)
 {
+    // Even an allocator that rejects every new request must permit the DM stage.
     allocations_before_failure = 0;
-    expect_failure("allocate density matrix (cudaMalloc)", "requested_bytes=32");
-}
-
-TEST_F(CusolverDensityFailure, OccupationAllocationReportsRequestedBytes)
-{
-    allocations_before_failure = 1;
-    expect_failure("allocate occupations (cudaMalloc)", "requested_bytes=16");
+    const double weights[2] = {2.0, 0.125};
+    double density[4] = {};
+    std::string error;
+    const bool success = solver->density_from_retained(2, weights, density, error);
+    EXPECT_TRUE(success) << error;
+    EXPECT_EQ(allocations_before_failure, 0);
+    EXPECT_DOUBLE_EQ(density[0], 2.0);
+    EXPECT_DOUBLE_EQ(density[3], 0.125);
 }
 
 TEST_F(CusolverDensityFailure, OccupationUploadReportsStage)

@@ -4,10 +4,10 @@
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/module_parallel/para_mpi_func.h"
+#include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_tools.h"
 #include <algorithm>
-#include <cstdio>
 #include <cstdlib>
 #include <memory>
 #include <string>
@@ -21,35 +21,61 @@ bool direct_supported(const int context, const int kpoints, const DirectConfig& 
 {
     const base_device::DeviceContext& device_context = base_device::DeviceContext::instance();
     int unsupported_rank = device_context.get_device_count() != 1
-                   || device_context.get_local_rank() != config.world_rank;
+                           || device_context.get_local_rank() != config.world_rank;
     char scope = 'A';
     char topology = ' ';
     Cigsum2d(context, &scope, &topology, 1, 1, &unsupported_rank, 1, -1, -1);
-    return config.method == "cusolver" && config.kpar == 1
-                   && config.nspin == 1 && kpoints == 1 && !config.skip_charge
-                   && unsupported_rank == 0;
-}
+    return config.method == "cusolver" && config.kpar == 1 && config.nspin == 1
+           && kpoints == 1 && !config.skip_charge && unsupported_rank == 0;
 }
 
-void direct_sync(const int context)
+void dm_from_cusolver(Diag_Cusolver_gvd* solver, const double* weights, const int bands,
+                     double* host_dm, double* distributed_dm, const Parallel_Blkcyclic& layout)
 {
-    int token = 1;
-    char scope = 'A';
-    char topology = ' ';
-    Cigsum2d(context, &scope, &topology, 1, 1, &token, 1, -1, -1);
+    ModuleBase::timer::start("HSolverLCAO", "dm_from_cusolver");
+    const bool root = layout.irproc() == 0 && layout.icproc() == 0;
+    const bool serial = layout.nrproc() == 1 && layout.ncproc() == 1;
+    const int context = layout.ictxt();
+    int success = 1;
+    std::string error;
+    if (root)
+    {
+        success = solver->density_from_retained(bands, weights, host_dm, error);
+    }
+    if (!serial)
+    {
+        char scope = 'A';
+        char topology = ' ';
+        if (root) Cigebs2d(context, &scope, &topology, 1, 1, &success, 1);
+        else Cigebr2d(context, &scope, &topology, 1, 1, &success, 1, 0, 0);
+    }
+    if (!success)
+    {
+        const MPI_Comm comm = layout.comm();
+        const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("direct_dm", comm);
+        Parallel::bcast_string(error, world, 0);
+        ModuleBase::WARNING_QUIT("dm_from_cusolver", error, EXIT_FAILURE);
+    }
+    if (!serial)
+    {
+        const int n = layout.nrglb();
+        const int leading_dimension = layout.irproc() == 0 ? n : 1;
+        int full_desc[9] = {1, context, n, n, n, n, 0, 0, leading_dimension};
+        int distributed_desc[9];
+        const int* descriptor = layout.desc();
+        const int* descriptor_end = descriptor + 9;
+        std::copy(descriptor, descriptor_end, distributed_desc);
+        Cpdgemr2d(n, n, host_dm, 1, 1, full_desc, distributed_dm, 1, 1, distributed_desc, context);
+    }
+    ModuleBase::timer::end("HSolverLCAO", "dm_from_cusolver");
 }
-
-double direct_elapsed(const std::chrono::steady_clock::time_point& started)
-{
-    const std::chrono::steady_clock::time_point finished = std::chrono::steady_clock::now();
-    const std::chrono::steady_clock::duration duration = finished - started;
-    return std::chrono::duration<double>(duration).count();
 }
 
 void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecState* state,
                   module_dm::DensityMatrix<double, double>& density, const Parallel_Orbitals* orbitals,
                   const DirectConfig& config)
 {
+    ModuleBase::timer::start("HSolverLCAO", "direct_gamma");
     const int bands = config.bands;
     const Parallel_Blkcyclic& layout = orbitals->para_2d();
     const int context = layout.ictxt();
@@ -64,18 +90,9 @@ void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     }
     const int n = layout.nrglb();
     const bool root = layout.irproc() == 0 && layout.icproc() == 0;
+    const bool serial = layout.nrproc() == 1 && layout.ncproc() == 1;
     const std::size_t matrix_size = static_cast<std::size_t>(n) * n;
     const std::size_t wave_size = static_cast<std::size_t>(n) * bands;
-    const std::size_t matrix_bytes = matrix_size * sizeof(double);
-    const std::size_t hs_bytes = 2 * matrix_bytes;
-    const std::size_t wave_bytes = wave_size * sizeof(double);
-    const std::size_t root_matrix_size = root ? matrix_size : 1;
-    const std::size_t root_wave_size = root ? wave_size : 1;
-    std::vector<double> h(root_matrix_size);
-    std::vector<double> s(root_matrix_size);
-    std::vector<double> host_wave;
-    std::vector<double> eigenvalues(n);
-    std::vector<double> host_dm;
     const int leading_dimension = layout.irproc() == 0 ? n : 1;
     int full_desc[9] = {1, context, n, n, n, n, 0, 0, leading_dimension};
     int wave_desc[9] = {1, context, n, bands, n, bands, 0, 0, leading_dimension};
@@ -87,20 +104,35 @@ void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
     const int* wave_descriptor_end = wave_descriptor + 9;
     std::copy(matrix_descriptor, matrix_descriptor_end, distributed_desc);
     std::copy(wave_descriptor, wave_descriptor_end, distributed_wave_desc);
-    const std::chrono::steady_clock::time_point gather_start = std::chrono::steady_clock::now();
     ModuleBase::MatrixBlock<double> hk;
     ModuleBase::MatrixBlock<double> sk;
     hs.hs_at_k(0, hk, sk);
-    direct_sync(context);
-    const std::chrono::steady_clock::time_point redistribution_start = std::chrono::steady_clock::now();
-    Cpdgemr2d(n, n, hk.p, 1, 1, distributed_desc, h.data(), 1, 1, full_desc, context);
-    Cpdgemr2d(n, n, sk.p, 1, 1, distributed_desc, s.data(), 1, 1, full_desc, context);
-    direct_sync(context);
-    direct_report_redistribution(root, redistribution_start);
-    const double gather_seconds = direct_elapsed(gather_start);
-    const std::chrono::steady_clock::time_point diagonal_start = std::chrono::steady_clock::now();
-    direct_report_diagonal_start(root, diagonal_start);
-    host_wave.resize(root_wave_size);
+    wave.fix_k(0);
+    double* wave_pointer = wave.get_pointer();
+    double* eigenvalues = &state->ekb(0, 0);
+    double* dm_pointer = density.get_dmk_ptr(0);
+    double* host_wave_pointer = wave_pointer;
+    double* host_dm = dm_pointer;
+    const double* h_pointer = hk.p;
+    const double* s_pointer = sk.p;
+    std::vector<double> h;
+    std::vector<double> s;
+    std::vector<double> host_wave;
+    if (!serial)
+    {
+        const std::size_t root_matrix_size = root ? matrix_size : 1;
+        const std::size_t root_wave_size = root ? wave_size : 1;
+        h.resize(root_matrix_size);
+        s.resize(root_matrix_size);
+        host_wave.resize(root_wave_size);
+        Cpdgemr2d(n, n, hk.p, 1, 1, distributed_desc, h.data(), 1, 1, full_desc, context);
+        Cpdgemr2d(n, n, sk.p, 1, 1, distributed_desc, s.data(), 1, 1, full_desc, context);
+        h_pointer = h.data();
+        s_pointer = s.data();
+        host_wave_pointer = host_wave.data();
+        // H is dead after diagonalization; reuse its gather buffer for the returned DM.
+        host_dm = h.data();
+    }
     std::unique_ptr<Diag_Cusolver_gvd> solver;
     if (root)
     {
@@ -109,68 +141,32 @@ void direct_gamma(HSMatrix<double>& hs, psi::Psi<double>& wave, elecstate::ElecS
         const bool subset = Diag_Cusolver_gvd::use_subset(n, bands);
         if (subset)
         {
-            solved = solver->solve_subset(n, bands, h.data(), s.data(), eigenvalues.data(), host_wave.data(), true);
+            solved = solver->solve_subset(n, bands, h_pointer, s_pointer, eigenvalues, host_wave_pointer, true);
         }
         if (!solved)
         {
-            solver->solve_full(n, bands, h.data(), s.data(), eigenvalues.data(), host_wave.data(), true);
+            solver->solve_full(n, bands, h_pointer, s_pointer, eigenvalues, host_wave_pointer, true);
         }
     }
-    direct_sync(context);
-    const double diagonal_seconds = direct_elapsed(diagonal_start);
-    const std::chrono::steady_clock::time_point psi_start = std::chrono::steady_clock::now();
-    char scope = 'A';
-    char topology = ' ';
-    if (root) Cdgebs2d(context, &scope, &topology, bands, 1, eigenvalues.data(), bands);
-    else Cdgebr2d(context, &scope, &topology, bands, 1, eigenvalues.data(), bands, 0, 0);
-    for (int band = 0; band < bands; ++band) state->ekb(0, band) = eigenvalues[band];
-    wave.fix_k(0);
-    double* wave_pointer = wave.get_pointer();
-    Cpdgemr2d(n, bands, host_wave.data(), 1, 1, wave_desc,
-              wave_pointer, 1, 1, distributed_wave_desc, context);
-    direct_sync(context);
-    const double psi_seconds = direct_elapsed(psi_start);
-    // The owning solver remains alive through ABACUS's actual occupation code.
-    const std::chrono::steady_clock::time_point occupation_start = std::chrono::steady_clock::now();
+    if (!serial)
+    {
+        std::vector<double>().swap(s);
+        char scope = 'A';
+        char topology = ' ';
+        if (root) Cdgebs2d(context, &scope, &topology, bands, 1, eigenvalues, bands);
+        else Cdgebr2d(context, &scope, &topology, bands, 1, eigenvalues, bands, 0, 0);
+        Cpdgemr2d(n, bands, host_wave_pointer, 1, 1, wave_desc,
+                  wave_pointer, 1, 1, distributed_wave_desc, context);
+        std::vector<double>().swap(host_wave);
+    }
+    // Keep the owning solver alive through ABACUS's actual occupation calculation.
     elecstate::calculate_weights(state->ekb, state->wg, state->klist, state->eferm,
                                  state->f_en, state->nelec_spin, bands, state->skip_weights);
     elecstate::calEBand(state->ekb, state->wg, state->f_en);
-    direct_sync(context);
-    const double occupation_seconds = direct_elapsed(occupation_start);
-    const std::chrono::steady_clock::time_point dm_start = std::chrono::steady_clock::now();
-    host_dm.resize(root_matrix_size);
-    int success = 1;
-    std::string error;
-    if (root)
-    {
-        const double* weights = &state->wg(0, 0);
-        success = solver->density_from_retained(bands, weights, host_dm.data(), error);
-    }
-    if (root) Cigebs2d(context, &scope, &topology, 1, 1, &success, 1);
-    else Cigebr2d(context, &scope, &topology, 1, 1, &success, 1, 0, 0);
-    if (!success)
-    {
-        const MPI_Comm comm = layout.comm();
-        const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("direct_dm", comm);
-        Parallel::bcast_string(error, world, 0);
-        ModuleBase::WARNING_QUIT("direct_gamma", error, EXIT_FAILURE);
-    }
-    const double device_dm_seconds = direct_elapsed(dm_start);
-    const std::chrono::steady_clock::time_point scatter_start = std::chrono::steady_clock::now();
-    double* dm_pointer = density.get_dmk_ptr(0);
-    Cpdgemr2d(n, n, host_dm.data(), 1, 1, full_desc,
-              dm_pointer, 1, 1, distributed_desc, context);
-    direct_sync(context);
-    const double scatter_seconds = direct_elapsed(scatter_start);
-    if (root)
-    {
-    std::printf("DM_DIRECT_PHASE mode=direct n=%d bands=%d gather_hs=%.9e diagonal=%.9e psi_redistribute=%.9e "
-                    "occupations=%.9e device_dm=%.9e dm_redistribute=%.9e hs_redistributions=2 hs_logical_bytes=%zu "
-                    "psi_redistributions=1 psi_logical_bytes=%zu dm_redistributions=%d dm_logical_bytes=%zu\n",
-                    n, bands, gather_seconds, diagonal_seconds, psi_seconds, occupation_seconds,
-                    device_dm_seconds, scatter_seconds, hs_bytes, wave_bytes, success, matrix_bytes);
-    }
-    return;
+    Diag_Cusolver_gvd* retained = solver.get();
+    const double* weights = &state->wg(0, 0);
+    dm_from_cusolver(retained, weights, bands, host_dm, dm_pointer, layout);
+    ModuleBase::timer::end("HSolverLCAO", "direct_gamma");
 }
 
 void direct_gamma(HSMatrix<std::complex<double>>&, psi::Psi<std::complex<double>>&,
@@ -178,20 +174,6 @@ void direct_gamma(HSMatrix<std::complex<double>>&, psi::Psi<std::complex<double>
                   const Parallel_Orbitals*, const DirectConfig&)
 {
     ModuleBase::WARNING_QUIT("direct_gamma", "device_dm gpu requires real Gamma FP64 eigenvectors");
-    return;
-}
-
-void direct_report_diagonal_start(const bool root, const std::chrono::steady_clock::time_point& started)
-{
-    const std::chrono::steady_clock::duration epoch = started.time_since_epoch();
-    const long long start_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch).count();
-    if (root) std::printf("DM_DIRECT_DIAGONAL_START ns=%lld\n", start_ns);
-}
-
-void direct_report_redistribution(const bool root, const std::chrono::steady_clock::time_point& started)
-{
-    const double seconds = direct_elapsed(started);
-    if (root) std::printf("DM_DIRECT_REDISTRIBUTION kind=hs seconds=%.9e\n", seconds);
 }
 
 }
