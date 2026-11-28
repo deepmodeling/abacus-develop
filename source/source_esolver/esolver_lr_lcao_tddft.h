@@ -237,7 +237,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
 
     /// @brief allocate and set the inital value of X
     void setup_eigenvectors_X();
-    void set_X_initial_guess();
 
     /// @brief read in the ground state wave function, band energy and occupation
     virtual void read_ks_wfc();

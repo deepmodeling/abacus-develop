@@ -26,6 +26,7 @@ if(ENABLE_LCAO)
     potentials/pot_grad_xc.cpp
     kernel_pots.cpp
     lr_dim.cpp
+    lr_gs.cpp
     init_helpers.cpp
     hsolver_lrtd.cpp
     zeq_solver.cpp
