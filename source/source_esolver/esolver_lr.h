@@ -21,7 +21,6 @@
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/lr_mpl.h"
 #include "source_lcao/module_lr/lr_relax.h"
-#include "source_lcao/module_lr/state_track.h"
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
 #include "source_hamilt/module_xc/exx_info.h" // for Exx_Info value member

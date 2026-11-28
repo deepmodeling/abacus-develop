@@ -24,10 +24,8 @@
 #include <cassert>
 #include <complex>
 #include <memory>
-#include "source_base/parallel_reduce.h"
 #include "source_estate/module_dm/dm_from_psi.h"
 #include "source_io/module_output/output_log.h"
-#include "source_lcao/module_lr/cal_edm.h"
 #include "source_lcao/module_lr/grad_degen.h"
 #include "source_lcao/module_lr/gradient_inputs.h"
 #include "source_lcao/module_lr/gradient_output.h"
@@ -35,7 +33,6 @@
 #include "source_lcao/module_lr/lr_dm.h"
 #include "source_lcao/module_lr/lr_force.h"
 #include "source_base/timer.h"
-#include <numeric>
 #include "source_lcao/module_lr/init_helpers.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_basis/module_pw/pw_basis_big.h"
