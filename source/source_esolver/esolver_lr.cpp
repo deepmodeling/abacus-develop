@@ -92,7 +92,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
         if (!this->ks_initialized_)
         {
             this->initialize_from_ks_(ucell, *this->inp_);
-            this->setup_relax_target_(); // needs the final dimensions, i.e. `openshell`
+            this->lr_.setup_relax(); // needs the final dimensions, i.e. `openshell`
         }
         else
         {
@@ -242,12 +242,12 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     {
         // Re-select which root to follow BEFORE taking the gradient, so the force belongs to
         // the same diabatic state as the previous step's.
-        this->follow_target_state_(this->ofs_running_);
+        this->lr_.follow_target(this->pelec->ekb, this->ofs_running_);
 
         // The LR terms only carry the Omega part of the force; the ground-state part is separate
         // and comes straight from the KS solver.
         this->ks_->cal_force(ucell, this->lr_.relax.force_gs);
-        this->lr_.relax.lr_force = this->cal_lr_force_relax_(this->ofs_running_);
+        this->lr_.relax.lr_force = this->lr_.cal_lr_force(this->pelec->ekb, this->ofs_running_);
 
         // One line per ionic step with the two halves of the energy and of the gradient. Without
         // it the relaxation only reports a force, and whether E_gs + Omega actually goes down --
@@ -382,7 +382,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell &basecell)
         }
         if (this->inp_->cal_force && !this->lr_.relax.target.active())
         {
-            this->cal_force_and_grad_matrix_(is, this->ofs_running_);
+            this->lr_.cal_force_grad(is, this->pelec->ekb, this->ofs_running_);
         }
     }
 }
@@ -480,195 +480,6 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge &chg_gs
                           this->sfac(), this->vloc(), this->solvent, !this->ks_, PARAM.globalv.has_float_data);
 }
 
-template <typename T, typename TR>
-LR::GsForceCtx<T> ModuleESolver::ESolver_LR<T, TR>::gs_force_ctx_() const
-{
-    // `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path (it is aliased straight
-    // from the ground-state solver's own `psi`), but per `this->lr_.gs.para_mat_all` on the
-    // read-from-file path, where it was allocated with that descriptor's own sizes.
-    const Parallel_Orbitals *const pv_all = this->ks_ ? &this->ks_->pv : &this->lr_.gs.para_mat_all;
-    const LR::ForceSettings settings{
-        this->lr_.dim.nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
-    return {*this->lr_.gs.psi_all, this->lr_.gs.wg_all, *pv_all, *this->pw_rho, *this->pw_rhod, this->vloc(), this->sfac(),
-            this->tcb(), settings, this->lr_.dim.openshell, this->inp_->lr_grad_solver, this->in_dir};
-}
-
-template <typename T, typename TR>
-LR::StateCtx<T> ModuleESolver::ESolver_LR<T, TR>::state_ctx_() const
-{
-    return {this->lr_.amp.x, this->lr_.amp.para_x, this->lr_.zw.para_x, this->lr_.dim.nocc, this->lr_.dim.nvirt, this->lr_.dim.nk, this->lr_.amp.nloc,
-            this->lr_.zw.nloc, this->lr_.dim.nstates, this->lr_.dim.openshell, this->pelec->ekb.c};
-}
-
-template <typename T, typename TR>
-std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(const int ispin, const int istate_only)
-{
-    if (this->inp_->test_force && ispin == 0)
-    {
-        this->test_force();
-    }
-    return this->lr_.dim.openshell
-               ? LR::state_forces_os<T>(this->gradient_inputs_(), this->gs_force_ctx_(), this->state_ctx_(), istate_only)
-               : LR::state_forces<T>(this->gradient_inputs_(), this->gs_force_ctx_(), this->state_ctx_(), ispin,
-                                     istate_only);
-}
-
-template <typename T, typename TR>
-LR::GradientInputs<T> ModuleESolver::ESolver_LR<T, TR>::gradient_inputs_() const
-{
-    return {*this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->lr_.gs.para_mat, this->lr_.zw.para_c, this->lr_.zw.para_x,
-        *this->lr_.zw.psi, this->lr_.zw.eig, this->lr_.dim.nocc, this->lr_.zw.nvirt, this->lr_.dim.nspin, this->lr_.dim.nk, this->lr_.dim.nbasis,
-        this->lr_.zw.nloc, this->xc_kernel, this->inp_->dft_functional, this->inp_->ks_solver,
-        this->inp_->test_force, this->lr_.relax.target.active(), this->out_dir, this->my_rank_, this->lr_.amp.spin_types, this->lr_.pot.pot,
-        this->lr_.pot.pot_hxc_gs, this->ofs_running_
-#ifdef __EXX
-        ,
-        this->exx_lri, this->exx_info.info_global.hybrid_alpha
-#endif
-    };
-}
-
-template <typename T, typename TR>
-std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(
-    const int ispin,
-    const ct::Tensor &Xz,
-    const std::vector<double> &omega,
-    const int label_begin)
-{
-    ModuleBase::timer::start("ESolver_LR", "cal_force_Xz");
-    const auto forces = LR::force_xz<T>(this->gradient_inputs_(), this->gs_force_ctx_(), ispin, Xz, omega, label_begin);
-    ModuleBase::timer::end("ESolver_LR", "cal_force_Xz");
-    return forces;
-}
-
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::cal_force_and_grad_matrix_(const int ispin, std::ofstream &ofs)
-{
-    const std::vector<ModuleBase::matrix> forces = this->cal_force(ispin);
-    if (this->inp_->lr_degen_thr <= 0.0)
-    {
-        return;
-    }
-    // Rebuilt from scratch for this channel: a relaxation calls this once per ionic step, and a
-    // stale multiplet from the previous geometry must not survive into the next one.
-    this->lr_.relax.mpl.erase(
-        std::remove_if(
-            this->lr_.relax.mpl.begin(), this->lr_.relax.mpl.end(),
-            [ispin](const LR::MplLvc &m) { return m.ispin == ispin; }),
-        this->lr_.relax.mpl.end());
-    // The per-state gradients above are the diagonal of the degenerate-subspace gradient matrix in
-    // whatever basis the eigensolver returned, so inside a multiplet only their trace means
-    // anything. `lr_degen_thr` asks for the off-diagonal part too, which is the rest of the
-    // first-order information.
-    for (LR::MplLvc &m : LR::multiplet_grad<T>(this->gradient_inputs_(), this->gs_force_ctx_(), this->state_ctx_(),
-                                               ispin, this->inp_->lr_degen_thr, forces, ofs))
-    {
-        this->lr_.relax.mpl.push_back(std::move(m));
-    }
-}
-
-template <typename T, typename TR>
-std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_openshell_Xz(
-    const ct::Tensor &Xz, const std::vector<double> &omega, const int label_begin)
-{
-    ModuleBase::timer::start("ESolver_LR", "cal_force_openshell_Xz");
-    const auto forces = LR::force_xz_os<T>(this->gradient_inputs_(), this->gs_force_ctx_(), Xz, omega, label_begin);
-    ModuleBase::timer::end("ESolver_LR", "cal_force_openshell_Xz");
-    return forces;
-}
-
-template <typename T, typename TR>
-module_dm::DensityMatrix<T, double> ModuleESolver::ESolver_LR<T, TR>::cal_dm_gs()
-{
-    // `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path (it is aliased straight
-    // from the ground-state solver's own `psi`), but per `this->lr_.gs.para_mat_all` on the
-    // read-from-file path (where it was allocated with that descriptor's own sizes).
-    const Parallel_Orbitals *const pv_all = this->ks_ ? &this->ks_->pv : &this->lr_.gs.para_mat_all;
-    return LR::make_gs_dm<T>(*this->lr_.gs.psi_all, this->lr_.gs.wg_all, *pv_all, this->lr_.gs.para_mat, *this->ucell_, this->gd(),
-                             this->orb_cutoff_, this->lr_.dim.nspin, this->kv.kvec_d, this->lr_.dim.nk);
-}
-
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::test_force()
-{
-    const LR::ForceSettings force_settings{
-        this->lr_.dim.nspin, this->inp_->test_force, this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
-    LR_Force<T> lr_force(
-        (*this->ucell_), this->kv.kvec_d, this->lr_.gs.para_mat, *this->pw_rhod, *this->pw_rho, this->vloc(), this->sfac(),
-        this->gd(), this->tcb(), force_settings, this->ofs_running_
-#ifdef __EXX
-        ,
-        std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha
-#endif
-    );
-
-    const module_dm::DensityMatrix<T, double> &dm_gs = this->cal_dm_gs();
-    // LR_Util::print_DMR(dm_gs, "DM(R) of ground state");
-    ///========================== test 1: reproduce the force of ground state =========================
-    // energy density matrix of the ground state
-    module_dm::DensityMatrix<T, double> edm_gs(&this->lr_.gs.para_mat, this->lr_.dim.nspin, this->kv.kvec_d, this->lr_.dim.nk); // DX
-    ModuleBase::matrix wg_ekb_ks_all(this->lr_.dim.nspin, this->inp_->nbands);
-    const int occupation_count = this->lr_.dim.nspin * this->inp_->nbands;
-    for (int index = 0; index < occupation_count; ++index)
-    {
-        wg_ekb_ks_all.c[index] = this->lr_.gs.wg_all.c[index] * this->lr_.gs.eig_all.c[index];
-    }
-    // see `cal_dm_gs()`: `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path,
-    // not `this->lr_.gs.para_mat_all`.
-    const Parallel_Orbitals *const pv_all_edm = this->ks_ ? &this->ks_->pv : &this->lr_.gs.para_mat_all;
-    module_dm::dm_from_psi(pv_all_edm, wg_ekb_ks_all, *this->lr_.gs.psi_all, edm_gs);
-    LR_Util::initialize_DMR(edm_gs, this->lr_.gs.para_mat, (*this->ucell_), this->gd(), this->orb_cutoff_);
-    edm_gs.cal_dmr(-1);
-    // ground-state force
-    ModuleBase::matrix force_gs = lr_force.reproduce_force_gs(kv, dm_gs, edm_gs);
-    ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "Ground State FORCE (eV/Angstrom)", force_gs, false);
-    /// ======================================= END test 1 =========================================
-    ///========================== test 2: reproduce the DX Hartree term =========================
-    ModuleBase::matrix f_hxc_potgs = lr_force.reproduce_force_gs_loc(dm_gs, *this->lr_.pot.gs_pot.pot_hartree());
-    ModuleIO::print_force(
-        this->ofs_running_, (*this->ucell_),
-        "GS Hartree force calculated by 'cal_pulay_fs' from potential (eV/Angstrom)", f_hxc_potgs, false);
-    ModuleBase::matrix f_hxc_potlr = lr_force.cal_force_hxc_dmtrans(dm_gs, *this->lr_.pot.pot[0]);
-    ModuleIO::print_force(
-        this->ofs_running_, (*this->ucell_), "GS Hxc force calculated by 'LR_Force' from kernel (eV/Angstrom)",
-        f_hxc_potlr, false);
-    // `cal_force_hxc_dmtrans` now includes the Pulay -> Pulay+Hellmann-Feynman factor 2 itself,
-    // so this must match the ground-state Hartree force directly (dm_gs is already symmetric).
-    /// ======================================= END test 2 =========================================
-}
-
-
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
-{
-    this->lr_.relax.target.setup(*this->inp_, this->lr_.dim.openshell, this->lr_.dim.nspin, this->lr_.dim.nstates, this->ofs_running_);
-    if (this->lr_.relax.target.active())
-    {
-        this->lr_.relax.force_gs.create(this->ucell_->nat, 3);
-        this->lr_.relax.lr_force.create(this->ucell_->nat, 3);
-    }
-}
-
-/// Compare roots in a common electron-hole basis using exact cross-geometry AO overlap.
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::follow_target_state_(std::ofstream &ofs)
-{
-    ModuleBase::timer::start("ESolver_LR", "follow_target_state_");
-    if (!this->lr_.relax.target.active())
-    {
-        ModuleBase::timer::end("ESolver_LR", "follow_target_state_");
-        return;
-    }
-    const int channel = this->lr_.dim.openshell ? 0 : this->lr_.relax.target.ispin();
-    const T *const amplitudes = this->lr_.amp.x[channel].template data<T>();
-    const TwoCenterIntegrator &overlap_integrator = *this->tcb().overlap_orb;
-    std::vector<double> energies(this->lr_.dim.nstates);
-    std::copy_n(this->pelec->ekb.c + this->lr_.relax.target.ekb_off(this->lr_.dim.nstates), this->lr_.dim.nstates, energies.begin());
-    this->lr_.relax.target.follow(*this->inp_, *this->ucell_, this->orb_cutoff_, overlap_integrator, *this->lr_.gs.psi, this->lr_.amp.para_c,
-                         this->lr_.gs.para_mat, this->lr_.amp.para_x, this->lr_.dim.nocc, this->lr_.dim.nvirt, amplitudes, this->lr_.amp.nloc,
-                         this->lr_.dim.nstates, energies, ofs);
-    ModuleBase::timer::end("ESolver_LR", "follow_target_state_");
-}
 
 template <typename T, typename TR>
 double ModuleESolver::ESolver_LR<T, TR>::cal_energy()
@@ -717,74 +528,6 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_stress(BaseCell &basecell, ModuleBase
     ModuleBase::WARNING_QUIT(
         "ESolver_LR::cal_stress", "the excited-state stress is not implemented (every LR gradient stress term is a "
                                   "dummy passed with isstress=false).");
-}
-
-template <typename T, typename TR>
-ct::Tensor ModuleESolver::ESolver_LR<T, TR>::pad_group_to_z_(const int ispin, const std::vector<int> &group) const
-{
-    return LR::pad_group<T>(this->lr_.amp.x, this->lr_.dim.openshell, this->lr_.amp.para_x, this->lr_.zw.para_x, this->lr_.dim.nocc, this->lr_.dim.nvirt, this->lr_.dim.nk,
-                            this->lr_.amp.nloc, this->lr_.zw.nloc, ispin, group);
-}
-
-template <typename T, typename TR>
-ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_lr_force_relax_(std::ofstream &ofs)
-{
-    this->lr_.relax.target.resolve_group(*this->inp_, this->pelec->ekb.c, this->lr_.dim.nstates, this->ofs_running_);
-    const std::vector<int> &group = this->lr_.relax.target.group();
-    if (group.empty())
-    {
-        return this->cal_force(this->lr_.relax.target.ispin(), this->lr_.relax.target.state())[0];
-    }
-    const bool jt_mode = (LR_Util::tolower(this->inp_->lr_degen_mode) == "jt");
-    // `average` needs only the DIAGONAL of the gradient matrix: the average is basis-independent by
-    // construction, so the off-diagonal part (and the extra d(d-1)/2 solves it costs) is not
-    // involved. The Jahn-Teller direction is orthogonal to the average and does need them.
-    const int d = static_cast<int>(group.size());
-    const int ekb_off = this->lr_.relax.target.ekb_off(this->lr_.dim.nstates);
-    const ct::Tensor Xz = this->pad_group_to_z_(this->lr_.relax.target.ispin(), group);
-    std::vector<double> omega(d);
-    for (int k = 0; k < d; ++k)
-    {
-        omega[k] = this->pelec->ekb.c[ekb_off + group[k]];
-    }
-    const std::vector<ModuleBase::matrix> forces =
-        this->lr_.dim.openshell ? this->cal_force_openshell_Xz(Xz, omega, group.front())
-                        : this->cal_force_Xz(this->lr_.relax.target.ispin(), Xz, omega, group.front());
-    ofs << " Followed state " << this->lr_.relax.target.state() << " is degenerate with";
-    for (const int ist : group)
-    {
-        if (ist != this->lr_.relax.target.state())
-        {
-            ofs << " " << ist;
-        }
-    }
-    ofs << " (Omega_bar = " << this->lr_.relax.target.omega(this->pelec->ekb.c, this->lr_.dim.nstates) << " Ry)." << std::endl;
-    if (!jt_mode)
-    {
-        ofs << " lr_degen_mode=average: following the multiplet average, which keeps the"
-               " geometry on the current average surface; split groups are not recombined."
-            << std::endl;
-        return average_forces(forces);
-    }
-    return this->cal_jt_force_(forces, ofs);
-}
-
-template <typename T, typename TR>
-ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_jt_force_(
-    const std::vector<ModuleBase::matrix> &diag, std::ofstream &ofs)
-{
-    // Regime (c): descend the Jahn-Teller branch. This needs the whole gradient matrix, so the
-    // off-diagonal elements are assembled here -- d(d-1)/2 further Z-vector solves on top of the
-    // d diagonal ones already in `diag`.
-    const std::vector<int> &group = this->lr_.relax.target.group();
-    const LR::MplLvc mpl = LR::build_mpl_state<T>(this->gradient_inputs_(), this->gs_force_ctx_(), this->state_ctx_(),
-                                                  this->lr_.relax.target.ispin(), group, diag, ofs);
-    LR::JtForce jt = LR::eval_jt_force(mpl.g, ofs);
-    const int channel = this->lr_.dim.openshell ? 0 : this->lr_.relax.target.ispin();
-    this->lr_.relax.target.save_mixed(this->lr_.amp.x[channel].template data<T>(), this->lr_.amp.nloc, jt.mixing);
-    // The returned force is the descending branch's own gradient; once a step splits the
-    // multiplet `resolve_group` finds no group and the single-state path takes over.
-    return jt.force;
 }
 
 // Initialize LR from an embedded KS solver or standalone ground-state files.
@@ -882,6 +625,34 @@ void ModuleESolver::ESolver_LR<T, TR>::bind_ground_state_aliases_()
         this->gd_ptr_ = &this->gd_own_;
         this->tcb_ptr_ = &this->two_center_bundle_own_;
     }
+}
+
+template <typename T, typename TR>
+LR::Refs<T> ModuleESolver::ESolver_LR<T, TR>::make_refs() const
+{
+    LR::Refs<T> refs;
+    refs.ucell = this->ucell_;
+    refs.kv = &this->kv;
+    refs.gd = &this->gd();
+    refs.orb_cutoff = &this->orb_cutoff_;
+    refs.rho = this->pw_rho;
+    refs.rhod = this->pw_rhod;
+    refs.vloc = &this->vloc();
+    refs.sfac = &this->sfac();
+    refs.tcb = &this->tcb();
+    refs.inp = this->inp_;
+    refs.log = &this->ofs_running_;
+    refs.pgrid = &this->pgrid();
+    refs.in_dir = &this->in_dir;
+    refs.out_dir = &this->out_dir;
+    refs.xc_kernel = &this->xc_kernel;
+    refs.my_rank = this->my_rank_;
+    refs.pv_all = this->ks_ ? &this->ks_->pv : &this->lr_.gs.para_mat_all;
+#ifdef __EXX
+    refs.exx_lri = &this->exx_lri;
+    refs.hybrid_alpha = this->exx_info.info_global.hybrid_alpha;
+#endif
+    return refs;
 }
 
 template <typename T, typename TR>
@@ -987,6 +758,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell &ucell, cons
 #endif
 
     refresh_from_ks_(ucell);
+    this->lr_.bind(this->make_refs());
     this->ks_initialized_ = true;
 }
 
@@ -1222,6 +994,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
     // else
 #endif
     // ModuleBase::Ylm::set_coefficients() is deprecated
+    this->lr_.bind(this->make_refs());
 }
 
 template class ModuleESolver::ESolver_LR<double, double>;

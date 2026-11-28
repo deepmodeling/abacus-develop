@@ -11,12 +11,34 @@
 #include "source_lcao/module_lr/potentials/lr_gs_pot.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 
+#include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
 
+class Grid_Driver;
+class Structure_Factor;
+class TwoCenterBundle;
+class pseudopot_cell_vl;
+#ifdef __EXX
+template <typename Tdata>
+class Exx_LRI;
+#endif
+namespace module_dm
+{
+template <typename TK, typename TR>
+class DensityMatrix;
+}
+
 namespace LR
 {
+template <typename T>
+struct GradientInputs;
+template <typename T>
+struct GsForceCtx;
+template <typename T>
+struct StateCtx;
+
 /// The ground state the LR solver works from.
 template <typename T>
 struct GsState
@@ -61,6 +83,36 @@ struct RelaxRun
     std::vector<MplLvc> mpl;
 };
 
+/// Borrowed handles the force and relaxation path needs. The esolver binds them once, after the
+/// ground state has been read; every pointer outlives the solver.
+template <typename T>
+struct Refs
+{
+    const UnitCell* ucell = nullptr;
+    const K_Vectors* kv = nullptr;
+    const Grid_Driver* gd = nullptr;
+    const std::vector<double>* orb_cutoff = nullptr;
+    const ModulePW::PW_Basis* rho = nullptr;
+    const ModulePW::PW_Basis* rhod = nullptr;
+    pseudopot_cell_vl* vloc = nullptr;
+    Structure_Factor* sfac = nullptr;
+    const TwoCenterBundle* tcb = nullptr;
+    const Input_para* inp = nullptr;
+    std::ofstream* log = nullptr;
+    Parallel_Grid* pgrid = nullptr;
+    const std::string* in_dir = nullptr;
+    const std::string* out_dir = nullptr;
+    const std::string* xc_kernel = nullptr;
+    int my_rank = 0;
+    /// The layout `gs.psi_all` is distributed by: the KS solver's `pv`, or `gs.para_mat_all`.
+    const Parallel_Orbitals* pv_all = nullptr;
+#ifdef __EXX
+    /// Points at the solver's member so a rebuilt `Exx_LRI` is seen without rebinding.
+    const std::shared_ptr<Exx_LRI<T>>* exx_lri = nullptr;
+    double hybrid_alpha = 1.0;
+#endif
+};
+
 /// LR solver state that does not belong to the esolver interface.
 template <typename T>
 struct Core
@@ -71,11 +123,47 @@ struct Core
     ZWin<T> zw;
     PotSet pot;
     RelaxRun<T> relax;
+    Refs<T> refs;
+
+    void bind(const Refs<T>& r) { this->refs = r; }
 
     /// Read the ground-state bands this solver needs, from file.
     void read_wfc(const std::string& in_dir, const Input_para& inp, const K_Vectors& kv, std::ostream& log);
     /// Widen the ground-state window into the Z window used by the force path.
     void fill_z(const int* desc_src, const K_Vectors& kv, bool cal_force, bool first, std::ostream& log);
+
+    /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
+    /// restricts it to that one state; -1 does all `nstates`.
+    std::vector<ModuleBase::matrix> cal_force(int ispin, const ModuleBase::matrix& ekb, int istate_only);
+    /// Gradients for caller-supplied vectors already widened into the Z window.
+    std::vector<ModuleBase::matrix> cal_force_xz(int ispin, const ct::Tensor& xz, const std::vector<double>& omega,
+                                                 int label_begin);
+    /// Open-shell counterpart of `cal_force_xz`: both channels live in one vector.
+    std::vector<ModuleBase::matrix> cal_force_os(const ct::Tensor& xz, const std::vector<double>& omega,
+                                                 int label_begin);
+    /// Per-state gradients plus the gradient matrix of each degenerate multiplet.
+    void cal_force_grad(int ispin, const ModuleBase::matrix& ekb, std::ofstream& ofs);
+    /// Ground-state density matrix.
+    module_dm::DensityMatrix<T, double> cal_dm_gs() const;
+    /// Reproduce the ground-state force as a check of the force machinery.
+    void test_force();
+
+    /// Resolve and validate `lr_target_state` / `lr_target_spin`.
+    void setup_relax();
+    /// Re-choose the followed root by cross-geometry overlap, then refresh the references.
+    void follow_target(const ModuleBase::matrix& ekb, std::ofstream& ofs);
+    /// The LR half of the force for the current geometry, following the selected surface.
+    ModuleBase::matrix cal_lr_force(const ModuleBase::matrix& ekb, std::ofstream& ofs);
+    /// The force of the steepest-descending branch of the target multiplet (`lr_degen_mode = jt`).
+    ModuleBase::matrix cal_jt_force(const std::vector<ModuleBase::matrix>& diag, const ModuleBase::matrix& ekb,
+                                    std::ofstream& ofs);
+    /// Widen a multiplet's eigenvectors into the Z window, one block each.
+    ct::Tensor pad_group_z(int ispin, const std::vector<int>& group) const;
+
+  private:
+    GradientInputs<T> gradient_inputs() const;
+    GsForceCtx<T> gs_force_ctx() const;
+    StateCtx<T> state_ctx(const ModuleBase::matrix& ekb) const;
 };
 
 } // namespace LR

@@ -117,18 +117,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     bool ks_initialized_ = false; ///< whether `initialize_from_ks_` has already run
     bool exx_owned_ = false;      ///< `exx_lri` was built here (so its Cs/Vs are ours to refresh)
 
-    // ---------- geometry relaxation on an excited state ----------
-    /// resolve and validate `lr_target_state` / `lr_target_spin`; call once the dimensions
-    /// (and therefore `openshell`) are final
-    void setup_relax_target_();
-    /// The followed state/multiplet. Seeded from `lr_target_state`, then re-chosen at every
-    /// later step by cross-geometry group overlap; following a fixed index instead makes the
-    /// force discontinuous as soon as two surfaces cross.
-    /// Match the old subspace to current energy groups and refresh the single/group references.
-    /// `ofs` receives the note when the followed root changes index, and the warning when
-    /// no current root resembles the previous one.
-    void follow_target_state_(std::ofstream &ofs);
-
     std::unique_ptr<ModuleGint::GintInfo> gint_info_ = nullptr;
 
     /// LR solver state that is not part of the esolver interface.
@@ -174,59 +162,8 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
 
     ///========================== for gradient calculation =========================
     void init_pot_groundstate(const Charge &chg_gs);
-    /// Solve the Z-vector equation for `nst` independent blocks of `Xz`.
-    /// Ground-state ingredients of the force path, filled once per call.
-    LR::GsForceCtx<T> gs_force_ctx_() const;
-    /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
-    /// restricts it to that one state: geometry relaxation follows a single state, and the
-    /// Z-vector solve dominates the cost. -1 does all `nstates`.
-    std::vector<ModuleBase::matrix> cal_force(const int ispin, const int istate_only = -1);
-    /// @brief Gradients for excitation vectors supplied by the caller, already widened into
-    ///        the Z window -- the two functions above are thin wrappers that widen the stored
-    ///        eigenvectors and look up their `omega`.
-    ///
-    /// The blocks of `Xz` need not be the eigenvectors the Casida diagonalizer returned. Any
-    /// normalized vector inside a degenerate multiplet is an eigenvector with the same
-    /// `omega`, so passing a linear combination is what turns the per-state gradient into the
-    /// full degenerate-subspace gradient matrix; see `LR::build_mpl` and
-    /// `grad_degen.h`.
-    ///
-    /// @param omega        excitation energy of each block (Ry); its size sets the block count
-    /// @param label_begin  state index the first block is reported under (labels only)
-    std::vector<ModuleBase::matrix> cal_force_Xz(
-        const int ispin,
-        const ct::Tensor &Xz,
-        const std::vector<double> &omega,
-        const int label_begin);
-    /// open-shell counterpart of `cal_force_Xz`
-    std::vector<ModuleBase::matrix> cal_force_openshell_Xz(
-        const ct::Tensor &Xz, const std::vector<double> &omega, const int label_begin);
-    /// The LR half of the force for the current geometry, following whichever surface
-    /// `lr_degen_mode` selects. `ofs` receives the note when that is not a single state.
-    ModuleBase::matrix cal_lr_force_relax_(std::ofstream &ofs);
-    /// @brief The force of the steepest-descending branch of the target multiplet, i.e.
-    ///        `lr_degen_mode = jt`.
-    ///
-    /// Assembles the off-diagonal part of the gradient matrix (which `average` does not need),
-    /// solves the joint direction/mixing optimization in `LR::find_jt_direction`, and returns
-    /// that branch's own force. Once a step has split the multiplet there is no group left and
-    /// the ordinary single-state path takes over, so the mode is self-limiting.
-    ///
-    /// @param diag  the multiplet's per-state forces, already computed
-    ModuleBase::matrix cal_jt_force_(const std::vector<ModuleBase::matrix> &diag, std::ofstream &ofs);
-    LR::GradientInputs<T> gradient_inputs_() const;
-    /// Widen a multiplet's eigenvectors into the Z window, one block each. Members need not be
-    /// contiguous, so they are padded one at a time.
-    ct::Tensor pad_group_to_z_(const int ispin, const std::vector<int> &group) const;
-    /// @brief Per-state gradients of every state, plus the gradient matrix of each degenerate
-    ///        multiplet when `lr_degen_thr` asks for it. The single-point entry point.
-    ///
-    /// Fills `multiplet_lvc_`.
-    void cal_force_and_grad_matrix_(const int ispin, std::ofstream &ofs);
-    /// Amplitudes and energies as `LR::StateCtx`, filled once per force evaluation.
-    LR::StateCtx<T> state_ctx_() const;
-    void test_force();                               // test: reproduce the force of ground state
-    module_dm::DensityMatrix<T, double> cal_dm_gs(); ///< ground-state density matrix
+    /// Borrow the geometry-dependent objects `LR::Core` needs for the force path.
+    LR::Refs<T> make_refs() const;
 
 #ifdef __EXX
     /// Tdata of Exx_LRI is same as T, for the reason, see operator_lr_exx.h
