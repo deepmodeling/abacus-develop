@@ -45,8 +45,12 @@ class Sto_DOS
      * @param sigmain  sigma for the gaussian broadening
      * @param de       energy step
      * @param npart    number of parts to reduce the memory usage
+     * @param out_dir  output directory (DOS/ when out_app_flag == 2)
+     * @param istep    zero-based ionic step used by the mode-2 suffix
+     * @param out_app_flag output layout mode: 0/1 fixed name, 2 adds g{step}
      */
-    void caldos(const double sigmain, const double de, const int npart);
+    void caldos(const double sigmain, const double de, const int npart,
+                const std::string& out_dir, const int istep, const int out_app_flag);
 
   protected:
     int nbands_ks = 0;                               ///< number of KS bands

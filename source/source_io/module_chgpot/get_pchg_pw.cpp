@@ -117,6 +117,8 @@ void Get_pchg_pw<T, Device>::begin(UnitCell* ucell,
                                    const std::string& global_out_dir,
                                    const bool if_separate_k,
                                    const bool noncolin,
+                                   const int istep,
+                                   const int out_app_flag,
                                    std::ofstream& ofs_running) const
 {
     // Resolve global band ownership collectively before validating the selection.
@@ -142,11 +144,11 @@ void Get_pchg_pw<T, Device>::begin(UnitCell* ucell,
         std::fill(work.becsum.begin(), work.becsum.end(), 0.0);
         if (if_separate_k)
         {
-            write_separate(band, *ucell, pgrid, kv, global_out_dir, noncolin, band_output, ofs_running, &work);
+            write_separate(band, *ucell, pgrid, kv, global_out_dir, noncolin, istep, out_app_flag, band_output, ofs_running, &work);
         }
         else
         {
-            write_summed(band, ucell, pgrid, kv, global_out_dir, noncolin, band_output, ofs_running, &work);
+            write_summed(band, ucell, pgrid, kv, global_out_dir, noncolin, istep, out_app_flag, band_output, ofs_running, &work);
         }
     }
 }
@@ -236,6 +238,8 @@ void Get_pchg_pw<T, Device>::write_separate(const int band,
                                             const K_Vectors& kv,
                                             const std::string& out_dir,
                                             const bool noncolin,
+                                            const int istep,
+                                            const int out_app_flag,
                                             const Parallel::ParaBandOutput& band_output,
                                             std::ofstream& ofs_running,
                                             Workspace* work) const
@@ -260,7 +264,7 @@ void Get_pchg_pw<T, Device>::write_separate(const int band,
         const int component_end = work->is_spinor ? 4 : spin_index + 1;
         for (int component = component_begin; component < component_end; ++component)
         {
-            write_cube(band, component, k_number, ucell, pgrid, out_dir, true, work->density[component], ofs_running);
+            write_cube(band, component, k_number, ucell, pgrid, out_dir, true, istep, out_app_flag, work->density[component], ofs_running);
         }
     }
 }
@@ -272,6 +276,8 @@ void Get_pchg_pw<T, Device>::write_summed(const int band,
                                           const K_Vectors& kv,
                                           const std::string& out_dir,
                                           const bool noncolin,
+                                          const int istep,
+                                          const int out_app_flag,
                                           const Parallel::ParaBandOutput& band_output,
                                           std::ofstream& ofs_running,
                                           Workspace* work) const
@@ -291,7 +297,7 @@ void Get_pchg_pw<T, Device>::write_summed(const int band,
     symmetrize(ucell, work);
     for (int is = 0; is < nspin_; ++is)
     {
-        write_cube(band, is, 0, *ucell, pgrid, out_dir, false, work->density[is], ofs_running);
+        write_cube(band, is, 0, *ucell, pgrid, out_dir, false, istep, out_app_flag, work->density[is], ofs_running);
     }
 }
 
@@ -463,18 +469,28 @@ void Get_pchg_pw<T, Device>::write_cube(const int band,
                                         const Parallel_Grid& pgrid,
                                         const std::string& out_dir,
                                         const bool separate_k,
+                                        const int istep,
+                                        const int out_app_flag,
                                         const std::vector<double>& values,
                                         std::ofstream& ofs_running) const
 {
+    // Modes 0 and 1 reuse the fixed filename (mode 0 truncates, mode 1 appends
+    // one frame per written step); only mode 2 embeds the step index.
+    const bool append = (out_app_flag == 1) && (istep > 0);
+
     std::stringstream filename;
     filename << out_dir << "pchgi" << band + 1 << "s" << component + 1;
     if (separate_k)
     {
         filename << "k" << k_number;
     }
+    if (out_app_flag == 2)
+    {
+        filename << "g" << istep + 1;
+    }
     filename << ".cube";
     const std::string desc_pchg = ModuleIO::make_data_desc("Partial charge", "Partial magnetization m", component, nspin_);
-    ModuleIO::write_vdata_palgrid(pgrid, values.data(), component, nspin_, 0, filename.str(), 0.0, &ucell, 11, 0, false, separate_k, false, ofs_running, desc_pchg);
+    ModuleIO::write_vdata_palgrid(pgrid, values.data(), component, nspin_, istep, filename.str(), 0.0, &ucell, 11, 0, false, separate_k, append, ofs_running, desc_pchg);
 }
 
 // Explicit instantiation emits both precisions for each supported device from this .cpp file.

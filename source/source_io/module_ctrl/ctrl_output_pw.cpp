@@ -127,7 +127,6 @@ void ModuleIO::ctrl_scf_pw(const int istep,
 
     const int output_frequency = inp.out_freq_ion;
     const bool selected_step = output_frequency == 0 || (output_frequency > 0 && istep % output_frequency == 0);
-    const bool output_td_state = inp.esolver_type != "tddft" || selected_step;
 
     // Only the following postprocessors consume the double CPU mirror.
     if (inp.calculation == "nscf" && (inp.towannier90 || (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)))
@@ -167,8 +166,9 @@ void ModuleIO::ctrl_scf_pw(const int istep,
             out_dos_tmp = false;
         }
 
-        // the above is only valid for KSDFT, not SDFT
-        // Needs update in the near future
+        // SDFT computes its DOS from stochastic wavefunctions in
+        // ESolver_SDFT_PW::after_all_runners (Sto_DOS), so the KS-based writer
+        // above must not run for SDFT.
         if (inp.esolver_type == "sdft")
         {
             out_dos_tmp = false;
@@ -206,9 +206,10 @@ void ModuleIO::ctrl_scf_pw(const int istep,
 
     //------------------------------------------------------------------
     // 5) Write partial charges and real-space wavefunctions
-    // for the current electronic state.
+    // for the current electronic state. Both follow out_freq_ion and
+    // out_app_flag like the other per-step snapshot outputs.
     //------------------------------------------------------------------
-    if (inp.out_pchg.size() > 0 && output_td_state)
+    if (inp.out_pchg.size() > 0 && selected_step)
     {
         const std::string global_chg_dir = PARAM.globalv.global_chg_dir;
         // Mode-2 CHG/ subdirectory is created lazily at write time.
@@ -216,17 +217,17 @@ void ModuleIO::ctrl_scf_pw(const int istep,
         // Use the solver's native wavefunction precision for FFT and projector overlaps.
         ModuleIO::Get_pchg_pw<T, Device>
             output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, ppcell, inp.nspin, inp.nbands);
-        output.begin(&ucell, para_grid, kv, inp.out_pchg, global_chg_dir, inp.if_separate_k, inp.noncolin, ofs_running);
+        output.begin(&ucell, para_grid, kv, inp.out_pchg, global_chg_dir, inp.if_separate_k, inp.noncolin, istep, inp.out_app_flag, ofs_running);
     }
 
-    if ((inp.out_wfc_norm.size() > 0 || inp.out_wfc_re_im.size() > 0) && output_td_state)
+    if ((inp.out_wfc_norm.size() > 0 || inp.out_wfc_re_im.size() > 0) && selected_step)
     {
         const std::string global_psi_dir = PARAM.globalv.global_psi_dir;
         // Mode-2 PSI/ subdirectory is created lazily at write time.
         ModuleBase::ensure_directory(global_psi_dir);
         // Use the solver's native wavefunction precision for FFT.
         ModuleIO::Get_wf_pw<T, Device> output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, inp.nspin, inp.nbands);
-        output.begin(ucell, para_grid, kv, inp.out_wfc_norm, inp.out_wfc_re_im, global_psi_dir, ofs_running);
+        output.begin(ucell, para_grid, kv, inp.out_wfc_norm, inp.out_wfc_re_im, global_psi_dir, istep, inp.out_app_flag, ofs_running);
     }
 
     //------------------------------------------------------------------

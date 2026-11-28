@@ -62,6 +62,14 @@ TEST(DFTUBaseIoTest, IonStepFilenameStartsFromOne)
     EXPECT_EQ(fn4, "OUT.ABACUS/occ_matg5.txt");
 }
 
+TEST(DFTUBaseIoTest, OccMatDirFollowsOutAppFlag)
+{
+    const std::string out_dir = "OUT.ABACUS/";
+    EXPECT_EQ(DFTU_BASE::occ_mat_output_dir(out_dir, 0), out_dir);
+    EXPECT_EQ(DFTU_BASE::occ_mat_output_dir(out_dir, 1), out_dir);
+    EXPECT_EQ(DFTU_BASE::occ_mat_output_dir(out_dir, 2), "OUT.ABACUS/OCC/");
+}
+
 int main(int argc, char** argv)
 {
 #ifdef __MPI

@@ -350,7 +350,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(
     // it was loaded from file; otherwise it is first available at iter 2.
     const int iter_limit = this->scf_iter_limit(istep);
     const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion, this->inp_->out_freq_elec, iter_limit,
-        this->inp_->out_occ_mat, this->inp_->dft_plus_u};
+        this->inp_->out_occ_mat, this->inp_->dft_plus_u, this->inp_->out_app_flag};
     const DFTU_BASE::OccmatStepInfo occmat_step{istep, iter, this->scf_thr, this->drho};
     // Read globalv values once into locals so the repeated DFT+U call sites
     // below do not each re-enter the global dependency surface.

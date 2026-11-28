@@ -1,37 +1,79 @@
 INPUT_PARAMETERS
 #Parameters    (General)
-suffix               autotest
+suffix               autotest-2
+out_freq_ion         2
+out_app_flag         2
     
-nbands               8
+nbands               28
 calculation          cell-relax
-ecutwfc              10
-scf_nmax             20
-
+nspin                2
 basis_type           pw
 relax_nmax           5
+relax_method         cg_trad
+ecutwfc              20
+scf_nmax             20
+scf_thr              1.0e-6
 
-cal_stress           1
-stress_thr           1e-6
+# DFT+U (PW). Fe 3d electrons are correlated; O is not.
+# orbital_corr: -1 = none, 1 = p, 2 = d, 3 = f (one value per atomic type).
+dft_plus_u           1
+orbital_corr         2 -1
+hubbard_u            5.0 0    # effective U (eV) for Fe and O
+onsite_radius        3.0      # Bohr
+
+symmetry             0
+smearing_method      gaussian
+smearing_sigma       0.01
+
+# Output layout convention (applies to every out_ parameter below):
+#   out_app_flag=2: per-step files are routed into SUB/ directories with a g{step} suffix
+#                   (CHG/ POT/ PSI/ DOS/ BANDS/ ELF/ DIP/ OCC/ STRUC/); final-snapshot outputs
+#                   (ldos) keep only the latest frame and drop g{step}.
+#   out_app_flag=0: fixed filenames in OUT.${suffix}/, truncated on every write (no SUB/, no g{step}).
+#   out_app_flag=1: fixed filenames in OUT.${suffix}/, frames appended and separated by '# Ionic_Step N'.
+#   Files that stay in OUT.${suffix}/ even in mode 2: eig_occg{step}.txt, logs/info/restart files.
+#   The 'SUB/' prefixes below describe mode 2; in mode 0/1 the same content lands in OUT.${suffix}/.
+
+out_element_info     1    # OUT.{element_label}/ (pseudopotential information)
+
+out_stru             1    # mode0: STRU_NOW + STRU_FINAL; mode1: STRU_NOW + STRU_FINAL + STRU (appended); mode2: STRUC/STRU_NOW + STRUC/STRU_FINAL + STRUC/STRU{step}
+
+out_chg              1    # CHG/chgs{spin}g{step}.cube (nspin=2 → chgs1*, chgs2*)
+out_pot              1    # POT/pots{spin}g{step}.cube
+out_wfc_pw           1    # PSI/wfk{k}[s{spin}][g{step}][e{iter}]_pw.txt (out_wfc_pw=2 → binary .dat)
+
+out_pchg             1    # CHG/pchgi{state}s{spin}[k{kpoint}]g{step}.cube (PW; if_separate_k controls the k label)
+out_wfc_norm         1    # PSI/wfi{state}s{spin}k{kpoint}g{step}.cube (PW)
+out_wfc_re_im        1    # PSI/wfi{state}s{spin}k{kpoint}{re|im}g{step}.cube (PW)
+
+out_dos              1    # DOS/doss{spin}g{step}.txt
+out_ldos             1    # DOS/ldos_{bias}ev.cube (final snapshot; header records the final step)
+out_band             1    # BANDS/bands{spin}g{step}.txt (nspin=2 → bands1*, bands2*)
+
+out_elf              1    # ELF/elfs{spin}g{step}.cube, ELF/elftotg{step}.cube
+out_xc_r             1    # CHG/xc_rho_s{spin}.cube, xc_vrho_s{spin}.cube, xc_exc.cube, xc_sigma_*.cube, xc_vsigma_*.cube (GGA; g{step} in mode 2)
+out_dipole           1    # DIP/dipole_s{spin}g{step}.txt (non-TD snapshot; RT-TDDFT keeps a fixed-name time series)
+out_occ_mat          1    # OCC/occ_mat.txt (latest) + OCC/occ_matg{step}.txt per out_freq_ion step in mode 2; OUT root in modes 0/1 (DFT+U only)
+
+# PW-capable out_ parameters that do not apply to this cell-relax example:
+#out_spillage        1    # PW-only; for the NAO generation workflow (nscf)
+#out_sol             1    # implicit solvation
+#out_current         1    # RT-TDDFT only
+#out_current_k       1    # RT-TDDFT only
+#out_efield          1    # RT-TDDFT only
+#out_vecpot          1    # RT-TDDFT only
+
+
+
 cal_force            1
 force_thr_ev         1.0e-3
 
-ks_solver            cg 
-mixing_type          broyden
-mixing_beta          0.7
+cal_stress           1
+stress_thr           1e-6
 
-relax_method         cg_trad
+ks_solver            dav_subspace
+mixing_type          broyden
+mixing_beta          0.4
 
 pseudo_dir           ../../../tests/PP_ORB    
 orbital_dir          ../../../tests/PP_ORB
-
-nspin                2
-
-out_chg              1
-out_pot              1
-out_wfc_pw           1
-out_dos              1
-out_band             1
-out_stru             1
-out_app_flag         0
-
-out_freq_ion         1

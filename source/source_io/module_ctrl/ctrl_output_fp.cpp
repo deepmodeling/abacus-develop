@@ -288,18 +288,30 @@ void ctrl_output_fp(UnitCell& ucell,
 #endif
 
     // RT-TDDFT response analysis requires every dipole sample, independently of snapshot output.
-    const bool output_dipole = inp.esolver_type == "tddft" || should_output;
+    const bool is_tddft = inp.esolver_type == "tddft";
+    const bool output_dipole = is_tddft || should_output;
     if (inp.out_dipole == 1 && output_dipole)
     {
         // Mode-2 DIP/ subdirectory is created lazily at write time.
         ModuleBase::ensure_directory(global_dip_dir);
+        // RT-TDDFT keeps a single appended time series with a fixed name so the
+        // response analysis sees every electronic step. Other calculations treat
+        // the dipole as a per-step snapshot: mode 0 truncates, mode 1 appends,
+        // and mode 2 writes one g{step} file per written step.
+        const bool dipole_geom_block = (!is_tddft) && (out_app_flag == 2);
+        const bool dipole_append = is_tddft || ((out_app_flag == 1) && (istep > 0));
         const int dipole_channels = nspin == 4 ? 1 : nspin;
         // In a spinor density only channel zero is charge; the other three channels are magnetization.
         for (int is = 0; is < dipole_channels; ++is)
         {
             std::stringstream ss_dipole;
-            ss_dipole << global_dip_dir << "dipole_s" << is + 1 << ".txt";
-            ModuleIO::write_dipole(ucell, chr.rho[is], pw_rhod, istep, ss_dipole.str(), ofs_running);
+            ss_dipole << global_dip_dir << "dipole_s" << is + 1;
+            if (dipole_geom_block)
+            {
+                ss_dipole << "g" << istep + 1;
+            }
+            ss_dipole << ".txt";
+            ModuleIO::write_dipole(ucell, chr.rho[is], pw_rhod, istep, ss_dipole.str(), ofs_running, dipole_append);
         }
     }
 

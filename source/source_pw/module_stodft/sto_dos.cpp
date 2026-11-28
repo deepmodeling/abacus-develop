@@ -1,5 +1,6 @@
 #include "sto_dos.h"
 
+#include "source_base/fs_compat.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -78,7 +79,8 @@ void Sto_DOS<FPTYPE, Device>::decide_param(const int& dos_nche,
 }
 
 template <typename FPTYPE, typename Device>
-void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, const int npart)
+void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, const int npart,
+                                     const std::string& out_dir, const int istep, const int out_app_flag)
 {
     ModuleBase::TITLE("Sto_DOS", "caldos");
     ModuleBase::timer::start("Sto_DOS", "caldos");
@@ -242,7 +244,15 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
     #endif
     if (GlobalV::MY_RANK == 0)
     {
-        std::string dosfile = PARAM.globalv.global_out_dir + "dos_sdft.txt";
+        ModuleBase::ensure_directory(out_dir);
+        // Modes 0 and 1 reuse the fixed name (this final-only output writes once),
+        // while mode 2 embeds the ionic step like the other DOS files.
+        std::string dosfile = out_dir + "dos_sdft";
+        if (out_app_flag == 2)
+        {
+            dosfile += "g" + std::to_string(istep + 1);
+        }
+        dosfile += ".txt";
         ofsdos.open(dosfile.c_str());
         double maxerror = 0;
         double sum = 0;
