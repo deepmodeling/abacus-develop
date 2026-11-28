@@ -39,14 +39,14 @@ void solve(
 {
     if (Diag_Cusolver_gvd::use_subset(n, nbands))
     {
-        if (solver.solve_subset(n, nbands, h, s, w, v))
+        if (solver.solve_subset(n, nbands, h, s, w, v, false))
         {
             return;
         }
         std::fprintf(
             stderr, "cuSOLVER Dsygvdx could not return %d eigenpairs (n=%d); retrying with Dsygvd\n", nbands, n);
     }
-    solver.solve_full(n, nbands, h, s, w, v);
+    solver.solve_full(n, nbands, h, s, w, v, false);
 }
 
 void solve(

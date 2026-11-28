@@ -1,0 +1,14 @@
+INPUT_PARAMETERS
+basis_type lcao
+calculation scf
+gamma_only 1
+device gpu
+ks_solver cusolver
+nbands 4
+nb2d 3
+latname sc
+ecutwfc 25.0
+scf_thr 1e-10
+pseudo_dir ../../PP_ORB
+orbital_dir ../../PP_ORB
+suffix autotest

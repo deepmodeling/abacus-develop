@@ -2,6 +2,24 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+if(USE_CUDA AND ENABLE_LCAO)
+  addtest(
+    TARGET MODULE_HSOLVER_direct_dm
+    LIBS CUDA::cudart CUDA::cublas CUDA::cusolver
+    SOURCES test_diag_cusolver.cpp ../kernels/cuda/diag_cusolver.cu
+    KEEP_FEATURE_DEFINITIONS __CUDA)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    addtest(
+      TARGET MODULE_HSOLVER_direct_dm_failures
+      LIBS CUDA::cudart CUDA::cublas CUDA::cusolver
+      SOURCES test_diag_cusolver_failures.cpp ../kernels/cuda/diag_cusolver.cu
+      KEEP_FEATURE_DEFINITIONS __CUDA)
+    target_link_options(
+      MODULE_HSOLVER_direct_dm_failures PRIVATE "LINKER:--wrap=cudaMalloc"
+      "LINKER:--wrap=cudaMemcpy" "LINKER:--wrap=cublasDgemm_v2")
+  endif()
+endif()
+
 set(DAV_SUBSPACE_TEST_SOURCES test_diago_dav_subspace.cpp
                               ../diago_dav_subspace.cpp)
 set(DAV_SUBSPACE_TEST_LIBS parameter base device container psi)

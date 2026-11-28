@@ -21,10 +21,15 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hsolver/parallel_k2d.h"
 
+#if defined(__CUDA) && defined(__MPI)
+#include "dm_cusolver.h"
+#endif
+
 #include <iostream>
 
 namespace hsolver
 {
+
 template <typename TK>
 void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
                                    psi::Psi<TK>& psi,
@@ -40,53 +45,66 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
 
     if (this->method != "pexsi")
     {
-    #ifdef __MPI
-    #ifdef __CUDA
-        if (this->method == "cusolver" && this->world_nproc > 1)
+        bool dm_ready = false;
+#if defined(__CUDA) && defined(__MPI)
+        if (this->use_gpu && this->overlap_cutoff == 0.0)
         {
-            this->parakSolve_cusolver(hs, psi, pes);
-        }else 
-    #endif
-        if (this->kpar_lcao > 1
-            && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx" || this->method == "lapack"))
+            const CusolverDmConfig config = {this->method, this->kpar_lcao, nspin, skip_charge,
+                                            this->world_rank, this->nbands};
+            dm_ready = solve_with_gpu_dm(hs, psi, pes, dm, this->ParaV, config);
+        }
+#endif
+        if (!dm_ready)
         {
-            this->parakSolve(hs, psi, pes, this->kpar_lcao, nspin);
-        } else
-    #endif
-        if (this->kpar_lcao == 1)
-        {
-            /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
-            for (int ik = 0; ik < psi.get_nk(); ++ik)
+#ifdef __MPI
+#ifdef __CUDA
+            if (this->method == "cusolver" && this->world_nproc > 1)
             {
-                /// H(k) and S(k) are all the eigensolvers need from the Hamiltonian
-                ModuleBase::MatrixBlock<TK> hk, sk;
-                hs.hs_at_k(ik, hk, sk);
+                this->parakSolve_cusolver(hs, psi, pes);
+            } else
+#endif
+            if (this->kpar_lcao > 1
+                && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx" || this->method == "lapack"))
+            {
+                this->parakSolve(hs, psi, pes, this->kpar_lcao, nspin);
+            } else
+#endif
+            if (this->kpar_lcao == 1)
+            {
+                /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
+                for (int ik = 0; ik < psi.get_nk(); ++ik)
+                {
+                    /// H(k) and S(k) are all the eigensolvers need from the Hamiltonian
+                    ModuleBase::MatrixBlock<TK> hk;
+                    ModuleBase::MatrixBlock<TK> sk;
+                    hs.hs_at_k(ik, hk, sk);
 
-                /// find psi pointer for each k point
-                psi.fix_k(ik);
+                    /// find psi pointer for each k point
+                    psi.fix_k(ik);
 
-                /// solve eigenvector and eigenvalue for H(k)
-                double* eigenvalues = &pes->ekb(ik, 0);
-                this->hamiltSolvePsiK(hk, sk, psi, eigenvalues, ik, nullptr);
+                    /// solve eigenvector and eigenvalue for H(k)
+                    double* eigenvalues = &pes->ekb(ik, 0);
+                    this->hamiltSolvePsiK(hk, sk, psi, eigenvalues, ik, nullptr);
+                }
             }
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
-                                     "This method and KPAR setting is not supported for lcao basis in ABACUS!");
-        }
+            else
+            {
+                ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
+                                         "This method and KPAR setting is not supported for lcao basis in ABACUS!");
+            }
 
-        elecstate::calculate_weights(pes->ekb,
-                                     pes->wg,
-                                     pes->klist,
-                                     pes->eferm,
-                                     pes->f_en,
-                                     pes->nelec_spin,
-                                     this->nbands,
-                                     pes->skip_weights);
+            elecstate::calculate_weights(pes->ekb,
+                                         pes->wg,
+                                         pes->klist,
+                                         pes->eferm,
+                                         pes->f_en,
+                                         pes->nelec_spin,
+                                         this->nbands,
+                                         pes->skip_weights);
 
-        elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
-        module_dm::dm_from_psi(this->ParaV, pes->wg, psi, dm);
+            elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
+            module_dm::dm_from_psi(this->ParaV, pes->wg, psi, dm);
+        }
         dm.cal_dmr(-1);
 
         if (!skip_charge)

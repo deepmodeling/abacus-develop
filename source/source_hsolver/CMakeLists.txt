@@ -57,6 +57,12 @@ endif()
 
 add_library(hsolver OBJECT ${objects})
 
+if(USE_CUDA
+   AND ENABLE_MPI
+   AND ENABLE_LCAO)
+  target_sources(hsolver PRIVATE dm_cusolver.cpp)
+endif()
+
 if(ENABLE_COVERAGE)
   add_coverage(hsolver)
 endif()
