@@ -33,14 +33,16 @@ ct::Tensor solve_zeq(const GradientInputs<T>& in, const ct::Tensor& xz, int ispi
                      const std::string& grad_solver, const std::string& in_dir,
                      const std::vector<std::vector<ct::Tensor>>& window_density);
 
-/// Forces of `nst` closed-shell states widened into the Z window.
+/// Forces of `nst` closed-shell states widened into the Z window. `nactive` is the X-window
+/// virtual count, i.e. the number of virtuals the caller actually solved for.
 template <typename T>
-std::vector<ModuleBase::matrix> force_xz(const GradientInputs<T>& in, const GsForceCtx<T>& gs, int ispin,
+std::vector<ModuleBase::matrix> force_xz(const GradientInputs<T>& in, const GsForceCtx<T>& gs, int nactive, int ispin,
                                          const ct::Tensor& xz, const std::vector<double>& omega, int label_begin);
 
 /// Open-shell counterpart: both spin channels live in one vector, so the channel is always 0.
 template <typename T>
-std::vector<ModuleBase::matrix> force_xz_os(const GradientInputs<T>& in, const GsForceCtx<T>& gs, const ct::Tensor& xz,
+std::vector<ModuleBase::matrix> force_xz_os(const GradientInputs<T>& in, const GsForceCtx<T>& gs,
+                                            const std::vector<int>& nactive, const ct::Tensor& xz,
                                             const std::vector<double>& omega, int label_begin);
 
 } // namespace LR

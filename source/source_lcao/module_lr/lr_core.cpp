@@ -560,7 +560,8 @@ std::vector<ModuleBase::matrix> Core<T>::cal_force_xz(const int ispin, const ct:
                                                       const std::vector<double>& omega, const int label_begin)
 {
     ModuleBase::timer::start("LR::Core", "cal_force_xz");
-    const auto forces = LR::force_xz<T>(this->gradient_inputs(), this->gs_force_ctx(), ispin, xz, omega, label_begin);
+    const auto forces = LR::force_xz<T>(this->gradient_inputs(), this->gs_force_ctx(), this->dim.nvirt[0], ispin, xz,
+                                        omega, label_begin);
     ModuleBase::timer::end("LR::Core", "cal_force_xz");
     return forces;
 }
@@ -570,7 +571,8 @@ std::vector<ModuleBase::matrix> Core<T>::cal_force_os(const ct::Tensor& xz, cons
                                                       const int label_begin)
 {
     ModuleBase::timer::start("LR::Core", "cal_force_os");
-    const auto forces = LR::force_xz_os<T>(this->gradient_inputs(), this->gs_force_ctx(), xz, omega, label_begin);
+    const auto forces =
+        LR::force_xz_os<T>(this->gradient_inputs(), this->gs_force_ctx(), this->dim.nvirt, xz, omega, label_begin);
     ModuleBase::timer::end("LR::Core", "cal_force_os");
     return forces;
 }

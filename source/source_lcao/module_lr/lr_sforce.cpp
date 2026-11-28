@@ -25,7 +25,7 @@ std::vector<ModuleBase::matrix> state_forces(const GradientInputs<T>& in, const 
     {
         omega[i] = st.ekb[ispin * st.nstates + ist_begin + i];
     }
-    return force_xz(in, gs, ispin, xz, omega, ist_begin);
+    return force_xz(in, gs, st.nvirt[0], ispin, xz, omega, ist_begin);
 }
 
 template <typename T>
@@ -49,7 +49,7 @@ std::vector<ModuleBase::matrix> state_forces_os(const GradientInputs<T>& in, con
     {
         omega[i] = st.ekb[ist_begin + i];
     }
-    return force_xz_os(in, gs, xz, omega, ist_begin);
+    return force_xz_os(in, gs, st.nvirt, xz, omega, ist_begin);
 }
 
 template <typename T>
@@ -67,7 +67,8 @@ MplLvc build_mpl_state(const GradientInputs<T>& in, const GsForceCtx<T>& gs, con
     }
     // The solver is reached only through this callback; everything else is module code.
     const MplEval eval = [&in, &gs, &st, ispin](const ct::Tensor& x, const std::vector<double>& w, const int label) {
-        return st.openshell ? force_xz_os(in, gs, x, w, label) : force_xz(in, gs, ispin, x, w, label);
+        return st.openshell ? force_xz_os(in, gs, st.nvirt, x, w, label)
+                            : force_xz(in, gs, st.nvirt[0], ispin, x, w, label);
     };
     return build_mpl<T>(xz, omega, diag, st.nloc_z, ispin, group, in.ucell, eval, ofs);
 }
