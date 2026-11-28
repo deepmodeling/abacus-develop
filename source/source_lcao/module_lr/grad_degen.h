@@ -13,7 +13,7 @@
 /// eigenvectors depend on $u$. The full first-order object is $3N$ matrices of size $d\times d$,
 /// and only $\operatorname{Tr}M$ is basis-invariant.
 ///
-/// The per-state analytic gradient implemented in `esolver_lr_grad.cpp` is, restricted to one
+/// The per-state analytic gradient implemented in `esolver_lr_lcao_tddft.cpp` is, restricted to one
 /// multiplet, a *quadratic form* in the excitation vector: every ingredient ($D^X$, $T$, $R$, $Z$,
 /// $D^Z$, $W^X$, $\Lambda$) is built from $X\otimes X$, the CPSCF operator $L$ depends only on the
 /// ground state, and $\Omega$ is a constant inside the multiplet. Write it $\mathcal F[X]$. Because
@@ -41,7 +41,7 @@
 /// This header holds only the basis-independent bookkeeping, so that it is unit-testable without a
 /// ground state: grouping states into multiplets, enumerating the pairs, forming the normalized
 /// combination, and assembling $G$. Everything needing the parallel layout or the Z-vector solver
-/// stays in `esolver_lr_grad.cpp`.
+/// stays in `esolver_lr_lcao_tddft.cpp`.
 
 namespace LR
 {
