@@ -10,6 +10,7 @@
 #include "exx_lri.h"
 #include "hybrid_image_domain.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/sph_bessel_recursive.h"
 #include "source_cell/unitcell.h"
 #include "ri_2d_comm.h"
 #include "ri_util.h"
@@ -98,6 +99,15 @@ void Exx_LRI<Tdata>::init(
         orb,
         settings,
         use_gpu);
+
+    // The radial interpolation tables now own the integrals used by EXX.
+    // Retain the Bessel objects for existing consumers, but release their cache.
+    std::size_t workspace_bytes = 0;
+    for (ModuleBase::Sph_Bessel_Recursive::D2& table : ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool)
+    {
+        workspace_bytes += table.release_workspace();
+    }
+    std::cout << " Bessel table workspace released (bytes): " << workspace_bytes << std::endl;
 
     ModuleBase::timer::end("Exx_LRI", "init");
 }

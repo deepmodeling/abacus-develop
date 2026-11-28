@@ -20,3 +20,9 @@ addtest(
   TARGET MODULE_BASE_net_force
   LIBS parameter base device
   SOURCES test_mathzone.cpp)
+
+addtest(
+  TARGET MODULE_BASE_sph_bessel_workspace
+  LIBS parameter
+  SOURCES test_sph_bessel_rec_d2.cpp ../sph_bessel_rec_d2.cpp
+          ../memory_recorder.cpp ../global_variable.cpp)
