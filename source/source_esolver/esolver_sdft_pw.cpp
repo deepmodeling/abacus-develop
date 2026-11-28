@@ -7,6 +7,7 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_stodft/sto_dos.h"
 #include "source_pw/module_stodft/sto_elecond.h"
 #include "source_pw/module_stodft/sto_forces.h"
@@ -117,6 +118,13 @@ void ESolver_SDFT_PW<T, Device>::iter_finish(
     bool &conv_esolver)
 {
     // call iter_finish() of ESolver_KS
+    if (this->inp_->sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<std::complex<double>>& sc
+            = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        const double escon = sc.cal_escon();
+        this->pelec->set_spin_constrain_energy(escon);
+    }
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
 }
 
@@ -157,7 +165,8 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(
         this->inp_->basis_type, this->inp_->ks_solver, PARAM.globalv.use_uspp, this->inp_->nspin,
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER, hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR, hsolver::DiagoIterAssist<T, Device>::need_subspace,
-        this->inp_->nbands, this->inp_->diago_smooth_ethr, this->inp_->pw_diag_ndim, this->inp_->diag_subspace,
+        this->inp_->nbands, this->inp_->diago_smooth_ethr, this->inp_->pw_diag_ndim,
+        this->inp_->lobpcg_locking, this->inp_->diag_subspace,
         this->inp_->nb2d, PARAM.globalv.ks_run, PARAM.globalv.all_ks_run, this->inp_->bndpar);
 
     sto_hsolver_pw_obj.solve(

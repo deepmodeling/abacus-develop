@@ -18,7 +18,11 @@ class DiagoElpa
   public:
     /// @param nlocal_in global dimension of the NAO Hamiltonian
     /// @param nbands_in number of lowest eigenpairs to compute
-    DiagoElpa(const int nlocal_in, const int nbands_in) : nlocal(nlocal_in), nbands(nbands_in) {};
+    DiagoElpa(const int nlocal_in, const int nbands_in) : DiagoElpa(nlocal_in, nbands_in, DecomposedState) {}
+
+    /// @param overlap_factor_in Factorization state of the supplied overlap buffer.
+    DiagoElpa(const int nlocal_in, const int nbands_in, int& overlap_factor_in)
+        : nlocal(nlocal_in), nbands(nbands_in), overlap_factor(overlap_factor_in) {}
 
     void diag(ModuleBase::MatrixBlock<T>& h_mat,
               ModuleBase::MatrixBlock<T>& s_mat,
@@ -41,6 +45,7 @@ class DiagoElpa
 
     const int nlocal;
     const int nbands;
+    int& overlap_factor;
 };
 
 template <typename T>

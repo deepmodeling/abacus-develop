@@ -1,8 +1,8 @@
+#include "source_base/matrix.h"
+#include "source_pw/module_pwdft/dftu_pw_tools.h"
 #include "gtest/gtest.h"
 #include <complex>
 #include <vector>
-#include "source_base/matrix.h"
-#include "source_pw/module_pwdft/dftu_pw_tools.h"
 
 /***********************************************************************
  * Unit tests for DFT+U PW nspin=1/2/4 support (PR-2)
@@ -34,15 +34,29 @@ class DftuPwTest : public ::testing::Test
 
 TEST_F(DftuPwTest, EnergyWeightsAllNspin)
 {
-    struct Case { int nspin; double expected_weight; double expected_diag; };
+    struct Case
+    {
+        int nspin;
+        double expected_weight;
+        double expected_diag;
+    };
     Case cases[] = {{1, 1.0, 0.5}, {2, 0.5, 0.5}, {4, 0.25, 1.0}};
-    for (const Case& c : cases) {
+    for (const Case &c : cases)
+    {
         double weight_eu = 1;
-        switch (c.nspin) {
-            case 1: weight_eu = 1.0; break;
-            case 2: weight_eu = 0.5; break;
-            case 4: weight_eu = 0.25; break;
-            default: break;
+        switch (c.nspin)
+        {
+        case 1:
+            weight_eu = 1.0;
+            break;
+        case 2:
+            weight_eu = 0.5;
+            break;
+        case 4:
+            weight_eu = 0.25;
+            break;
+        default:
+            break;
         }
         const double diag_coeff = c.nspin == 4 ? 1.0 : 0.5;
         EXPECT_DOUBLE_EQ(weight_eu, c.expected_weight);
@@ -76,14 +90,18 @@ TEST_F(DftuPwTest, PotOnsitePotNspin1_DiagonalLocale)
 
     std::vector<double> occ_mat_c(size, 0.0);
     for (int m = 0; m < m_size; m++)
+    {
         occ_mat_c[m * m_size + m] = 0.3; // diagonal
+    }
 
     std::vector<std::complex<double>> pot_onsite(size, {0.0, 0.0});
     pw::compute_pot_onsite_scalar(pot_onsite.data(), occ_mat_c.data(), U_val, 0.5, 1.0, m_size);
 
     // diagonal: U*(0.5 - 0.3) = 4.0*0.2 = 0.8
     for (int m = 0; m < m_size; m++)
+    {
         EXPECT_DOUBLE_EQ(pot_onsite[m * m_size + m].real(), 0.8);
+    }
     // off-diagonal: U*(0 - 0) = 0
     EXPECT_DOUBLE_EQ(pot_onsite[0 * m_size + 1].real(), 0.0);
     EXPECT_DOUBLE_EQ(pot_onsite[1 * m_size + 0].real(), 0.0);
@@ -131,14 +149,14 @@ TEST_F(DftuPwTest, PotOnsitePotNspin4_PauliTransform)
 
     pw::pauli_to_spin_basis(pot_onsite, m_size);
 
-    EXPECT_DOUBLE_EQ(pot_onsite[0].real(), 0.6);  // 0.5*(1.0+0.2)
+    EXPECT_DOUBLE_EQ(pot_onsite[0].real(), 0.6); // 0.5*(1.0+0.2)
     EXPECT_DOUBLE_EQ(pot_onsite[0].imag(), 0.0);
-    EXPECT_DOUBLE_EQ(pot_onsite[3].real(), 0.4);  // 0.5*(1.0-0.2)
+    EXPECT_DOUBLE_EQ(pot_onsite[3].real(), 0.4); // 0.5*(1.0-0.2)
     EXPECT_DOUBLE_EQ(pot_onsite[3].imag(), 0.0);
-    EXPECT_DOUBLE_EQ(pot_onsite[1].real(), 0.25); // 0.5*0.5
-    EXPECT_DOUBLE_EQ(pot_onsite[1].imag(), 0.15); // 0.5*0.3
-    EXPECT_DOUBLE_EQ(pot_onsite[2].real(), 0.25); // 0.5*0.5
-    EXPECT_DOUBLE_EQ(pot_onsite[2].imag(), -0.15);// -0.5*0.3
+    EXPECT_DOUBLE_EQ(pot_onsite[1].real(), 0.25);  // 0.5*0.5
+    EXPECT_DOUBLE_EQ(pot_onsite[1].imag(), 0.15);  // 0.5*0.3
+    EXPECT_DOUBLE_EQ(pot_onsite[2].real(), 0.25);  // 0.5*0.5
+    EXPECT_DOUBLE_EQ(pot_onsite[2].imag(), -0.15); // -0.5*0.3
 }
 
 // =====================================================================
@@ -160,20 +178,19 @@ TEST_F(DftuPwTest, EnergyNspin12_DiagonalLocale)
 
     // nspin=1: E = U * 1.0 * (0.5^2 + 0.3^2 + 0.2^2) = 4 * 0.38 = 1.52
     std::vector<std::complex<double>> pot_onsite_nspin1(size, {0.0, 0.0});
-    double energy_u = pw::compute_pot_onsite_scalar(
-        pot_onsite_nspin1.data(), occ_mat_c.data(), U_val, 0.5, 1.0, m_size);
+    double energy_u =
+        pw::compute_pot_onsite_scalar(pot_onsite_nspin1.data(), occ_mat_c.data(), U_val, 0.5, 1.0, m_size);
     EXPECT_DOUBLE_EQ(energy_u, 1.52);
 
     // nspin=2: two spin channels, weight_eu = 0.5
     std::vector<double> occ_mat_up(size, 0.0), occ_mat_dn(size, 0.0);
-    occ_mat_up[0] = 0.4; occ_mat_dn[0] = 0.6;
+    occ_mat_up[0] = 0.4;
+    occ_mat_dn[0] = 0.6;
     std::vector<std::complex<double>> pot_onsite_up(size, {0.0, 0.0});
     std::vector<std::complex<double>> pot_onsite_dn(size, {0.0, 0.0});
     energy_u = 0.0;
-    energy_u += pw::compute_pot_onsite_scalar(
-        pot_onsite_up.data(), occ_mat_up.data(), U_val, 0.5, 0.5, m_size);
-    energy_u += pw::compute_pot_onsite_scalar(
-        pot_onsite_dn.data(), occ_mat_dn.data(), U_val, 0.5, 0.5, m_size);
+    energy_u += pw::compute_pot_onsite_scalar(pot_onsite_up.data(), occ_mat_up.data(), U_val, 0.5, 0.5, m_size);
+    energy_u += pw::compute_pot_onsite_scalar(pot_onsite_dn.data(), occ_mat_dn.data(), U_val, 0.5, 0.5, m_size);
     // E = U*0.5*(0.4^2 + 0.6^2) = 4*0.5*(0.16+0.36) = 1.04
     EXPECT_DOUBLE_EQ(energy_u, 1.04);
 }
@@ -189,15 +206,18 @@ TEST_F(DftuPwTest, EnergyNspin4_WithOffDiagonal)
     // 4 Pauli components stored contiguously
     std::vector<double> occ_mat_c(size * 4, 0.0);
     // charge channel (is=0)
-    occ_mat_c[0] = 0.5; occ_mat_c[1] = 0.1;
-    occ_mat_c[2] = 0.1; occ_mat_c[3] = 0.5;
+    occ_mat_c[0] = 0.5;
+    occ_mat_c[1] = 0.1;
+    occ_mat_c[2] = 0.1;
+    occ_mat_c[3] = 0.5;
     // sigma_x (is=1)
-    occ_mat_c[size + 0] = 0.2; occ_mat_c[size + 1] = 0.0;
-    occ_mat_c[size + 2] = 0.0; occ_mat_c[size + 3] = 0.2;
+    occ_mat_c[size + 0] = 0.2;
+    occ_mat_c[size + 1] = 0.0;
+    occ_mat_c[size + 2] = 0.0;
+    occ_mat_c[size + 3] = 0.2;
 
     std::vector<std::complex<double>> pot_onsite(size * 4, {0.0, 0.0});
-    double energy_u = pw::compute_pot_onsite_spinor(
-        pot_onsite.data(), occ_mat_c.data(), U_val, 1.0, weight_eu, m_size);
+    double energy_u = pw::compute_pot_onsite_spinor(pot_onsite.data(), occ_mat_c.data(), U_val, 1.0, weight_eu, m_size);
 
     // is=0: 2*0.25*(0.5*0.5 + 0.1*0.1 + 0.1*0.1 + 0.5*0.5) = 0.26
     // is=1: 2*0.25*(0.2*0.2 + 0 + 0 + 0.2*0.2) = 0.04
@@ -215,17 +235,19 @@ TEST_F(DftuPwTest, LocaleAccumNspin12)
     const int m_size = 3, nkb = 5, begin_ih = 0, m_begin = 0, nbands = 2, ik = 0;
 
     std::vector<std::complex<double>> becp(nbands * nkb, {0.0, 0.0});
-    becp[0 * nkb + 0] = {1.0, 0.0}; becp[0 * nkb + 1] = {0.0, 1.0}; becp[0 * nkb + 2] = {0.5, 0.5};
-    becp[1 * nkb + 0] = {0.5, 0.0}; becp[1 * nkb + 1] = {0.5, -0.5}; becp[1 * nkb + 2] = {0.0, 1.0};
+    becp[0 * nkb + 0] = {1.0, 0.0};
+    becp[0 * nkb + 1] = {0.0, 1.0};
+    becp[0 * nkb + 2] = {0.5, 0.5};
+    becp[1 * nkb + 0] = {0.5, 0.0};
+    becp[1 * nkb + 1] = {0.5, -0.5};
+    becp[1 * nkb + 2] = {0.0, 1.0};
 
     ModuleBase::matrix wg(1, nbands);
     wg(0, 0) = 1.0;
     wg(0, 1) = 0.5;
 
     std::vector<double> occ_mat_c(m_size * m_size, 0.0);
-    pw::accumulate_occ_scalar(
-        occ_mat_c.data(), becp.data(), nbands, nkb,
-        begin_ih, m_begin, m_size, wg, ik);
+    pw::accumulate_occ_scalar(occ_mat_c.data(), becp.data(), nbands, nkb, begin_ih, m_begin, m_size, wg, ik);
 
     // band0, w=1.0: occ_mat[0,0] = 1.0*|1|^2 = 1.0
     // band1, w=0.5: occ_mat[0,0] = 0.5*|0.5|^2 = 0.125
@@ -249,24 +271,22 @@ TEST_F(DftuPwTest, LocaleAccumNspin4_PauliComponents)
     const int m_size = 1, nkb = 2, nbands = 1, npol = 2, ik = 0;
 
     std::vector<std::complex<double>> becp(nbands * 2 * nkb, {0.0, 0.0});
-    becp[0] = {0.8, 0.0};       // becp_up[m=0]
-    becp[nkb] = {0.0, 0.6};     // becp_dn[m=0]
+    becp[0] = {0.8, 0.0};   // becp_up[m=0]
+    becp[nkb] = {0.0, 0.6}; // becp_dn[m=0]
 
     const int size = m_size * m_size;
     std::vector<double> occ_mat_c(size * 4, 0.0);
 
     ModuleBase::matrix wg(1, nbands);
     wg(0, 0) = 1.0;
-    pw::accumulate_occ_spinor(
-        occ_mat_c.data(), becp.data(), nbands, npol, nkb,
-        0, 0, m_size, wg, ik);
+    pw::accumulate_occ_spinor(occ_mat_c.data(), becp.data(), nbands, npol, nkb, 0, 0, m_size, wg, ik);
 
     // becp_up = (0.8, 0), becp_dn = (0, 0.6)
     // occ[0] = 0.64, occ[1] = (0, 0.48), occ[2] = (0, -0.48), occ[3] = 0.36
-    EXPECT_DOUBLE_EQ(occ_mat_c[0], 1.0);    // charge: (0.64+0.36).real = 1.0
-    EXPECT_DOUBLE_EQ(occ_mat_c[1], 0.0);    // sigma_x: (occ1+occ2).real = 0
-    EXPECT_DOUBLE_EQ(occ_mat_c[2], 0.96);   // sigma_y: (occ1-occ2).imag = 0.96
-    EXPECT_DOUBLE_EQ(occ_mat_c[3], 0.28);   // sigma_z: (occ0-occ3).real = 0.28
+    EXPECT_DOUBLE_EQ(occ_mat_c[0], 1.0);  // charge: (0.64+0.36).real = 1.0
+    EXPECT_DOUBLE_EQ(occ_mat_c[1], 0.0);  // sigma_x: (occ1+occ2).real = 0
+    EXPECT_DOUBLE_EQ(occ_mat_c[2], 0.96); // sigma_y: (occ1-occ2).imag = 0.96
+    EXPECT_DOUBLE_EQ(occ_mat_c[3], 0.28); // sigma_z: (occ0-occ3).real = 0.28
 }
 
 // =====================================================================
@@ -286,9 +306,12 @@ TEST_F(DftuPwTest, MultiAtomSplitLayout_Nspin2)
 
     // Simulate occ_mat values for both atoms
     std::vector<double> loc_up[2], loc_dn[2];
-    for (int i = 0; i < 2; i++) {
-        loc_up[i].assign(size, 0.0); loc_dn[i].assign(size, 0.0);
-        for (int m = 0; m < m_size; m++) {
+    for (int i = 0; i < 2; i++)
+    {
+        loc_up[i].assign(size, 0.0);
+        loc_dn[i].assign(size, 0.0);
+        for (int m = 0; m < m_size; m++)
+        {
             loc_up[i][m * m_size + m] = 0.8 - i * 0.1;
             loc_dn[i][m * m_size + m] = 0.2 + i * 0.1;
         }
@@ -297,10 +320,13 @@ TEST_F(DftuPwTest, MultiAtomSplitLayout_Nspin2)
     // --- Write to uom_array using split layout ---
     std::vector<double> uom_array(total, 0.0);
     for (int iat = 0; iat < nat; iat++)
-        for (int mm = 0; mm < size; mm++) {
+    {
+        for (int mm = 0; mm < size; mm++)
+        {
             uom_array[uterm_mat_index[iat] + mm] = loc_up[iat][mm];
             uom_array[half_size + uterm_mat_index[iat] + mm] = loc_dn[iat][mm];
         }
+    }
 
     // Verify split layout: first half = all spin-up, second half = all spin-down
     EXPECT_DOUBLE_EQ(uom_array[0], 0.8);                // atom 0 up diagonal
@@ -310,7 +336,9 @@ TEST_F(DftuPwTest, MultiAtomSplitLayout_Nspin2)
 
     // --- Read back and verify round-trip ---
     for (int iat = 0; iat < nat; iat++)
+    {
         EXPECT_DOUBLE_EQ(uom_array[uterm_mat_index[iat]], loc_up[iat][0]);
+    }
 
     // --- pot_onsite values in split layout ---
     const double U_val = 5.0;
@@ -318,17 +346,17 @@ TEST_F(DftuPwTest, MultiAtomSplitLayout_Nspin2)
     std::vector<std::complex<double>> uterm_mat(total, {0.0, 0.0});
 
     // atom 0 spin-up pot_onsite
-    std::complex<double>* pot_onsite_up_0 = &uterm_mat[0];
+    std::complex<double> *pot_onsite_up_0 = &uterm_mat[0];
     pot_onsite_up_0[0] = U_val * (diag_coeff - loc_up[0][0]);
     // atom 0 spin-down pot_onsite (split layout: offset by half_size)
-    std::complex<double>* pot_onsite_dn_0 = &uterm_mat[half_size];
+    std::complex<double> *pot_onsite_dn_0 = &uterm_mat[half_size];
     pot_onsite_dn_0[0] = U_val * (diag_coeff - loc_dn[0][0]);
 
     EXPECT_DOUBLE_EQ(pot_onsite_up_0[0].real(), -1.5); // 5*(0.5-0.8)
     EXPECT_DOUBLE_EQ(pot_onsite_dn_0[0].real(), 1.5);  // 5*(0.5-0.2)
 
     // Verify no overlap between atoms in pot_onsite arrays
-    std::complex<double>* pot_onsite_up_1 = &uterm_mat[size];
+    std::complex<double> *pot_onsite_up_1 = &uterm_mat[size];
     pot_onsite_up_1[0] = U_val * (diag_coeff - loc_up[1][0]);
     EXPECT_NE(pot_onsite_up_0[0], pot_onsite_up_1[0]);
 }
@@ -346,7 +374,9 @@ TEST_F(DftuPwTest, OnsitePsOpKernel_Nspin2_Npol1)
     // pot_onsite array: 2 atoms, each with tlp1*tlp1 = 25 elements
     std::vector<std::complex<double>> pot_onsite(nat * tlp1 * tlp1);
     for (size_t i = 0; i < pot_onsite.size(); i++)
+    {
         pot_onsite[i] = {static_cast<double>(i + 1), 0.0};
+    }
 
     // ip_m: maps each projector to m index within its atom
     std::vector<int> ip_m = {0, 1, 2, 3, 4, 0, 1, 2, 3, 4};
@@ -356,22 +386,32 @@ TEST_F(DftuPwTest, OnsitePsOpKernel_Nspin2_Npol1)
     // becp: npm * tnp
     std::vector<std::complex<double>> becp(npm * tnp, {0.0, 0.0});
     for (int ib = 0; ib < npm; ib++)
+    {
         for (int ip = 0; ip < tnp; ip++)
+        {
             becp[ib * tnp + ip] = {static_cast<double>(ib + ip + 1), 0.0};
+        }
+    }
 
     // ps: tnp * npm
     std::vector<std::complex<double>> ps(tnp * npm, {0.0, 0.0});
 
     // Kernel logic for npol=1 (EXACT copy from onsite_op.cpp)
-    for (int ib = 0; ib < npm; ib++) {
-        for (int ip = 0; ip < tnp; ip++) {
+    for (int ib = 0; ib < npm; ib++)
+    {
+        for (int ip = 0; ip < tnp; ip++)
+        {
             int m1 = ip_m[ip];
-            if (m1 < 0) continue;
+            if (m1 < 0)
+            {
+                continue;
+            }
             int iat = ip_iat[ip];
-            const std::complex<double>* pot_onsite_iat = pot_onsite.data() + pot_onsite_begin_iat[iat];
+            const std::complex<double> *pot_onsite_iat = pot_onsite.data() + pot_onsite_begin_iat[iat];
             int ip2_begin = ip - m1, ip2_end = ip - m1 + tlp1;
             const int psind = ip * npm + ib;
-            for (int ip2 = ip2_begin; ip2 < ip2_end; ip2++) {
+            for (int ip2 = ip2_begin; ip2 < ip2_end; ip2++)
+            {
                 int m2 = ip_m[ip2];
                 ps[psind] += pot_onsite_iat[m1 * tlp1 + m2] * becp[ib * tnp + ip2];
             }
@@ -382,7 +422,9 @@ TEST_F(DftuPwTest, OnsitePsOpKernel_Nspin2_Npol1)
     // ps[0] = sum_{ip2=0..4} pot_onsite[0*tlp1+ip_m[ip2]] * becp[0*tnp+ip2]
     std::complex<double> expected = {0.0, 0.0};
     for (int ip2 = 0; ip2 < tlp1; ip2++)
+    {
         expected += pot_onsite[ip2] * becp[ip2];
+    }
     EXPECT_DOUBLE_EQ(ps[0].real(), expected.real());
     EXPECT_DOUBLE_EQ(ps[0].imag(), expected.imag());
 }
@@ -396,22 +438,33 @@ TEST_F(DftuPwTest, OnsitePsOpKernel_Nspin2_Npol1)
 class PWIndexSetupTest : public ::testing::Test
 {
   protected:
-    struct AtomInfo { int it, nh, target_l; }; // target_l=-1 if not correlated
+    struct AtomInfo
+    {
+        int it, nh, target_l;
+    }; // target_l=-1 if not correlated
 
-    void setup_indices(const std::vector<AtomInfo>& atoms,
-        std::vector<int>& ip_iat, std::vector<int>& ip_m,
-        std::vector<int>& pot_onsite_begin_iat, int& pot_onsite_total_size)
+    void setup_indices(
+        const std::vector<AtomInfo> &atoms,
+        std::vector<int> &ip_iat,
+        std::vector<int> &ip_m,
+        std::vector<int> &pot_onsite_begin_iat,
+        int &pot_onsite_total_size)
     {
         int ip0 = 0, pot_onsite_begin = 0, npol = 1;
-        ip_iat.resize(0); ip_m.resize(0); pot_onsite_begin_iat.resize(atoms.size());
-        for (const PWIndexSetupTest::AtomInfo& atom : atoms)
+        ip_iat.resize(0);
+        ip_m.resize(0);
+        pot_onsite_begin_iat.resize(atoms.size());
+        for (const PWIndexSetupTest::AtomInfo &atom : atoms)
         {
             ip_iat.resize(ip_iat.size() + atom.nh);
             ip_m.resize(ip_m.size() + atom.nh);
             if (atom.target_l == -1)
             {
                 for (int ip = 0; ip < atom.nh; ip++)
-                { ip_iat[ip0] = static_cast<int>(&atom - &atoms[0]); ip_m[ip0++] = -1; }
+                {
+                    ip_iat[ip0] = static_cast<int>(&atom - &atoms[0]);
+                    ip_m[ip0++] = -1;
+                }
                 pot_onsite_begin_iat[&atom - &atoms[0]] = 0;
             }
             else
@@ -435,12 +488,20 @@ class PWIndexSetupTest : public ::testing::Test
 TEST_F(PWIndexSetupTest, SingleCorrelatedAtom_DOrbital)
 {
     std::vector<AtomInfo> atoms = {{0, 9, 2}}; // s(1)+p(3)+d(5) projectors, l=2
-    std::vector<int> ip_iat, ip_m, pot_onsite_begin_iat; int pot_onsite_total_size;
+    std::vector<int> ip_iat, ip_m, pot_onsite_begin_iat;
+    int pot_onsite_total_size;
     setup_indices(atoms, ip_iat, ip_m, pot_onsite_begin_iat, pot_onsite_total_size);
     // Projectors 0-3 (s+p): m=-1; 4-8 (d): m=0..4
     EXPECT_EQ(ip_iat.size(), 9u);
-    for (int ip = 0; ip < 4; ip++) EXPECT_EQ(ip_m[ip], -1);
-    for (int ip = 4; ip < 9; ip++) { EXPECT_EQ(ip_iat[ip], 0); EXPECT_EQ(ip_m[ip], ip-4); }
+    for (int ip = 0; ip < 4; ip++)
+    {
+        EXPECT_EQ(ip_m[ip], -1);
+    }
+    for (int ip = 4; ip < 9; ip++)
+    {
+        EXPECT_EQ(ip_iat[ip], 0);
+        EXPECT_EQ(ip_m[ip], ip - 4);
+    }
     EXPECT_EQ(pot_onsite_begin_iat[0], 0);
     EXPECT_EQ(pot_onsite_total_size, 25); // 5*5
 }
@@ -448,15 +509,22 @@ TEST_F(PWIndexSetupTest, SingleCorrelatedAtom_DOrbital)
 TEST_F(PWIndexSetupTest, MixedCorrelatedUncorrelated)
 {
     std::vector<AtomInfo> atoms = {{0, 4, 1}, {1, 2, -1}}; // atom0: p-correlated, atom1: not
-    std::vector<int> ip_iat, ip_m, pot_onsite_begin_iat; int pot_onsite_total_size;
+    std::vector<int> ip_iat, ip_m, pot_onsite_begin_iat;
+    int pot_onsite_total_size;
     setup_indices(atoms, ip_iat, ip_m, pot_onsite_begin_iat, pot_onsite_total_size);
     // atom0: s(ip=0)->m=-1, p(ip=1,2,3)->m=0,1,2
-    EXPECT_EQ(ip_iat[0], 0); EXPECT_EQ(ip_m[0], -1);
-    EXPECT_EQ(ip_iat[1], 0); EXPECT_EQ(ip_m[1], 0);
-    EXPECT_EQ(ip_iat[2], 0); EXPECT_EQ(ip_m[2], 1);
-    EXPECT_EQ(ip_iat[3], 0); EXPECT_EQ(ip_m[3], 2);
+    EXPECT_EQ(ip_iat[0], 0);
+    EXPECT_EQ(ip_m[0], -1);
+    EXPECT_EQ(ip_iat[1], 0);
+    EXPECT_EQ(ip_m[1], 0);
+    EXPECT_EQ(ip_iat[2], 0);
+    EXPECT_EQ(ip_m[2], 1);
+    EXPECT_EQ(ip_iat[3], 0);
+    EXPECT_EQ(ip_m[3], 2);
     // atom1: all m=-1
-    EXPECT_EQ(ip_iat[4], 1); EXPECT_EQ(ip_m[4], -1);
-    EXPECT_EQ(ip_iat[5], 1); EXPECT_EQ(ip_m[5], -1);
+    EXPECT_EQ(ip_iat[4], 1);
+    EXPECT_EQ(ip_m[4], -1);
+    EXPECT_EQ(ip_iat[5], 1);
+    EXPECT_EQ(ip_m[5], -1);
     EXPECT_EQ(pot_onsite_total_size, 9); // 3*3 for p-orbital
 }

@@ -19,7 +19,7 @@ run_ml_descriptor_props() {
   #--------------------------------------------
   descriptor_dir="OUT.autotest/MLKEDF_Descriptors"
   if [ -d "$descriptor_dir" ]; then
-    python3 $COLLECT_NPY_MEANS "$descriptor_dir" >>"$props_result_file"
+    python3 $COLLECT_NPY_MEANS "$descriptor_dir" >> "$props_result_file"
   fi
 
 }
@@ -31,7 +31,7 @@ run_ml_rpa_props() {
   #--------------------------------------------
   if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
     Etot_without_rpa=$(grep Etot_without_rpa log.txt | awk 'BEGIN{FS=":"} {print $2}')
-    echo "Etot_without_rpa $Etot_without_rpa" >>$props_result_file
+    echo "Etot_without_rpa $Etot_without_rpa" >> $props_result_file
     rpa_outdir=$(get_input_key_value "rpa_outdir" "INPUT")
     if [ -z "$rpa_outdir" ]; then
       rpa_outdir="./OUT.librpa"
@@ -64,9 +64,9 @@ run_ml_lr_props() {
     lr_files=(OUT.autotest/trans_analysis_*_tda.dat)
     if grep -q '^ LR excitation energies:' "$running_path"; then
       # abs_gauge=none retains an energy-only report; ignore stale optical files.
-      awk '/^ LR excitation energies:/{p=1; next} /End LR excitation energies/{p=0} p && /^[[:space:]]*[0-9]+[[:space:]]/{printf "excitationenergyref%d %.6f\n", ++n, $2}' "$running_path" >>"$props_result_file"
+      awk '/^ LR excitation energies:/{p=1; next} /End LR excitation energies/{p=0} p && /^[[:space:]]*[0-9]+[[:space:]]/{printf "excitationenergyref%d %.6f\n", ++n, $2}' "$running_path" >> "$props_result_file"
     elif [ ${#lr_files[@]} -gt 0 ]; then
-      cat "${lr_files[@]}" | awk '/Excitation Energy/{p=1; next} p && /^[[:space:]]*[0-9]+[[:space:]]/{printf "excitationenergyref%d %.6f\n", ++n, $2} /Occupied orbital/{p=0}' >>$props_result_file
+      cat "${lr_files[@]}" | awk '/Excitation Energy/{p=1; next} p && /^[[:space:]]*[0-9]+[[:space:]]/{printf "excitationenergyref%d %.6f\n", ++n, $2} /Occupied orbital/{p=0}' >> $props_result_file
     fi
     shopt -u nullglob
   fi
@@ -79,37 +79,37 @@ run_ml_rdmft_props() {
   # Check RDMFT method
   #--------------------------------------------
   if ! test -z "$rdmft" && [[ $rdmft == 1 ]]; then
-    echo "" >>$props_result_file
-    echo "The following energy units are in Rydberg:" >>$props_result_file
+    echo "" >> $props_result_file
+    echo "The following energy units are in Rydberg:" >> $props_result_file
 
     E_TV_RDMFT=$(grep "E_TV_RDMFT" "$running_path" | tail -1 | awk '{print $2}')
-    echo "E_TV_RDMFT_ref $E_TV_RDMFT" >>$props_result_file
+    echo "E_TV_RDMFT_ref $E_TV_RDMFT" >> $props_result_file
 
     E_hartree_RDMFT=$(grep "E_hartree_RDMFT" "$running_path" | tail -1 | awk '{print $2}')
-    echo "E_hartree_RDMFT_ref $E_hartree_RDMFT" >>$props_result_file
+    echo "E_hartree_RDMFT_ref $E_hartree_RDMFT" >> $props_result_file
 
     Exc_cwp22_RDMFT=$(grep "Exc_cwp22_RDMFT" "$running_path" | tail -1 | awk '{print $2}')
-    echo "Exc_cwp22_RDMFT_ref $Exc_cwp22_RDMFT" >>$props_result_file
+    echo "Exc_cwp22_RDMFT_ref $Exc_cwp22_RDMFT" >> $props_result_file
 
     E_Ewald=$(grep "E_Ewald" "$running_path" | tail -1 | awk '{print $2}')
-    echo "E_Ewald_ref $E_Ewald" >>$props_result_file
+    echo "E_Ewald_ref $E_Ewald" >> $props_result_file
 
     E_entropy=$(grep "E_entropy(-TS)" "$running_path" | tail -1 | awk '{print $2}')
-    echo "E_entropy_ref $E_entropy" >>$props_result_file
+    echo "E_entropy_ref $E_entropy" >> $props_result_file
 
     E_descf=$(grep "E_descf" "$running_path" | tail -1 | awk '{print $2}')
-    echo "E_descf_ref $E_descf" >>$props_result_file
+    echo "E_descf_ref $E_descf" >> $props_result_file
 
     Etotal_RDMFT=$(grep "Etotal_RDMFT" "$running_path" | tail -1 | awk '{print $2}')
-    echo "Etotal_RDMFT_ref $Etotal_RDMFT" >>$props_result_file
+    echo "Etotal_RDMFT_ref $Etotal_RDMFT" >> $props_result_file
 
     Exc_ksdft=$(grep "Exc_ksdft" "$running_path" | tail -1 | awk '{print $2}')
-    echo "Exc_ksdft_ref $Exc_ksdft" >>$props_result_file
+    echo "Exc_ksdft_ref $Exc_ksdft" >> $props_result_file
 
     E_exx_ksdft=$(grep "E_exx_ksdft" "$running_path" | tail -1 | awk '{print $2}')
-    echo "E_exx_ksdft_ref $E_exx_ksdft" >>$props_result_file
+    echo "E_exx_ksdft_ref $E_exx_ksdft" >> $props_result_file
 
-    echo "" >>$props_result_file
+    echo "" >> $props_result_file
   fi
 
 }

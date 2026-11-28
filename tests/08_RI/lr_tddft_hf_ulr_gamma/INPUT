@@ -10,9 +10,9 @@ nspin             2
 
 #Parameters (2.Iteration)
 ecutwfc           10
-scf_thr           1e-7
+scf_thr           1e-2
 scf_nmax          20
-exx_hybrid_step   1
+exx_hybrid_step   2
 
 #Parameters (3.Basis)
 basis_type        lcao

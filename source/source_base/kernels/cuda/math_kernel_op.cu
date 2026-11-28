@@ -217,6 +217,51 @@ void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
     CHECK_CUBLAS(cublasZgemv(cublas_handle, cutrans, m, n, &alpha, (cuDoubleComplex*)A, lda, (cuDoubleComplex*)X, incx, &beta, (cuDoubleComplex*)Y, incy));
 }
 
+
+template <>
+void trmm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(
+    const char& side, const char& uplo, const char& trans, const char& diag,
+    const int& m, const int& n, const std::complex<float>* alpha,
+    const std::complex<float>* a, const int& lda, std::complex<float>* b, const int& ldb)
+{
+    if (m == 0 || n == 0)
+    {
+        return;
+    }
+    const cublasSideMode_t gpu_side = side == 'L' ? CUBLAS_SIDE_LEFT : CUBLAS_SIDE_RIGHT;
+    const cublasFillMode_t gpu_uplo = uplo == 'U' ? CUBLAS_FILL_MODE_UPPER : CUBLAS_FILL_MODE_LOWER;
+    const cublasOperation_t gpu_trans = GetCublasOperation(trans, true);
+    const cublasDiagType_t gpu_diag = diag == 'U' ? CUBLAS_DIAG_UNIT : CUBLAS_DIAG_NON_UNIT;
+    const cuComplex gpu_alpha = make_cuComplex(alpha->real(), alpha->imag());
+    const cuComplex* gpu_a = reinterpret_cast<const cuComplex*>(a);
+    cuComplex* gpu_b = reinterpret_cast<cuComplex*>(b);
+    // TRMM permits identical input/output B with the same leading dimension.
+    CHECK_CUBLAS(cublasCtrmm(cublas_handle, gpu_side, gpu_uplo, gpu_trans, gpu_diag,
+                            m, n, &gpu_alpha, gpu_a, lda, gpu_b, ldb, gpu_b, ldb));
+}
+
+template <>
+void trmm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
+    const char& side, const char& uplo, const char& trans, const char& diag,
+    const int& m, const int& n, const std::complex<double>* alpha,
+    const std::complex<double>* a, const int& lda, std::complex<double>* b, const int& ldb)
+{
+    if (m == 0 || n == 0)
+    {
+        return;
+    }
+    const cublasSideMode_t gpu_side = side == 'L' ? CUBLAS_SIDE_LEFT : CUBLAS_SIDE_RIGHT;
+    const cublasFillMode_t gpu_uplo = uplo == 'U' ? CUBLAS_FILL_MODE_UPPER : CUBLAS_FILL_MODE_LOWER;
+    const cublasOperation_t gpu_trans = GetCublasOperation(trans, true);
+    const cublasDiagType_t gpu_diag = diag == 'U' ? CUBLAS_DIAG_UNIT : CUBLAS_DIAG_NON_UNIT;
+    const cuDoubleComplex gpu_alpha = make_cuDoubleComplex(alpha->real(), alpha->imag());
+    const cuDoubleComplex* gpu_a = reinterpret_cast<const cuDoubleComplex*>(a);
+    cuDoubleComplex* gpu_b = reinterpret_cast<cuDoubleComplex*>(b);
+    // TRMM permits identical input/output B with the same leading dimension.
+    CHECK_CUBLAS(cublasZtrmm(cublas_handle, gpu_side, gpu_uplo, gpu_trans, gpu_diag,
+                            m, n, &gpu_alpha, gpu_a, lda, gpu_b, ldb, gpu_b, ldb));
+}
+
 template <>
 void gemm_op<float, base_device::DEVICE_GPU>::operator()(const char& transa,
                                                          const char& transb,

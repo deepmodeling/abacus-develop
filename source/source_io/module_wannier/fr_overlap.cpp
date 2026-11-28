@@ -118,7 +118,7 @@ void FR_overlap<T>::calculate_FR()
         {
             const ModuleBase::Vector3<int> R_index = tmp.get_R_index(iR);
             ModuleBase::Vector3<int> R_vector(R_index);
-            auto dtau = ucell->cal_dtau(iat1, iat2, R_vector) * ucell->lat0;
+            ModuleBase::Vector3<double> dtau = ucell->cal_dtau(iat1, iat2, R_vector) * ucell->lat0;
             T* data_pointer = tmp.get_pointer(iR);
             this->cal_FR_IJR(iat1, iat2, paraV, dtau, data_pointer);
         }
@@ -296,7 +296,7 @@ std::map<std::pair<int, int>, double> FR_overlap<T>::psi_inter(const int &T1,
 {
     std::map<std::pair<int, int>, double> psi_value;
 
-    for (auto i : LN_pair1)
+    for (std::pair<int, int> i : LN_pair1)
     {
         int L1 = i.first;
         int N1 = i.second;

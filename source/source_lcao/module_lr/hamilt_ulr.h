@@ -40,14 +40,14 @@ namespace LR
             const std::vector<int>& nvirt,   ///< {up, down}
             const UnitCell& ucell_in,
             const std::vector<double>& orb_cutoff,
-            Grid_Driver& gd_in,
+            const Grid_Driver& gd_in,
             const psi::Psi<T>& psi_ks_in,
             const ModuleBase::matrix& eig_ks,
 #ifdef __EXX
             std::weak_ptr<Exx_LRI<T>> exx_lri_in,
             const double& exx_alpha,
 #endif
-            std::vector<std::shared_ptr<PotHxcLR>>& pot_in,
+            const std::vector<std::shared_ptr<PotHxcLR>>& pot_in,
             const K_Vectors& kv_in,
             const std::vector<Parallel_Blkcyclic>& pX_in,   ///< {up, down}
             const Parallel_Blkcyclic& pc_in,

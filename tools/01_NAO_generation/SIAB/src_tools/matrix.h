@@ -4,7 +4,7 @@ class matrix
 {
     /* data */
   public:
-    double* c; /* Holds the data */
+    double *c; /* Holds the data */
     int nr;
     int nc; /* Number of rows and columns */
     int hermetian;
@@ -12,33 +12,27 @@ class matrix
 
     /* Constructors and destructor */
     matrix(const int nrows = 1, const int ncols = 1);
-    matrix(const matrix& m1); /* copy constructor */
+    matrix(const matrix &m1); /* copy constructor */
     ~matrix();
 
     void create(const int nrow, const int ncol);
-    void operator=(const matrix& m1); /* Nonstandard: returns void */
+    void operator=(const matrix &m1); /* Nonstandard: returns void */
 
-    double& operator()(const int ir, const int ic)
-    {
-        return c[nc * ir + ic];
-    };
+    double &operator()(const int ir, const int ic) { return c[nc * ir + ic]; };
 
-    const double& operator()(const int ir, const int ic) const
-    {
-        return c[nc * ir + ic];
-    };
+    const double &operator()(const int ir, const int ic) const { return c[nc * ir + ic]; };
 
     //	inline double &operator()(int i,int j) const
     //	    { return c[nc*i+j]; }
 
-    friend matrix operator+(const matrix& m1, const matrix& m2);
-    friend matrix operator-(const matrix& m1, const matrix& m2);
-    friend matrix operator*(const matrix& m1, const matrix& m2);
-    friend matrix operator*(const double& s, const matrix& m);
-    friend matrix operator*(const matrix& m, const double& s);
-    void operator*=(const double& s);
-    void operator+=(const matrix& m);
-    void operator-=(const matrix& m);
+    friend matrix operator+(const matrix &m1, const matrix &m2);
+    friend matrix operator-(const matrix &m1, const matrix &m2);
+    friend matrix operator*(const matrix &m1, const matrix &m2);
+    friend matrix operator*(const double &s, const matrix &m);
+    friend matrix operator*(const matrix &m, const double &s);
+    void operator*=(const double &s);
+    void operator+=(const matrix &m);
+    void operator-=(const matrix &m);
 
     /* member function: */
     matrix Inverse(void);

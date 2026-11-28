@@ -2,15 +2,14 @@
 
 #include "../src_parallel/parallel_common.h"
 
-ReadData::ReadData() : test(0)
-{
-    weight = new double[1];
-}
+ReadData::ReadData() : test(0) { weight = new double[1]; }
 
 ReadData::~ReadData()
 {
     if (TEST1)
+    {
         cout << "\n ~ReadData()" << endl;
+    }
     delete[] weight;
 }
 
@@ -21,16 +20,16 @@ ReadData::~ReadData()
 // The number of ie is : ne
 // The number of k points : nks;
 //==========================================================
-void ReadData::OverlapQandS(const string& name)
+void ReadData::OverlapQandS(const string &name)
 {
     TITLE(ofs_running, "ReadData", "OverlapQandS");
 
     ifstream ifs;
 
-    double* weighttmp = new double[NKSTOT];
-    double* carkx = new double[NKSTOT];
-    double* carky = new double[NKSTOT];
-    double* carkz = new double[NKSTOT];
+    double *weighttmp = new double[NKSTOT];
+    double *carkx = new double[NKSTOT];
+    double *carky = new double[NKSTOT];
+    double *carkz = new double[NKSTOT];
     ZEROS(weighttmp, NKSTOT);
 
     if (MY_RANK == 0)
@@ -143,7 +142,9 @@ void ReadData::OverlapQandS(const string& name)
             for (int ik = 0; ik < NKSTOT; ik++)
             {
                 if (ik % 4 == 0)
+                {
                     ofs_running << endl;
+                }
                 ifs >> carkx[ik] >> carky[ik] >> carkz[ik] >> weighttmp[ik];
                 ofs_running << " " << carkx[ik] << " " << carky[ik] << " " << carkz[ik] << " " << weighttmp[ik] << endl;
             }
@@ -152,7 +153,9 @@ void ReadData::OverlapQandS(const string& name)
 
         double sum = 0;
         for (int ik = 0; ik < NKSTOT; ik++)
+        {
             sum += weighttmp[ik];
+        }
 
         // ofs_running << "\n sum kpoint weight = " << sum;
         if (abs(sum - 1.0) > 1.0e-5)
@@ -215,7 +218,7 @@ void ReadData::OverlapQandS(const string& name)
     return;
 }
 
-void ReadData::OverlapSq1q2(ifstream& ifs)
+void ReadData::OverlapSq1q2(ifstream &ifs)
 {
     //	TITLE("ReadData", "OverlapSq1q2");
     timer::tick("ReadData", "OverlapSq1q2");
@@ -245,7 +248,9 @@ void ReadData::OverlapSq1q2(ifstream& ifs)
     }
 
     if (CALSPI == 0)
+    {
         return;
+    }
 
     if (!USEPW)
     {
@@ -260,8 +265,8 @@ void ReadData::OverlapSq1q2(ifstream& ifs)
     if (!USEPW)
     {
         const int ndata = NWFCALL * NWFCALL * NE * NE;
-        double* buffera = new double[ndata];
-        double* bufferb = new double[ndata];
+        double *buffera = new double[ndata];
+        double *bufferb = new double[ndata];
         for (int ik = 0; ik < NKSTOT; ik++)
         {
             ZEROS(buffera, ndata);
@@ -362,10 +367,12 @@ void ReadData::OverlapSq1q2(ifstream& ifs)
     return;
 }
 
-void ReadData::OverlapQ(ifstream& ifs)
+void ReadData::OverlapQ(ifstream &ifs)
 {
     if (CALSPI == 0)
+    {
         return;
+    }
     //	TITLE("ReadData", "OverlapQ");
     timer::tick("ReadData", "OverlapQ");
 
@@ -401,8 +408,8 @@ void ReadData::OverlapQ(ifstream& ifs)
         double a, b;
 #ifdef __MPI
         const int ndata = NBANDS * NWFCALL * NE;
-        double* buffera = new double[ndata];
-        double* bufferb = new double[ndata];
+        double *buffera = new double[ndata];
+        double *bufferb = new double[ndata];
         for (int ik = 0; ik < NKSTOT; ik++)
         {
             ZEROS(buffera, ndata);
@@ -500,7 +507,7 @@ void ReadData::OverlapQ(ifstream& ifs)
 // Readin inverse S matrix.
 // Sinv is fail to use if C4 change.
 //==========================================================
-void ReadData::OverlapSinv(const string& name)
+void ReadData::OverlapSinv(const string &name)
 {
     //	TITLE("ReadData", "OverlapSinv");
     ifstream ifs(name.c_str());

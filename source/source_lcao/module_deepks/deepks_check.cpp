@@ -15,9 +15,9 @@ void DeePKS_domain::check_tensor(const torch::Tensor& tensor, const std::string&
     std::ofstream ofs(filename.c_str());
     ofs << std::setprecision(10);
 
-    auto sizes = tensor.sizes();
+    at::IntArrayRef sizes = tensor.sizes();
     int ndim = sizes.size();
-    auto data_ptr = tensor.data_ptr<T_tensor>();
+    T_tensor* data_ptr = tensor.data_ptr<T_tensor>();
     int64_t numel = tensor.numel();
 
     // stride for each dimension

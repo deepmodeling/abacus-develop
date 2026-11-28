@@ -4,8 +4,38 @@ if(ENABLE_MPI)
 endif()
 
 addtest(
+  TARGET MODULE_CELL_mdcell_cif_io
+  LIBS parameter
+       base
+       device
+       cell
+       domain_decomposition
+       neighbor
+       symmetry
+  SOURCES test_mdcell_cif_io.cpp
+          ${_adapter_test_main}
+          ../module_neighlist/neighbor_search.cpp
+          ../module_neighlist/bin_manager.cpp
+          ../module_neighlist/page_allocator.cpp)
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_CELL_mdcell_cif_io_np2
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            $<TARGET_FILE:MODULE_CELL_mdcell_cif_io>
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  set_tests_properties(MODULE_CELL_mdcell_cif_io_np2
+                       PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+endif()
+
+addtest(
   TARGET MODULE_CELL_mdcell_adapter
-  LIBS parameter base device cell domain_decomposition neighbor symmetry
+  LIBS parameter
+       base
+       device
+       cell
+       domain_decomposition
+       neighbor
+       symmetry
   SOURCES test_mdcell_adapter.cpp
           ${_adapter_test_main}
           ../module_neighlist/neighbor_search.cpp
@@ -32,10 +62,7 @@ endif()
 addtest(
   TARGET MODULE_CELL_read_orb_boundary_test
   LIBS base device
-  SOURCES test_read_orb.cpp
-          ../read_orb.cpp
-          ../atom_spec.cpp
-          ../atom_pseudo.cpp
+  SOURCES test_read_orb.cpp ../read_orb.cpp ../atom_spec.cpp ../atom_pseudo.cpp
           ../pseudo.cpp)
 
 addtest(
@@ -45,24 +72,39 @@ addtest(
 
 addtest(
   TARGET MODULE_CELL_klist_validation_test
-  LIBS parameter base device cell domain_decomposition neighbor symmetry
-  SOURCES test_klist.cpp
-          ../module_neighlist/neighbor_search.cpp
+  LIBS parameter
+       base
+       device
+       cell
+       domain_decomposition
+       neighbor
+       symmetry
+  SOURCES test_klist.cpp ../module_neighlist/neighbor_search.cpp
           ../module_neighlist/bin_manager.cpp
           ../module_neighlist/page_allocator.cpp)
 
 addtest(
   TARGET MODULE_CELL_read_species_malformed_test
-  LIBS parameter base device cell domain_decomposition neighbor symmetry
-  SOURCES test_read_atom_species.cpp
-          ../module_neighlist/neighbor_search.cpp
+  LIBS parameter
+       base
+       device
+       cell
+       domain_decomposition
+       neighbor
+       symmetry
+  SOURCES test_read_atom_species.cpp ../module_neighlist/neighbor_search.cpp
           ../module_neighlist/bin_manager.cpp
           ../module_neighlist/page_allocator.cpp)
 
 addtest(
   TARGET MODULE_CELL_read_atoms_malformed_test
-  LIBS parameter base device cell domain_decomposition neighbor symmetry
-  SOURCES test_read_atoms.cpp
-          ../module_neighlist/neighbor_search.cpp
+  LIBS parameter
+       base
+       device
+       cell
+       domain_decomposition
+       neighbor
+       symmetry
+  SOURCES test_read_atoms.cpp ../module_neighlist/neighbor_search.cpp
           ../module_neighlist/bin_manager.cpp
           ../module_neighlist/page_allocator.cpp)

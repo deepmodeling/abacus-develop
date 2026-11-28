@@ -7,16 +7,17 @@ template <typename FPTYPE>
 struct onsite_ps_op<FPTYPE, base_device::DEVICE_CPU>
 {
     // kernel for DeltaSpin calculation
-    void operator()(const base_device::DEVICE_CPU* /*dev*/,
-                    const int& npm,
-                    const int npol,
-                    const int* ip_iat,
-                    const int& tnp,
-                    const std::complex<FPTYPE>* lambda_array,
-                    std::complex<FPTYPE>* ps,
-                    const std::complex<FPTYPE>* becp)
+    void operator()(
+        const base_device::DEVICE_CPU * /*dev*/,
+        const int &npm,
+        const int npol,
+        const int *ip_iat,
+        const int &tnp,
+        const std::complex<FPTYPE> *lambda_array,
+        std::complex<FPTYPE> *ps,
+        const std::complex<FPTYPE> *becp)
     {
-        if(npol == 2)
+        if (npol == 2)
         {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
@@ -29,10 +30,10 @@ struct onsite_ps_op<FPTYPE, base_device::DEVICE_CPU>
                     int iat = ip_iat[ip];
                     const int psind = ip * npm + ib2;
                     const int becpind = ib2 * tnp + ip;
-                    ps[psind] += lambda_array[iat * 4] * becp[becpind]
-                                + lambda_array[iat * 4 + 2] * becp[becpind + tnp];
-                    ps[psind + 1] += lambda_array[iat * 4 + 1] * becp[becpind]
-                                + lambda_array[iat * 4 + 3] * becp[becpind + tnp];
+                    ps[psind] +=
+                        lambda_array[iat * 4] * becp[becpind] + lambda_array[iat * 4 + 2] * becp[becpind + tnp];
+                    ps[psind + 1] +=
+                        lambda_array[iat * 4 + 1] * becp[becpind] + lambda_array[iat * 4 + 3] * becp[becpind + tnp];
                 } // end ip
             } // end ib
         }
@@ -55,80 +56,87 @@ struct onsite_ps_op<FPTYPE, base_device::DEVICE_CPU>
     };
 
     // kernel for DFT+U calculation
-    void operator()(const base_device::DEVICE_CPU* dev,
-      const int& npm,
-      const int npol,
-      const int* orb_l_iat,
-      const int* ip_iat,
-      const int* ip_m,
-      const int* pot_onsite_begin_iat,
-      const int& tnp,
-      const std::complex<FPTYPE>* pot_onsite,
-      std::complex<FPTYPE>* ps,
-      const std::complex<FPTYPE>* becp)
-  {
-    if(npol == 2)
+    void operator()(
+        const base_device::DEVICE_CPU *dev,
+        const int &npm,
+        const int npol,
+        const int *orb_l_iat,
+        const int *ip_iat,
+        const int *ip_m,
+        const int *pot_onsite_begin_iat,
+        const int &tnp,
+        const std::complex<FPTYPE> *pot_onsite,
+        std::complex<FPTYPE> *ps,
+        const std::complex<FPTYPE> *becp)
     {
+        if (npol == 2)
+        {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
-        for (int ib = 0; ib < npm / npol; ib++)
-        {
-            for (int ip = 0; ip < tnp; ip++)
+            for (int ib = 0; ib < npm / npol; ib++)
             {
-                int m1 = ip_m[ip];
-                if(m1 < 0) continue;
-                int ib2 = ib * npol;
-                int iat = ip_iat[ip];
-                const std::complex<FPTYPE>* pot_onsite_iat = pot_onsite + pot_onsite_begin_iat[iat];
-                int orb_l = orb_l_iat[iat];
-                int tlp1 = 2 * orb_l + 1;
-                int tlp1_2 = tlp1 * tlp1;
-                int ip2_begin = ip - m1;
-                int ip2_end = ip - m1 + tlp1;
-                const int psind = ip * npm + ib2;
-                for(int ip2 = ip2_begin;ip2<ip2_end;ip2++)
+                for (int ip = 0; ip < tnp; ip++)
                 {
-                    const int becpind = ib2 * tnp + ip2;
-                    int m2 = ip_m[ip2];
-                    const int index_mm = m1 * tlp1 + m2;
-                    ps[psind] += pot_onsite_iat[index_mm] * becp[becpind]
-                                + pot_onsite_iat[index_mm + tlp1_2 * 2] * becp[becpind + tnp];
-                    ps[psind + 1] += pot_onsite_iat[index_mm + tlp1_2 * 1] * becp[becpind]
-                                + pot_onsite_iat[index_mm + tlp1_2 * 3] * becp[becpind + tnp];
-                }
-            } // end ip
-        } // end ib
-    }
-    else // npol == 1, nspin=1 or nspin=2
-    {
+                    int m1 = ip_m[ip];
+                    if (m1 < 0)
+                    {
+                        continue;
+                    }
+                    int ib2 = ib * npol;
+                    int iat = ip_iat[ip];
+                    const std::complex<FPTYPE> *pot_onsite_iat = pot_onsite + pot_onsite_begin_iat[iat];
+                    int orb_l = orb_l_iat[iat];
+                    int tlp1 = 2 * orb_l + 1;
+                    int tlp1_2 = tlp1 * tlp1;
+                    int ip2_begin = ip - m1;
+                    int ip2_end = ip - m1 + tlp1;
+                    const int psind = ip * npm + ib2;
+                    for (int ip2 = ip2_begin; ip2 < ip2_end; ip2++)
+                    {
+                        const int becpind = ib2 * tnp + ip2;
+                        int m2 = ip_m[ip2];
+                        const int index_mm = m1 * tlp1 + m2;
+                        ps[psind] += pot_onsite_iat[index_mm] * becp[becpind] +
+                                     pot_onsite_iat[index_mm + tlp1_2 * 2] * becp[becpind + tnp];
+                        ps[psind + 1] += pot_onsite_iat[index_mm + tlp1_2 * 1] * becp[becpind] +
+                                         pot_onsite_iat[index_mm + tlp1_2 * 3] * becp[becpind + tnp];
+                    }
+                } // end ip
+            } // end ib
+        }
+        else // npol == 1, nspin=1 or nspin=2
+        {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
-        for (int ib = 0; ib < npm; ib++)
-        {
-            for (int ip = 0; ip < tnp; ip++)
+            for (int ib = 0; ib < npm; ib++)
             {
-                int m1 = ip_m[ip];
-                if(m1 < 0) continue;
-                int iat = ip_iat[ip];
-                const std::complex<FPTYPE>* pot_onsite_iat = pot_onsite + pot_onsite_begin_iat[iat];
-                int orb_l = orb_l_iat[iat];
-                int tlp1 = 2 * orb_l + 1;
-                int ip2_begin = ip - m1;
-                int ip2_end = ip - m1 + tlp1;
-                const int psind = ip * npm + ib;
-                for(int ip2 = ip2_begin;ip2<ip2_end;ip2++)
+                for (int ip = 0; ip < tnp; ip++)
                 {
-                    const int becpind = ib * tnp + ip2;
-                    int m2 = ip_m[ip2];
-                    const int index_mm = m1 * tlp1 + m2;
-                    ps[psind] += pot_onsite_iat[index_mm] * becp[becpind];
-                }
-            } // end ip
-        } // end ib
+                    int m1 = ip_m[ip];
+                    if (m1 < 0)
+                    {
+                        continue;
+                    }
+                    int iat = ip_iat[ip];
+                    const std::complex<FPTYPE> *pot_onsite_iat = pot_onsite + pot_onsite_begin_iat[iat];
+                    int orb_l = orb_l_iat[iat];
+                    int tlp1 = 2 * orb_l + 1;
+                    int ip2_begin = ip - m1;
+                    int ip2_end = ip - m1 + tlp1;
+                    const int psind = ip * npm + ib;
+                    for (int ip2 = ip2_begin; ip2 < ip2_end; ip2++)
+                    {
+                        const int becpind = ib * tnp + ip2;
+                        int m2 = ip_m[ip2];
+                        const int index_mm = m1 * tlp1 + m2;
+                        ps[psind] += pot_onsite_iat[index_mm] * becp[becpind];
+                    }
+                } // end ip
+            } // end ib
+        }
     }
-  }
 };
 
 template struct onsite_ps_op<float, base_device::DEVICE_CPU>;

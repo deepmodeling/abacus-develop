@@ -42,37 +42,42 @@ class DFPT_Pert;
 class DFPT_HamiltShift : public DFPT_Stern::LinearOperator
 {
   public:
-    DFPT_HamiltShift(const UnitCell& ucell,
-                     ModulePW::PW_Basis* pw_rho,
-                     ModulePW::PW_Basis_K* pw_wfc,
-                     const std::vector<double>& veff_r,
-                     const DFPT_Pert* pert);
+    DFPT_HamiltShift(
+        const UnitCell &ucell,
+        ModulePW::PW_Basis *pw_rho,
+        ModulePW::PW_Basis_K *pw_wfc,
+        const std::vector<double> &veff_r,
+        const DFPT_Pert *pert);
     ~DFPT_HamiltShift();
 
-    DFPT_HamiltShift(const DFPT_HamiltShift&) = delete;
-    DFPT_HamiltShift& operator=(const DFPT_HamiltShift&) = delete;
+    DFPT_HamiltShift(const DFPT_HamiltShift &) = delete;
+    DFPT_HamiltShift &operator=(const DFPT_HamiltShift &) = delete;
 
     /// Fix the (k, q) context and cache the k+q projector set; the
     /// eigenvalue shift (Ry) is set per solve through set_shift.
-    void set_context(const ModuleBase::Vector3<double>& q_cart, int k_idx);
+    void set_context(const ModuleBase::Vector3<double> &q_cart, int k_idx);
     void set_shift(double shift);
     int dimension() const override;
 
-    void apply(const std::complex<double>* x, std::complex<double>* y) const override;
+    /// the k+q basis cached by the last set_context (the nscf path
+    /// reads it for the kinetic preconditioner)
+    const DFPT_KQ_Basis &basis() const { return kq_; }
+
+    void apply(const std::complex<double> *x, std::complex<double> *y) const override;
 
     /// debug: <x|T + Vnl|x> without the veff convolution (design-phase
     /// validation diagnostics)
-    double debug_t_vnl(const std::vector<std::complex<double>>& x) const;
+    double debug_t_vnl(const std::vector<std::complex<double>> &x) const;
 
     /// debug: <x|V|x> through the ground-state wfc-basis k-indexed FFT
     /// path (validation of the rho-grid scatter/gather convolution)
-    double debug_v_wfc(const std::vector<std::complex<double>>& x) const;
+    double debug_v_wfc(const std::vector<std::complex<double>> &x) const;
 
   private:
-    const UnitCell* ucell_ = nullptr;
-    ModulePW::PW_Basis* pw_rho_ = nullptr;
-    ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
-    const DFPT_Pert* pert_ = nullptr;
+    const UnitCell *ucell_ = nullptr;
+    ModulePW::PW_Basis *pw_rho_ = nullptr;
+    ModulePW::PW_Basis_K *pw_wfc_ = nullptr;
+    const DFPT_Pert *pert_ = nullptr;
     std::vector<double> veff_r_;
     double tpiba2_ = 0.0;
     int nrxx_ = 0;

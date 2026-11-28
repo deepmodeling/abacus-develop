@@ -8,11 +8,8 @@
 
 #include <algorithm>
 #include <fstream>
-#include <limits>
-#include <map>
 #include <sstream>
 #include <stdexcept>
-#include <utility>
 
 namespace MD_func
 {
@@ -240,7 +237,14 @@ void init_vel(
             read_vel(unit, velocities.data());
             double kinetic = 0.0;
             const double current = current_temp(kinetic, unit.nat, frozen_freedom, masses.data(), velocities.data());
-            if (!restart && temperature >= 0.0 && current > 0.0)
+            if (!restart && temperature > 0.0 && current <= 0.0)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "MD_func::init_vel",
+                    "init_vel is set to true, but no velocity information was found in the STRU file "
+                    "(all velocities are zero). Set init_vel to false to use random initial velocities.");
+            }
+            if (!restart && temperature >= 0.0)
             {
                 rescale_vel(unit.nat, temperature, masses.data(), frozen_freedom, velocities.data());
             }
@@ -308,7 +312,14 @@ void init_vel(
     {
         double kinetic = 0.0;
         const double current = current_temp(kinetic, mdcell, frozen_freedom);
-        if (!restart && current > 0.0 && temperature > 0.0)
+        if (!restart && temperature > 0.0 && current <= 0.0)
+        {
+            ModuleBase::WARNING_QUIT(
+                "MD_func::init_vel",
+                "init_vel is set to true, but no velocity information was found in the STRU file "
+                "(all velocities are zero). Set init_vel to false to use random initial velocities.");
+        }
+        if (!restart && temperature > 0.0)
         {
             const double factor = sqrt(temperature / current);
             for (LocalAtom &atom : atoms)
@@ -445,6 +456,21 @@ void print_stress(std::ofstream &ofs, const ModuleBase::matrix &virial, const Mo
         << std::endl;
     ofs << " MD PRESSURE (ELECTRONS+IONS)  : " << stress_scalar * unit_transform << " kbar" << std::endl;
 
+    ofs << " VIRIAL (kbar):" << std::endl;
+    ofs << std::setprecision(12);
+    for (int i = 0; i < 3; ++i)
+    {
+        ofs << " " << virial(i, 0) * unit_transform << " " << virial(i, 1) * unit_transform
+            << " " << virial(i, 2) * unit_transform << std::endl;
+    }
+    ofs << " MD TOTAL STRESS (kbar):" << std::endl;
+    for (int i = 0; i < 3; ++i)
+    {
+        ofs << " " << stress(i, 0) * unit_transform << " " << stress(i, 1) * unit_transform
+            << " " << stress(i, 2) * unit_transform << std::endl;
+    }
+    ofs << std::setprecision(8);
+
     // one should use 'print_stress' function in ../source/source_io/output_log.cpp
     /*
         ofs.unsetf(std::ios::fixed);
@@ -459,207 +485,6 @@ void print_stress(std::ofstream &ofs, const ModuleBase::matrix &virial, const Mo
     */
 
     return;
-}
-
-namespace
-{
-void write_dump_rows(
-    std::ostream &output,
-    const std::string &text,
-    const std::int64_t begin,
-    const std::int64_t end)
-{
-    // Spatial ownership is unrelated to the stable type-major atom index.
-    std::map<std::int64_t, std::string> rows;
-    std::istringstream input(text);
-    std::string line;
-    while (std::getline(input, line))
-    {
-        std::istringstream record(line);
-        std::int64_t index = 0;
-        if (!(record >> index) || index < begin || index >= end)
-        {
-            ModuleBase::WARNING_QUIT("MD_func::dump_info", "invalid MD_dump atom index.");
-        }
-        const bool inserted = rows.emplace(index, line).second;
-        if (!inserted)
-        {
-            ModuleBase::WARNING_QUIT("MD_func::dump_info", "duplicate MD_dump atom index.");
-        }
-    }
-    const std::size_t expected_count = static_cast<std::size_t>(end - begin);
-    if (rows.size() != expected_count)
-    {
-        ModuleBase::WARNING_QUIT("MD_func::dump_info", "missing MD_dump atoms.");
-    }
-    for (const auto &row : rows)
-    {
-        output << row.second << "\n";
-    }
-}
-} // namespace
-
-void dump_info(
-    const int &step,
-    const std::string &global_out_dir,
-    const MDCell &mdcell,
-    const MD_para &mdp,
-    const bool cal_stress,
-    const ModuleBase::matrix &virial)
-{
-    const int max_batch_bytes = 1024 * 1024;
-    dump_info(step, global_out_dir, mdcell, mdp, cal_stress, virial, max_batch_bytes);
-}
-
-void dump_info(
-    const int &step,
-    const std::string &global_out_dir,
-    const MDCell &mdcell,
-    const MD_para &mdp,
-    const bool cal_stress,
-    const ModuleBase::matrix &virial,
-    const int max_batch_bytes)
-{
-    if (max_batch_bytes <= 0)
-    {
-        throw std::invalid_argument("MD_dump batch budget must be positive.");
-    }
-    std::stringstream file;
-    file << global_out_dir << "MD_dump";
-    const double unit_pos = mdcell.lat0() / ModuleBase::ANGSTROM_AU;
-    const double unit_vel = 1.0 / ModuleBase::ANGSTROM_AU / ModuleBase::AU_to_FS;
-    const double unit_virial = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-    const double unit_force = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
-    std::ostringstream header;
-    header << "MDSTEP:  " << step << "\n" << std::fixed << std::setprecision(12);
-    header << "LATTICE_CONSTANT: " << mdcell.lat0() * ModuleBase::BOHR_TO_A << " Angstrom\nLATTICE_VECTORS\n";
-    header << "  " << mdcell.latvec().e11 << "  " << mdcell.latvec().e12 << "  " << mdcell.latvec().e13 << "\n";
-    header << "  " << mdcell.latvec().e21 << "  " << mdcell.latvec().e22 << "  " << mdcell.latvec().e23 << "\n";
-    header << "  " << mdcell.latvec().e31 << "  " << mdcell.latvec().e32 << "  " << mdcell.latvec().e33 << "\n";
-    if (cal_stress && mdp.dump_virial)
-    {
-        header << "VIRIAL (kbar)\n";
-        for (int i = 0; i < 3; ++i)
-        {
-            header << "  " << virial(i, 0) * unit_virial << "  " << virial(i, 1) * unit_virial << "  "
-                   << virial(i, 2) * unit_virial << "\n";
-        }
-    }
-    header << "INDEX    LABEL    POSITION (Angstrom)";
-    if (mdp.dump_force)
-    {
-        header << "    FORCE (eV/Angstrom)";
-    }
-    if (mdp.dump_vel)
-    {
-        header << "    VELOCITY (Angstrom/fs)";
-    }
-    header << "\n";
-    std::vector<std::int64_t> type_offsets(mdcell.type_atom_counts().size() + 1, 0);
-    for (std::size_t it = 0; it < mdcell.type_atom_counts().size(); ++it)
-    {
-        type_offsets[it + 1] = type_offsets[it] + mdcell.type_atom_counts()[it];
-    }
-    const auto format_atom = [&](const LocalAtom &atom) -> std::string
-    {
-        std::ostringstream row;
-        row << std::fixed << std::setprecision(12);
-        row << "  " << type_offsets[atom.type] + atom.type_index << "  " << mdcell.type_labels()[atom.type] << "  "
-            << atom.cart.x * unit_pos << "  " << atom.cart.y * unit_pos << "  " << atom.cart.z * unit_pos;
-        if (mdp.dump_force)
-        {
-            row << "  " << atom.force.x * unit_force << "  " << atom.force.y * unit_force << "  "
-                << atom.force.z * unit_force;
-        }
-        if (mdp.dump_vel)
-        {
-            row << "  " << atom.vel.x * unit_vel << "  " << atom.vel.y * unit_vel << "  " << atom.vel.z * unit_vel;
-        }
-        row << "\n";
-        return row.str();
-    };
-    std::vector<std::pair<std::int64_t, const LocalAtom *>> ordered_atoms;
-    const std::size_t local_atom_count = mdcell.owned_atoms().size();
-    ordered_atoms.reserve(local_atom_count);
-    int local_row_bytes = 0;
-    int local_overflow = 0;
-    const std::size_t maximum_count = std::numeric_limits<int>::max();
-    for (const LocalAtom &atom : mdcell.owned_atoms())
-    {
-        const std::int64_t index = type_offsets[atom.type] + atom.type_index;
-        const LocalAtom *atom_pointer = &atom;
-        ordered_atoms.emplace_back(index, atom_pointer);
-        const std::string row = format_atom(atom);
-        if (row.size() > maximum_count)
-        {
-            local_overflow = 1;
-        }
-        else
-        {
-            const int row_bytes = static_cast<int>(row.size());
-            local_row_bytes = std::max(local_row_bytes, row_bytes);
-        }
-    }
-    std::sort(
-        ordered_atoms.begin(), ordered_atoms.end(),
-        [](const std::pair<std::int64_t, const LocalAtom *> &left,
-            const std::pair<std::int64_t, const LocalAtom *> &right) { return left.first < right.first; });
-    ModuleBase::CommunicationDomain domain;
-#ifdef __MPI
-    domain.initialize(mdcell.communicator());
-#endif
-    if (domain.max(local_overflow) != 0)
-    {
-        throw std::length_error("A single MD_dump row exceeds the MPI count range.");
-    }
-    const int maximum_row_bytes = domain.max(local_row_bytes);
-    const int row_bytes = std::max(maximum_row_bytes, 1);
-    const int batch_bytes = std::max(max_batch_bytes, row_bytes);
-    const std::int64_t batch_atoms = batch_bytes / row_bytes;
-    std::ofstream ofs;
-    if (domain.rank() == 0)
-    {
-        const std::string filename = file.str();
-        const std::ios_base::openmode mode = step == 0 ? std::ios::trunc : std::ios::app;
-        ofs.open(filename.c_str(), mode);
-        if (!ofs)
-        {
-            ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot open MD_dump.");
-        }
-        ofs << header.str();
-    }
-    std::size_t local_index = 0;
-    for (std::int64_t begin = 0; begin < type_offsets.back();)
-    {
-        // Each global-index range contains at most batch_atoms rows across all ranks.
-        // Counts and displacements are bounded per batch, independent of frame size.
-        const std::int64_t remaining = type_offsets.back() - begin;
-        const std::int64_t count = std::min(batch_atoms, remaining);
-        const std::int64_t end = begin + count;
-        std::ostringstream local;
-        while (local_index < ordered_atoms.size() && ordered_atoms[local_index].first < end)
-        {
-            const LocalAtom &atom = *ordered_atoms[local_index].second;
-            local << format_atom(atom);
-            ++local_index;
-        }
-        const std::string local_text = local.str();
-        const std::string gathered = domain.gather_text(local_text, batch_bytes);
-        if (domain.rank() == 0)
-        {
-            write_dump_rows(ofs, gathered, begin, end);
-        }
-        begin = end;
-    }
-    if (domain.rank() == 0)
-    {
-        ofs << "\n\n";
-        ofs.close();
-        if (!ofs)
-        {
-            ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump.");
-        }
-    }
 }
 
 void get_mass_mbl(

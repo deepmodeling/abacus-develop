@@ -84,13 +84,11 @@ addtest(
   LIBS parameter psi device
   SOURCES test_md_func.cpp ${depend_files})
 
-addtest(
-  TARGET MODULE_MD_SNAP_model
-  SOURCES test_snap_model.cpp ../module_snap/snap_model.cpp)
+addtest(TARGET MODULE_MD_SNAP_model SOURCES test_snap_model.cpp
+                                            ../module_snap/snap_model.cpp)
 
-addtest(
-  TARGET MODULE_MD_SNAP_cg
-  SOURCES test_snap_cg.cpp ../module_snap/snap_cg.cpp)
+addtest(TARGET MODULE_MD_SNAP_cg SOURCES test_snap_cg.cpp
+                                         ../module_snap/snap_cg.cpp)
 
 addtest(
   TARGET MODULE_MD_SNAP_descriptor
@@ -137,12 +135,10 @@ addtest(
   LIBS ${_md_dp_test_libs}
   SOURCES test_dp_forcefield.cpp ../module_dp/dp_forcefield.cpp
           ../module_dp/dp_aparam.cpp
-          ../../source_cell/module_neighlist/neighbor_list.cpp
-          ${depend_files})
+          ../../source_cell/module_neighlist/neighbor_list.cpp ${depend_files})
 
-addtest(
-  TARGET MODULE_MD_dp_aparam
-  SOURCES test_dp_aparam.cpp ../module_dp/dp_aparam.cpp)
+addtest(TARGET MODULE_MD_dp_aparam SOURCES test_dp_aparam.cpp
+                                           ../module_dp/dp_aparam.cpp)
 
 set(_md_nep_test_libs parameter psi device)
 if(ENABLE_NEP)
@@ -154,8 +150,7 @@ addtest(
   TARGET MODULE_MD_nep_forcefield
   LIBS ${_md_nep_test_libs}
   SOURCES test_nep_forcefield.cpp ../module_nep/nep_forcefield.cpp
-          ../../source_cell/module_neighlist/neighbor_list.cpp
-          ${depend_files})
+          ../../source_cell/module_neighlist/neighbor_list.cpp ${depend_files})
 
 addtest(
   TARGET MODULE_MD_fire
@@ -165,14 +160,13 @@ addtest(
 addtest(
   TARGET MODULE_MD_base
   LIBS parameter psi device
-  SOURCES test_md_base.cpp ../md_base.cpp
-          ../../source_cell/magnetism.cpp ${depend_files})
+  SOURCES test_md_base.cpp ../md_base.cpp ../../source_cell/magnetism.cpp
+          ${depend_files})
 
 addtest(
   TARGET MODULE_MD_verlet
   LIBS parameter psi device
-  SOURCES test_verlet.cpp ../md_base.cpp ../verlet.cpp
-          ${depend_files})
+  SOURCES test_verlet.cpp ../md_base.cpp ../verlet.cpp ${depend_files})
 
 addtest(
   TARGET MODULE_MD_nhc
@@ -192,11 +186,9 @@ addtest(
   LIBS parameter psi device
   SOURCES test_langevin.cpp ../md_base.cpp ../langevin.cpp ${depend_files})
 
-# Header-only MD loop predicates (is_last_step / is_frame_write_step). Kept in
+# Header-only MD loop predicates (is_last_step / is_structure_output_step). Kept in
 # its own translation unit so this target links without the heavy MD/cell stack.
-addtest(
-  TARGET MODULE_MD_final_step
-  SOURCES test_run_md_final_step.cpp)
+addtest(TARGET MODULE_MD_final_step SOURCES test_run_md_final_step.cpp)
 
 if(ENABLE_MPI)
   addtest(
@@ -204,33 +196,26 @@ if(ENABLE_MPI)
     KEEP_FEATURE_DEFINITIONS __MPI
     LIBS parameter psi device
     SOURCES test_lj_forcefield.cpp ../../source_base/test/mpi_test_main.cpp
-            ../../source_base/parallel_common.cpp
-            ${depend_files})
+            ../../source_base/parallel_common.cpp ${depend_files})
   set_tests_properties(
     MODULE_MD_lj_forcefield_mpi
-    PROPERTIES ENVIRONMENT "GTEST_FILTER=LJPotential.SplitCommunicatorReducesWithinCell;OMP_NUM_THREADS=1"
-               TIMEOUT 60)
+    PROPERTIES
+      ENVIRONMENT
+      "GTEST_FILTER=LJPotential.SplitCommunicatorReducesWithinCell;OMP_NUM_THREADS=1"
+      TIMEOUT
+      60)
   add_test(
     NAME MODULE_MD_lj_forcefield_mpi_np4
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
-            $<TARGET_FILE:MODULE_MD_lj_forcefield_mpi>
-            --gtest_filter=LJPotential.SplitCommunicatorReducesWithinCell
-            ${MPIEXEC_POSTFLAGS}
+    COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:MODULE_MD_lj_forcefield_mpi>
+      --gtest_filter=LJPotential.SplitCommunicatorReducesWithinCell
+      ${MPIEXEC_POSTFLAGS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  set_tests_properties(MODULE_MD_lj_forcefield_mpi_np4
-                       PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;I_MPI_PIN=0"
-                                  TIMEOUT 60)
-  addtest(
-    TARGET MODULE_MD_dump_mpi
-    KEEP_FEATURE_DEFINITIONS __MPI
-    LIBS parameter psi device
-    SOURCES test_md_func.cpp ../../source_base/parallel_common.cpp
-            ../../source_cell/magnetism.cpp ${depend_files})
-  add_test(
-    NAME MODULE_MD_dump_mpi_np4
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
-            $<TARGET_FILE:MODULE_MD_dump_mpi> ${MPIEXEC_POSTFLAGS}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  set_tests_properties(
+    MODULE_MD_lj_forcefield_mpi_np4
+    PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;I_MPI_PIN=0"
+               TIMEOUT 60)
   addtest(
     TARGET MODULE_MD_base_mpi
     KEEP_FEATURE_DEFINITIONS __MPI
@@ -244,8 +229,7 @@ if(ENABLE_MPI)
             $<TARGET_FILE:MODULE_MD_base_mpi> ${MPIEXEC_POSTFLAGS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   set_tests_properties(
-    MODULE_MD_dump_mpi MODULE_MD_dump_mpi_np4 MODULE_MD_base_mpi
-    MODULE_MD_base_mpi_np4
+    MODULE_MD_base_mpi MODULE_MD_base_mpi_np4
     PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;I_MPI_PIN=0"
                TIMEOUT 60)
   foreach(rank_count IN ITEMS 1 4)

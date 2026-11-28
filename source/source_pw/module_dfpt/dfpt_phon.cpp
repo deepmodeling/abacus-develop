@@ -24,27 +24,23 @@
 namespace ModuleDFPT
 {
 
-DFPT_Phon::DFPT_Phon()
-{
-}
+DFPT_Phon::DFPT_Phon() {}
 
-DFPT_Phon::~DFPT_Phon()
-{
-}
+DFPT_Phon::~DFPT_Phon() {}
 
 namespace
 {
 
 // signed frequencies: omega = sgn(e) sqrt(|e|), converted to cm^-1
 // sqrt(Ry/(bohr^2 amu)) in cm^-1 = sqrt(RYDBERG_SI/amu_kg)/(bohr*2pi*c)
-std::vector<double> signed_freqs_cm1(const std::vector<double>& eigs)
+std::vector<double> signed_freqs_cm1(const std::vector<double> &eigs)
 {
     ModuleBase::TITLE("DFPT_Phon", "signed_freqs_cm1");
     ModuleBase::timer::start("DFPT_Phon", "signed_freqs_cm1");
     const double amu_kg = 1.0e-3 / ModuleBase::NA;
     const double light_speed_cgs = 2.99792458e10; // cm/s, exact SI value
-    const double ry_bohr2_amu_to_cm1 = std::sqrt(ModuleBase::RYDBERG_SI / amu_kg)
-                                       / (ModuleBase::BOHR_RADIUS_SI * ModuleBase::TWO_PI * light_speed_cgs);
+    const double ry_bohr2_amu_to_cm1 = std::sqrt(ModuleBase::RYDBERG_SI / amu_kg) /
+                                       (ModuleBase::BOHR_RADIUS_SI * ModuleBase::TWO_PI * light_speed_cgs);
     std::vector<double> freq(eigs.size(), 0.0);
     for (size_t i = 0; i < eigs.size(); ++i)
     {
@@ -56,7 +52,7 @@ std::vector<double> signed_freqs_cm1(const std::vector<double>& eigs)
 
 } // namespace
 
-void DFPT_Phon::init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, DFPT_Pert* pert)
+void DFPT_Phon::init(UnitCell &ucell, ModulePW::PW_Basis *pw_rho, DFPT_Pert *pert)
 {
     ModuleBase::TITLE("DFPT_Phon", "init");
     ModuleBase::timer::start("DFPT_Phon", "init");
@@ -66,26 +62,17 @@ void DFPT_Phon::init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, DFPT_Pert* per
     ModuleBase::timer::end("DFPT_Phon", "init");
 }
 
-void DFPT_Phon::set_rho(const DFPT_Rho* rho)
-{
-    rho_ = rho;
-}
+void DFPT_Phon::set_rho(const DFPT_Rho *rho) { rho_ = rho; }
 
-void DFPT_Phon::set_vxc_r(const std::vector<double>* vxc_r)
-{
-    vxc_r_ = vxc_r;
-}
+void DFPT_Phon::set_vxc_r(const std::vector<double> *vxc_r) { vxc_r_ = vxc_r; }
 
-void DFPT_Phon::set_dvxc_core_table(const std::vector<std::vector<std::complex<double>>>* table)
-{
-    dvxc_core_ = table;
-}
+void DFPT_Phon::set_dvxc_core_table(const std::vector<std::vector<std::complex<double>>> *table) { dvxc_core_ = table; }
 
 // ---------------------------------------------------------------------------
 // assemble / diagonalize / LO-TO / sum rule
 // ---------------------------------------------------------------------------
 
-void DFPT_Phon::assemble(int q_idx, DFPT_PW_Data& data)
+void DFPT_Phon::assemble(int q_idx, DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Phon", "assemble");
     ModuleBase::timer::start("DFPT_Phon", "assemble");
@@ -137,7 +124,7 @@ void DFPT_Phon::assemble(int q_idx, DFPT_PW_Data& data)
     ModuleBase::timer::end("DFPT_Phon", "assemble");
 }
 
-void DFPT_Phon::diagonalize(int q_idx, DFPT_PW_Data& data)
+void DFPT_Phon::diagonalize(int q_idx, DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Phon", "diagonalize");
     ModuleBase::timer::start("DFPT_Phon", "diagonalize");
@@ -157,23 +144,15 @@ void DFPT_Phon::diagonalize(int q_idx, DFPT_PW_Data& data)
     int info = 0;
     LapackConnector::zheev('N', 'U', nat3, dyn, nat3, w.data(), work.data(), -1, rwork.data(), &info);
     work.resize(std::max(1, static_cast<int>(work[0].real())));
-    LapackConnector::zheev('N',
-                           'U',
-                           nat3,
-                           dyn,
-                           nat3,
-                           w.data(),
-                           work.data(),
-                           static_cast<int>(work.size()),
-                           rwork.data(),
-                           &info);
+    LapackConnector::zheev(
+        'N', 'U', nat3, dyn, nat3, w.data(), work.data(), static_cast<int>(work.size()), rwork.data(), &info);
 
     // signed frequencies: omega = sgn(e) sqrt(|e|), converted to cm^-1
     // sqrt(Ry/(bohr^2 amu)) in cm^-1 = sqrt(RYDBERG_SI/amu_kg)/(bohr*2pi*c)
     const double amu_kg = 1.0e-3 / ModuleBase::NA;
     const double light_speed_cgs = 2.99792458e10; // cm/s, exact SI value
-    const double ry_bohr2_amu_to_cm1 = std::sqrt(ModuleBase::RYDBERG_SI / amu_kg)
-                                       / (ModuleBase::BOHR_RADIUS_SI * ModuleBase::TWO_PI * light_speed_cgs);
+    const double ry_bohr2_amu_to_cm1 = std::sqrt(ModuleBase::RYDBERG_SI / amu_kg) /
+                                       (ModuleBase::BOHR_RADIUS_SI * ModuleBase::TWO_PI * light_speed_cgs);
     std::vector<double> freq(nat3, 0.0);
     for (int i = 0; i < nat3; ++i)
     {
@@ -184,7 +163,7 @@ void DFPT_Phon::diagonalize(int q_idx, DFPT_PW_Data& data)
     ModuleBase::timer::end("DFPT_Phon", "diagonalize");
 }
 
-void DFPT_Phon::add_loto(const ModuleBase::Vector3<double>& qhat, DFPT_PW_Data& data)
+void DFPT_Phon::add_loto(const ModuleBase::Vector3<double> &qhat, DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Phon", "add_loto");
     ModuleBase::timer::start("DFPT_Phon", "add_loto");
@@ -203,9 +182,9 @@ void DFPT_Phon::add_loto(const ModuleBase::Vector3<double>& qhat, DFPT_PW_Data& 
         ModuleBase::timer::end("DFPT_Phon", "add_loto");
         return; // no dielectric tensor stored yet (C6 not run)
     }
-    const double qeq = qhat.x * (qhat.x * eps(0, 0) + qhat.y * eps(1, 0) + qhat.z * eps(2, 0))
-                       + qhat.y * (qhat.x * eps(0, 1) + qhat.y * eps(1, 1) + qhat.z * eps(2, 1))
-                       + qhat.z * (qhat.x * eps(0, 2) + qhat.y * eps(1, 2) + qhat.z * eps(2, 2));
+    const double qeq = qhat.x * (qhat.x * eps(0, 0) + qhat.y * eps(1, 0) + qhat.z * eps(2, 0)) +
+                       qhat.y * (qhat.x * eps(0, 1) + qhat.y * eps(1, 1) + qhat.z * eps(2, 1)) +
+                       qhat.z * (qhat.x * eps(0, 2) + qhat.y * eps(1, 2) + qhat.z * eps(2, 2));
     if (std::abs(qeq) < qeq_tol)
     {
         ModuleBase::timer::end("DFPT_Phon", "add_loto");
@@ -240,7 +219,7 @@ void DFPT_Phon::add_loto(const ModuleBase::Vector3<double>& qhat, DFPT_PW_Data& 
     ModuleBase::timer::end("DFPT_Phon", "add_loto");
 }
 
-void DFPT_Phon::diagonalize_loto(DFPT_PW_Data& data)
+void DFPT_Phon::diagonalize_loto(DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Phon", "diagonalize_loto");
     ModuleBase::timer::start("DFPT_Phon", "diagonalize_loto");
@@ -260,21 +239,13 @@ void DFPT_Phon::diagonalize_loto(DFPT_PW_Data& data)
     int info = 0;
     LapackConnector::zheev('N', 'U', nat3, dyn, nat3, w.data(), work.data(), -1, rwork.data(), &info);
     work.resize(std::max(1, static_cast<int>(work[0].real())));
-    LapackConnector::zheev('N',
-                           'U',
-                           nat3,
-                           dyn,
-                           nat3,
-                           w.data(),
-                           work.data(),
-                           static_cast<int>(work.size()),
-                           rwork.data(),
-                           &info);
+    LapackConnector::zheev(
+        'N', 'U', nat3, dyn, nat3, w.data(), work.data(), static_cast<int>(work.size()), rwork.data(), &info);
     data.set_phon_freq_loto(signed_freqs_cm1(w));
     ModuleBase::timer::end("DFPT_Phon", "diagonalize_loto");
 }
 
-std::string DFPT_Phon::format_q_report(int q_idx, const DFPT_PW_Data& data) const
+std::string DFPT_Phon::format_q_report(int q_idx, const DFPT_PW_Data &data) const
 {
     ModuleBase::TITLE("DFPT_Phon", "format_q_report");
     ModuleBase::timer::start("DFPT_Phon", "format_q_report");
@@ -292,7 +263,7 @@ std::string DFPT_Phon::format_q_report(int q_idx, const DFPT_PW_Data& data) cons
     return os.str();
 }
 
-std::string DFPT_Phon::format_loto_report(const DFPT_PW_Data& data) const
+std::string DFPT_Phon::format_loto_report(const DFPT_PW_Data &data) const
 {
     ModuleBase::TITLE("DFPT_Phon", "format_loto_report");
     ModuleBase::timer::start("DFPT_Phon", "format_loto_report");
@@ -315,7 +286,7 @@ std::string DFPT_Phon::format_loto_report(const DFPT_PW_Data& data) const
     return os.str();
 }
 
-bool DFPT_Phon::check_sum_rule(int q_idx, DFPT_PW_Data& data) const
+bool DFPT_Phon::check_sum_rule(int q_idx, DFPT_PW_Data &data) const
 {
     ModuleBase::TITLE("DFPT_Phon", "check_sum_rule");
     ModuleBase::timer::start("DFPT_Phon", "check_sum_rule");
@@ -365,7 +336,7 @@ bool DFPT_Phon::check_sum_rule(int q_idx, DFPT_PW_Data& data) const
     return true;
 }
 
-void DFPT_Phon::dftu_onsite(int q_idx, DFPT_PW_Data& data)
+void DFPT_Phon::dftu_onsite(int q_idx, DFPT_PW_Data &data)
 {
     ModuleBase::TITLE("DFPT_Phon", "dftu_onsite");
     ModuleBase::timer::start("DFPT_Phon", "dftu_onsite");

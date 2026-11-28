@@ -27,17 +27,13 @@ addtest(
           ../../source_cell/parallel_kpoints.cpp
           ../../source_cell/reciprocal_grid.cpp)
 
-addTest(
-  TARGET MODULE_IO_parse_command_line_test
-  SOURCES test_parse_command_line.cpp ../parse_command_line.cpp
-)
+addtest(TARGET MODULE_IO_parse_command_line_test
+        SOURCES test_parse_command_line.cpp ../parse_command_line.cpp)
 
 addtest(TARGET MODULE_IO_spin_tag SOURCES test_spin_tag.cpp)
 
-addtest(
-  TARGET MODULE_IO_libxc_r_suffix
-  SOURCES test_libxc_r_suffix.cpp
-          ../module_chgpot/libxc_r_suffix.cpp)
+addtest(TARGET MODULE_IO_libxc_r_suffix
+        SOURCES test_libxc_r_suffix.cpp ../module_chgpot/libxc_r_suffix.cpp)
 
 addtest(TARGET MODULE_IO_frame_append SOURCES test_frame_append.cpp)
 
@@ -331,11 +327,9 @@ if(ENABLE_LCAO)
   addtest(
     TARGET MODULE_IO_write_dmr_test
     LIBS parameter base device hcontainer
-    SOURCES test_write_dmr.cpp
-            ../module_dm/write_dmr.cpp
+    SOURCES test_write_dmr.cpp ../module_dm/write_dmr.cpp
             ../../source_cell/ucell_io.cpp
-            ../../source_basis/module_ao/parallel_orbitals.cpp
-           )
+            ../../source_basis/module_ao/parallel_orbitals.cpp)
 endif()
 
 addtest(
@@ -354,8 +348,10 @@ if(ENABLE_LIBRI)
   addtest(
     TARGET MODULE_IO_restart_exx_csr_test
     LIBS parameter base device
-    SOURCES test_restart_exx_csr.cpp ../module_restart/restart_exx_csr.cpp
-            ../module_hs/hs_sparse_io.cpp ../module_hs/lat_r_csr.cpp
+    SOURCES test_restart_exx_csr.cpp
+            ../module_restart/restart_exx_csr.cpp
+            ../module_hs/hs_sparse_io.cpp
+            ../module_hs/lat_r_csr.cpp
             ../../source_cell/ucell_io.cpp
             ../../source_basis/module_ao/parallel_orbitals.cpp
             tmp_mocks.cpp)

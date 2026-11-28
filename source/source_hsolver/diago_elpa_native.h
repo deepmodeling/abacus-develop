@@ -20,7 +20,11 @@ class DiagoElpaNative
     /// @param nbands_in number of lowest eigenpairs to compute
     /// @param use_gpu_in offload to the NVIDIA-GPU ELPA kernels when ELPA was built with GPU support
     DiagoElpaNative(const int nlocal_in, const int nbands_in, const bool use_gpu_in)
-        : nlocal(nlocal_in), nbands(nbands_in), use_gpu(use_gpu_in) {};
+        : DiagoElpaNative(nlocal_in, nbands_in, use_gpu_in, DecomposedState) {}
+
+    /// @param overlap_factor_in Factorization state of the supplied overlap buffer.
+    DiagoElpaNative(const int nlocal_in, const int nbands_in, const bool use_gpu_in, int& overlap_factor_in)
+        : nlocal(nlocal_in), nbands(nbands_in), use_gpu(use_gpu_in), overlap_factor(overlap_factor_in) {}
 
     void diag(ModuleBase::MatrixBlock<T>& h_mat,
               ModuleBase::MatrixBlock<T>& s_mat,
@@ -41,6 +45,7 @@ class DiagoElpaNative
     const int nlocal;
     const int nbands;
     const bool use_gpu;
+    int& overlap_factor;
 };
 
 template <typename T>

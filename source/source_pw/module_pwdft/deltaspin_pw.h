@@ -22,10 +22,11 @@ namespace pw
  * @return true if the solver should be skipped (lambda loop was executed),
  *         false otherwise.
  */
-bool run_deltaspin_lambda_loop(const int iter,
-                               const double drho,
-                               const Input_para& inp,
-                               std::ostream& ofs_running);
+bool run_deltaspin_lambda_loop(
+    const int iter,
+    const double drho,
+    const Input_para &inp,
+    std::ostream &ofs_running);
 
 /**
  * @brief Check if SCF oscillation occurs for DeltaSpin method.
@@ -39,11 +40,12 @@ bool run_deltaspin_lambda_loop(const int iter,
  * @param p_chgmix Pointer to the Charge_Mixing object.
  * @param inp The input parameters.
  */
-void check_deltaspin_oscillation(const int iter,
-                                 const double drho,
-                                 Charge_Mixing* p_chgmix,
-                                 const Input_para& inp);
+void check_deltaspin_oscillation(
+    const int iter,
+    const double drho,
+    Charge_Mixing *p_chgmix,
+    const Input_para &inp);
 
-}
+} // namespace pw
 
 #endif

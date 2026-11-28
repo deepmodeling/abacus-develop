@@ -26,8 +26,8 @@ run_basic_props() {
   if [ $calculation != "get_wf" ] && [ $calculation != "get_pchg" ] && [ $calculation != "get_s" ] && [ $is_lr == 0 ]; then
     etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
     etotperatom=$(awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}')
-    echo "etotref $etot" >>$props_result_file
-    echo "etotperatomref $etotperatom" >>$props_result_file
+    echo "etotref $etot" >> $props_result_file
+    echo "etotperatomref $etotperatom" >> $props_result_file
   fi
 
   # Opt-in collinear magnetic-state check. Comparing both moments distinguishes
@@ -40,7 +40,7 @@ run_basic_props() {
             if (!have_total || !have_absolute) exit 1
             print total, absolute
         }
-    ' "$running_path" >magnetism.out
+    ' "$running_path" > magnetism.out
     record_compare_result "$props_result_file" "CompareMagnetism_pass" "magnetism.ref" "magnetism.out" 3
   fi
 
@@ -52,11 +52,16 @@ run_basic_props() {
       echo "[ERROR] Invalid atom count for force collection: $natom" >&2
       return 1
     fi
-    # MDCell forces are in MD_dump; older MD and non-MD logs may still
-    # contain a TOTAL-FORCE table. Both paths require a complete last frame.
-    if [ "$calculation" = "md" ] && [ -f OUT.autotest/MD_dump ]; then
-      force_source=OUT.autotest/MD_dump
-      force_format=dump
+    # The final MD structure contains the evaluated force on every atom.
+    if [ "$calculation" = "md" ]; then
+      force_source=$(awk '/Write file: .*STRU_FINAL$/ {sub(/^.*Write file: /, ""); path=$0} END {print path}' "$running_path")
+      if [ -z "$force_source" ] || [ ! -f "$force_source" ]; then
+        force_source=OUT.autotest/STRU_FINAL
+        if [ ! -f "$force_source" ] && [ -f OUT.autotest/STRUC/STRU_FINAL ]; then
+          force_source=OUT.autotest/STRUC/STRU_FINAL
+        fi
+      fi
+      force_format=stru
     else
       force_source=$running_path
       force_format=log
@@ -73,16 +78,25 @@ run_basic_props() {
         delete force_y
         delete force_z
       }
-      format == "dump" && /^MDSTEP:/ { reset_frame(); next }
-      format == "dump" && /^INDEX[[:space:]]+LABEL[[:space:]]+POSITION.*FORCE/ {
-        in_atoms = 1
-        next
-      }
+      format == "stru" && /^ATOMIC_POSITIONS/ { reset_frame(); in_atoms = 1; next }
       format == "log" && /TOTAL-FORCE/ { reset_frame(); in_atoms = 1; next }
-      in_atoms && ((format == "dump" && $1 ~ /^[0-9]+$/ && NF >= 8) || (format == "log" && NF == 4 && $1 != "Atoms")) {
-        x = format == "dump" ? $6 : $2
-        y = format == "dump" ? $7 : $3
-        z = format == "dump" ? $8 : $4
+      in_atoms && ((format == "stru" && NF >= 3 && number($1) && number($2) && number($3)) || (format == "log" && NF == 4 && $1 != "Atoms")) {
+        x = $2
+        y = $3
+        z = $4
+        if (format == "stru") {
+          found_force = 0
+          for (field = 4; field <= NF; ++field) {
+            if ($field == "f") {
+              found_force = 1
+              x = $(field + 1)
+              y = $(field + 2)
+              z = $(field + 3)
+              break
+            }
+          }
+          if (!found_force) invalid = 1
+        }
         if (!number(x) || !number(y) || !number(z)) invalid = 1
         atom_count++
         force_x[atom_count] = x
@@ -96,24 +110,85 @@ run_basic_props() {
           print force_x[iat], force_y[iat], force_z[iat]
         }
       }
-    ' "$force_source" >force.txt; then
+    ' "$force_source" > force.txt; then
       echo "[ERROR] Failed to extract $natom valid force rows from $force_source" >&2
       rm -f force.txt
       return 1
     fi
     total_force=$(sum_file force.txt)
     rm force.txt
-    echo "totalforceref $total_force" >>$props_result_file
+    echo "totalforceref $total_force" >> $props_result_file
   fi
 
   #-------------------------------
   # stress information
   #-------------------------------
   if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
-    grep -A6 "TOTAL-STRESS" $running_path | awk 'NF==3' | tail -3 >stress.txt
+    if [ "$calculation" = "md" ]; then
+      final_structure="OUT.autotest/STRU_FINAL"
+      if [ ! -f "$final_structure" ]; then
+        final_structure="OUT.autotest/STRUC/STRU_FINAL"
+      fi
+      if [ ! -f "$final_structure" ]; then
+        final_structure="OUT.autotest/STRU_FINAL.cif"
+      fi
+      if [ ! -f "$final_structure" ]; then
+        final_structure="OUT.autotest/STRUC/STRU_FINAL.cif"
+      fi
+      if [ ! -f "$final_structure" ]; then
+        echo "[ERROR] Cannot identify the final MD step without STRU_FINAL" >&2
+        return 1
+      fi
+      final_step=$(awk '/^# MD step [0-9]+/ { print $4; exit }' "$final_structure")
+      if [ -z "$final_step" ]; then
+        echo "[ERROR] Missing MD step marker in $final_structure" >&2
+        return 1
+      fi
+      # The MD virial is the electronic stress after external pressure is
+      # subtracted. Reconstruct the solver's former TOTAL-STRESS value so
+      # existing reference data continue to compare the same quantity.
+      press1=$(get_input_key_value press1 INPUT)
+      press2=$(get_input_key_value press2 INPUT)
+      press3=$(get_input_key_value press3 INPUT)
+      if [ "$esolver_type" = "ofdft" ] || [ "$esolver_type" = "sdft" ]; then
+        # These solvers return their electronic stress without subtracting
+        # the requested external pressure.
+        press1=0
+        press2=0
+        press3=0
+      fi
+      if ! awk -v p1="$press1" -v p2="$press2" -v p3="$press3" -v final="$final_step" '
+        /MD STEP:/ { step = $3 }
+        /VIRIAL \(kbar\):/ { rows = 3; count = 0; selected = (step == final); next }
+        rows > 0 {
+          if (NF != 3) exit 1
+          count++
+          if (selected) value[count] = $1 " " $2 " " $3
+          rows--
+        }
+        END {
+          if (!selected || count != 3 || rows != 0) exit 1
+          split(value[1], first)
+          split(value[2], second)
+          split(value[3], third)
+          # Keep the precision of the former TOTAL-STRESS table. awk print
+          # defaults to six significant digits, enough to change the summed
+          # stress by more than the existing test tolerance.
+          printf "%.10f %.10f %.10f\n", first[1] + p1, first[2], first[3]
+          printf "%.10f %.10f %.10f\n", second[1], second[2] + p2, second[3]
+          printf "%.10f %.10f %.10f\n", third[1], third[2], third[3] + p3
+        }
+      ' "$running_path" > stress.txt; then
+        echo "[ERROR] Failed to extract the MD virial from $running_path" >&2
+        rm -f stress.txt
+        return 1
+      fi
+    else
+      grep -A6 "TOTAL-STRESS" "$running_path" | awk 'NF==3' | tail -3 > stress.txt
+    fi
     total_stress=$(sum_file stress.txt)
     rm stress.txt
-    echo "totalstressref $total_stress" >>$props_result_file
+    echo "totalstressref $total_stress" >> $props_result_file
   fi
 
   #-------------------------------
@@ -121,7 +196,7 @@ run_basic_props() {
   #-------------------------------
   if ! test -z "$has_dos" && [ $has_dos == 1 ]; then
     total_dos=$(cat OUT.autotest/dos*.txt | awk 'END {print}' | awk '{print $3}')
-    echo "totaldosref $total_dos" >>$props_result_file
+    echo "totaldosref $total_dos" >> $props_result_file
   elif [ "$has_dos" = 2 ]; then
     local dos_dir=OUT.autotest
     if [ "$out_app_flag" = 2 ]; then dos_dir+=/DOS; fi
@@ -134,8 +209,7 @@ run_basic_props() {
   if ! test -z "$has_cond" && [ $has_cond == 1 ]; then
     onref=refOnsager.txt
     oncal=OUT.autotest/Onsager.txt
-    python3 $COMPARE_SCRIPT $onref $oncal 3 -com_type 0
-    echo "CompareH_Failed $?" >>$props_result_file
+    record_compare_result "$props_result_file" "CompareH_Failed" "$onref" "$oncal" 3 0 0
     rm -f je-je.txt Chebycoef
   fi
 
@@ -149,8 +223,8 @@ run_basic_props_post_ml() {
   if ! test -z "$imp_sol" && { [ "$imp_sol" = 1 ] || [ "$imp_sol" = 2 ]; }; then
     esol_el=$(grep E_sol_el $running_path | tail -1 | awk '{print $3}')
     esol_cav=$(grep E_sol_cav $running_path | tail -1 | awk '{print $3}')
-    echo "esolelref $esol_el" >>$props_result_file
-    echo "esolcavref $esol_cav" >>$props_result_file
+    echo "esolelref $esol_el" >> $props_result_file
+    echo "esolcavref $esol_cav" >> $props_result_file
   fi
 
   # Solvent-aware SCCS (imp_sol 2, sccs_solvent_radius > 0). With sccs_debug 2
@@ -167,7 +241,7 @@ run_basic_props_post_ml() {
       echo "Error: solvent-aware SCCS with sccs_debug 2 but no V_FILLED/Bohr3 in $running_path"
       exit 1
     fi
-    echo "sccs_filled_volumeref $filled_volume" >>$props_result_file
+    echo "sccs_filled_volumeref $filled_volume" >> $props_result_file
   fi
 
   # out_sol 1: the cubes must exist (the cases set imp_sol 2, or imp_sol 1 with
@@ -188,7 +262,7 @@ run_basic_props_post_ml() {
     done
     # Append mode retains earlier geometries; compare the final complete frame.
     integral=$(python3 "$CUBE_TOOL" integrate-last "OUT.autotest/sol_cavity.cube") || return 1
-    echo "sol_cavity_integralref $integral" >>$props_result_file
+    echo "sol_cavity_integralref $integral" >> $props_result_file
   fi
 
   #--------------------------------------------
@@ -196,7 +270,7 @@ run_basic_props_post_ml() {
   #--------------------------------------------
   if [[ "$assume_isolated" == "pcc_0d" || "$assume_isolated" == "pcc_2d" ]]; then
     epcc=$(grep E_pcc "$running_path" | tail -1 | awk '{print $3}')
-    echo "epccref $epcc" >>$props_result_file
+    echo "epccref $epcc" >> $props_result_file
   fi
 
 }
@@ -212,16 +286,16 @@ run_basic_props_post_deepks() {
     pointgroup=$(grep 'POINT GROUP =' $running_path | grep -v 'MAGNETIC' | grep -v 'BvK' | awk '{print $4}')
     spacegroup=$(grep 'SPACE GROUP =' $running_path | grep -v 'MAGNETIC' | grep -v 'BvK' | awk '{print $7}')
     nksibz=$(grep 'Number of irreducible k-points' $running_path | awk '{print $6}')
-    echo "pointgroupref $pointgroup" >>$props_result_file
-    echo "spacegroupref $spacegroup" >>$props_result_file
-    echo "nksibzref $nksibz" >>$props_result_file
+    echo "pointgroupref $pointgroup" >> $props_result_file
+    echo "spacegroupref $spacegroup" >> $props_result_file
+    echo "nksibzref $nksibz" >> $props_result_file
     # (nspin=4) magnetic (Shubnikov) group analysis: capture the space-group-consistent
     # magnetic point group. Only printed when the group is actually reduced (magnetic);
     # non-magnetic nspin=4 does not print it, so the capture is skipped when empty.
     if ! test -z "$nspin" && [ $nspin == 4 ]; then
       magpointgroup=$(grep 'MAGNETIC POINT GROUP IN SPACE GROUP' $running_path | awk '{print $NF}')
       if ! test -z "$magpointgroup"; then
-        echo "magpointgroupref $magpointgroup" >>$props_result_file
+        echo "magpointgroupref $magpointgroup" >> $props_result_file
       fi
     fi
   fi
@@ -241,7 +315,7 @@ run_basic_props_post_rdmft() {
     fi
 
     # Find all running*.log files in OUT.autotest directory
-    log_files=$(ls OUT.autotest/running*.log 2>/dev/null)
+    log_files=$(ls OUT.autotest/running*.log 2> /dev/null)
 
     if [ -z "$log_files" ]; then
       echo "Error: No running*.log files found in OUT.autotest/"
@@ -260,10 +334,10 @@ run_basic_props_post_rdmft() {
 
     if $all_valid; then
       echo "All log filenames contain 'running_${calculation}_' - validation passed"
-      echo "log_filename_validation 1" >>$props_result_file
+      echo "log_filename_validation 1" >> $props_result_file
     else
       echo "Error: Some log filenames do not contain 'running_${calculation}_'"
-      echo "log_filename_validation 0" >>$props_result_file
+      echo "log_filename_validation 0" >> $props_result_file
       exit 1
     fi
   fi

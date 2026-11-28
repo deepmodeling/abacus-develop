@@ -8,6 +8,7 @@
 #include "source_cell/read_pp_ucell.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/param_update.h"
+#include "source_io/module_hs/angmom_op_mat.h"
 #include "source_io/module_hs/hsr_legacy.h"
 #include "source_io/module_hs/mom_op_mat.h"
 #include "source_lcao/module_momentum_op/pos_op_mat.h"
@@ -131,7 +132,7 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
                 ucell, gd, &this->pv, *basis_index_, this->pv.para_2d(), this->kv, *(two_center_bundle_.overlap_orb),
                 orb_.cutoffs());
             hamilt::Hamilt<std::complex<double>>* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
-            auto *ops_ptr =
+            hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>* ops_ptr =
                 dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>> *>(hamilt_ptr->ops);
             ops_ptr->contributeHR();
         }
@@ -156,20 +157,20 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
     const double sparse_threshold = 1e-10;
     const int precision = 16;
     ModuleIO::output_SR(
-        ucell, pv, gd, hamilt_ptr, binary, sparse_threshold, precision, global_matrix_dir, PARAM.inp.calculation,
-        PARAM.inp.out_app_flag, PARAM.inp.nspin, istep, GlobalV::ofs_running);
+        ucell, pv, gd, hamilt_ptr, binary, sparse_threshold, precision, global_matrix_dir, this->inp_->calculation,
+        this->inp_->out_app_flag, this->inp_->nspin, istep, GlobalV::ofs_running);
 
     if (this->inp_->out_mat_r[0])
     {
         Position_op r_matrix;
-        const bool cal_force = PARAM.inp.cal_force;
+        const bool cal_force = this->inp_->cal_force;
         const int nlocal = PARAM.globalv.nlocal;
         r_matrix.init(ucell, pv.para_2d(), orb_, cal_force, nlocal);
         r_matrix.out_rR(
             ucell, gd,
             -1, // get_s has no ionic step; use -1 for no step suffix
-            this->inp_->out_mat_r[1], PARAM.globalv.global_out_dir, global_matrix_dir, PARAM.inp.calculation,
-            PARAM.inp.out_app_flag, nlocal, PARAM.globalv.npol, GlobalV::ofs_running);
+            this->inp_->out_mat_r[1], PARAM.globalv.global_out_dir, global_matrix_dir, this->inp_->calculation,
+            this->inp_->out_app_flag, nlocal, PARAM.globalv.npol, GlobalV::ofs_running);
     }
 
     if (this->inp_->out_mat_ds[0])
@@ -181,15 +182,45 @@ void ESolver_GetS::runner(BaseCell &basecell, const int istep)
         mat_R_options.precision = this->inp_->out_mat_ds[1];
         mat_R_options.global_out_dir = PARAM.globalv.global_out_dir;
         mat_R_options.global_matrix_dir = global_matrix_dir;
-        mat_R_options.calculation = PARAM.inp.calculation;
-        mat_R_options.out_app_flag = PARAM.inp.out_app_flag;
-        mat_R_options.nspin = PARAM.inp.nspin;
+        mat_R_options.calculation = this->inp_->calculation;
+        mat_R_options.out_app_flag = this->inp_->out_app_flag;
+        mat_R_options.nspin = this->inp_->nspin;
         //! Print out sparse matrix
         ModuleIO::output_dSR(
             istep, ucell, this->pv, HS_Arrays,
             gd, // mohan add 2024-04-06
             two_center_bundle_, orb_, mat_R_options, PARAM.globalv.gamma_only_local, PARAM.globalv.npol,
             PARAM.globalv.nlocal, GlobalV::ofs_running);
+    }
+
+    //! The angular momentum matrices <phi_i|Lx/Ly/Lz|phi_j> are built from the
+    //! orbital tables only and do not depend on the SCF result, so out_mat_l is
+    //! also honored in the get_s workflow.
+    if (this->inp_->out_mat_l[0])
+    {
+        const int my_rank = GlobalV::MY_RANK;
+        const double l_search_radius = orb_.get_rcutmax_Phi();
+        const int l_precision = this->inp_->out_mat_l[1];
+        const int l_out_app_flag = this->inp_->out_app_flag;
+        ModuleIO::Angmom_op angmom_calculator(this->inp_->orbital_dir,
+                                              ucell,
+                                              l_search_radius,
+                                              this->inp_->test_deconstructor,
+                                              this->inp_->test_grid,
+                                              this->inp_->test_atom_input,
+                                              PARAM.globalv.search_pbc,
+                                              this->inp_->out_level,
+                                              PARAM.globalv.gamma_only_local,
+                                              &GlobalV::ofs_running,
+                                              my_rank);
+        angmom_calculator.calculate(this->inp_->suffix,
+                                    global_matrix_dir,
+                                    ucell,
+                                    this->pv,
+                                    l_precision,
+                                    my_rank,
+                                    istep,
+                                    l_out_app_flag);
     }
 
     //! The momentum matrix p = -i nabla + i [V_nl, r] is built from the orbital

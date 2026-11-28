@@ -81,6 +81,7 @@ struct Input_para
 
     // ==============   #Parameters (2.Electronic structure) ===========================
     std::string ks_solver = "default"; ///< xiaohui add 2013-09-01
+    double lcao_sk_cut = 0.0; ///< relative cutoff for AO overlap eigenvalues
     std::string basis_type = "pw";     ///< xiaohui add 2013-09-01, for structural adjustment
     int nbands = 0;                    ///< number of bands
     double nelec = 0.0;                ///< total number of electrons
@@ -98,6 +99,7 @@ struct Input_para
     double pw_diag_thr = 0.01;      ///< used in cg method
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
+    std::string lobpcg_locking = "hard"; ///< hard freezes converged vectors; soft keeps them in RR
     int diago_cg_prec = 1;          ///< mohan add 2012-03-31
     int diag_subspace = 0;          // 0: Lapack, 1: elpa, 2: scalapack
     bool use_k_continuity = false;  ///< whether to use k-point continuity for initializing wave functions
@@ -403,7 +405,7 @@ struct Input_para
     // ==============   #Parameters (10.lr-tddft) ===========================
     int lr_nstates = 1;                              ///< the number of 2-particle states to be solved
     int lr_target_state = 0;                         ///< which excited state the geometry relaxation follows (0-based)
-    std::string lr_target_spin = "singlet";          ///< spin channel of that state: singlet / triplet / updown
+    std::string lr_target_spin = "singlet";          ///< nspin=1 LR channel, or relaxation target at nspin=2: singlet / triplet / updown
     double lr_degen_thr
         = 0.0; ///< max excitation-energy spread of a degenerate multiplet whose gradient matrix is computed (Ry); 0 disables
     std::string lr_degen_mode = "state";       ///< what a relaxation follows when the target state sits in a degenerate multiplet: state / average
@@ -458,7 +460,7 @@ struct Input_para
     int dfpt_broyden_ndim = 8;                ///< Broyden history depth (broyden variants)
 
     // ==============   #Parameters (11.Output) ===========================
-    int out_stru = 1;                         ///< output stru file each ion step
+    int out_stru = 1;                         ///< 0: none, 1: ABACUS STRU, 2: CIF geometry
                                               ///< 0: no output, 1: STRU format, 2: CIF format
     int out_freq_elec = 0;                    ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                     ///< the frequency ( >= 0 ) of ionic step to output charge density;

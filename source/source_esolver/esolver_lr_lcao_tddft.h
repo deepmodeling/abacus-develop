@@ -258,7 +258,11 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     ///========================== for gradient calculation =========================
     void init_pot_groundstate(const Charge &chg_gs);
     /// Solve the Z-vector equation for `nst` independent blocks of `Xz`.
-    ct::Tensor solve_zvector_eqation(const int ispin, const int nst, const ct::Tensor &Xz);
+    ct::Tensor solve_zvector_eqation(
+        const int ispin,
+        const int nst,
+        const ct::Tensor &Xz,
+        const std::vector<std::vector<ct::Tensor>> &window_density);
     /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
     /// restricts it to that one state: geometry relaxation follows a single state, and the
     /// Z-vector solve dominates the cost. -1 does all `nstates`.

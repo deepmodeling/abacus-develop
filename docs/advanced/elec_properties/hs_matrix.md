@@ -163,6 +163,8 @@ We also offer the option of only calculating the overlap matrix without running 
 
 A file named `sr_nao.csr` will be generated in `OUT.${suffix}`, which contains the overlap matrix.
 
+When [out_mat_l](../input_files/input-main.md#out_mat_l) is enabled, the expectation values of the angular momentum operators are written in the same run as `lx_nao.csr`, `ly_nao.csr` and `lz_nao.csr` in `OUT.${suffix}`. Like the overlap matrix, these matrices are built from the orbital tables and require no SCF cycle; because the NAO basis functions are real, only the imaginary part of each matrix element is stored. This combination is not available for `nspin = 4`, and [out_app_flag](../input_files/input-main.md#out_app_flag) controls whether the L files carry an ionic-step suffix (`lxg${step}_nao.csr` etc.) and whether they are overwritten or appended.
+
 When [out_mat_p](../input_files/input-main.md#out_mat_p) is enabled, the momentum operator matrices $\langle\phi_i|\hat{p}_x|\phi_j\rangle$, $\langle\phi_i|\hat{p}_y|\phi_j\rangle$ and $\langle\phi_i|\hat{p}_z|\phi_j\rangle$ are written in the same run as `prx_nao.csr`, `pry_nao.csr` and `prz_nao.csr` in `OUT.${suffix}`. The momentum operator $\hat{\mathbf{p}} = -i\nabla + i[\hat{V}_{\mathrm{NL}}, \hat{\mathbf{r}}]$ includes the gradient term and the non-local pseudopotential commutator, both of which are built from the orbital tables and the pseudopotential projectors and require no SCF cycle. Because the NAO basis functions are real, every matrix element is purely imaginary, so the stored real part is identically zero. This combination is not available for `nspin = 4`, and [out_app_flag](../input_files/input-main.md#out_app_flag) controls whether the files carry an ionic-step suffix (`prxg${step}_nao.csr` etc.) and whether they are overwritten or appended.
 
 > When `nspin` is set to 1 or 2, the dimension of the overlap matrix is nlocal $\times$ nlocal, where nlocal is the total number of numerical atomic orbitals. 
@@ -176,6 +178,6 @@ We provide [examples](https://github.com/deepmodeling/abacus-develop/tree/develo
 - `03_out_hsk_gamma`: writing H(k) and S(k) for a gamma-only calculation
 - `04_out_hsk_multik`: writing H(k) and S(k) for a multi-k calculation
 - `01_out_hsr_multik` and `02_out_hsr_multik`: writing H(R) and S(R) for a multi-k calculation
-- `05_gets`: running `calculation = get_s` to obtain the overlap matrix; enabling `out_mat_p` in the same run also writes the momentum operator matrices
+- `05_gets`: running `calculation = get_s` to obtain the overlap matrix; enabling `out_mat_l` or `out_mat_p` in the same run also writes the angular momentum or momentum operator matrices
 
 Reference output files are provided in each directory.
