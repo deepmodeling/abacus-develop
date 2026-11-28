@@ -132,9 +132,6 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     // but span every virtual band the ground state produced (the input `nbands`), so the
     // window is widened by raising *nbands*, not `nvirt`. X keeps its own window, so Omega
     // -- and with it any finite-difference reference -- is untouched.
-    /// (re)build the Z window from `psi_ks_all_` / `eig_ks_all`. `desc_src` describes the
-    /// source wavefunction's 2D layout; unused (and may be null) in a serial build.
-    void fill_z_window_(const int *desc_src);
     /// Widen `nst` X blocks starting at `istate_begin` from the X window into the Z window,
     /// zero-filling the virtual rows X does not have.
     /// @brief variables for parallel distribution of matrix in AO representation

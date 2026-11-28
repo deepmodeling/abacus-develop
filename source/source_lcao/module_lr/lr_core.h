@@ -144,9 +144,13 @@ struct Core
     void bind(const Refs<T>& r) { this->refs = r; }
 
     /// Read the ground-state bands this solver needs, from file.
-    void read_wfc(const std::string& in_dir, const Input_para& inp, const K_Vectors& kv, std::ostream& log);
+    void read_wfc();
+    /// Read the ground-state charge density from file.
+    void read_chg(Charge& chg);
     /// Widen the ground-state window into the Z window used by the force path.
     void fill_z(const int* desc_src, const K_Vectors& kv, bool cal_force, bool first, std::ostream& log);
+    /// The bound-input counterpart of `fill_z`.
+    void fill_z_win(const int* desc_src, bool first);
     /// Re-read the band window that follows the current geometry, then rebuild the Z window.
     /// `first` selects the one-time spin-channel setup; later calls only validate it.
     void refresh_gs(const KsBands<T>& bands, const K_Vectors& kv, const Input_para& inp, bool first,

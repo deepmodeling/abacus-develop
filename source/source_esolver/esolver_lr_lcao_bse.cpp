@@ -113,6 +113,8 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell &basecell, const Input_para
 
         if (!this->inp_->bse_ri_hartree && this->inp_->ri_hartree_benchmark == "none")
         {
+            // the potentials below read `Refs`
+            this->lr_.bind(this->make_refs());
             Charge chg_gs;
             this->read_ks_chg(chg_gs);
             this->init_pot(chg_gs);

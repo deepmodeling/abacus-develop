@@ -185,20 +185,13 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge &chg_gs)
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
 {
-    this->lr_.read_wfc(this->in_dir, *this->inp_, this->kv, this->ofs_running_);
-}
-
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int *desc_src)
-{
-    this->lr_.fill_z(desc_src, this->kv, this->inp_->cal_force, !this->ks_initialized_, this->ofs_running_);
+    this->lr_.read_wfc();
 }
 
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge &chg_gs)
 {
-    LR::read_gs_chg(this->in_dir, *this->inp_, this->lr_.dim.nspin, *this->ucell_, pgrid(), this->pw_rho, chg_gs,
-                    this->my_rank_, this->ofs_running_);
+    this->lr_.read_chg(chg_gs);
 }
 
 
@@ -551,10 +544,11 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell
         reset_dim_spin();
     }
     // the Z-vector window: after `reset_dim_spin`, so nocc/nvirt/openshell are final
+    // (the file path is always the first build of the window)
 #ifdef __MPI
-    this->fill_z_window_(this->lr_.gs.para_mat_all.desc_wfc);
+    this->lr_.fill_z_win(this->lr_.gs.para_mat_all.desc_wfc, true);
 #else
-    this->fill_z_window_(nullptr);
+    this->lr_.fill_z_win(nullptr, true);
 #endif
 
     // clear ks info, new elecstate for excition

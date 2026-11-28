@@ -44,16 +44,31 @@ namespace LR
 {
 
 template <typename T>
-void Core<T>::read_wfc(const std::string& in_dir, const Input_para& inp, const K_Vectors& kv, std::ostream& log)
+void Core<T>::read_wfc()
 {
     assert(this->gs.psi != nullptr);
+    const Input_para& inp = *this->refs.inp;
     GsWfc<T> wfc = read_gs_wfc<T>(*this->gs.psi, this->gs.eig, this->gs.wg, this->gs.para_mat, this->gs.para_mat_all,
-                                  in_dir, inp, this->dim.nocc_in, this->dim.nvirt_in, this->dim.nocc_max,
-                                  this->dim.nbands, this->dim.nbasis, kv, inp.cal_force, log);
+                                  *this->refs.in_dir, inp, this->dim.nocc_in, this->dim.nvirt_in, this->dim.nocc_max,
+                                  this->dim.nbands, this->dim.nbasis, *this->refs.kv, inp.cal_force, *this->refs.log);
     this->gs.psi_all_own = std::move(wfc.all_own);
     this->gs.psi_all = wfc.all;
     this->gs.eig_all = std::move(wfc.eig_all);
     this->gs.wg_all = std::move(wfc.wg_all);
+}
+
+template <typename T>
+void Core<T>::read_chg(Charge& chg)
+{
+    const Input_para& inp = *this->refs.inp;
+    LR::read_gs_chg(*this->refs.in_dir, inp, this->dim.nspin, *this->refs.ucell, *this->refs.pgrid, this->refs.rho, chg,
+                    this->refs.my_rank, *this->refs.log);
+}
+
+template <typename T>
+void Core<T>::fill_z_win(const int* desc_src, const bool first)
+{
+    this->fill_z(desc_src, *this->refs.kv, this->refs.inp->cal_force, first, *this->refs.log);
 }
 
 template <typename T>
@@ -727,11 +742,14 @@ ModuleBase::matrix Core<T>::cal_jt_force(const std::vector<ModuleBase::matrix>& 
     return jt.force;
 }
 
-template void Core<double>::read_wfc(const std::string&, const Input_para&, const K_Vectors&, std::ostream&);
-template void Core<std::complex<double>>::read_wfc(const std::string&, const Input_para&, const K_Vectors&,
-                                                   std::ostream&);
+template void Core<double>::read_wfc();
+template void Core<std::complex<double>>::read_wfc();
+template void Core<double>::read_chg(Charge&);
+template void Core<std::complex<double>>::read_chg(Charge&);
 template void Core<double>::fill_z(const int*, const K_Vectors&, bool, bool, std::ostream&);
 template void Core<std::complex<double>>::fill_z(const int*, const K_Vectors&, bool, bool, std::ostream&);
+template void Core<double>::fill_z_win(const int*, bool);
+template void Core<std::complex<double>>::fill_z_win(const int*, bool);
 template void Core<double>::refresh_gs(const KsBands<double>&, const K_Vectors&, const Input_para&, bool,
                                        std::ostream&);
 template void Core<std::complex<double>>::refresh_gs(const KsBands<std::complex<double>>&, const K_Vectors&,
