@@ -16,7 +16,6 @@
 #include "source_estate/module_charge/chg_tools.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/setup_deepks.h" // use deepks, mohan add 2025-10-10
 
@@ -151,7 +150,7 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell &ucell, const int istep)
     }
     if (this->p_hamilt_base == nullptr)
     {
-        const bool load_exx_flag = !GlobalC::restart.info_load.restart_exx && GlobalC::restart.info_load.load_H;
+        const bool load_exx_flag = this->exx_nao.need_load_hexx(*this->inp_);
         this->p_hamilt_base = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, *(this->basis_index_), this->pv.para_2d(), this->pelec_base->pot, this->kv,
             this->two_center_bundle_, this->orb_, this->dmat_base.dm, this->dftu_.get(), this->deepks, istep,

@@ -13,6 +13,30 @@ Exx_NAO<TK>::~Exx_NAO(){}
 
 
 template <typename TK>
+bool Exx_NAO<TK>::need_load_hexx(const Input_para& inp) const
+{
+#ifdef __EXX
+    if (inp.init_exx != "file")
+    {
+        return false;
+    }
+    // After the file-loaded Hexx(R) has been consumed once, do not reload it on
+    // subsequent ionic steps (MD/relax); the working Hexx(R) is recomputed instead.
+    if (this->exd)
+    {
+        return !this->exd->restart_exx_done();
+    }
+    if (this->exc)
+    {
+        return !this->exc->restart_exx_done();
+    }
+#else
+    (void)inp;
+#endif
+    return false;
+}
+
+template <typename TK>
 void Exx_NAO<TK>::init(const UnitCell& ucell, Exx_Info& exx_info)
 {
 #ifdef __EXX

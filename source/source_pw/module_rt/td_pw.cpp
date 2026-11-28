@@ -56,7 +56,7 @@ void check_td_input(const Input_para& input, const UnitCell& cell, int xc_type, 
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support ELF.");
     }
-    if (input.mdp.md_restart || input.restart_load)
+    if (input.mdp.md_restart)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT restart is not supported yet.");
     }

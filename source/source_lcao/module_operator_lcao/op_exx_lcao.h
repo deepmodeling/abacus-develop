@@ -82,15 +82,13 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr;
     std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr;
 
-    /// @brief if restart, read and save Hexx, and directly use it during the first outer loop.
+    /// @brief if true (init_exx = file), load Hexx(R) from file for the first outer loop.
     bool restart = false;
 
     /// @brief EXX info, passed from ESolver
     const Exx_Info* exx_info_ptr = nullptr;
 
     const int istep = 0; // the ion step
-
-    void add_loaded_Hexx(const int ik);
 
     const UnitCell& ucell;
 
@@ -99,10 +97,6 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     // if k points has no shift, use cell_nearest to reduce the memory cost
     RI::Cell_Nearest<int, int, 3, double, 3> cell_nearest;
     bool use_cell_nearest = true;
-
-    /// @brief Hexxk for all k-points, only for the 1st scf loop ofrestart load
-    std::vector<std::vector<double>> Hexxd_k_load;
-    std::vector<std::vector<std::complex<double>>> Hexxc_k_load;
 };
 
 using TAC = std::pair<int, std::array<int, 3>>;

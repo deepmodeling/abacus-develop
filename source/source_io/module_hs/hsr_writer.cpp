@@ -115,7 +115,8 @@ bool ModuleIO::write_hcontainer_csr(const std::string& fname,
         representation_note,
         has_efermi,
         efermi_eV,
-        false};
+        false,
+        ""};
     ModuleIO::detail::write_csr_text_header(ofs, header);
 
     const double sparse_threshold = 1e-10;

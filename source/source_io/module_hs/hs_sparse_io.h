@@ -45,6 +45,9 @@ struct SparseWriteOptions
     // independent outputs keep the defaults (one spin direction, index 0).
     int nspin = 1;
     int ispin = 0;
+    /// Optional suffix appended to the description line (e.g. ", E_exx = ... Ry").
+    /// Empty by default so existing writers are unaffected.
+    std::string description_suffix = "";
 };
 
 template <typename Tdata>

@@ -52,9 +52,6 @@ out_chg              0  # print CHG or not
 out_mul              1  # print Mulliken charge and mag of atom in mulliken.txt
 # out_wfc_lcao       1
 # out_freq_ion       1
-# restart setting
-# restart_save       auto  # false, auto, other
-# restart_load       false
 
 
 ### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.

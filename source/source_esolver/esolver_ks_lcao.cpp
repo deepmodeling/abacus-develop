@@ -34,7 +34,6 @@
 #include "source_io/module_output/print_info.h"
 #include "source_io/module_output/write_orb_info.h"
 #include "source_io/module_parameter/input_parameter.h"
-#include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_lcao/lcao_set.h"             // mohan add 20251111
 #include "source_lcao/module_rdmft/rdmft.h"
 #include "source_lcao/module_rt/td_info.h" // TD_info for init_dm config
@@ -213,7 +212,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell &ucell, const int istep, const
     }
     if (this->p_hamilt == nullptr)
     {
-        const bool load_exx_flag = !GlobalC::restart.info_load.restart_exx && GlobalC::restart.info_load.load_H;
+        const bool load_exx_flag = this->exx_nao.need_load_hexx(*this->inp_);
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, *(this->basis_index_), this->pv.para_2d(), this->pelec->pot, this->kv,
             two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_,
@@ -681,7 +680,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(
     ModuleIO::ctrl_iter_lcao<TK, TR>(
         ucell, *this->inp_, this->kv, this->pelec, *this->dmat.dm, this->pv, this->gd, this->psi, this->chr,
         this->p_chgmix, hamilt_lcao, this->orb_, this->deepks, this->exx_nao, this->exx_info_, iter, istep,
-        conv_esolver, this->scf_ene_thr);
+        conv_esolver, this->scf_ene_thr, GlobalV::ofs_running);
 }
 
 template <typename TK, typename TR>

@@ -137,10 +137,9 @@ if(ENABLE_MPI)
   # )
 
   # MODULE_CHARGE_init is temporarily disabled: chg_init.cpp pulls in symbols
-  # from source_io (ModuleIO::read_vdata_palgrid, ModuleIO::read_wf2rho_pw,
-  # Restart::read_file2) whose dependency chains are complex (read_wf2rho_pw
-  # alone drags in chg_parallel/chg_symm/elecstate_op), and the test file also
-  # stubs GlobalC::restart which conflicts with linking the real restart.cpp.
+  # from source_io (ModuleIO::read_vdata_palgrid, ModuleIO::read_wf2rho_pw)
+  # whose dependency chains are complex (read_wf2rho_pw alone drags in
+  # chg_parallel/chg_symm/elecstate_op).
   # TODO: resolve this dependency issue later before re-enabling.
   # AddTest(
   #   TARGET MODULE_CHARGE_init

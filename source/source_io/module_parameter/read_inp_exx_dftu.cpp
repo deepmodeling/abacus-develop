@@ -59,6 +59,19 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("init_exx");
+        item.annotation = "read the EXX Hamiltonian Hexx(R) and E_exx from a CSR file";
+        item.category = "Exact Exchange (Common)";
+        item.type = "String";
+        item.description = R"(This variable controls whether the exact-exchange Hamiltonian matrix Hexx(R) and the corresponding EXX energy are read back from a previously written CSR file, so that a new SCF run can skip rebuilding Hexx(R) in the first outer loop.
+
+* none: do not read Hexx(R) from file.
+* file: read hrs{is}_exx.csr (one file per spin channel, is = 1, 2, ...) from the directory specified by read_file_dir, together with the E_exx value embedded in the CSR header. The calculation stops with an error if the file or the E_exx field is missing. Only available for LCAO calculations with exact exchange, and it is the read counterpart of out_mat_exx = 1. If out_mat_exx was written with out_app_flag = 1 or 2, the fixed file name above is not present and the user has to provide the corresponding single-frame file.)";
+        item.default_value = "none";
+        read_sync_string(input.init_exx);
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_erfc_alpha");
         item.annotation = "fraction of exchange erfc(wr)/r in hybrid functionals";
         item.category = "Exact Exchange (Common)";

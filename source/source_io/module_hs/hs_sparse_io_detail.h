@@ -157,6 +157,11 @@ struct CsrTextHeader
     bool has_efermi;                 ///< Append the Fermi energy to the spin line.
     double efermi_eV;                ///< Fermi energy in eV.
     bool write_banner;               ///< Write the CSR layout banner.
+    /// Optional suffix appended to the description line (e.g. ", E_exx = ... Ry").
+    /// Left empty by callers that do not need it; no default member initializer
+    /// is used so that this struct stays an aggregate under C++11 and the
+    /// brace-initializer lists at the call sites keep working.
+    std::string description_suffix;
 };
 
 /**
@@ -194,7 +199,7 @@ inline void write_csr_text_header(std::ofstream& ofs, const CsrTextHeader& heade
 
     const std::string time_stamp = ModuleIO::local_timestamp();
     ofs << "Ionic_Step " << header.step << ModuleIO::prov_inline(time_stamp) << std::endl;
-    ofs << header.description << std::endl;
+    ofs << header.description << header.description_suffix << std::endl;
     ofs << " " << header.nspin << " # number of spin directions" << std::endl;
     ofs << " " << header.ispin << " # spin index";
     if (header.has_efermi)

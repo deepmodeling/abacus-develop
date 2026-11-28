@@ -1,10 +1,8 @@
 #ifdef __EXX
 #include "op_exx_lcao.h"
-#include "source_base/module_external/blacs_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_restart/restart.h"
 #include "source_io/module_restart/restart_exx_csr.h"
 #include "source_hamilt/module_hcontainer/read_hcontainer.h"
 #include "source_lcao/module_ri/exx_lri_interface.h"
@@ -30,22 +28,6 @@ namespace hamilt
         cell_nearest.init(atoms_pos, latvec, Rs_period);
         return cell_nearest;
     }
-
-template<>
-void OperatorEXX<OperatorLCAO<double, double>>::add_loaded_Hexx(const int ik)
-{
-    BlasConnector::axpy(this->hR->get_paraV()->para_2d().size(), 1.0, this->Hexxd_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
-}
-template<>
-void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::add_loaded_Hexx(const int ik)
-{
-    BlasConnector::axpy(this->hR->get_paraV()->para_2d().size(), 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
-}
-template<>
-void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::add_loaded_Hexx(const int ik)
-{
-    BlasConnector::axpy(this->hR->get_paraV()->para_2d().size(), 1.0, this->Hexxc_k_load[ik].data(), 1, this->hsk->get_hk(), 1);
-}
 
 } // namespace hamilt
 
@@ -180,13 +162,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     { // for nscf, calculate HexxR from the read-in DM, or read HexxR in
         auto file_name_list_csr = []() -> std::vector<std::string> {
             std::vector<std::string> file_name_list;
-            for (int irank = 0; irank < PARAM.globalv.nproc; ++irank)
+            for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
-                for (int is = 0; is < PARAM.inp.nspin; ++is)
-                {
-                    file_name_list.push_back(PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(irank) + "_"
-                                             + std::to_string(is) + ".csr");
-                }
+                file_name_list.push_back(PARAM.globalv.global_readin_dir
+                                         + ModuleIO::exx_csr_filename(is, false, -1));
             }
             return file_name_list;
         };
@@ -269,16 +248,16 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             if (check_exist(file_name_list_csr()))
             {
                 // read HexxR first and reallocate hR according to the read-in HexxR
-                const std::string file_name_exx_csr
-                    = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(PARAM.globalv.myrank);
+                const std::string file_dir_exx_csr = PARAM.globalv.global_readin_dir;
                 // Read HexxR in CSR format
+                double eexx_read = 0.0;
                 if (exx_info_ptr->info_ri.real_number)
                 {
-                    ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
+                    ModuleIO::read_Hexxs_csr(file_dir_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd, eexx_read);
                 }
                 else
                 {
-                    ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
+                    ModuleIO::read_Hexxs_csr(file_dir_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc, eexx_read);
                 }
             }
             else if (check_exist(file_name_list_cereal()))
@@ -351,53 +330,15 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             /// If other operators depends on DM, we can also read DM and then calculate the operators to save the
             /// memory to store operator terms.
 
-            if (this->add_hexx_type == Add_Hexx_Type::k)
+            if (this->add_hexx_type == Add_Hexx_Type::R)
             {
-                /// read in Hexx(k)
-                if (std::is_same<TK, double>::value)
-                {
-                    this->Hexxd_k_load.resize(this->kv.get_nks());
-                    for (int ik = 0; ik < this->kv.get_nks(); ik++)
-                    {
-                        this->Hexxd_k_load[ik].resize(pv->para_2d().size(), 0.0);
-                        this->restart = GlobalC::restart.load_disk("Hexx",
-                                                                   ik,
-                                                                   pv->para_2d().size(),
-                                                                   this->Hexxd_k_load[ik].data(),
-                                                                   false);
-                        if (!this->restart)
-                        {
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    this->Hexxc_k_load.resize(this->kv.get_nks());
-                    for (int ik = 0; ik < this->kv.get_nks(); ik++)
-                    {
-                        this->Hexxc_k_load[ik].resize(pv->para_2d().size(), 0.0);
-                        this->restart = GlobalC::restart.load_disk("Hexx",
-                                                                   ik,
-                                                                   pv->para_2d().size(),
-                                                                   this->Hexxc_k_load[ik].data(),
-                                                                   false);
-                        if (!this->restart)
-                        {
-                            break;
-                        }
-                    }
-                }
-            }
-            else if (this->add_hexx_type == Add_Hexx_Type::R)
-            {
-                // read in Hexx(R)
-                const std::string restart_HR_path
-                    = GlobalC::restart.folder + "HexxR" + std::to_string(PARAM.globalv.myrank);
+                // read in Hexx(R) from the directory specified by read_file_dir.
+                // Only the CSR format (with E_exx embedded in the header) is supported.
+                const std::string restart_HR_dir = PARAM.globalv.global_readin_dir;
                 int all_exist = 1;
                 for (int is = 0; is < PARAM.inp.nspin; ++is)
                 {
-                    std::ifstream ifs(restart_HR_path + "_" + std::to_string(is) + ".csr");
+                    std::ifstream ifs(restart_HR_dir + ModuleIO::exx_csr_filename(is, false, -1));
                     if (!ifs)
                     {
                         all_exist = 0;
@@ -408,54 +349,29 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 #ifdef __MPI
                 Parallel_Reduce::reduce_min(all_exist);
 #endif
-                if (all_exist)
+                if (!all_exist)
                 {
-                    // Read HexxR in CSR format
-                    if (exx_info_ptr->info_ri.real_number)
+                    ModuleBase::WARNING_QUIT("OperatorEXX",
+                        "init_exx = file but hrs{is}_exx.csr is missing under " + restart_HR_dir);
+                }
+                double eexx_read = 0.0;
+                if (exx_info_ptr->info_ri.real_number)
+                {
+                    ModuleIO::read_Hexxs_csr(restart_HR_dir, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd, eexx_read);
+                    if (this->exd != nullptr)
                     {
-                        ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
-                    }
-                    else
-                    {
-                        ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
+                        this->exd->set_hexx_loaded(eexx_read);
                     }
                 }
                 else
                 {
-                    // Read HexxR in binary format (old version)
-                    const std::string restart_HR_path_cereal
-                        = GlobalC::restart.folder + "HexxR_" + std::to_string(PARAM.globalv.myrank);
-                    std::ifstream ifs(restart_HR_path_cereal, std::ios::binary);
-                    int all_exist_cereal = ifs ? 1 : 0;
-#ifdef __MPI
-                    Parallel_Reduce::reduce_min(all_exist_cereal);
-#endif
-                    if (!all_exist_cereal)
+                    ModuleIO::read_Hexxs_csr(restart_HR_dir, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc, eexx_read);
+                    if (this->exc != nullptr)
                     {
-                        // no HexxR file in CSR or binary format
-                        this->restart = false;
-                    }
-                    else
-                    {
-                        if (exx_info_ptr->info_ri.real_number)
-                        {
-                            ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxd);
-                        }
-                        else
-                        {
-                            ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxc);
-                        }
+                        this->exc->set_hexx_loaded(eexx_read);
                     }
                 }
             }
-
-            if (!this->restart)
-            {
-                std::cout << "WARNING: Hexx not found, restart from the non-exx loop." << std::endl
-                          << "If the loaded charge density is EXX-solved, this may lead to poor convergence."
-                          << std::endl;
-            }
-            GlobalC::restart.info_load.load_H_finish = this->restart;
         }
     }
 }
@@ -587,41 +503,8 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
         return;
     }
 
-    // The restart path may still use a full EXX workflow. For one-shot
-    // operators exd/exc are null and the value remains zero.
-    int two_level_step = 0;
-    if (exx_info_ptr->info_ri.real_number && this->exd != nullptr)
-    {
-        two_level_step = this->exd->get_two_level_step();
-    }
-    else if (!exx_info_ptr->info_ri.real_number && this->exc != nullptr)
-    {
-        two_level_step = this->exc->get_two_level_step();
-    }
-
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
-        if (this->restart)
-        {
-            if (two_level_step == 0)
-            {
-                this->add_loaded_Hexx(ik);
-                return;
-            }
-            else // clear loaded Hexx and release memory
-            {
-                if (this->Hexxd_k_load.size() > 0)
-                {
-                    this->Hexxd_k_load.clear();
-                    this->Hexxd_k_load.shrink_to_fit();
-                }
-                else if (this->Hexxc_k_load.size() > 0)
-                {
-                    this->Hexxc_k_load.clear();
-                    this->Hexxc_k_load.shrink_to_fit();
-                }
-            }
-        }
         if (exx_info_ptr->info_ri.real_number)
         {
             RI_2D_Comm::add_Hexx(ucell,

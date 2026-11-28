@@ -13,24 +13,32 @@ namespace ModuleIO
 using TC = std::array<int, 3>;
 using TAC = std::pair<int, TC>;
 
-/// read Hexxs in CSR format
+/// Build the EXX restart CSR file name: hrs{ispin+1}[g{istep+1}]_exx.csr
+std::string exx_csr_filename(const int ispin, const bool numbered, const int istep);
+
+/// read Hexxs in CSR format; also extracts E_exx from the description line
 template <typename Tdata>
-void read_Hexxs_csr(const std::string& file_name,
+void read_Hexxs_csr(const std::string& file_dir,
                     const UnitCell& ucell,
                     const int nspin,
                     const int nbasis,
-                    std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs);
+                    std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
+                    double& eexx);
 
 /// read Hexxs in cereal format
 template <typename Tdata>
 void read_Hexxs_cereal(const std::string& file_name,
                        std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs);
 
-/// write Hexxs in CSR format
+/// write Hexxs in CSR format; embeds E_exx in the description line
 template <typename Tdata>
-void write_Hexxs_csr(const std::string& file_name,
+void write_Hexxs_csr(const std::string& out_dir,
                      const UnitCell& ucell,
-                     const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs);
+                     const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
+                     const double eexx,
+                     const int precision,
+                     const int istep,
+                     const int out_app_flag);
 
 /// calculate CSR sparse matrix from the global matrix stored with RI::Tensor
 /// the return type is same as SR_sparse,  HR_sparse, etc.

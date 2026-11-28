@@ -1355,6 +1355,33 @@ For binary output, each file uses the same basename as text output with a .dat s
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_exx");
+        item.annotation = "output Hexx(R) CSR matrix for EXX restart";
+        item.category = "Output information";
+        item.type = R"(Boolean \[Integer\](optional))";
+        item.description = "Whether to write the exact-exchange Hamiltonian matrix Hexx(R) in CSR text format, together with the EXX energy embedded in the file header, into OUT.${suffix}/hrs{is}_exx.csr (one file per spin channel, is = 1, 2, ...). The optional second integer controls the text precision (default 16). This output is the counterpart read back by init_exx = file. Like the other out_mat_* outputs it follows out_freq_ion and out_app_flag: out_app_flag = 2 inserts a g{step} index before _exx.csr, and out_app_flag = 1 appends later ionic steps to the same file. It only takes effect for LCAO calculations with exact exchange (dft_functional / xc_functional selects a hybrid functional).";
+        item.default_value = "0 16";
+        item.unit = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_exx[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_exx enable flag must be 0/1, using default 0");
+            }
+            if (count >= 2) try { para.input.out_mat_exx[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_exx[0] && para.input.out_mat_exx[1] <= 0)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_exx precision must be positive");
+        };
+        sync_intvec(input.out_mat_exx, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_ds");
         item.annotation = "output of derivative of S(R) matrix";
         item.category = "Output information";
@@ -1684,21 +1711,6 @@ For more information, refer to the documentation of out_mat_r, out_hsr, out_mat_
         item.default_value = "False";
         item.unit = "";
         read_sync_bool(input.out_element_info);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("restart_save");
-        item.annotation = "print to disk every step for restart";
-        item.category = "Output information";
-        item.type = "Boolean";
-        item.description = R"(Whether to save charge density files per ionic step, which are used to restart calculations. According to the value of read_file_dir:
-* auto: These files are saved in folder OUT.{read_file_dir}/restart/.
-
-If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or rpa==True), the Hexx(R) files for each processor will also be saved in the above folder, which can be read in EXX calculation with restart_load==True.)";
-        item.default_value = "False";
-        item.unit = "";
-        item.set_availability("basis_type==lcao");
-        read_sync_bool(input.restart_save);
         this->add_item(item);
     }
     {

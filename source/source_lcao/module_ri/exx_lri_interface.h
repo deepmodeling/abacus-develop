@@ -78,6 +78,24 @@ public:
         return this->two_level_step;
     }
 
+    /// @brief Mark that Hexx(R) and E_exx were loaded from file, and store E_exx.
+    void set_hexx_loaded(const double eexx)
+    {
+        this->hexx_loaded_ = true;
+        this->eexx_loaded_ = eexx;
+    }
+    /// @brief Whether Hexx(R) has already been loaded from file in this run.
+    bool hexx_loaded() const
+    {
+        return this->hexx_loaded_;
+    }
+    /// @brief Whether the file-loading procedure has already been consumed once
+    /// (used to avoid reloading on each ionic step in MD/relax calculations).
+    bool restart_exx_done() const
+    {
+        return this->restart_exx_;
+    }
+
     // Processes in ESolver_KS_LCAO
     /// @brief in init: Exx_LRI::init()
     void init(
@@ -143,7 +161,8 @@ public:
                          const double& scf_ene_thr,
                          int& iter,
                          const int istep,
-                         bool& conv_esolver);
+                         bool& conv_esolver,
+                         std::ofstream& ofs_running);
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(const UnitCell& ucell,
                             hamilt::Hamilt<T>& hamilt,
@@ -196,6 +215,13 @@ private:
 
     bool exx_spacegroup_symmetry = false;
     ModuleSymmetry::Symmetry_rotation symrot_;
+
+    /// @brief Whether Hexx(R) was loaded from file, and the EXX energy read with it.
+    bool hexx_loaded_ = false;
+    double eexx_loaded_ = 0.0;
+    /// @brief Set to true after the file-loaded Hexx(R) has been consumed once,
+    /// so that MD/relax runs do not reload it on every ionic step.
+    bool restart_exx_ = false;
 
     struct Flag_Finish
     {

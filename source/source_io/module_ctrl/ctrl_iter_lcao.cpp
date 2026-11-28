@@ -1,12 +1,11 @@
 #include "ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 
-#include "source_base/global_variable.h" // use GlobalC
+#include "source_base/global_variable.h" // use GlobalV
 #include "source_hamilt/module_xc/exx_info.h"
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/lcao_deepks.h"
 #include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
-#include "source_io/module_restart/restart.h"
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
@@ -33,20 +32,11 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         int &iter,
         const int istep,
         bool &conv_esolver,
-		const double &scf_ene_thr)
+		const double &scf_ene_thr,
+		std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_iter_lcao");
-
-    // save charge density
-    // Peize Lin add 2020.04.04
-    if (GlobalC::restart.info_save.save_charge)
-    {
-        for (int is = 0; is < inp.nspin; ++is)
-        {
-            GlobalC::restart.save_disk("charge", is, chr.nrxx, chr.rho[is]);
-        }
-    }
 
 #ifdef __EXX
     bool cal_exx = exx_info.info_global.cal_exx;
@@ -58,9 +48,9 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         {
             real_number ?
               exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
-                pv, *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
+                pv, *p_chgmix, scf_ene_thr, iter, istep, conv_esolver, ofs_running) :
               exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
-                pv, *p_chgmix, scf_ene_thr, iter, istep, conv_esolver);
+                pv, *p_chgmix, scf_ene_thr, iter, istep, conv_esolver, ofs_running);
         }
     }
 #endif
@@ -104,7 +94,8 @@ template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
         int &iter,
         const int istep,
         bool &conv_esolver,
-		const double &scf_ene_thr);
+		const double &scf_ene_thr,
+		std::ofstream &ofs_running);
 
 // TK: complex<double>  TR: double 
 template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // unit cell *
@@ -125,7 +116,8 @@ template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // u
         int &iter,
         const int istep,
         bool &conv_esolver,
-		const double &scf_ene_thr);
+		const double &scf_ene_thr,
+		std::ofstream &ofs_running);
 
 // TK: complex<double>  TR: complex<double> 
 template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, // unit cell *
@@ -146,6 +138,7 @@ template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCel
         int &iter,
         const int istep,
         bool &conv_esolver,
-		const double &scf_ene_thr);
+		const double &scf_ene_thr,
+		std::ofstream &ofs_running);
 
 } // end ModuleIO

@@ -777,7 +777,6 @@ OBJS_IO=module_parameter/input_conv.o\
     module_wf/read_wfc_pw.o\
     module_wf/get_wf_pw.o\
     module_wf/read_wf2rho_pw.o\
-    module_restart/restart.o\
     module_wannier/to_w90.o\
     module_qo/to_qo_kernel.o\
     module_qo/to_qo_mpi.o\

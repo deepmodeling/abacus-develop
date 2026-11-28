@@ -10,11 +10,8 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "../module_unk/berryphase.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_restart/restart.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/lattice_change_basic.h"
-
-#include <algorithm>
 
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_abfs_jle.h"
@@ -125,68 +122,6 @@ void Input_Conv::Convert()
 #endif // __LCAO
 
 
-
-    //----------------------------------------------------------
-    // about restart, // Peize Lin add 2020-04-04
-    //----------------------------------------------------------
-    if (PARAM.inp.restart_save)
-    {
-        std::string dft_functional_lower = PARAM.inp.dft_functional;
-        std::transform(PARAM.inp.dft_functional.begin(),
-                       PARAM.inp.dft_functional.end(),
-                       dft_functional_lower.begin(),
-                       tolower);
-        GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
-        ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
-        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
-            || dft_functional_lower == "hse"
-            || dft_functional_lower == "opt_orb"
-            || dft_functional_lower == "scan0") {
-            GlobalC::restart.info_save.save_charge = true;
-            GlobalC::restart.info_save.save_H = true;
-        }
-        else if ( dft_functional_lower == "muller" || dft_functional_lower == "power"
-            || dft_functional_lower == "wp22"
-            || dft_functional_lower == "cwp22" ) // added by jghan, 2024-07-07
-        {
-            GlobalC::restart.info_save.save_charge = true;
-            GlobalC::restart.info_save.save_H = true;
-        }
-        else {
-            GlobalC::restart.info_save.save_charge = true;
-        }
-    }
-    if (PARAM.inp.restart_load)
-    {
-        std::string dft_functional_lower = PARAM.inp.dft_functional;
-        std::transform(PARAM.inp.dft_functional.begin(),
-                       PARAM.inp.dft_functional.end(),
-                       dft_functional_lower.begin(),
-                       tolower);
-        GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
-        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
-            || dft_functional_lower == "hse"
-            || dft_functional_lower == "opt_orb"
-            || dft_functional_lower == "scan0"
-            || dft_functional_lower == "lc_pbe"
-            || dft_functional_lower == "lc_wpbe"
-            || dft_functional_lower == "lrc_wpbe"
-            || dft_functional_lower == "lrc_wpbeh"
-            || dft_functional_lower == "cam_pbeh") {
-            GlobalC::restart.info_load.load_charge = true;
-            GlobalC::restart.info_load.load_H = true;
-        }
-        else if ( dft_functional_lower == "muller" || dft_functional_lower == "power"
-            || dft_functional_lower == "wp22"
-            || dft_functional_lower == "cwp22" ) // added by jghan, 2024-07-07
-        {
-            GlobalC::restart.info_load.load_charge = true;
-            GlobalC::restart.info_load.load_H = true;
-        }
-        else {
-            GlobalC::restart.info_load.load_charge = true;
-        }
-    }
 
 //----------------------------------------------------------
 // about exx, Peize Lin add 2018-06-20

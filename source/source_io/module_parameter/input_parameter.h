@@ -52,6 +52,7 @@ struct Input_para
     std::string init_wfc_file_format = "";   ///< normalized file format: "txt" or "binary"
     int pw_seed = 0;                    ///< random seed for initializing wave functions
     std::string init_chg = "atomic";    ///< "file","atomic"
+    std::string init_exx = "none";      ///< "none","file": read Hexx(R) and E_exx from read_file_dir
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density
     std::string chg_extrap = "default"; ///< xiaohui modify 2015-02-01
     bool init_vel = false;              ///< read velocity from STRU or not  liuyu 2021-07-14
@@ -64,7 +65,6 @@ struct Input_para
     std::string pseudo_dir = "";        ///< directory of pseudopotential
     std::string orbital_dir = "";       ///< directory of orbital file
     std::string read_file_dir = "auto"; ///< directory of files for reading
-    bool restart_load = false;
     std::string wannier_card = "none";              ///< input card for wannier functions.
     int mem_saver = 0;                              ///< 1: save psi when nscf calculation.
     int diago_proc = 0;                             ///< the number of procs used to diag. mohan add 2012-01-13
@@ -495,6 +495,7 @@ struct Input_para
     std::vector<int> out_mat_vhk = {0, 8};    ///< output Hartree Vh(k) matrix
     std::vector<int> out_mat_vxck = {0, 8};   ///< output XC Vxc(k) matrix
     std::vector<int> out_mat_exxk = {0, 8};   ///< output exact-exchange Vexx(k) matrix
+    std::vector<int> out_mat_exx = {0, 16};   ///< output Hexx(R) CSR matrix for EXX restart; [0] flag, [1] precision
     std::vector<int> out_mat_h_vnl = {0, 8};  ///< legacy alias for out_mat_vnlk
     std::vector<int> out_mat_h_vl = {0, 8};   ///< legacy alias for out_mat_vlk
     std::vector<int> out_mat_h_vh = {0, 8};   ///< legacy alias for out_mat_vhk
@@ -529,7 +530,6 @@ struct Input_para
     bool out_current_k = false;              ///< output tddft current for all k points
     bool out_vecpot = false;                 ///< output the vector potential or not
     std::vector<int> cal_symm_repr = {0, 3}; ///< output the symmetry representation matrix
-    bool restart_save = false;               ///< restart //Peize Lin add 2020-04-04
     bool rpa = false;                        ///< rpa calculation
     bool rpa_out_vel = false;                ///< whether to output velocity matrix for librpa
     std::string rpa_outdir = "OUT.librpa";   ///< output directory for librpa

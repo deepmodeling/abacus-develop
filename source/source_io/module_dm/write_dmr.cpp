@@ -64,7 +64,8 @@ void write_dmr_csr(std::string& fname,
         std::string(),
         false,
         0.0,
-        false};
+        false,
+        ""};
     ModuleIO::detail::write_csr_text_header(ofs, header);
 
     // write HR_serial to ofs

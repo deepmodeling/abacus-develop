@@ -148,6 +148,7 @@ props_init() {
   out_hsr=$(get_input_key_value "out_hsr" "INPUT")
   has_hs=$(get_input_key_value "out_mat_hs" "INPUT")
   has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
+  has_exx_csr=$(get_input_key_value "out_mat_exx" "INPUT")
   out_hr_npz=$(get_input_key_value "out_hr_npz" "INPUT")
   out_hsr_npz=$(get_input_key_value "out_hsr_npz" "INPUT")
   out_dm_npz=$(get_input_key_value "out_dm_npz" "INPUT")

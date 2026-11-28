@@ -5,7 +5,6 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_charge/chg_init.h"
-#include "source_io/module_restart/restart.h"
 
 #include <complex>
 #include <sstream>
@@ -20,12 +19,6 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
-
-// chg_init.cpp references GlobalC::restart; provide a definition.
-namespace GlobalC
-{
-Restart restart;
-} // namespace GlobalC
 
 /************************************************
  *  unit test of module_charge/chg_init.cpp

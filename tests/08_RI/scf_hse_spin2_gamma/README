@@ -1,1 +1,2 @@
 scf HSE on H2O, gamma_only, nspin=2, exx_separate_loop=1.
+Checks the EXX restart files hrs1_exx.csr / hrs2_exx.csr written by out_mat_exx.
