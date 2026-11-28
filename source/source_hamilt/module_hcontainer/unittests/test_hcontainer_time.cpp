@@ -51,7 +51,7 @@ class HContainerTest : public ::testing::Test
 TEST(single_test_hcontainer, insert_pair)
 {
     // print current used memory of system
-    auto memory_start = ModuleBase::GlobalFunc::MemAvailable() / 1024.0;
+    double memory_start = ModuleBase::GlobalFunc::MemAvailable() / 1024.0;
     // get random number between (0, 100000000) by rand()
     srand((unsigned)time(nullptr));
     hamilt::HContainer<double> HR_test(test_size);
@@ -63,7 +63,7 @@ TEST(single_test_hcontainer, insert_pair)
         int iat2 = rand() % test_size;
         hamilt::AtomPair<double> tmp(iat1, iat2);
         tmp.set_size(10, 10);
-        auto p = tmp.get_HR_values(0, 0, 0).get_pointer();
+        double* p = tmp.get_HR_values(0, 0, 0).get_pointer();
         p[0] = i * 1.0;
         HR_test.insert_pair(tmp);
     }
@@ -72,13 +72,13 @@ TEST(single_test_hcontainer, insert_pair)
     int count = 0;
     for (int i = 0; i < HR_test.size_atom_pairs(); i++)
     {
-        auto tmp = HR_test.get_atom_pair(i);
+        hamilt::AtomPair<double> tmp = HR_test.get_atom_pair(i);
         count += tmp.get_R_size();
     }
     std::cout << "total I-J-R: " << count << std::endl;
     std::cout << "pure data size of I-J-R: " << count * 10 * 10 * sizeof(double) / 1024.0 / 1024.0 << " MB"
               << std::endl;
-    auto memory_end = ModuleBase::GlobalFunc::MemAvailable() / 1024.0;
+    double memory_end = ModuleBase::GlobalFunc::MemAvailable() / 1024.0;
     std::cout << "memory: " << double(HR_test.get_memory_size()) / 1024.0 / 1024.0 << " MB" << std::endl;
     std::cout << "time: " << (double)(end - start) / CLOCKS_PER_SEC << std::endl;
 }
@@ -98,7 +98,7 @@ TEST(single_test_IJR, insert_pair)
         tmp.set_size(10, 10);
         for (int j = 0; j < 100; j++)
         {
-            auto p = tmp.get_HR_values(0, 0, j).get_pointer();
+            double* p = tmp.get_HR_values(0, 0, j).get_pointer();
             p[0] = i * 1.0;
         }
         HR_test.insert_pair(tmp);
@@ -108,7 +108,7 @@ TEST(single_test_IJR, insert_pair)
     int count = 0;
     for (int i = 0; i < HR_test.size_atom_pairs(); i++)
     {
-        auto tmp = HR_test.get_atom_pair(i);
+        hamilt::AtomPair<double> tmp = HR_test.get_atom_pair(i);
         count += tmp.get_R_size();
     }
     std::cout << "total I-J-R: " << count << std::endl;
@@ -129,7 +129,7 @@ TEST_F(HContainerTest, find_pair)
     {
         int iat1 = rand() % test_size;
         int iat2 = rand() % test_size;
-        auto tmp = HR->find_pair(iat1, iat2);
+        hamilt::AtomPair<double>* tmp = HR->find_pair(iat1, iat2);
         if (tmp == nullptr)
         {
             std::cout << "not found" << std::endl;

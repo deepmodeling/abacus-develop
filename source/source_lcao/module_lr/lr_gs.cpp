@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <complex>
 #include <sstream>
+#include <type_traits>
 
 namespace LR
 {
@@ -241,7 +242,7 @@ ZWin<T> build_z_win(psi::Psi<T>* psi_all, const ModuleBase::matrix& eig_all, con
 #else
         for (int ib = 0; ib < z.nbands; ++ib)
         {
-            const auto* start = &(*psi_all)(ik, start_band + ib, 0);
+            const T* start = &(*psi_all)(ik, start_band + ib, 0);
             std::copy(start, start + nbasis, &(*z.psi)(ik, ib, 0));
         }
 #endif
@@ -260,8 +261,12 @@ ZWin<T> build_z_win(psi::Psi<T>* psi_all, const ModuleBase::matrix& eig_all, con
     // the same windows. Diagnose once, without changing the truncated eigenproblem.
     if (diagnose)
     {
+        // Real-Gamma forces include the virtual-window response for both spin formulations.
+        // Retain diagnostics for missing occupied orbitals and uncomputed bands.
+        const bool virtual_response = std::is_same<T, double>::value && kv.get_nks() == 1 && start_band == 0;
+        const std::vector<int>& diagnosed_virtuals = virtual_response ? z.nvirt : nvirt;
         const std::string warning =
-            LR_Util::force_window_warning(nbasis, eig_all.nc, start_band, nvirt, z.nvirt);
+            LR_Util::force_window_warning(nbasis, eig_all.nc, start_band, diagnosed_virtuals, z.nvirt);
         if (!warning.empty())
         {
             log << warning << std::endl;

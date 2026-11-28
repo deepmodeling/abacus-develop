@@ -16,8 +16,8 @@ namespace LR_Util
     inline void print_excitation_energies(std::ostream& log, const double* energies,
                                          const int nstates, const std::string& channel)
     {
-        const auto flags = log.flags();
-        const auto precision = log.precision();
+        const std::ios_base::fmtflags flags = log.flags();
+        const std::streamsize precision = log.precision();
         log << " LR excitation energies: " << channel << '\n';
         log << " State   Excitation Energy (Ry, eV)\n";
         log << std::defaultfloat << std::setprecision(6);

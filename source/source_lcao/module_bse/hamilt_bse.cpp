@@ -111,7 +111,7 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
     
     if (!this->bse_mem_save)
     {
-        for (const auto& st : this->spin_types) {
+        for (const std::string& st : this->spin_types) {
             if (st == "singlet" || st == "triplet") {
                 // Hartree term V (exchange electron and hole)
                 if (st == "singlet"){
@@ -478,7 +478,7 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
 {
     // 1. initialize HContainer VR
     const int is = 0; //spin index, NOTE: only support 1 spin now
-    const auto psi_is = LR_Util::get_psi_spin(psi_ks, is, nk);
+    const psi::Psi<T> psi_is = LR_Util::get_psi_spin(psi_ks, is, nk);
     std::unique_ptr<hamilt::HContainer<T>> VR = std::unique_ptr<hamilt::HContainer<T>>(new hamilt::HContainer<T>(&this->pmat));
     LR_Util::initialize_HR<T, T>(*VR, this->ucell, this->gd, this->orb_cutoff);
 #ifdef __MPI

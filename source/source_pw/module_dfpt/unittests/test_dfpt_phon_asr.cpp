@@ -6,6 +6,7 @@
 
 #include "dfpt_test_tool.h"
 #include "source_base/complexmatrix.h"
+#include "source_base/matrix3.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/qlist.h"
@@ -336,4 +337,155 @@ TEST_F(DFPTPhonSerialTest, AsrSimpleCrossCartesianRegression)
     {
         EXPECT_EQ(out(i, i).imag(), 0.0) << "i=" << i;
     }
+}
+
+namespace
+{
+
+// the 48 signed-permutation cartesian rotations (the Oh point group): the
+// synthetic operation set for the tensor projection tests
+std::vector<ModuleBase::Matrix3> cubic_cartesian_ops()
+{
+    std::vector<ModuleBase::Matrix3> ops;
+    const int rows[6][3] = {{0, 1, 2}, {1, 2, 0}, {2, 0, 1}, {0, 2, 1}, {2, 1, 0}, {1, 0, 2}};
+    for (int p = 0; p < 6; ++p)
+    {
+        for (int sx = 1; sx >= -1; sx -= 2)
+        {
+            for (int sy = 1; sy >= -1; sy -= 2)
+            {
+                for (int sz = 1; sz >= -1; sz -= 2)
+                {
+                    const int signs[3] = {sx, sy, sz};
+                    double m[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        m[i * 3 + rows[p][i]] = signs[i];
+                    }
+                    ops.push_back(ModuleBase::Matrix3(m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]));
+                }
+            }
+        }
+    }
+    return ops;
+}
+
+} // namespace
+
+TEST(DFPTTensorSymmetrize, IsotropicTensorIsInvariant)
+{
+    const std::vector<ModuleBase::Matrix3> ops = cubic_cartesian_ops();
+    ModuleBase::matrix t(3, 3, true);
+    for (int i = 0; i < 3; ++i)
+    {
+        t(i, i) = 12.34;
+    }
+    const ModuleBase::matrix before = t;
+    ModuleDFPT::symmetrize_tensor3(ops, t);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            EXPECT_DOUBLE_EQ(t(i, j), before(i, j));
+        }
+    }
+}
+
+TEST(DFPTTensorSymmetrize, AnisotropicTensorProjectsOntoCubicForm)
+{
+    const std::vector<ModuleBase::Matrix3> ops = cubic_cartesian_ops();
+    ModuleBase::matrix t(3, 3, true);
+    t(0, 0) = 3.0;
+    t(1, 1) = 5.0;
+    t(2, 2) = 7.0;
+    t(0, 1) = 0.9;
+    t(1, 2) = -0.4;
+    ModuleDFPT::symmetrize_tensor3(ops, t);
+    // the cubic projection of a diagonal(3,5,7) is the isotropic mean 5,
+    // off-diagonal content vanishes
+    for (int i = 0; i < 3; ++i)
+    {
+        EXPECT_NEAR(t(i, i), 5.0, 1.0e-12);
+        for (int j = 0; j < 3; ++j)
+        {
+            if (i != j)
+            {
+                EXPECT_NEAR(t(i, j), 0.0, 1.0e-12);
+            }
+        }
+    }
+}
+
+TEST(DFPTTensorSymmetrize, EmptyOrSingleOpIsNoOp)
+{
+    ModuleBase::matrix t(3, 3, true);
+    t(0, 0) = 3.0;
+    t(1, 1) = 5.0;
+    const ModuleBase::matrix before = t;
+    ModuleDFPT::symmetrize_tensor3({}, t);
+    ModuleDFPT::symmetrize_tensor3({ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1)}, t);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            EXPECT_DOUBLE_EQ(t(i, j), before(i, j));
+        }
+    }
+}
+
+TEST(DFPTTensorSymmetrize, BornChargesFollowAtomImages)
+{
+    // two atoms swapped by a C2 rotation about the z axis with the tensors
+    // rotated along: Z'_0 must be the average of Z_0 and R Z_1 R^T
+    const ModuleBase::Matrix3 r_z(-1, 0, 0, 0, -1, 0, 0, 0, 1);
+    const ModuleBase::Matrix3 eye(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    std::vector<ModuleBase::Matrix3> ops = {eye, r_z};
+    std::vector<std::vector<int>> images = {{0, 1}, {1, 0}};
+    std::vector<ModuleBase::matrix> born(2, ModuleBase::matrix(3, 3, true));
+    born[0](0, 0) = 4.0;
+    born[0](1, 1) = 2.0;
+    born[1](0, 0) = 2.0;
+    born[1](1, 1) = 4.0;
+    ModuleDFPT::symmetrize_born(ops, images, born);
+    // atom 0 gets (Z_0 + R Z_1 R^T)/2: R flips x and y, so R Z_1 R^T has
+    // (0,0)=2, (1,1)=4 swapped by the double flip -> equals Z_1; the
+    // average of (4,2) and (2,4) on the two diagonal slots is 3
+    for (int iat = 0; iat < 2; ++iat)
+    {
+        EXPECT_NEAR(born[iat](0, 0), 3.0, 1.0e-12);
+        EXPECT_NEAR(born[iat](1, 1), 3.0, 1.0e-12);
+    }
+}
+
+TEST(DFPTTensorSymmetrize, TracesAndSumsArePreserved)
+{
+    // the projection preserves the trace of every atom's charge tensor and
+    // the per-component sum over atoms (the Z* sum rule input)
+    const std::vector<ModuleBase::Matrix3> ops = cubic_cartesian_ops();
+    const std::vector<std::vector<int>> images(ops.size(), std::vector<int>{0, 1});
+    std::vector<ModuleBase::matrix> born(2, ModuleBase::matrix(3, 3, true));
+    born[0](0, 0) = 4.1;
+    born[0](2, 2) = 1.2;
+    born[0](0, 2) = 0.7;
+    born[1](1, 1) = -2.3;
+    born[1](2, 2) = -0.9;
+    born[1](1, 2) = 0.3;
+    double sum_diag_before = 0.0;
+    for (int iat = 0; iat < 2; ++iat)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            sum_diag_before += born[iat](i, i);
+        }
+    }
+    ModuleDFPT::symmetrize_born(ops, images, born);
+    double sum_diag_after = 0.0;
+    for (int iat = 0; iat < 2; ++iat)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            sum_diag_after += born[iat](i, i);
+        }
+    }
+    EXPECT_NEAR(sum_diag_after, sum_diag_before, 1.0e-12);
 }

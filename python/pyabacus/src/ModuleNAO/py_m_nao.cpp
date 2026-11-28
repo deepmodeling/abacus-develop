@@ -30,7 +30,7 @@ void bind_m_nao(py::module& m)
             [](RadialCollection& self, int nfile, const py::list& file_list, char ftype) {
                 std::vector<std::string> files;
                 files.reserve(nfile);
-                for (auto file: file_list)
+                for (py::handle file: file_list)
                 {
                     files.push_back(file.cast<std::string>());
                 }

@@ -30,7 +30,7 @@ void Gint_env_gamma::cal_env_band(const int iband)
 #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            const auto &biggrid = gint_info_->get_biggrids()[i];
+            const std::shared_ptr<BigGrid>& biggrid = gint_info_->get_biggrids()[i];
             if (biggrid->get_atoms().size() == 0)
             {
                 continue;

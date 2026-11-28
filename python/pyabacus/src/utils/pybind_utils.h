@@ -241,7 +241,7 @@ py::array_t<T> numpy_from_ptr_copy_nd(const T* ptr, const std::vector<ssize_t>& 
 {
     py::array_t<T> result(shape);
     size_t total_size = 1;
-    for (auto dim: shape)
+    for (ssize_t dim: shape)
     {
         total_size *= static_cast<size_t>(dim);
     }

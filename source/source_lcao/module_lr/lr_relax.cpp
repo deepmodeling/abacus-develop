@@ -68,16 +68,11 @@ void RelaxTarget<T>::setup(const Input_para& inp, bool openshell, int nspin, int
                               "triplet are separate states with separate gradients. Pick one of them, or set "
                               "lr_unrestricted to run spin-unrestricted.");
         }
-        ispin_ = (spin == "triplet") ? 1 : 0;
-        if (ispin_ >= nspin)
-        {
-            ModuleBase::WARNING_QUIT(
-                "ESolver_LR", "lr_target_spin=triplet requires nspin=2: the triplet channel is not built here.");
-        }
+        ispin_ = (spin == "triplet" && nspin == 2) ? 1 : 0;
     }
     state_ = inp.lr_target_state; // seed; overlap takes over from step 2
     log << " Excited-state relaxation follows state " << inp.lr_target_state << " of the "
-        << (openshell_ ? "updown" : (ispin_ == 1 ? "triplet" : "singlet"))
+        << (openshell_ ? "updown" : inp.lr_target_spin)
         << " channel, tracked by cross-geometry orbital and amplitude overlap." << std::endl;
 }
 

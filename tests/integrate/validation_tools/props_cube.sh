@@ -22,8 +22,7 @@ run_cube_pot_props() {
   if ! test -z "$out_pot" && [ $out_pot == 1 ]; then
     pot1ref=pot.cube.ref
     pot1cal=OUT.autotest/pot.cube
-    python3 $COMPARE_SCRIPT $pot1ref $pot1cal 3
-    echo "ComparePot1_pass $?" >> $props_result_file
+    record_compare_result "$props_result_file" "ComparePot1_pass" "$pot1ref" "$pot1cal" 3
   fi
 
   #-------------------------------
@@ -32,8 +31,7 @@ run_cube_pot_props() {
   if ! test -z "$out_pot" && [ $out_pot == 2 ]; then
     pot1ref=potes.cube.ref
     pot1cal=OUT.autotest/potes.cube
-    python3 $COMPARE_SCRIPT $pot1ref $pot1cal 8
-    echo "ComparePot_pass $?" >> $props_result_file
+    record_compare_result "$props_result_file" "ComparePot_pass" "$pot1ref" "$pot1cal" 8
   fi
 
   #-------------------------------
@@ -43,8 +41,7 @@ run_cube_pot_props() {
   if ! test -z "$out_elf" && [ $out_elf == 1 ]; then
     elf1ref=elftot.cube.ref
     elf1cal=OUT.autotest/elftot.cube
-    python3 $COMPARE_SCRIPT $elf1ref $elf1cal 3
-    echo "ComparePot1_pass $?" >> $props_result_file
+    record_compare_result "$props_result_file" "ComparePot1_pass" "$elf1ref" "$elf1cal" 3
   fi
 
 }
@@ -56,7 +53,11 @@ run_cube_props() {
   #---------------------------------------
   #echo $out_chg
   if ! test -z "$out_chg" && [ $out_chg -ge 1 ]; then
-    record_compare_result "$props_result_file" "chg.cube_pass" "chg.cube.ref" "OUT.autotest/chg.cube" 6
+    # A channel-density regression can opt into lr_density.ref instead of
+    # storing a separate ground-state cube. Still check both if both exist.
+    if [ "$is_lr" != 1 ] || [ ! -f lr_density.ref ] || [ -f chg.cube.ref ]; then
+      record_compare_result "$props_result_file" "chg.cube_pass" "chg.cube.ref" "OUT.autotest/chg.cube" 6
+    fi
   fi
 
   #---------------------------------------
@@ -65,8 +66,8 @@ run_cube_props() {
   #---------------------------------------
   if ! test -z "$has_scan" && [ $has_scan == "scan" ] &&
     ! test -z "$out_chg" && [ $out_chg == 1 ]; then
-    python3 $COMPARE_SCRIPT tau.cube.ref OUT.autotest/tau.cube 8
-    echo "tau.cube_pass $?" >> $props_result_file
+    record_compare_result "$props_result_file" "tau.cube_pass" \
+      "tau.cube.ref" "OUT.autotest/tau.cube" 8
   fi
 
   #---------------------------------------
@@ -75,8 +76,8 @@ run_cube_props() {
   #---------------------------------------
   if ! test -z "$has_ldos" && [ $has_ldos == 1 ]; then
     stm_bias=$(get_input_key_value "stm_bias" "OUT.autotest/INPUT.info")
-    python3 $COMPARE_SCRIPT ldos.cube.ref OUT.autotest/ldos_"$stm_bias"ev.cube 8
-    echo "ldos.cube_pass $?" >> $props_result_file
+    record_compare_result "$props_result_file" "ldos.cube_pass" \
+      "ldos.cube.ref" "OUT.autotest/ldos_${stm_bias}ev.cube" 8
   fi
 
   #---------------------------------------
@@ -194,11 +195,14 @@ run_cube_props() {
       echo "Error: failed to strip comment lines from $wfc_cal or $wfc_ref"
       wfc_pass=1
     else
-      python3 $COMPARE_SCRIPT "$wfc_cal_nohdr" "$wfc_ref_nohdr" 8 -abs 1
-      wfc_pass=$?
+      if python3 "$COMPARE_SCRIPT" "$wfc_cal_nohdr" "$wfc_ref_nohdr" 8 -abs 1; then
+        wfc_pass=0
+      else
+        wfc_pass=$?
+      fi
     fi
     rm -f "$wfc_cal_nohdr" "$wfc_ref_nohdr"
-    echo "Compare_wfc_lcao_pass $wfc_pass" >> $props_result_file
+    record_compare_status "$props_result_file" "Compare_wfc_lcao_pass" "$wfc_pass"
   fi
 
 }
@@ -209,8 +213,8 @@ run_cube_tail_props() {
   # mulliken charge
   #--------------------------------------------
   if ! test -z "$out_mul" && [ $out_mul == 1 ]; then
-    python3 $COMPARE_SCRIPT mulliken.txt.ref OUT.autotest/mulliken.txt 3
-    echo "Compare_mulliken_pass $?" >> $props_result_file
+    record_compare_result "$props_result_file" "Compare_mulliken_pass" \
+      "mulliken.txt.ref" "OUT.autotest/mulliken.txt" 3
   fi
 
   #--------------------------------------------
@@ -314,11 +318,8 @@ run_cube_tail_props() {
   if_separate_k=$(get_input_key_value "if_separate_k" "INPUT")
   if [ "$nspin" = "4" ] && { [ "$if_separate_k" = "1" ] || [ "$if_separate_k" = "true" ]; } &&
     [ -n "$out_wfc_norm" ] && [ -n "$out_wfc_re_im" ] && [ -n "$out_pchg" ]; then
-    if python3 "$CUBE_TOOL" check-spinor OUT.autotest; then
-      echo "pw_spinor_cube_identity 0" >> "$props_result_file"
-    else
-      echo "pw_spinor_cube_identity 1" >> "$props_result_file"
-    fi
+    run_and_record_status "$props_result_file" "pw_spinor_cube_identity" \
+      python3 "$CUBE_TOOL" check-spinor OUT.autotest
   fi
 
 }

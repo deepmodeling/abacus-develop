@@ -30,7 +30,8 @@ struct GsForceCtx
 /// Solve the Z-vector equation for `nst` independent blocks of `xz`.
 template <typename T>
 ct::Tensor solve_zeq(const GradientInputs<T>& in, const ct::Tensor& xz, int ispin, int nst, bool openshell,
-                     const std::string& grad_solver, const std::string& in_dir);
+                     const std::string& grad_solver, const std::string& in_dir,
+                     const std::vector<std::vector<ct::Tensor>>& window_density);
 
 /// Forces of `nst` closed-shell states widened into the Z window.
 template <typename T>

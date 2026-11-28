@@ -82,7 +82,7 @@ void Structure_Factor::get_sk(Device* ctx, const int ik, const ModulePW::PW_Basi
     {
         int it = ucell->iat2it[iat];
         int ia = ucell->iat2ia[iat];
-        auto* tau = reinterpret_cast<double*>(ucell->atoms[it].tau.data());
+        double* tau = reinterpret_cast<double*>(ucell->atoms[it].tau.data());
         const std::int64_t target_offset = static_cast<std::int64_t>(iat) * 3;
         const std::int64_t source_offset = static_cast<std::int64_t>(ia) * 3;
         h_atom_tau[target_offset + 0] = static_cast<FPTYPE>(tau[source_offset + 0]);

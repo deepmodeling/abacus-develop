@@ -308,7 +308,7 @@ void Velocity_op<TR>::calculate_vcomm_r()
             const int thread_id = omp_get_thread_num();
             std::set<int> ad_atom_set_thread;
             int i = 0;
-            for(const auto iat1 : ad_atom_set)
+            for(const int iat1 : ad_atom_set)
             {
                 if (i % num_threads == thread_id)
                 {
@@ -465,7 +465,7 @@ void Velocity_op<TR>::calculate_grad_term()
 #endif
     for (int iat1 = 0; iat1 < this->ucell->nat; iat1++)
     {
-        auto tau1 = ucell->get_tau(iat1);
+        ModuleBase::Vector3<double> tau1 = ucell->get_tau(iat1);
         int T1 = 0, I1 = 0;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo& adjs = this->adjs_grad[iat1];

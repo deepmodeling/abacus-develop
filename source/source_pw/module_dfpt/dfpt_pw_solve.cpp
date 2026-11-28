@@ -223,10 +223,7 @@ void debug_iter_snapshot(
 }
 
 void debug_h_consistency(
-    DFPT_HamiltShift &h,
-    const std::vector<std::vector<std::complex<double>>> &occ_k,
-    const ModuleBase::matrix &eig,
-    int ikq)
+    DFPT_HamiltShift &h, const std::vector<std::vector<std::complex<double>>> &occ_k, const std::vector<double> &eig)
 {
     std::cout << "DBG occ_kq nstates=" << occ_k.size() << std::endl;
     for (size_t m = 0; m < occ_k.size(); ++m)
@@ -240,7 +237,7 @@ void debug_h_consistency(
             dot += std::conj(occ_k[m][i]) * hp[i];
         }
         std::cout << "DBG   <psi_" << m << "|H|psi_" << m << "> = " << dot.real() << " + i " << dot.imag()
-                  << "  (GS eig " << eig(ikq, static_cast<int>(m)) << ")" << std::endl;
+                  << "  (nscf eig " << (m < eig.size() ? eig[m] : 0.0) << ")" << std::endl;
         std::cout << "DBG   <psi_" << m << "|T+Vnl|psi_" << m << "> = " << h.debug_t_vnl(occ_k[m]) << std::endl;
         std::cout << "DBG   <psi_" << m << "|V(wfc-path)|psi_" << m << "> = " << h.debug_v_wfc(occ_k[m]) << std::endl;
     }
@@ -344,7 +341,7 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
                 last_q_ = q_idx;
                 if (dbg)
                 {
-                    debug_h_consistency(*hamilt_, occ_kq_[ik], eig_, ikq_of_k_[ik]);
+                    debug_h_consistency(*hamilt_, occ_kq_[ik], eig_kq_[ik]);
                 }
             }
             for (int ib = 0; ib < nbands; ++ib)
@@ -365,18 +362,19 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
             if (vsc_broyden)
             {
                 // Broyden on the real-space potential: push, cal_coef, mix
-                auto screen = std::function<void(std::complex<double> *)>();
+                std::function<void(std::complex<double> *)> screen = std::function<void(std::complex<double> *)>();
                 const double beta = mix_beta_;
-                auto mix_cb = std::function<void(
-                    std::complex<double> *, const std::complex<double> *, const std::complex<double> *)>(
-                    [nrxx, beta](
-                        std::complex<double> *out, const std::complex<double> *in, const std::complex<double> *F)
-                    {
-                        for (int i = 0; i < nrxx; ++i)
+                std::function<void(std::complex<double> *, const std::complex<double> *, const std::complex<double> *)>
+                    mix_cb = std::function<void(
+                        std::complex<double> *, const std::complex<double> *, const std::complex<double> *)>(
+                        [nrxx, beta](
+                            std::complex<double> *out, const std::complex<double> *in, const std::complex<double> *F)
                         {
-                            out[i] = in[i] + beta * F[i];
-                        }
-                    });
+                            for (int i = 0; i < nrxx; ++i)
+                            {
+                                out[i] = in[i] + beta * F[i];
+                            }
+                        });
                 vsc_broyden_->push_data(*vsc_broyden_mdata_, v_sc_in_r.data(), v_sc_out_r.data(), screen, mix_cb, true);
                 vsc_broyden_->cal_coef(
                     *vsc_broyden_mdata_, std::function<double(std::complex<double> *, std::complex<double> *)>(

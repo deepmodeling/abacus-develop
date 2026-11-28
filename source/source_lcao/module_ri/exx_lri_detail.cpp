@@ -31,7 +31,7 @@ CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
     const double fallback_rcut = default_spencer_rcut(ucell, kv);
     bool used_fallback_rcut = false;
 
-    for (auto& param_list: center2_param)
+    for (std::pair<const Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& param_list: center2_param)
     {
         if (param_list.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock)
         {
@@ -39,7 +39,7 @@ CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
         }
         for (std::map<std::string, std::string>& param: param_list.second)
         {
-            const auto cut_radius_policy = param.find("rpa_cut_radius");
+            const std::map<std::string, std::string>::iterator cut_radius_policy = param.find("rpa_cut_radius");
             if (cut_radius_policy != param.end() && cut_radius_policy->second == "inscribed")
             {
                 const std::array<std::array<double, 3>, 3> cut_bvk_lattice = {{
@@ -52,13 +52,13 @@ CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
                 cut_radius_text << Conv_Coulomb_Pot_K::bvk_inscribed_radius(cut_bvk_lattice);
                 param["Rcut"] = cut_radius_text.str();
             }
-            auto rcut_it = param.find("Rcut");
+            std::map<std::string, std::string>::iterator rcut_it = param.find("Rcut");
             if (rcut_it == param.end() || rcut_it->second.empty())
             {
                 param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(fallback_rcut);
                 used_fallback_rcut = true;
             }
-            const auto cut_mode = param.find("rpa_cut_coulomb");
+            const std::map<std::string, std::string>::iterator cut_mode = param.find("rpa_cut_coulomb");
             if (cut_mode != param.end())
             {
                 std::cout << "RPA cut Coulomb: mode=" << cut_mode->second

@@ -186,7 +186,7 @@ void KEDF_ML::init_data(
     ofs_running << "  ---------------------------------------------------------\n";
     ofs_running << "  descriptor2index (input vector positions):\n";
 
-    for (const auto& pair : this->descriptor2index) 
+    for (const std::pair<const std::string, std::vector<int>>& pair : this->descriptor2index)
     {
         ofs_running << "    " << std::setw(15) << std::left << pair.first << " : [";
         for (size_t i = 0; i < pair.second.size(); ++i) 
@@ -203,7 +203,7 @@ void KEDF_ML::init_data(
     ofs_running << "  ---------------------------------------------------------\n";
     ofs_running << "  descriptor2kernel (kernel indices):\n";
 
-    for (const auto& pair : this->descriptor2kernel) 
+    for (const std::pair<const std::string, std::vector<int>>& pair : this->descriptor2kernel)
     {
         ofs_running << "    " << std::setw(15) << std::left << pair.first << " : [";
         for (size_t i = 0; i < pair.second.size(); ++i) 

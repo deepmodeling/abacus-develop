@@ -2,6 +2,7 @@
 #define DFPT_PHON_H
 
 #include "dfpt_pw_data.h"
+#include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 
@@ -234,6 +235,21 @@ class DFPT_Phon
 /// bound; exposed for the serial analytic tests, see
 /// EwaldAlphaSearchLowCutoffContinuesBelowDecade)
 double ewald_alpha_search(double charge, double ggecut, double tpiba2);
+
+/// Project a 3x3 cartesian response tensor onto the crystal point-group
+/// invariant form T' = (1/n) sum_g R_g T R_g^T with R_g the cartesian
+/// images of the group operations (QE symmatrix parity, PW/src/symme.f90,
+/// including the IF (nsym == 1) RETURN guard: an empty or single-element
+/// rotation list is a no-op, so under nosym the raw tensor stays visible).
+void symmetrize_tensor3(const std::vector<ModuleBase::Matrix3> &rot_carts, ModuleBase::matrix &tensor);
+
+/// Project the Born effective charges with the per-operation atom images
+/// (QE symtensor parity): Z'_iat = (1/n) sum_g R_g Z_{image_g(iat)} R_g^T.
+/// Summing over the whole group makes the forward/backward image
+/// conventions equivalent.
+void symmetrize_born(
+    const std::vector<ModuleBase::Matrix3> &rot_carts, const std::vector<std::vector<int>> &atom_images,
+    std::vector<ModuleBase::matrix> &born);
 
 } // namespace ModuleDFPT
 

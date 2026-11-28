@@ -37,16 +37,16 @@ void cal_mag(Parallel_Orbitals* pv,
 {
     if (PARAM.inp.out_mul)
     {
-        auto cell_index
+        CellIndex cell_index
             = CellIndex(unitcell::get_atomLabels(ucell.atoms, ucell.ntype),
 			unitcell::get_atomCounts(ucell.atoms, ucell.ntype),
 			unitcell::get_lnchiCounts(ucell.atoms, ucell.ntype), PARAM.inp.nspin);
-        auto out_s_k = ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
-        auto out_dm_k = ModuleIO::Output_DMK<TK>(dm, pv, PARAM.inp.nspin, kv.get_nks());
+        ModuleIO::Output_Sk<TK> out_s_k = ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
+        ModuleIO::Output_DMK<TK> out_dm_k = ModuleIO::Output_DMK<TK>(dm, pv, PARAM.inp.nspin, kv.get_nks());
 
-        auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_s_k),
+        ModuleIO::Output_Mulliken<TK> mulp = ModuleIO::Output_Mulliken<TK>(&(out_s_k),
 			&(out_dm_k), pv, &cell_index, kv.isk, PARAM.inp.nspin);
-        auto atom_chg = mulp.get_atom_chg();
+        std::vector<std::vector<double>> atom_chg = mulp.get_atom_chg();
         ucell.atom_mulliken = mulp.get_atom_mulliken(atom_chg);
         if (print && GlobalV::MY_RANK == 0)
         {
@@ -63,11 +63,11 @@ void cal_mag(Parallel_Orbitals* pv,
         std::vector<double> mag_x(ucell.nat, 0.0);
         std::vector<double> mag_y(ucell.nat, 0.0);
         std::vector<double> mag_z(ucell.nat, 0.0);
-        auto atomLabels = unitcell::get_atomLabels(ucell.atoms, ucell.ntype);
+        std::vector<std::string> atomLabels = unitcell::get_atomLabels(ucell.atoms, ucell.ntype);
 
         if(PARAM.inp.nspin == 2)
         {
-            auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(nullptr,
+            hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>* sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(nullptr,
 		kv.kvec_d,
 		dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham)->getHR(),
 		ucell,
@@ -89,7 +89,7 @@ void cal_mag(Parallel_Orbitals* pv,
         }
         else if(PARAM.inp.nspin == 4)
         {
-            auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
+            hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>* sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
                 nullptr,
                 kv.kvec_d,
                 dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getHR(),

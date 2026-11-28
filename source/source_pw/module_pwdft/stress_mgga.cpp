@@ -54,12 +54,12 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(
         kvec_host[3 * i + 1] = static_cast<FPTYPE>(wfc_basis->kvec_c[i].y);
         kvec_host[3 * i + 2] = static_cast<FPTYPE>(wfc_basis->kvec_c[i].z);
     }
-    auto gcar_device =
+    container::Tensor gcar_device =
         ct::TensorMap(gcar_host.data(), ct::DataTypeToEnum<FPTYPE>::value, ct::DeviceType::CpuDevice, {gcar_size, 3})
             .to_device<ct_Device>();
-    auto kvec_device = ct::TensorMap(
+    container::Tensor kvec_device = ct::TensorMap(
         kvec_host.data(), ct::DataTypeToEnum<FPTYPE>::value, ct::DeviceType::CpuDevice, {wfc_basis->nks, 3})
-                           .to_device<ct_Device>();
+                                        .to_device<ct_Device>();
 
     ct::Tensor gradwfc =
         ct::Tensor(ct::DataTypeToEnum<std::complex<FPTYPE>>::value, ct::DeviceTypeToEnum<ct_Device>::value, {nrxx * 3});
@@ -68,7 +68,8 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(
         ct::DataTypeToEnum<FPTYPE>::value, ct::DeviceTypeToEnum<ct_Device>::value, {PARAM.inp.nspin, nrxx * 6});
     crosstaus.zero(); // Must be zeroed out
 
-    auto cal_stress_mgga_solver = hamilt::cal_stress_mgga_op<std::complex<FPTYPE>, Device>();
+    hamilt::cal_stress_mgga_op<std::complex<FPTYPE>, Device> cal_stress_mgga_solver =
+        hamilt::cal_stress_mgga_op<std::complex<FPTYPE>, Device>();
     for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
         if (PARAM.inp.nspin == 2)
@@ -90,8 +91,8 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(
         } // band loop
         // delete[] psi;
     } // k loop
-    auto crosstaus_host = crosstaus.to_device<ct::DEVICE_CPU>();
-    auto crosstaus_pack = crosstaus_host.accessor<FPTYPE, 2>();
+    container::Tensor crosstaus_host = crosstaus.to_device<ct::DEVICE_CPU>();
+    container::TensorAccessor<FPTYPE, 2> crosstaus_pack = crosstaus_host.accessor<FPTYPE, 2>();
 #ifdef __MPI
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {

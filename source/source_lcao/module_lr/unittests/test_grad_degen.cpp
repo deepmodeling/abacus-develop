@@ -251,7 +251,7 @@ TEST(GradMatrixDegenerate, PairOrder)
     // d + d(d-1)/2 = d(d+1)/2 evaluations in total, the number of independent components
     for (int d = 1; d < 8; ++d)
     {
-        const auto pairs = LR::degenerate_pairs(d);
+        const std::vector<std::pair<int, int>> pairs = LR::degenerate_pairs(d);
         EXPECT_EQ(pairs.size(), d * (d - 1) / 2);
     }
 }

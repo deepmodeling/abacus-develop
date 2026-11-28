@@ -86,6 +86,12 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell &basecell, const int iste
     // solve the TDA eigenproblem (or read its states back under `lr_solver = spectrum`)
     this->lr_.solve(this->pelec->ekb.c, istep);
 
+    if (this->ks_ && this->inp_->cal_force && !this->lr_.relax.target.active())
+    {
+        // Cache the KS force shared by all single-point excited states.
+        this->ks_->cal_force(ucell, this->lr_.relax.force_gs);
+    }
+
     if (this->lr_.relax.target.active())
     {
         // Re-select which root to follow BEFORE taking the gradient, so the force belongs to
@@ -206,6 +212,11 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force(BaseCell &basecell, ModuleBase:
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     const UnitCell &ucell = static_cast<const UnitCell &>(basecell);
+    if (this->ks_ && this->lr_.relax.force_gs.nr == ucell.nat)
+    {
+        ModuleIO::print_force(
+            this->ofs_running_, ucell, "GROUND-STATE FORCE (eV/Angstrom)", this->lr_.relax.force_gs, false);
+    }
     if (!this->lr_.relax.target.active())
     { // single-point runs print the gradients of every state from `after_all_runners` instead
         return;
@@ -216,9 +227,8 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force(BaseCell &basecell, ModuleBase:
             "ESolver_LR::cal_force", "the excited-state gradient has not been computed for this geometry.");
     }
     // Both halves already follow the ABACUS force convention F = -dE/dR (Ry/Bohr), so they add.
-    // The "Gradients of each excited state" heading that `cal_force(int)` prints under is a
-    // misnomer: the finite-difference reference it was validated against (`abacus-fd lr-custom`)
-    // computes (E(-h) - E(+h))/h, which is -d(Omega)/dR, and the two agree in sign.
+    // The per-state LR table reports the excitation-energy contribution -d(Omega)/dR;
+    // adding the ground-state force gives the total force on the excited-state surface.
     force.create(ucell.nat, 3);
     force = this->lr_.relax.force_gs + this->lr_.relax.lr_force;
     ModuleIO::print_force(this->ofs_running_, ucell, "EXCITED-STATE TOTAL-FORCE (eV/Angstrom)", force, false);

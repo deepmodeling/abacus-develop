@@ -45,7 +45,7 @@ std::vector<LibRpaSpinSymmetryOperation> make_librpa_spin_symmetry_operations(
         // Convert the fractional row-vector rotation to Cartesian coordinates
         // before deriving the SU(2) representation used by the spinor reader.
         const ModuleBase::Matrix3 cartesian = latvec.Inverse() * rotation * latvec;
-        const auto spin_u = ModuleSymmetry::SpinRotation::so3_to_su2(cartesian);
+        const ModuleSymmetry::SpinRotation::Su2 spin_u = ModuleSymmetry::SpinRotation::so3_to_su2(cartesian);
         LibRpaSpinSymmetryOperation operation;
         operation.antiunitary = antiunitary;
         for (int i = 0; i != 4; ++i)

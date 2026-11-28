@@ -233,6 +233,10 @@ void Core<T>::solve(double* ekb, const int istep)
     // to leave it empty, and both the output path and the gradient index it
     this->amp.spin_types =
         this->dim.openshell ? std::vector<std::string>({"updown"}) : std::vector<std::string>({"singlet", "triplet"});
+    if (this->dim.nspin == 1)
+    {
+        this->amp.spin_types = {inp.lr_target_spin};
+    }
 
     // a relaxation writes these once per ionic step; without the suffix every step would overwrite
     // the last, and the trajectory would be impossible to inspect afterwards
@@ -387,8 +391,9 @@ void Core<T>::init_pot(const Charge& chg_gs)
         return;
     }
     const Parallel_Grid& grid = *this->refs.pgrid;
-    auto prepared = LR::prepare_lr_potentials(*this->refs.inp, *this->refs.xc_kernel, *this->refs.rho,
-                                              *this->refs.ucell, chg_gs, grid, this->dim.nspin, this->dim.openshell);
+    LR::KernelPotentials prepared = LR::prepare_lr_potentials(*this->refs.inp, *this->refs.xc_kernel, *this->refs.rho,
+                                                               *this->refs.ucell, chg_gs, grid, this->dim.nspin,
+                                                               this->dim.openshell);
     this->pot.pot = std::move(prepared.pot);
     if (this->refs.inp->cal_force)
     {
@@ -425,7 +430,8 @@ void Core<T>::output(const ModuleBase::matrix& ekb)
             for (int is = 0; is < this->dim.nspin; ++is)
             {
                 const T* const amplitudes = this->amp.x[0].template data<T>();
-                lr_density.output_eh_density_all_states(amplitudes, is, this->dim.nstates, ofs);
+                const std::string density_label = is == 0 ? "up" : "down";
+                lr_density.output_eh_density_all_states(amplitudes, is, this->dim.nstates, density_label, ofs);
             }
         }
         else
@@ -433,7 +439,7 @@ void Core<T>::output(const ModuleBase::matrix& ekb)
             for (int is = 0; is < this->amp.x.size(); ++is)
             {
                 const T* const amplitudes = this->amp.x[is].template data<T>();
-                lr_density.output_eh_density_all_states(amplitudes, is, this->dim.nstates, ofs);
+                lr_density.output_eh_density_all_states(amplitudes, is, this->dim.nstates, this->amp.spin_types[is], ofs);
             }
         }
     }
