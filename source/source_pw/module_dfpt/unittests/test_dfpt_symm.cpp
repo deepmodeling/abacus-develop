@@ -7,6 +7,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
+#include <sstream>
 #include <vector>
 
 namespace
@@ -257,4 +259,189 @@ TEST(DFPTKqPairs, EmptyInputsAreEmptyOutputs)
     const ModuleBase::Vector3<double> q(0.0, 0.0, 0.0);
     EXPECT_TRUE(ModuleDFPT::kq_pair_reps(fcc_latvec(), nullptr, 0, q, mesh_2x2x2()).empty());
     EXPECT_TRUE(ModuleDFPT::kq_pair_reps(fcc_latvec(), gm.data(), gm.size(), q, {}).empty());
+}
+
+namespace
+{
+
+/// hexagonal primitive lattice with lat != lat^T (the basis-asymmetry
+/// discriminator the fcc tests cannot exercise)
+ModuleBase::Matrix3 hex_latvec()
+{
+    const double c_over_a = 1.6;
+    return ModuleBase::Matrix3(1.0, 0.0, 0.0, -0.5, 0.5 * std::sqrt(3.0), 0.0, 0.0, 0.0, c_over_a);
+}
+
+/// the 12 cartesian rotations of the C6v point group (6-fold about z and
+/// the vertical mirrors composed with the horizontal flip)
+std::vector<ModuleBase::Matrix3> hex_cartesian_ops()
+{
+    std::vector<ModuleBase::Matrix3> ops;
+    for (int n = 0; n < 6; ++n)
+    {
+        const double th = n * M_PI / 3.0;
+        const double c = std::cos(th);
+        const double s = std::sin(th);
+        const ModuleBase::Matrix3 rz(c, -s, 0.0, s, c, 0.0, 0.0, 0.0, 1.0);
+        ops.push_back(rz);
+        ops.push_back(
+            ModuleBase::Matrix3(c, -s, 0.0, s, c, 0.0, 0.0, 0.0, 1.0) *
+            ModuleBase::Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0));
+    }
+    return ops;
+}
+
+/// the hexagonal operations in the fractional basis, in EITHER the test
+/// convention lat R lat^-1 (dir = +1) or the production convention
+/// lat R^T lat^-1 (dir = -1): the two differ for non-symmetric bases
+std::vector<ModuleBase::Matrix3> hex_gmatrices(int dir)
+{
+    const ModuleBase::Matrix3 lat = hex_latvec();
+    const ModuleBase::Matrix3 inv_lat = lat.Inverse();
+    const std::vector<ModuleBase::Matrix3> ops = hex_cartesian_ops();
+    std::vector<ModuleBase::Matrix3> gm;
+    for (const ModuleBase::Matrix3 &r : ops)
+    {
+        if (dir > 0)
+        {
+            gm.push_back(lat * r * inv_lat);
+        }
+        else
+        {
+            gm.push_back(lat * r.Transpose() * inv_lat);
+        }
+    }
+    return gm;
+}
+
+/// the 3x3x2 Gamma-centered mesh in fractional coordinates: its orbits
+/// under C6v wrap by reciprocal-lattice vectors (e.g. (1/3, 1/3) <->
+/// (2/3, 2/3)), which is what the mod-lattice membership must catch
+std::vector<ModuleBase::Vector3<double>> mesh_3x3x2()
+{
+    std::vector<ModuleBase::Vector3<double>> mesh;
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            for (int k = 0; k < 2; ++k)
+            {
+                mesh.push_back(ModuleBase::Vector3<double>(i / 3.0, j / 3.0, k / 2.0));
+            }
+        }
+    }
+    return mesh;
+}
+
+/// multiset key of a pair list for convention-robustness comparison
+std::vector<std::string> pair_keys(const std::vector<ModuleDFPT::KQPair> &pairs)
+{
+    std::vector<std::string> keys;
+    for (const ModuleDFPT::KQPair &p : pairs)
+    {
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(6) << p.k_frac.x << "," << p.k_frac.y << "," << p.k_frac.z << ","
+            << p.orbit_size;
+        keys.push_back(oss.str());
+    }
+    std::sort(keys.begin(), keys.end());
+    return keys;
+}
+
+} // namespace
+
+TEST(DFPTKqPairs, HexGammaReducesUnderC6vWithWrappingOrbits)
+{
+    // q = 0, full C6v: the 18-point mesh reduces to 6 pairs with orbit
+    // sizes 6, 6, 2, 2, 1, 1 (brute-force derived); the 2-member orbits
+    // of the interior points only close through the reciprocal-lattice
+    // wrap, so this test locks the mod-lattice membership
+    const std::vector<ModuleBase::Matrix3> gm = hex_gmatrices(1);
+    const ModuleBase::Vector3<double> q(0.0, 0.0, 0.0);
+    const std::vector<ModuleDFPT::KQPair> pairs =
+        ModuleDFPT::kq_pair_reps(hex_latvec(), gm.data(), gm.size(), q, mesh_3x3x2());
+    ASSERT_EQ(pairs.size(), 6u);
+    const std::vector<int> sizes = orbit_sizes(pairs);
+    EXPECT_EQ(sizes[0], 6);
+    EXPECT_EQ(sizes[1], 6);
+    EXPECT_EQ(sizes[2], 2);
+    EXPECT_EQ(sizes[3], 2);
+    EXPECT_EQ(sizes[4], 1);
+    EXPECT_EQ(sizes[5], 1);
+}
+
+TEST(DFPTKqPairs, HexKPointReducesUnderTheLittleGroup)
+{
+    // q = K = (1/3, 1/3, 0): the unitary little co-group has 6 members
+    // (C3 plus the mirrors fixing K) and the mesh reduces to 10 pairs
+    // with orbit sizes 3, 3, 3, 3, then six singletons
+    const std::vector<ModuleBase::Matrix3> gm = hex_gmatrices(1);
+    const ModuleBase::Vector3<double> q(1.0 / 3.0, 1.0 / 3.0, 0.0);
+    const std::vector<ModuleDFPT::KQPair> pairs =
+        ModuleDFPT::kq_pair_reps(hex_latvec(), gm.data(), gm.size(), q, mesh_3x3x2());
+    ASSERT_EQ(pairs.size(), 10u);
+    const std::vector<int> sizes = orbit_sizes(pairs);
+    EXPECT_EQ(sizes[0], 3);
+    EXPECT_EQ(sizes[1], 3);
+    EXPECT_EQ(sizes[2], 3);
+    EXPECT_EQ(sizes[3], 3);
+    for (int i = 4; i < 10; ++i)
+    {
+        EXPECT_EQ(sizes[i], 1);
+    }
+}
+
+TEST(DFPTKqPairs, HexMPointReducesUnderTheLittleGroup)
+{
+    // q = M = (1/2, 0, 0): the unitary little co-group has 4 members
+    // and the mesh reduces to 10 pairs with orbit sizes 2 x 8, 1, 1
+    const std::vector<ModuleBase::Matrix3> gm = hex_gmatrices(1);
+    const ModuleBase::Vector3<double> q(0.5, 0.0, 0.0);
+    const std::vector<ModuleDFPT::KQPair> pairs =
+        ModuleDFPT::kq_pair_reps(hex_latvec(), gm.data(), gm.size(), q, mesh_3x3x2());
+    ASSERT_EQ(pairs.size(), 10u);
+    const std::vector<int> sizes = orbit_sizes(pairs);
+    EXPECT_EQ(sizes[0], 2);
+    for (int i = 0; i < 8; ++i)
+    {
+        EXPECT_EQ(sizes[i], 2);
+    }
+    EXPECT_EQ(sizes[8], 1);
+    EXPECT_EQ(sizes[9], 1);
+}
+
+TEST(DFPTKqPairs, ProductionConventionInputMatchesTestConvention)
+{
+    // the production gmatrix form lat R^T lat^-1 and the test form
+    // lat R lat^-1 differ by R <-> R^T, which is only the same matrix
+    // set for symmetric bases (fcc); on the hexagonal lattice they are
+    // genuinely different matrices, and the reconstruction must map
+    // both onto valid rotations so the pair lists agree exactly
+    const ModuleBase::Vector3<double> q(0.0, 0.0, 0.0);
+    const std::vector<ModuleBase::Matrix3> gm_test = hex_gmatrices(1);
+    const std::vector<ModuleBase::Matrix3> gm_prod = hex_gmatrices(-1);
+    const std::vector<ModuleDFPT::KQPair> pairs_test =
+        ModuleDFPT::kq_pair_reps(hex_latvec(), gm_test.data(), gm_test.size(), q, mesh_3x3x2());
+    const std::vector<ModuleDFPT::KQPair> pairs_prod =
+        ModuleDFPT::kq_pair_reps(hex_latvec(), gm_prod.data(), gm_prod.size(), q, mesh_3x3x2());
+    EXPECT_EQ(pair_keys(pairs_test), pair_keys(pairs_prod));
+}
+
+TEST(DFPTLittleGroup, HexagonalLittleGroups)
+{
+    // Gamma keeps all 12 C6v operations; M = (1/2, 0, 0) is
+    // time-reversal invariant so its union equals the 4-member unitary
+    // co-group; K = (1/3, 1/3, 0) is not TR invariant and the
+    // antiunitary branch doubles its 6 unitary members to 12
+    // the little-group function takes CARTESIAN q (the fcc tests pass
+    // (pi/a)-scale vectors); the hexagonal high-symmetry points are
+    // converted through the reciprocal map 2pi latvec^-1
+    const std::vector<ModuleBase::Matrix3> gm = hex_gmatrices(1);
+    const ModuleBase::Matrix3 recip = hex_latvec().Inverse() * ModuleBase::TWO_PI;
+    const ModuleBase::Vector3<double> qg(0.0, 0.0, 0.0);
+    EXPECT_EQ(ModuleDFPT::little_group_of_q(hex_latvec(), gm.data(), gm.size(), qg).size(), 12u);
+    const ModuleBase::Vector3<double> qm = recip * ModuleBase::Vector3<double>(0.5, 0.0, 0.0);
+    EXPECT_EQ(ModuleDFPT::little_group_of_q(hex_latvec(), gm.data(), gm.size(), qm).size(), 4u);
+    const ModuleBase::Vector3<double> qk = recip * ModuleBase::Vector3<double>(1.0 / 3.0, 1.0 / 3.0, 0.0);
+    EXPECT_EQ(ModuleDFPT::little_group_of_q(hex_latvec(), gm.data(), gm.size(), qk).size(), 12u);
 }

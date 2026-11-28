@@ -108,10 +108,13 @@ std::vector<KQPair> kq_pair_reps(
         ModuleBase::timer::end("DFPT_Symm", "kq_pair_reps");
         return pairs;
     }
-    // reciprocal basis B = 2pi (latvec^-1)^T (columns b_i) maps fractional
-    // k to cartesian k; direct primitive vectors a_i are latvec rows
+    // reciprocal map k_cart = 2pi latvec^-1 k_frac (the columns of
+    // 2pi latvec^-1 are the reciprocal primitive vectors b_i, satisfying
+    // b_i . a_j = 2pi delta_ij with a_j the latvec rows); the transposed
+    // variant 2pi (latvec^-1)^T differs for non-symmetric basis matrices
+    // and was only accidentally right for the fcc tests
     const ModuleBase::Matrix3 inv_lat = latvec.Inverse();
-    const ModuleBase::Matrix3 b_mat = inv_lat.Transpose() * ModuleBase::TWO_PI;
+    const ModuleBase::Matrix3 b_mat = inv_lat * ModuleBase::TWO_PI;
     const ModuleBase::Matrix3 lat = latvec;
     const ModuleBase::Vector3<double> q_cart = b_mat * q_frac;
     const ModuleBase::Vector3<double> a1(lat.e11, lat.e12, lat.e13);
@@ -135,12 +138,20 @@ std::vector<KQPair> kq_pair_reps(
             unitary.push_back(rot);
         }
     }
-    // cartesian images of the mesh for the orbit partition
+    // cartesian images of the mesh for the orbit partition; membership is
+    // compared as wrapped FRACTIONAL coordinates because a rotation image
+    // may differ from a mesh point by a reciprocal-lattice vector (the
+    // wrapping orbits): a raw cartesian comparison silently splits those
+    // orbits, which the fcc 2x2x2 tests missed only because their star
+    // images land exactly on mesh points
     std::vector<ModuleBase::Vector3<double>> mesh_cart(nmesh);
+    std::vector<ModuleBase::Vector3<double>> mesh_wrap(nmesh);
     for (int ik = 0; ik < nmesh; ++ik)
     {
         mesh_cart[ik] = b_mat * mesh_frac[ik];
+        mesh_wrap[ik] = wrap01(mesh_frac[ik]);
     }
+    const ModuleBase::Matrix3 inv_b = b_mat.Inverse();
     std::vector<bool> seen(nmesh, false);
     const double match_tol = 1.0e-6;
     for (int ik = 0; ik < nmesh; ++ik)
@@ -149,7 +160,8 @@ std::vector<KQPair> kq_pair_reps(
         {
             continue;
         }
-        // orbit of ik in cartesian space; membership against the mesh
+        // orbit of ik; membership against the mesh modulo the reciprocal
+        // lattice through the wrapped fractional images
         std::vector<int> members;
         for (int idx = 0; idx < nmesh; ++idx)
         {
@@ -159,9 +171,11 @@ std::vector<KQPair> kq_pair_reps(
             }
             for (const ModuleBase::Matrix3 &rot : unitary)
             {
-                const ModuleBase::Vector3<double> image = rot * mesh_cart[idx];
-                if (std::abs(image.x - mesh_cart[ik].x) < match_tol &&
-                    std::abs(image.y - mesh_cart[ik].y) < match_tol && std::abs(image.z - mesh_cart[ik].z) < match_tol)
+                const ModuleBase::Vector3<double> image = inv_b * (rot * mesh_cart[idx]);
+                const ModuleBase::Vector3<double> image_wrap = wrap01(image);
+                if (std::abs(image_wrap.x - mesh_wrap[ik].x) < match_tol &&
+                    std::abs(image_wrap.y - mesh_wrap[ik].y) < match_tol &&
+                    std::abs(image_wrap.z - mesh_wrap[ik].z) < match_tol)
                 {
                     members.push_back(idx);
                     break;
